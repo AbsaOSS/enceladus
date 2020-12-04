@@ -23,7 +23,11 @@ import org.apache.spark.sql.types._
 
 package object dataFrameFilter {
 
-  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
+  /**
+    * DataFrameFilter is the basic trait for all filters. Introduces the interface to get the filter column a boolean
+    * column that is expected to be used in a DataFrame filter.
+    * Several operators are defined to be able to combine filter instances
+    */  @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
   @JsonSubTypes(Array(
     new Type(value = classOf[OrJoinedFilters], name = "OrJoinedFilters"),
     new Type(value = classOf[AndJoinedFilters], name = "AndJoinedFilters"),
@@ -42,7 +46,6 @@ package object dataFrameFilter {
         case (a, b) => OrJoinedFilters(Set(a, b))
       }
     }
-
     @JsonIgnore def and(otherFilter: DataFrameFilter): DataFrameFilter = {
       (this, otherFilter) match {
         case (a: AndJoinedFilters, b: AndJoinedFilters) => AndJoinedFilters(a.filterItems & b.filterItems)
@@ -64,6 +67,9 @@ package object dataFrameFilter {
     }
   }
 
+  /**
+    * Trait JoinFilters is a foundation how to join several filters together using some logical operator
+    */
   sealed trait JoinFilters extends DataFrameFilter {
     @JsonIgnore protected def operator: (Column, Column) => Column
 
@@ -79,6 +85,9 @@ package object dataFrameFilter {
     }
   }
 
+  /**
+    * Trait SingleColumnAndValueFilter is a foundation to compare a column value with a constant using some operator.
+    */
   sealed trait SingleColumnAndValueFilter extends DataFrameFilter {
     def columnName: String
     def value: String
@@ -119,18 +128,49 @@ package object dataFrameFilter {
     }
   }
 
+  /**
+    * Joins a set of filters with an or operator. Therefor at least one of the filter items has to be evaluated as true
+    * the filter to be itself true.
+    * JSON representation: {"_t":"OrJoinedFilters","filterItems":[FILTER_ITEMS]}
+    * FILTER_ITEMS is a comma separated list of other filters JSON entries
+    * @param filterItems the filters that will be joined with the or operator
+    */
   case class OrJoinedFilters(filterItems: Set[DataFrameFilter]) extends JoinFilters {
     protected val operator: (Column, Column) => Column = (a: Column, b: Column) => { a or b }
   }
 
+  /**
+    * Joins a set of filters with an and operator. Therefor all the filter items has to be evaluated as true
+    * the filter to be itself true.
+    * JSON representation: {"_t":"AndJoinedFilters","filterItems":[FILTER_ITEMS]}
+    * FILTER_ITEMS is a comma separated list of other filters JSON entries
+    * @param filterItems the filters that will be joined with the and operator
+    */
   case class AndJoinedFilters(filterItems: Set[DataFrameFilter]) extends JoinFilters {
     protected val operator: (Column, Column) => Column = (a: Column, b: Column) => { a and b }
   }
 
+  /**
+    * Reverses the boolean value of the input filter
+    * JSON representation: {"_t":"NotFilter","inputFilter":[FILTER_ITEM]}
+    * FILTER_ITEM JSON representation of the filter to reverse
+    * @param inputFilter The filter which boolean evaluation is to be reversed true->false, false->tr
+    */
   case class NotFilter(inputFilter: DataFrameFilter) extends DataFrameFilter {
     override def filter: Column = columnNot(inputFilter.filter)
   }
 
+  /**
+    * EqualsFilter evaluates to true if the value in the column identified by name equals to the constant value provided.
+    * JSON representation: {"_t":"EqualsFilter","columnName":"COLUMN_NAME","value":"VALUE","valueType":"VALUE_TYPE"}
+    * JSON representation: {"_t":"EqualsFilter","columnName":"COLUMN_NAME","value":"VALUE"}
+    * COLUMN_NAME       name of the column which values are taken in by the filter
+    * VALUE             value to compare to
+    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * @param columnName name of the column which values are taken in by the filter
+    * @param value      value to compare to
+    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    */
   case class EqualsFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) => {
       column === valueColumn
@@ -143,6 +183,17 @@ package object dataFrameFilter {
     }
   }
 
+  /**
+    * DiffersFilter evaluates to true if the value in the column identified by name differs from the constant value provided.
+    * JSON representation: {"_t":"DiffersFilter","columnName":"COLUMN_NAME","value":"VALUE","valueType":"VALUE_TYPE"}
+    * JSON representation: {"_t":"DiffersFilter","columnName":"COLUMN_NAME","value":"VALUE"}
+    * COLUMN_NAME       name of the column which values are taken in by the filter
+    * VALUE             value to compare to
+    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * @param columnName name of the column which values are taken in by the filter
+    * @param value      value to compare to
+    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    */
   case class DiffersFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) =>  {
       column =!= valueColumn
@@ -155,6 +206,12 @@ package object dataFrameFilter {
     }
   }
 
+  /**
+    * IsNullFilter evalutes to true if the content of the column identifed by column name is NULL.
+    * JSON representation: {"_t":"IsNullFilter","columnName":"COLUMN_NAME"}
+    * COLUMN_NAME       name of the column which values are checked for null
+    * @param columnName name of the column which values are checked for null
+    */
   case class IsNullFilter(columnName: String) extends DataFrameFilter {
     override def filter: Column = col(columnName).isNull
   }

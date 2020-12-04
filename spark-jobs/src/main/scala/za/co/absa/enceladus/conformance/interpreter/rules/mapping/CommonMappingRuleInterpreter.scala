@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.interpreter.rules
+package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
 import org.apache.spark.sql.functions.{col, lit}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.slf4j.Logger
 import za.co.absa.enceladus.conformance.config.FilterFromConfig
@@ -26,6 +26,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
+import za.co.absa.enceladus.utils.validation.ExpressionValidator
+
+import scala.util.Try
+import scala.util.control.NonFatal
 
 trait CommonMappingRuleInterpreter {
 
@@ -66,6 +71,10 @@ trait CommonMappingRuleInterpreter {
     }
     val mapTable = DataSource.getDataFrame(mappingTableDef.hdfsPath, progArgs.reportDate, filter)
 
+    if (mapTable.head(1).isEmpty) {
+      log.warn(s"Mapping table ${mappingTableDef.name} is empty")
+    }
+
     // join & perform projection on the target attribute
     val joinConditionStr = joinCondition.toString
     log.info("Mapping table: \n" + mapTable.schema.treeString)
@@ -84,10 +93,8 @@ trait CommonMappingRuleInterpreter {
   protected def validateMappingFieldsExist(joinConditionStr: String,
                                            datasetSchema: StructType,
                                            mappingTableSchema: StructType,
-                                           rule: MappingConformanceRule): Unit
-
-  protected def datasetWithJoinCondition(joinConditionStr: String): String = {
-    s"the dataset, join condition = $joinConditionStr"
+                                           rule: MappingConformanceRule): Unit = {
+    // nothing to do here in general
   }
 
   protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
@@ -121,7 +128,7 @@ trait CommonMappingRuleInterpreter {
       val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
       mappingTableSchemaOpt match {
         case Some(schema) =>
-          MappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+          CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
             rule.targetAttribute, defaultValueOpt.get)
         case None =>
           log.warn("Mapping table schema loading failed")
@@ -137,8 +144,57 @@ object CommonMappingRuleInterpreter {
   val joinType = "left_outer"
 
   /**
-    * getJoinCondition Function which builds a column object representing the join condition for mapping operation
+    * Checks if a default value type can be used for a target attribute in Mapping rule.
+    * Throws a MappingValidationException exception if there is a casting error.
     *
+    * @param mappingTable The name of a mapping table. Used to construct an error message only
+    * @param schema The schema of a mapping table
+    * @param defaultValue A default value as a Spark expression
+    * @param spark (implicit) A Spark Session
+    *
+    */
+  @throws[ValidationException]
+  def ensureDefaultValueMatchSchema(mappingTable: String,
+                                    schema: StructType,
+                                    targetAttribute: String,
+                                    defaultValue: String)
+                                   (implicit spark: SparkSession): Unit = {
+    val targetField = getQualifiedField(schema, targetAttribute)
+
+    if (targetField.isEmpty) {
+      throw new ValidationException(
+        s"The mapping table '$mappingTable' does not contain the specified target attribute '$targetAttribute'\n")
+    }
+
+    val targetAttributeType = targetField.get.dataType
+
+    // Put all checks inside a Try object so we could intercept any exception and pack it
+    // into a MappingValidationException.
+    Try({
+      if (defaultValue.trim.toLowerCase == "null") {
+        require(targetField.get.nullable, "The target field is not nullable, 'null' is not acceptable.")
+      } else {
+        ExpressionValidator.ensureExpressionMatchesType(defaultValue, targetAttributeType)
+      }
+    }).recover({
+      // Constructing a common form of exception messages based on the exception type
+      // If it is IllegalArgumentException, include the details in the message itself.
+      // Otherwise use the original exception message and put it into techDetails field
+      // of MappingValidationException.
+      val typeText = targetAttributeType.prettyJson
+      val msg = s"The default value \n'$defaultValue'\n set for mapping table '$mappingTable' does not match the target attribute's data " +
+        s"type\n'$typeText' \n"
+
+      val recoverFunction: PartialFunction[Throwable, Unit] = {
+        case e: IllegalArgumentException => throw new ValidationException(msg + "Details: " + e.getMessage, "")
+        case NonFatal(e)                 => throw new ValidationException(msg, e.getMessage)
+      }
+      recoverFunction
+    }).get // throw the exception of Try if it is a Failure
+  }
+
+  /**
+    * getJoinCondition Function which builds a column object representing the join condition for mapping operation
     */
   def getJoinCondition(rule: MappingConformanceRule): Column = {
     def joinNullSafe(colNames: (String, String) ): Column = {
@@ -163,5 +219,24 @@ object CommonMappingRuleInterpreter {
     } else {
       lit(true)
     }
+  }
+
+  private def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {
+    val flatSchema = flattenForJoin(schema)
+    flatSchema.find(_.name == fieldName)
+  }
+
+  // Flattens a schema for join validation purposes.
+  private def flattenForJoin(schema: StructType, prefix: Option[String] = None): Seq[StructField] = {
+    schema.fields.flatMap(field => {
+      val fieldName = prefix.getOrElse("") + field.name
+      val fld = field.copy(name = fieldName)
+      field.dataType match {
+        case s: StructType =>
+          Seq(fld) ++ flattenForJoin(s, Some(fieldName + "."))
+        case _ =>
+          Seq(fld)
+      }
+    })
   }
 }

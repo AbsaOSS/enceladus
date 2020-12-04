@@ -1,10 +1,13 @@
 package za.co.absa.enceladus.conformance.config
 
+import java.text.ParseException
+
 import org.apache.spark.sql.types._
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.model.dataFrameFilter._
 
 class FilterFromConfigSuite extends FunSuite {
+
   test("Filter for dataset doesn't exist") {
     assert(FilterFromConfig.loadFilter("NotExistent").isEmpty)
   }
@@ -22,7 +25,12 @@ class FilterFromConfigSuite extends FunSuite {
   }
 
   test("Filter for dataset is wrong") {
-    assert(FilterFromConfig.loadFilter("Fail").isEmpty)
+    val filterName = "Fail"
+
+    val except = intercept[ParseException] {
+      FilterFromConfig.loadFilter(filterName)
+    }
+    assert(except.getMessage.contains(s"$filterName filter load failed"))
   }
 
   test("A complex filter") {

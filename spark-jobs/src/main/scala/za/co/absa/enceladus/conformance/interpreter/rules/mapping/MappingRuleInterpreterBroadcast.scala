@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.interpreter.rules
+package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
@@ -59,13 +59,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
       })
 
     withMappedFieldsDf
-  }
-
-  override protected def validateMappingFieldsExist(joinConditionStr: String,
-                                                    datasetSchema: StructType,
-                                                    mappingTableSchema: StructType,
-                                                    rule: MappingConformanceRule): Unit = {
-    // No extra step needed, the check is done in LocalMappingTable constructor
   }
 
   /**

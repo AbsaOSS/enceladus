@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.conformance.config
 
-import org.apache.log4j.{LogManager, Logger}
+import java.text.ParseException
+
 import za.co.absa.enceladus.dao.rest.JsonSerializer
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.utils.config.ConfigReader
@@ -28,7 +29,6 @@ import scala.util.{Failure, Success, Try}
   */
 object FilterFromConfig {
   private val configReader = new ConfigReader()
-  private val log: Logger = LogManager.getLogger(this.getClass)
 
   private def dataFrameId(dataFrameName: String): String = {
     s"dataframefilter.$dataFrameName"
@@ -38,8 +38,7 @@ object FilterFromConfig {
     val result = Try (JsonSerializer.fromJson[DataFrameFilter](json))
     result match {
       case Failure(exception) =>
-        log.warn(s"$dataFrameName filter load failed: ${exception.getMessage}")
-        None
+        throw new ParseException(s"$dataFrameName filter load failed: ${exception.getMessage}", 0)
       case Success(filter) => Option(filter)
     }
   }

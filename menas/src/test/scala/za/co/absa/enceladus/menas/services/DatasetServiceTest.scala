@@ -76,7 +76,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
 
     val validations = Seq(Future(Validation()), validationWithErrors1, validationWithErrors2)
     val fields = Future(Set("someField"))
-    val validation = service.RuleValidationsAndFields(validations, fields)
+    val validation = DatasetService.RuleValidationsAndFields(validations, fields)
     val result = await(validation.mergeAndGetValidations())
 
     assert(expectedResult == result)
@@ -85,7 +85,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] {
   test("RuleValidationsAndFields - merge empty"){
     val validations = Seq.empty[Future[Validation]]
     val fields = Future(Set("a"))
-    val validation = service.RuleValidationsAndFields(validations, fields)
+    val validation = DatasetService.RuleValidationsAndFields(validations, fields)
 
     assert(await(validation.mergeAndGetValidations()).isValid())
   }

@@ -13,13 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.interpreter.rules
+package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
 import org.apache.spark.sql.api.java.UDF1
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, DataFrame, Row, SparkSession}
-import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
+import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
@@ -28,13 +29,9 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
-import za.co.absa.enceladus.utils.validation._
-
-import scala.util.Try
-import scala.util.control.NonFatal
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset)
-  extends RuleInterpreter with CommonMappingRuleInterpreter {
+  extends RuleInterpreter with JoinMappingRuleInterpreter {
 
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
@@ -99,13 +96,6 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       .select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
   }
 
-  override protected def validateMappingFieldsExist(joinConditionStr:  String,
-                                                    datasetSchema: StructType,
-                                                    mappingTableSchema: StructType,
-                                                    rule: MappingConformanceRule): Unit = {
-    MappingRuleInterpreter.validateMappingFieldsExist(datasetWithJoinCondition(joinConditionStr), datasetSchema, mappingTableSchema, rule)
-  }
-
   private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType) = {
     val paths = mappings.flatMap { mapping =>
       SchemaUtils.getAllArraysInPath(mapping.mappedDatasetColumn, schema)
@@ -115,113 +105,6 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 }
 
 object MappingRuleInterpreter {
-  /**
-   * Checks if a default value type can be used for a target attribute in Mapping rule.
-   * Throws a MappingValidationException exception if there is a casting error.
-   *
-   * @param mappingTable The name of a mapping table. Used to construct an error message only
-   * @param schema The schema of a mapping table
-   * @param defaultValue A default value as a Spark expression
-   * @param spark (implicit) A Spark Session
-   *
-   */
-  @throws[ValidationException]
-  private[rules] def ensureDefaultValueMatchSchema(mappingTable: String,
-                                                   schema: StructType,
-                                                   targetAttribute: String,
-                                                   defaultValue: String)
-                                                  (implicit spark: SparkSession): Unit = {
-
-    val targetField = getQualifiedField(schema, targetAttribute)
-
-    if (targetField.isEmpty) {
-      throw new ValidationException(
-        s"The mapping table '$mappingTable' does not contain the specified target attribute '$targetAttribute'\n")
-    }
-
-    val targetAttributeType = targetField.get.dataType
-
-    // Put all checks inside a Try object so we could intercept any exception and pack it
-    // into a MappingValidationException.
-    Try({
-      if (defaultValue.trim.toLowerCase == "null") {
-        require(targetField.get.nullable, "The target field is not nullable, 'null' is not acceptable.")
-      } else {
-        ExpressionValidator.ensureExpressionMatchesType(defaultValue, targetAttributeType)
-      }
-    }).recover({
-      // Constructing a common form of exception messages based on the exception type
-      // If it is IllegalArgumentException, include the details in the message itself.
-      // Otherwise use the original exception message and put it into techDetails field
-      // of MappingValidationException.
-      val typeText = targetAttributeType.prettyJson
-      val msg = s"The default value \n'$defaultValue'\n set for mapping table '$mappingTable' does not match the target attribute's data " +
-        s"type\n'$typeText' \n"
-
-      val recoverFunction: PartialFunction[Throwable, Unit] = {
-        case e: IllegalArgumentException => throw new ValidationException(msg + "Details: " + e.getMessage, "")
-        case NonFatal(e)                 => throw new ValidationException(msg, e.getMessage)
-      }
-      recoverFunction
-    }).get // throw the exception of Try if it is a Failure
-  }
-
-  @throws[ValidationException]
-  private[rules] def validateMappingFieldsExist(datasetName: String, datasetSchema: StructType, mappingTableSchema: StructType,
-                                                rule: MappingConformanceRule): Unit = {
-    // Validate the output column
-    validateOutputField(datasetName, datasetSchema, rule.outputColumn)
-
-    // Validate the target attribute
-    validateTargetAttribute(rule.mappingTable, mappingTableSchema, rule.targetAttribute)
-
-    // Validate the join condition
-    rule.attributeMappings.foreach {
-      case (mappingTableField, datasetField) =>
-        validateJoinField(rule.mappingTable, mappingTableSchema, mappingTableField)
-        validateJoinField(datasetName, datasetSchema, datasetField)
-    }
-  }
-
-  @throws[ValidationException]
-  def validateJoinField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
-    RuleValidators.checkAndThrowValidationErrors(datasetName, "A join condition validation error occurred.", validationIssues)
-  }
-
-  @throws[ValidationException]
-  def validateTargetAttribute(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
-    RuleValidators.checkAndThrowValidationErrors(datasetName, "A tagret attribute validation error occurred.", validationIssues)
-  }
-
-  @throws[ValidationException]
-  def validateOutputField(datasetName: String, schema: StructType, fieldPath: String): Unit = {
-    val validationIssues = SchemaPathValidator.validateSchemaPathParent(schema, fieldPath)
-    RuleValidators.checkAndThrowValidationErrors(datasetName, "An output column name validation error occurred.", validationIssues)
-  }
-
-  private[rules] def getQualifiedField(schema: StructType, fieldName: String): Option[StructField] = {
-    val flatSchema = flattenForJoin(schema)
-    val field: Option[StructField] = flatSchema.find(_.name == fieldName)
-    field
-  }
-
-  // Flattens a schema for join validation purposes.
-  private[rules] def flattenForJoin(schema: StructType, prefix: Option[String] = None): Seq[StructField] = {
-    schema.fields.flatMap(field => {
-      val fieldName = prefix.getOrElse("") + field.name
-      field.dataType match {
-        case s: StructType =>
-          val fld = field.copy(name = fieldName)
-          Seq(fld) ++ flattenForJoin(s, Some(fieldName + "."))
-        case _ =>
-          val fld = field.copy(name = fieldName)
-          Seq(fld)
-      }
-    })
-  }
-
   /**
    * includeErrorsCondition Function which builds a column object representing the where clause for error column population
    *
@@ -247,5 +130,4 @@ object MappingRuleInterpreter {
           )
       }
   }
-
 }

@@ -24,6 +24,8 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import scala.language.reflectiveCalls
+import DatasetService.RuleValidationsAndFields
 
 
 @Service
@@ -31,18 +33,6 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  // Local class for the representation of validation of conformance rules.
-  final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
-    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
-        validations = validations ++ ruleValidationsAndFields.validations,
-        fields = ruleValidationsAndFields.fields
-      )
-
-    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
-
-    def mergeAndGetValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
-  }
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
@@ -279,4 +269,20 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     RuleValidationsAndFields(Seq(Future(validation)), fields)
   }
 
+}
+
+object DatasetService {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  // Local class for the representation of validation of conformance rules.
+  final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
+    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
+      validations = validations ++ ruleValidationsAndFields.validations,
+      fields = ruleValidationsAndFields.fields
+    )
+
+    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+
+    def mergeAndGetValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
+  }
 }
