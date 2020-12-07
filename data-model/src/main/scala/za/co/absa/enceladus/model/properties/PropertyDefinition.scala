@@ -70,11 +70,14 @@ case class PropertyDefinition(name: String,
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,
-        Seq(AuditFieldName("propertyType", "Property type"),
+        Seq(
+          AuditFieldName("description", "Description"),
+          AuditFieldName("propertyType", "Property type"),
           AuditFieldName("putIntoInfoFile", "Put into _INFO file"),
-          AuditFieldName("essentiality", "Essentiality"),
-          AuditFieldName("schemaVersion", "Schema Version"),
-          AuditFieldName("schedule", "Schedule"))))
+          AuditFieldName("essentiality", "Essentiality")
+        )
+      )
+    )
   }
 
   override def exportItem(): String = {
