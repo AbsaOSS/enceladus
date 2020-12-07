@@ -84,12 +84,13 @@ trait CommonJobExecution extends ProjectMetadata {
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
 
     dao.authenticate()
-    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
-    val dsValidation = dao.getDatasetPropertiesValidation(cmd.datasetName, cmd.datasetVersion)
-    if (!dsValidation.isValid) {
-      throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
-        dsValidation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
-      )
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, validateProperties = true)
+    dataset.propertiesValidation match {
+      case Some(validation) if !validation.isValid =>
+        throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
+          validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
+        )
+      case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
     }
 
     val reportVersion = getReportVersion(cmd, dataset)

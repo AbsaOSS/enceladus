@@ -106,7 +106,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           assertCreated(response)
 
           val actual = response.getBody
-          val expected = toExpected(schema.setVersion(2), actual).copy(parent = Some(SchemaFactory.toParent(schema)))
+          val expected = toExpected(schema.setVersion(2).setParent(Some(SchemaFactory.toParent(schema))), actual)
           assert(actual == expected)
         }
       }
@@ -1068,13 +1068,4 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
     }
   }
 
-  private def toExpected(schema: Schema, actual: Schema): Schema = {
-    schema.copy(
-      dateCreated = actual.dateCreated,
-      userCreated = actual.userCreated,
-      lastUpdated = actual.lastUpdated,
-      userUpdated = actual.userUpdated,
-      dateDisabled = actual.dateDisabled,
-      userDisabled = actual.userDisabled)
-  }
 }

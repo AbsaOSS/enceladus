@@ -84,7 +84,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             assertCreated(response)
 
             val actual = response.getBody
-            val expected = toExpected(propertyDefinition.setVersion(2), actual).copy(parent = Some(PropertyDefinitionFactory.toParent(propertyDefinition)))
+            val expected = toExpected(propertyDefinition.setVersion(2).setParent(Some(PropertyDefinitionFactory.toParent(propertyDefinition))), actual)
             assert(actual == expected)
           }
         }
@@ -369,13 +369,4 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
     }
   }
 
-  private def toExpected(propertyDefinition: PropertyDefinition, actual: PropertyDefinition): PropertyDefinition = {
-    propertyDefinition.copy(
-      dateCreated = actual.dateCreated,
-      userCreated = actual.userCreated,
-      lastUpdated = actual.lastUpdated,
-      userUpdated = actual.userUpdated,
-      dateDisabled = actual.dateDisabled,
-      userDisabled = actual.userDisabled)
-  }
 }

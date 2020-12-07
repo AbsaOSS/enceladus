@@ -30,17 +30,10 @@ protected class MenasRestDAO(private[rest] val apiCaller: ApiCaller,
     restClient.authenticate()
   }
 
-  def getDataset(name: String, version: Int): Dataset = {
+  def getDataset(name: String, version: Int, validateProperties: Boolean = false): Dataset = {
     apiCaller.call { apiBaseUrl =>
-      val url = s"$apiBaseUrl/api/dataset/detail/$name/$version"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=$validateProperties"
       restClient.sendGet[Dataset](url)
-    }
-  }
-
-  def getDatasetPropertiesValidation(datasetName: String, datasetVersion: Int): Validation = {
-    apiCaller.call { apiBaseUrl =>
-      val url = s"$apiBaseUrl/api/dataset/$datasetName/$datasetVersion/properties/valid"
-      restClient.sendGet[Validation](url)
     }
   }
 

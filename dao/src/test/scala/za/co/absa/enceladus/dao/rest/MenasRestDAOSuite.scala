@@ -67,7 +67,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
     "getDataset" in {
       val expected = DatasetFactory.getDummyDataset(name, version)
-      val url = s"$apiBaseUrl/api/dataset/detail/$name/$version"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=false"
       Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
 
       val result = menasDao.getDataset(name, version)

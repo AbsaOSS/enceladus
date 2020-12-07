@@ -220,6 +220,29 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
+  { // properties validation
+    def createPropDef(name: String, essentiality: Essentiality, propertyType: PropertyType): PropertyDefinition =
+      PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
+
+    val propDefs = Seq(
+      createPropDef("mandatoryField1", Mandatory(), StringPropertyType("default1")),
+      createPropDef("mandatoryField2", Mandatory(), StringPropertyType("default1")),
+      createPropDef("enumField1", Optional(), EnumPropertyType("optionA", "optionB")),
+      createPropDef("enumField2", Recommended(), EnumPropertyType("optionC", "optionD"))
+    )
+
+    val properties = Map(
+      "mandatoryField1" -> "its value", // mandatoryField2 missing
+      "enumField1" -> "invalidOption", // enumField2 is just recommended
+      "nonAccountedField" -> "randomVal"
+    )
+
+    val expectedValidation = Validation(Map(
+      "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
+      "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
+      "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
+    ))
+
     s"GET $apiUrl/{name}/{version}/properties/valid" should {
       "return 404" when {
         "when the dataset-by-name does not exist" in {
@@ -240,21 +263,8 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       "return 200" when {
         "there is a correct Dataset name+version" should {
           s"return validated properties" in {
-            def createPropDef(name: String, essentiality: Essentiality, propertyType: PropertyType): PropertyDefinition =
-              PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
-
-            val propDefS1 = createPropDef("mandatoryField1", Mandatory(), StringPropertyType("default1"))
-            val propDefS2 = propDefS1.copy(name = "mandatoryField2")
-            val propDefE1 = createPropDef("enumField1", Optional(), EnumPropertyType("optionA", "optionB"))
-            val propDefE2 = createPropDef("enumField2", Recommended(), EnumPropertyType("optionC", "optionD"))
-            propertyDefinitionFixture.add(propDefE1, propDefE2, propDefS1, propDefS2)
-
-            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
-              properties = Some(Map(
-                "mandatoryField1" -> "its value", // mandatoryField2 missing
-                "enumField1" -> "invalidOption", // enumField2 is just recommended
-                "nonAccountedField" -> "randomVal"
-              )))
+            propertyDefinitionFixture.add(propDefs: _*)
+            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
             // showing that the version # is respected, even for the non-latest
             val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
             datasetFixture.add(datasetAv2, datasetAv3)
@@ -262,17 +272,57 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid")
             assertOk(response)
 
-            val expectedValidation = Validation(Map(
-              "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
-              "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
-              "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
-            ))
             val body = response.getBody
             assert(body == expectedValidation)
           }
         }
       }
+    }
 
+    Seq(
+      (s"$apiUrl/datasetA/2?validateProperties=true", Some(expectedValidation)),
+      (s"$apiUrl/datasetA/2?validateProperties=false", None),
+      (s"$apiUrl/datasetA/2", None)
+    ).foreach { case (url, expectedPropertiesValidation) =>
+
+      s"GET $url" should {
+        "return 404" when {
+          "when the dataset-by-name does not exist" in {
+            val response = sendGet[String](url)
+            assertNotFound(response)
+          }
+
+          "when the dataset by name+version does not exist" in {
+            val datasetAv1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+            datasetFixture.add(datasetAv1)
+
+            val response = sendGet[String](url) // v2 does not exist
+            assertNotFound(response)
+          }
+        }
+
+        "return 200" when {
+          "there is a correct Dataset name+version" should {
+            s"return dataset with validated properties" in {
+              propertyDefinitionFixture.add(propDefs: _*)
+
+              val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
+                properties = Some(properties))
+              // showing that the version # is respected, even for the non-latest
+              val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+              datasetFixture.add(datasetAv2, datasetAv3)
+
+              val response = sendGet[Dataset](url)
+              assertOk(response)
+
+              val actual = response.getBody
+              val expected = toExpected(datasetAv2, actual).copy(propertiesValidation = expectedPropertiesValidation) // will (not) miss expectedValidation
+              assert(actual == expected)
+            }
+          }
+        }
+      }
+    }
   }
 
 }
