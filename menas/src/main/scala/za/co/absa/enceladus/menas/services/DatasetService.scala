@@ -153,7 +153,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       .filter(!_.disabled)
       .collect {
         case propDef if propDef.isRequired && !existingProperties.contains(propDef.name) =>
-            Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
+          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
 
         case propDef if propDef.isRecommended && !existingProperties.contains(propDef.name) =>
           log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
@@ -161,6 +161,28 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
 
       }.foldLeft(Validation.empty)(Validation.merge)
+  }
+
+  /**
+   * Retireves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false, it behaves as [[VersionedModelService#getVersion()]]
+   * @param datasetName dataset name to retrieve
+   * @param datasetVersion dataset version to retrieve
+   * @param addPropertiesValidation true if populate dataset's `propertiesValidation` field
+   * @return None if dataset found, Some(dataset) otherwise.
+   */
+  def getVersionValidated(datasetName: String, datasetVersion: Int, addPropertiesValidation: Boolean): Future[Option[Dataset]] = {
+    val datasetResponse: Future[Option[Dataset]] = getVersion(datasetName, datasetVersion)
+    if (!addPropertiesValidation) {
+      datasetResponse // as-is
+    } else {
+      datasetResponse.flatMap {
+        case None => Future.successful(None) // None signifies the dataset not found => passing along
+        case definedDataset@Some(dataset) =>
+          // actually adding validation
+        val validationResult: Future[Validation] = validateProperties(dataset.propertiesAsMap)
+          validationResult.map { props => definedDataset.map(_.copy(propertiesValidation = Some(props))) }
+      }
+    }
   }
 
   def validateProperties(properties: Map[String, String]): Future[Validation] = {
@@ -199,8 +221,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     val validationConnectedEntities = validateConnectedEntitiesExistence(confRulesWithConnectedEntities)
     val validationConformanceRules = validateConformanceRules(item.conformance, maybeSchema)
     for {
-      b  <- validationBase
-      s  <- validationSchema
+      b <- validationBase
+      s <- validationSchema
       ce <- validationConnectedEntities
       cr <- validationConformanceRules
     } yield b.merge(s).merge(ce).merge(cr)

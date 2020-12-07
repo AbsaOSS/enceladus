@@ -46,7 +46,8 @@ case class Dataset(name: String,
                    conformance: List[ConformanceRule],
                    parent: Option[MenasReference] = None,
                    schedule: Option[OozieSchedule] = None,
-                   properties: Option[Map[String, String]] = Some(Map.empty)
+                   properties: Option[Map[String, String]] = Some(Map.empty),
+                   propertiesValidation: Option[Validation] = None
                   ) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)

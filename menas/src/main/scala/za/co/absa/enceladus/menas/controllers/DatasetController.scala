@@ -124,6 +124,18 @@ class DatasetController @Autowired()(datasetService: DatasetService)
     }
   }
 
+  @GetMapping(Array("/{datasetName}/{datasetVersion}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getDatasetWithPropertiesValidation(@PathVariable("datasetName") datasetName: String,
+                                         @PathVariable("datasetVersion") datasetVersion: Int,
+                                         @RequestParam(value = "validateProperties", required = false, defaultValue = "false")
+                                         validate: Boolean // todo api test for this
+                                        ): CompletableFuture[Dataset] = {
+    datasetService.getVersionValidated(datasetName, datasetVersion, validate).map {
+      case Some(ds) => ds
+      case None => throw notFound()
+    }
+  }
 }
 
 object DatasetController {
