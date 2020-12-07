@@ -149,15 +149,18 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   private def validateRequiredPropertiesExistence(existingProperties: Set[String],
                                                   propDefs: Seq[PropertyDefinition]): Validation = {
-    propDefs.collect {
-      case propDef if propDef.isRequired && !propDef.disabled =>
-        if (!existingProperties.contains(propDef.name)) {
-          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
-        } else {
-          Validation.empty
-        }
+    propDefs
+      .filter(!_.disabled)
+      .collect {
+        case propDef if propDef.isRequired && !existingProperties.contains(propDef.name) =>
+            Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
 
-    }.foldLeft(Validation.empty)(Validation.merge)
+        case propDef if propDef.isRecommended && !existingProperties.contains(propDef.name) =>
+          log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
+          Validation.empty
+
+
+      }.foldLeft(Validation.empty)(Validation.merge)
   }
 
   def validateProperties(properties: Map[String, String]): Future[Validation] = {
@@ -339,9 +342,9 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
                           cr: ConformanceRule): RuleValidationsAndFields = {
     val validation = Validation()
       .withError(
-      "item.conformanceRules",
-      s"Validation does not know hot to process rule of type ${cr.getClass}"
-    )
+        "item.conformanceRules",
+        s"Validation does not know hot to process rule of type ${cr.getClass}"
+      )
 
     RuleValidationsAndFields(Seq(Future(validation)), fields)
   }

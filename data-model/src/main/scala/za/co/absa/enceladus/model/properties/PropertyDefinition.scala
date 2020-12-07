@@ -20,7 +20,7 @@ import java.time.ZonedDateTime
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
-import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional}
+import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
@@ -46,6 +46,7 @@ case class PropertyDefinition(name: String,
                              ) extends VersionedModel with Auditable[PropertyDefinition] {
 
   val isRequired: Boolean = essentiality == Mandatory()
+  val isRecommended: Boolean = essentiality == Recommended()
   val isOptional: Boolean = essentiality == Optional()
 
   // VersionModel induced methods:
