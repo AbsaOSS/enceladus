@@ -86,7 +86,8 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
         val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
         val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
-        infoControlMeasure.metadata.additionalInfo should contain ("std_ds_keyFromDs1" -> "itsValue1") // key with prefix
+        // key with prefix from test's application.conf
+        infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
       }
     }
 

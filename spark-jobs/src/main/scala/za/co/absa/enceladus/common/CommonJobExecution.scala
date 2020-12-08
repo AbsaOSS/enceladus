@@ -233,8 +233,10 @@ trait CommonJobExecution extends ProjectMetadata {
     })
   }
 
-  protected def addCustomDataToInfoFile(keyPrefix: String, data: Map[String, String]): Unit = {
-    log.debug(s"Writing custom data to info file: $data")
+  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+
+    log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
     data.foreach { case (key, value) =>
       Atum.setAdditionalInfo((s"$keyPrefix$key", value))
     }
