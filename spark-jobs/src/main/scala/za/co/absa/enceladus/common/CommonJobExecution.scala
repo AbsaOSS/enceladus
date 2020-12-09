@@ -91,6 +91,7 @@ trait CommonJobExecution extends ProjectMetadata {
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
       case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
+      case _ => // no problems found
     }
 
     val reportVersion = getReportVersion(cmd, dataset)
