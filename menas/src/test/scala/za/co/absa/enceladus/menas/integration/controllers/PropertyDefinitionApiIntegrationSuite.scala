@@ -305,8 +305,6 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
                  |"dateDisabled":null,
                  |"userDisabled":null,
                  |"parent":{"collection":"propertydef","name":"propertyDefinition1","version":22},
-                 |"isRequired":false,
-                 |"isOptional":true,
                  |"createdMessage":{
                  |"menasRef":{"collection":null,"name":"propertyDefinition1","version":23},
                  |"updatedBy":"dummyUser",
