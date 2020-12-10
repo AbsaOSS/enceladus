@@ -25,7 +25,7 @@ package object propertyType {
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_t")
   @JsonSubTypes(Array(
     new Type(value = classOf[StringPropertyType], name = "StringPropertyType"),
-    new Type(value = classOf[EnumPropertyType ], name = "EnumPropertyType ")
+    new Type(value = classOf[EnumPropertyType], name = "EnumPropertyType")
   ))
   sealed trait PropertyType {
     def suggestedValue: String
@@ -48,17 +48,19 @@ package object propertyType {
 
     isValueConforming(suggestedValue) match {
       case Success(_) =>
-      case Failure(e) => new IllegalArgumentException(s"The suggested value $suggestedValue cannot be used.", e)
+      case Failure(e) => throw PropertyTypeValidationException(s"The suggested value $suggestedValue cannot be used: ${e.getMessage}", e)
     }
   }
 
-  object EnumPropertyType  {
+  object EnumPropertyType {
     /**
-     * Shorthand for creating [[EnumPropertyType ]].
+     * Shorthand for creating [[EnumPropertyType]].
      * @param allowedValues The first value will be assinged to the [[PropertyType#suggestedValue]] field.
      * @return
      */
-    def apply(allowedValues: String*): EnumPropertyType  = EnumPropertyType(allowedValues.toSet, allowedValues(0))
+    def apply(allowedValues: String*): EnumPropertyType = EnumPropertyType(allowedValues.toSet, allowedValues(0))
   }
+
+  case class PropertyTypeValidationException(msg: String, cause: Throwable) extends Exception(msg, cause)
 
 }

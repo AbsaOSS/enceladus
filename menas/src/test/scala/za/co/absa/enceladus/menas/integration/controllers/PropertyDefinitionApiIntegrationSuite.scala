@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.menas.integration.controllers
 
 import org.junit.runner.RunWith
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAll, Matchers}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -30,7 +30,7 @@ import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll with Matchers {
 
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
@@ -43,6 +43,16 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
   private def minimalPdCreatePayload(name: String, suggestedValue: String) =
     s"""{"name": "$name","propertyType": {"_t": "StringPropertyType","suggestedValue": "$suggestedValue"}}"""
+
+  private def invalidPayload(name: String) =
+    s"""{
+       |"name": "$name",
+       |"propertyType": {
+       |    "_t": "EnumPropertyType",
+       |    "allowedValues": ["a", "b"],
+       |    "suggestedValue": "invalidOptionC"
+       |}
+       |}""".stripMargin
 
   Seq(
     (s"$apiUrl/create", false), // VersionedModelController.create does not yield Location header
@@ -100,6 +110,12 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val actual = response.getBody
           val expected = Validation().withError("name", "entity with name already exists: 'dummyName'")
           assert(actual == expected)
+        }
+        "an invalid PD payload is sent" in {
+          val response = sendPost[String, String](urlPattern, bodyOpt = Some(invalidPayload("somePd1")))
+          assertBadRequest(response)
+
+          response.getBody should include("The suggested value invalidOptionC cannot be used: Value 'invalidOptionC' is not one of the allowed values (a, b).")
         }
       }
     }

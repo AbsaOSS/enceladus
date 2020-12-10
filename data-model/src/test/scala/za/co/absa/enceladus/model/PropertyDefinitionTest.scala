@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model
 import org.scalatest.FunSuite
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
-import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType , StringPropertyType}
+import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyTypeValidationException, StringPropertyType}
 
 class PropertyDefinitionTest extends FunSuite {
 
@@ -58,12 +58,26 @@ class PropertyDefinitionTest extends FunSuite {
     val expectedPropertyDef =
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
          |"name":"Test enum property",
-         |"propertyType":{"_t":"EnumPropertyType ","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
+         |"propertyType":{"_t":"EnumPropertyType","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
          |"putIntoInfoFile":false,
          |"essentiality":{"_t":"Optional"}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
     assert(enumPropertyDef.exportItem() == expectedPropertyDef)
+  }
+
+  test("Suggested value conformity should be checked") {
+    val message = intercept[PropertyTypeValidationException] {
+      PropertyDefinition(
+        name = "Test enum property",
+        version = 3,
+        description = None,
+        propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "invalidOption")
+      )
+    }.getMessage
+
+    assert(message ==
+      "The suggested value invalidOption cannot be used: Value 'invalidOption' is not one of the allowed values (optionA, optionB, optionC).")
   }
 
 }

@@ -15,20 +15,20 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.springframework.http.ResponseEntity
+import org.apache.oozie.client.OozieClientException
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import za.co.absa.enceladus.model.{UsedIn, Validation}
 import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.RestError
-import org.springframework.http.HttpStatus
-import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
-import org.apache.oozie.client.OozieClientException
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.context.request.async.AsyncRequestTimeoutException
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
@@ -78,6 +78,13 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[ValidationException]))
   def handleValidationException(exception: ValidationException): ResponseEntity[Validation] = {
     ResponseEntity.badRequest().body(exception.validation)
+  }
+
+  // when json <-> object mapping fails, respond with 400 instead of 500
+  @ExceptionHandler(value = Array(classOf[HttpMessageConversionException]))
+  def handleHttpMessageConversionException(exception: HttpMessageConversionException): ResponseEntity[Any] = {
+    logger.error(s"HttpMessageConversionException: ${exception.getMessage}", exception)
+    ResponseEntity.badRequest().body(exception.getMessage)
   }
 
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))

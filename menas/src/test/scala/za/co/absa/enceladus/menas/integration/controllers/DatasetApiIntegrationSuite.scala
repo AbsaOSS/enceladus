@@ -25,7 +25,7 @@ import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
-import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, EnumPropertyType , StringPropertyType}
+import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
 @RunWith(classOf[SpringRunner])

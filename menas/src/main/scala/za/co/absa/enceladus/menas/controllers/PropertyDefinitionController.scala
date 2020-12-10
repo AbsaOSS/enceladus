@@ -28,6 +28,10 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+/**
+ * This API mapping is directly connected to Dataset Properties.
+ * Should we need to serve other entity properties in the future, API support may be added.
+ */
 @RestController
 @RequestMapping(path = Array("/api/properties/datasets"), produces = Array("application/json"))
 class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefinitionService)
