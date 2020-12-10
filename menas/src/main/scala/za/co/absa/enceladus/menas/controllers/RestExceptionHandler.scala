@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import org.apache.oozie.client.OozieClientException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -28,6 +29,7 @@ import za.co.absa.enceladus.menas.models.RestError
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
 import za.co.absa.enceladus.model.{UsedIn, Validation}
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
@@ -83,8 +85,18 @@ class RestExceptionHandler {
   // when json <-> object mapping fails, respond with 400 instead of 500
   @ExceptionHandler(value = Array(classOf[HttpMessageConversionException]))
   def handleHttpMessageConversionException(exception: HttpMessageConversionException): ResponseEntity[Any] = {
-    logger.error(s"HttpMessageConversionException: ${exception.getMessage}", exception)
-    ResponseEntity.badRequest().body(exception.getMessage)
+
+    // logic: the cause may be our custom PropertyTypeValidationException or another general exception
+    val specificMessage = exception.getCause match {
+      case jme:JsonMappingException => jme.getCause match {
+        case ptve:PropertyTypeValidationException => ptve.getMessage
+        case _ => jme.getMessage
+      }
+      case _ => exception.getMessage
+    }
+
+    logger.error(s"HttpMessageConversionException: $specificMessage", exception)
+    ResponseEntity.badRequest().body(specificMessage)
   }
 
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))

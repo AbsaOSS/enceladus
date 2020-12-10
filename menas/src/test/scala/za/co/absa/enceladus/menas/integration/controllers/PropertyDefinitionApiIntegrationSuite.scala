@@ -115,7 +115,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val response = sendPost[String, String](urlPattern, bodyOpt = Some(invalidPayload("somePd1")))
           assertBadRequest(response)
 
-          response.getBody should include("The suggested value invalidOptionC cannot be used: Value 'invalidOptionC' is not one of the allowed values (a, b).")
+          response.getBody shouldBe "The suggested value invalidOptionC cannot be used: Value 'invalidOptionC' is not one of the allowed values (a, b)."
         }
       }
     }
