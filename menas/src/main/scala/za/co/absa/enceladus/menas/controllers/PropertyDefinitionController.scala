@@ -71,7 +71,7 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @GetMapping(Array("/{propertyName}/{version}"))
   def getDatasetProperty(@PathVariable propertyName: String, @PathVariable version: Int): CompletableFuture[PropertyDefinition] = {
     logger.info(s"retrieving property definition '$propertyName' (version $version) in full")
-    // basically an alias for /detail/{name}/latest
+    // basically an alias for /detail/{name}/{version}
     super.getVersionDetail(propertyName, version)
   }
 

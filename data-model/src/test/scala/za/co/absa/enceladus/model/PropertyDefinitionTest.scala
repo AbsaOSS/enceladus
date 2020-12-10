@@ -27,7 +27,7 @@ class PropertyDefinitionTest extends FunSuite {
 
   test("export string PropertyDefinition") {
     val stringPropertyDef = PropertyDefinition(
-      name = "Test string property",
+      name = "testStringProperty1",
       version = 2,
       description = Some("test desc"),
       propertyType = StringPropertyType(suggestedValue = "sort of default"),
@@ -37,7 +37,7 @@ class PropertyDefinitionTest extends FunSuite {
 
     val expectedPropertyDef =
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
-         |"name":"Test string property",
+         |"name":"testStringProperty1",
          |"description":"test desc",
          |"propertyType":{"_t":"StringPropertyType","suggestedValue":"sort of default"},
          |"putIntoInfoFile":true,
@@ -49,7 +49,7 @@ class PropertyDefinitionTest extends FunSuite {
 
   test("export enum PropertyDefinition") {
     val enumPropertyDef = PropertyDefinition(
-      name = "Test enum property",
+      name = "testEnumProperty1",
       version = 3,
       description = None,
       propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
@@ -57,7 +57,7 @@ class PropertyDefinitionTest extends FunSuite {
 
     val expectedPropertyDef =
       s"""{"metadata":{"exportVersion":$modelVersion},"item":{
-         |"name":"Test enum property",
+         |"name":"testEnumProperty1",
          |"propertyType":{"_t":"EnumPropertyType","allowedValues":["optionA","optionB","optionC"],"suggestedValue":"optionB"},
          |"putIntoInfoFile":false,
          |"essentiality":{"_t":"Optional"}
@@ -67,16 +67,16 @@ class PropertyDefinitionTest extends FunSuite {
   }
 
   test("Suggested value conformity should be checked") {
-    val message = intercept[PropertyTypeValidationException] {
+    val errorMessage = intercept[PropertyTypeValidationException] {
       PropertyDefinition(
-        name = "Test enum property",
+        name = "testEnumProperty1",
         version = 3,
         description = None,
         propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "invalidOption")
       )
     }.getMessage
 
-    assert(message ==
+    assert(errorMessage ==
       "The suggested value invalidOption cannot be used: Value 'invalidOption' is not one of the allowed values (optionA, optionB, optionC).")
   }
 
