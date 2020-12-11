@@ -18,16 +18,20 @@ package za.co.absa.enceladus.menas.services
 import scala.concurrent.Future
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn}
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import za.co.absa.enceladus.model.properties.PropertyDefinition
+
+import scala.util.{Failure, Success}
 
 
 @Service
-class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepository, oozieRepository: OozieRepository)
+class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository,
+                                  oozieRepository: OozieRepository,
+                                  datasetPropertyDefinitionService: PropertyDefinitionService)
   extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -35,9 +39,9 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
   // Local class for the representation of validation of conformance rules.
   final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
     def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
-        validations = validations ++ ruleValidationsAndFields.validations,
-        fields = ruleValidationsAndFields.fields
-      )
+      validations = validations ++ ruleValidationsAndFields.validations,
+      fields = ruleValidationsAndFields.fields
+    )
 
     def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
 
@@ -54,8 +58,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setDescription(dataset.description).asInstanceOf[Dataset]
-        }
-      )
+      })
     }
   }
 
@@ -113,6 +116,95 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     }
   }
 
+  def replaceProperties(username: String, datasetName: String,
+                        updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
+    for {
+      latestVersion <- getLatestVersionNumber(datasetName)
+      update <- super.update(username, datasetName, latestVersion) { latest =>
+        latest.copy(properties = updatedProperties)
+      }
+    } yield update
+  }
+
+  private def validateExistingProperty(key: String, value: String,
+                                       propertyDefinitionsMap: Map[String, PropertyDefinition]): Validation = {
+    propertyDefinitionsMap.get(key) match {
+      case None => Validation.empty.withError(key, s"There is no property definition for key '$key'.")
+      case Some(propertyDefinition) =>
+
+        val disabilityValidation: Validation = if (propertyDefinition.disabled) {
+          Validation.empty.withError(key, s"Property for key '$key' is disabled.")
+        } else {
+          Validation.empty
+        }
+
+        val typeConformityValidation: Validation = propertyDefinition.propertyType.isValueConforming(value) match {
+          case Success(_) => Validation.empty
+          case Failure(e) => Validation.empty.withError(key, e.getMessage)
+        }
+
+        disabilityValidation merge typeConformityValidation
+    }
+  }
+
+  private def validateRequiredPropertiesExistence(existingProperties: Set[String],
+                                                  propDefs: Seq[PropertyDefinition]): Validation = {
+    propDefs
+      .filter(!_.disabled)
+      .collect {
+        case propDef if propDef.isRequired && !existingProperties.contains(propDef.name) =>
+          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
+
+        case propDef if propDef.isRecommended && !existingProperties.contains(propDef.name) =>
+          log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
+          Validation.empty
+
+
+      }.foldLeft(Validation.empty)(Validation.merge)
+  }
+
+  /**
+   * Retireves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false, it behaves as [[VersionedModelService#getVersion()]]
+   * @param datasetName dataset name to retrieve
+   * @param datasetVersion dataset version to retrieve
+   * @param addPropertiesValidation true if populate dataset's `propertiesValidation` field
+   * @return None if dataset found, Some(dataset) otherwise.
+   */
+  def getVersionValidated(datasetName: String, datasetVersion: Int, addPropertiesValidation: Boolean): Future[Option[Dataset]] = {
+    val datasetResponse: Future[Option[Dataset]] = getVersion(datasetName, datasetVersion)
+    if (!addPropertiesValidation) {
+      datasetResponse // as-is
+    } else {
+      datasetResponse.flatMap {
+        case None => Future.successful(None) // None signifies the dataset not found => passing along
+        case definedDataset@Some(dataset) =>
+          // actually adding validation
+        val validationResult: Future[Validation] = validateProperties(dataset.propertiesAsMap)
+          validationResult.map { props => definedDataset.map(_.copy(propertiesValidation = Some(props))) }
+      }
+    }
+  }
+
+  def validateProperties(properties: Map[String, String]): Future[Validation] = {
+
+    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+      val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
+
+      val existingPropsValidation = properties.toSeq.map { case (key, value) => validateExistingProperty(key, value, propDefsMap) }
+        .foldLeft(Validation.empty)(Validation.merge)
+      val requiredPropDefsValidations = validateRequiredPropertiesExistence(properties.keySet, propDefs)
+
+      existingPropsValidation merge requiredPropDefsValidations
+    }
+  }
+
+  def filterProperties(properties: Map[String, String], filter: PropertyDefinition => Boolean): Future[Map[String, String]] = {
+    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+      val filteredPropDefNames = propDefs.filter(filter).map(_.name).toSet
+      properties.filterKeys(filteredPropDefNames.contains)
+    }
+  }
+
   override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
@@ -129,8 +221,8 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
     val validationConnectedEntities = validateConnectedEntitiesExistence(confRulesWithConnectedEntities)
     val validationConformanceRules = validateConformanceRules(item.conformance, maybeSchema)
     for {
-      b  <- validationBase
-      s  <- validationSchema
+      b <- validationBase
+      s <- validationSchema
       ce <- validationConnectedEntities
       cr <- validationConformanceRules
     } yield b.merge(s).merge(ce).merge(cr)
@@ -201,8 +293,8 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
       .update(currentColumns.map(f => f - output))
   }
 
-  private type WithInAndOut = { def inputColumn: String; def outputColumn: String }
-  private type WithMultipleInAndOut = { def inputColumns: Seq[String]; def outputColumn: String }
+  private type WithInAndOut = {def inputColumn: String; def outputColumn: String}
+  private type WithMultipleInAndOut = {def inputColumns: Seq[String]; def outputColumn: String}
 
   private def validateInAndOut[C <: WithInAndOut](fields: Future[Set[String]],
                                                   cr: C): RuleValidationsAndFields = {
@@ -272,9 +364,9 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
                           cr: ConformanceRule): RuleValidationsAndFields = {
     val validation = Validation()
       .withError(
-      "item.conformanceRules",
-      s"Validation does not know hot to process rule of type ${cr.getClass}"
-    )
+        "item.conformanceRules",
+        s"Validation does not know hot to process rule of type ${cr.getClass}"
+      )
 
     RuleValidationsAndFields(Seq(Future(validation)), fields)
   }

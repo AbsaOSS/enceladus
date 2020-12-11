@@ -23,9 +23,9 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
-import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.model.test.factories.RunFactory
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
-  import za.co.absa.enceladus.menas.models.Validation._
+  import za.co.absa.enceladus.model.Validation._
 
   @Autowired
   private val runFixture: RunFixtureService = null

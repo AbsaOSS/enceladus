@@ -13,8 +13,14 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.exceptions
+package za.co.absa.enceladus.menas.integration.fixtures
 
-import za.co.absa.enceladus.model.Validation
+import org.mongodb.scala.MongoDatabase
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
+import za.co.absa.enceladus.menas.repositories.PropertyDefinitionMongoRepository
+import za.co.absa.enceladus.model.properties.PropertyDefinition
 
-case class ValidationException(validation: Validation) extends Exception(validation.toString)
+@Component
+class PropertyDefinitionFixtureService @Autowired()(mongoDb: MongoDatabase)
+  extends FixtureService[PropertyDefinition](mongoDb, PropertyDefinitionMongoRepository.collectionName)

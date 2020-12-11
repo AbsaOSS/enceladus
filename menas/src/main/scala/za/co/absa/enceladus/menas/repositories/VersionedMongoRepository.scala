@@ -19,6 +19,7 @@ import java.time.ZonedDateTime
 
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
+import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
@@ -61,7 +62,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
-  def getLatestVersions(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+  def getLatestVersionsSummary(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
     val searchFilter = searchQuery match {
       case Some(search) => Filters.regex("name", search, "i")
       case None => Filters.expr(true)
@@ -72,6 +73,17 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       sort(Sorts.ascending("_id"))
     )
     collection.aggregate[VersionedSummary](pipeline).toFuture()
+  }
+
+  def getLatestVersions(): Future[Seq[C]] = {
+    // there may be a way to this using mongo-joining (aggregation.lookup) instead
+    getLatestVersionsSummary(None).flatMap { summaries =>
+      val resultIn = summaries.map { summary =>
+        getVersion(summary._id, summary.latestVersion).map(_.toSeq)
+      }
+
+      Future.sequence(resultIn).map(_.flatten)
+    }
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
@@ -87,7 +99,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
-    val filter = if(inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
+    val filter = if (inclDisabled) getNameFilter(name) else getNameFilterEnabled(name)
     collection
       .find(filter)
       .sort(Sorts.ascending("name", "version"))
@@ -107,7 +119,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       latestVersion <- getLatestVersionValue(updated.name)
       newVersion <- if (latestVersion.isEmpty) {
         throw NotFoundException()
-      } else if(latestVersion.get != updated.version) {
+      } else if (latestVersion.get != updated.version) {
         throw EntityAlreadyExistsException(s"Entity ${updated.name} (version. ${updated.version}) already exists.")
       } else {
         Future.successful(latestVersion.get + 1)
@@ -142,7 +154,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
     val filter = version match {
       case Some(ver) => Filters.and(getNotDisabledFilter, equal(refNameCol, name), equal(refVersionCol, ver))
-      case None      => Filters.and(getNotDisabledFilter, equal(refNameCol, name))
+      case None => Filters.and(getNotDisabledFilter, equal(refNameCol, name))
     }
     collection
       .find[MenasReference](filter)
@@ -158,7 +170,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   private[repositories] def getNameVersionFilter(name: String, version: Option[Int]): Bson = {
     version match {
       case Some(ver) => Filters.and(getNameFilter(name), equal("version", ver))
-      case None      => getNameFilter(name)
+      case None => getNameFilter(name)
     }
   }
 

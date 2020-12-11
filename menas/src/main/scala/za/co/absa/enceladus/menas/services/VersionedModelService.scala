@@ -19,14 +19,12 @@ import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.ModelVersion
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
@@ -37,8 +35,12 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def getLatestVersions(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersions(searchQuery)
+  def getLatestVersionsSummary(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
+    versionedMongoRepository.getLatestVersionsSummary(searchQuery)
+  }
+
+  def getLatestVersions(): Future[Seq[C]] = {
+    versionedMongoRepository.getLatestVersions()
   }
 
   def getSearchSuggestions(): Future[Seq[String]] = {
@@ -286,9 +288,9 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   private[services] def hasWhitespace(name: String): Boolean =
-    Option(name).exists( definedName => !definedName.matches("""\w+"""))
+    Option(name).exists(definedName => !definedName.matches("""\w+"""))
   private[services] def hasValidNameChars(name: String): Boolean =
-    Option(name).exists( definedName => !definedName.matches("""[a-zA-Z0-9._-]+"""))
+    Option(name).exists(definedName => definedName.matches("""[a-zA-Z0-9._-]+"""))
   private[services] def hasValidApiVersion(version: Option[String]): Boolean = version.contains(ModelVersion.toString)
 
 }
