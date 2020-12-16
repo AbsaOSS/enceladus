@@ -7,4 +7,6 @@ if [[ -n ${PRIVATE_KEY} && -n ${CERTIFICATE} && -n ${CA_CHAIN} ]]; then
     rm conf/server.xml
     cp /tmp/server.xml conf/server.xml
 fi
+#Debugging
+#export CATALINA_OPTS="$CATALINA_OPTS -agentlib:jdwp=transport=dt_socket,address=5005,server=y,suspend=n"
 catalina.sh run

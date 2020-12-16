@@ -50,6 +50,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .spnegoAuthenticationProcessingFilter(authenticationManager, authenticationSuccessHandler)
 
       http
+        .cors().and()
         .csrf()
           .disable()
         .sessionManagement()
@@ -59,9 +60,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/user/version", s"/$menasVersion/**", "/api/configuration/**", "/lineage/**")
+          .antMatchers( "/admin/health", "/api/user/version", "/api/configuration/**")
           .permitAll()
         .anyRequest()
           .authenticated()

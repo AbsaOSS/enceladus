@@ -12,15 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package za.co.absa.enceladus.menas
+package za.co.absa.enceladus.menas.web
 
 import za.co.absa.enceladus.utils.config.ConfigReader
 
 object LineageConfig {
   final val config = new ConfigReader()
   final val apiUrl: Option[String] = config.readStringConfigIfExist("menas.lineage.readApiUrl").filter(_.trim.nonEmpty)
-  final val jarName =  "spline"
+  final val jarName = "spline"
   final val subSpace = "lineage"
 
   final val mappingPathForController = "/" + subSpace + "/app/**"
@@ -29,7 +28,7 @@ object LineageConfig {
   final val executionIdApiTemplate: Option[String] = apiUrl.map(_ + "/execution-events?dataSourceUri=%s&applicationId=%s")
 
   def baseUrl(baseUrlPrefix: String): String = {
-    val delimiter  = if (baseUrlPrefix.takeRight(1) == "/") "" else "/"
+    val delimiter = if (baseUrlPrefix.takeRight(1) == "/") "" else "/"
     s"$baseUrlPrefix$delimiter$subSpace/"
   }
 }

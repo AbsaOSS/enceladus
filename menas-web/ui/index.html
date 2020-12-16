@@ -1,0 +1,111 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE HTML>
+
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta http-equiv='Content-Type' content='text/html;charset=UTF-8' />
+
+<script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
+  data-sap-ui-compatVersion="edge"
+  data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
+  data-sap-ui-bindingSyntax="complex"
+  data-sap-ui-theme='sap_belize'></script>
+
+<script src="webjars/momentjs/min/moment.min.js"></script>
+<script src="webjars/lodash/lodash.js"></script>
+<script src="webjars/cronstrue-webjar/cronstrue-webjar.js"></script>
+
+<script>
+      function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
+        const el = document.createElement(sElemType);
+        const srcAttr = sElemType === "link" ? "href" : "src";
+        el[srcAttr] = `${window.menasVersion}/${sSrc}`;
+        aAttrs.forEach((attr) => {
+          el.setAttribute(attr.k, attr.v);
+        })
+        if(fnOnLoad) {
+          el.addEventListener("load", fnOnLoad);
+        }
+        document.getElementsByTagName("head").item(0).append(el);
+      }
+
+      fetch("/metadata/").then((resp) => resp.json())
+          .then((metadata) => {
+            window.menasVersion = metadata.version;
+            window.apiUrl = metadata.apiUrl
+
+            _menasLoadElem("link", "css/style.css", [
+                {k: "type", v: "text/css"},
+                {k: "rel", v: "stylesheet"}
+            ]);
+
+          //Load deps which require sap on load
+            sap.ui.getCore().attachInit(function() {
+                _menasLoadElem("script", "generic/model.js", []);
+                _menasLoadElem("script", "generic/prop.js", []);
+                _menasLoadElem("script", "generic/functions.js", []);
+                _menasLoadElem("script", "generic/formatters.js", []);
+                _menasLoadElem("script", "service/ValidationResult.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRule.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/SchemaManager.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialog.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialogFactory.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/RuleColumnDialog.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/RuleColumnDialogFactory.js", []);
+                _menasLoadElem("script", "components/SchemaTable.js", []);
+                _menasLoadElem("script", "service/MessageProvider.js", []);
+                _menasLoadElem("script", "service/RestDAO.js", []);
+                _menasLoadElem("script", "service/RunRestDAO.js", []);
+                _menasLoadElem("script", "service/EntityService.js", []);
+                _menasLoadElem("script", "service/GenericService.js", []);
+                _menasLoadElem("script", "service/MonitoringService.js", []);
+                _menasLoadElem("script", "service/RuleService.js", []);
+                _menasLoadElem("script", "service/RunService.js", []);
+                _menasLoadElem("script", "service/EntityDialog.js", []);
+                _menasLoadElem("script", "service/DialogFactory.js", []);
+                _menasLoadElem("script", "service/EntityValidationService.js", []);
+                _menasLoadElem("script", "service/SchemaFieldSelector.js", []);
+                _menasLoadElem("script", "service/CheckpointUtils.js", []);
+                _menasLoadElem("script", "service/ResponseUtils.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleDialog.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleForm.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleFormFactory.js", [],
+                    function() {
+
+                sap.ui.loader.config({
+                    async: true,
+                    paths: {
+                    'components': `${window.menasVersion}/components/`
+                    }
+                });
+
+              var component = new sap.ui.core.ComponentContainer("MenasComponent", {
+                  name: "components",
+              });
+
+              component.placeAt("content");
+              });
+            });
+      })
+    </script>
+
+</head>
+<body class="sapUiBody" role="application">
+  <div id="content"></div>
+</body>
+</html>

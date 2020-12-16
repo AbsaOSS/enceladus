@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas
+package za.co.absa.enceladus.menas.web
 
 import org.springframework.web.servlet.resource.WebJarsResourceResolver
 import org.webjars.WebJarAssetLocator

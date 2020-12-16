@@ -19,7 +19,11 @@ class RestClient {
 
   static get(url, shouldUseCache = false) {
     let request = {
-      url: url,
+      headers: {
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
+        "JWT": localStorage.getItem("jwtToken")
+      },
+      url: window.apiUrl + "/" + url,
       async: true
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
@@ -28,7 +32,11 @@ class RestClient {
 
   static getSync(url, shouldUseCache = false) {
     let request = {
-      url: url,
+      headers: {
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
+        "JWT": localStorage.getItem("jwtToken")
+      },
+      url: window.apiUrl + "/" + url,
       async: false
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
@@ -37,24 +45,26 @@ class RestClient {
 
   static post(url, data) {
     const jqXHR = $.post({
-      url: url,
+      url: window.apiUrl + "/" + url,
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
-      }
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
+        "JWT": localStorage.getItem("jwtToken")
+      },
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
   static put(url, data) {
     const jqXHR = $.ajax({
-      url: url,
+      url: window.apiUrl + "/" + url,
       type: "PUT",
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
+        "JWT": localStorage.getItem("jwtToken")
       }
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
@@ -62,10 +72,11 @@ class RestClient {
 
   static delete(url) {
     const jqXHR = $.ajax({
-      url: url,
+      url: window.apiUrl + "/" + url,
       type: "DELETE",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken")
+        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
+        "JWT": localStorage.getItem("jwtToken")
       }
     });
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
@@ -222,7 +233,7 @@ class ConfigRestClient {
   }
 
   static getLineageExecutionIdApiTemplate() {
-    return RestClient.get(`api/configuration/lineageExecutionIdApiTemplate`)
+    return RestClient.get(`metadata/lineageExecutionIdApiTemplate`)
   }
 
 }

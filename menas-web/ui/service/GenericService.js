@@ -29,7 +29,7 @@ var GenericService = new function () {
       model().setProperty("/menasVersion", oInfo.menasVersion);
     };
 
-    $.ajax("api/user/info", {
+    $.ajax(window.apiUrl + "/api/user/info", {
       method: "GET",
       success: fnSuccess,
       async: false

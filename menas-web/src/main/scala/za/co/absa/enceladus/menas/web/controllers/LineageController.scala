@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.web.controllers
 
 import javax.servlet.http.HttpServletRequest
 import org.apache.commons.io.IOUtils
@@ -23,7 +23,7 @@ import org.springframework.http.MediaType.TEXT_HTML_VALUE
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.{RequestMapping, ResponseBody}
 import org.webjars.WebJarAssetLocator
-import za.co.absa.enceladus.menas.LineageConfig
+import za.co.absa.enceladus.menas.web.LineageConfig
 
 @Controller
 class LineageController @Autowired()(webJarAssetLocator: WebJarAssetLocator) {

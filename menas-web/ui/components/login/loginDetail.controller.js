@@ -124,7 +124,9 @@ sap.ui.define([
       let fnSuccess = (result, status, xhr) => {
         this.byId("password").setValue("");
         let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
+        let jwt = xhr.getResponseHeader("JWT");
         localStorage.setItem("csrfToken", csrfToken);
+        localStorage.setItem("jwtToken",jwt)
         Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           model.setProperty("/menasVersion", oInfo.menasVersion);
@@ -140,7 +142,7 @@ sap.ui.define([
         this.byId(usernameField).setValueState(sap.ui.core.ValueState.Error);
         this.byId(passwordField).setValueState(sap.ui.core.ValueState.Error);
       };
-      $.ajax("api/login", {
+      $.ajax(window.apiUrl + "/api/login", {
         complete: function () {
           if (oControl) oControl.setBusy(false)
         },

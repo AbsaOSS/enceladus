@@ -13,19 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.web
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
+import org.springframework.boot.builder.SpringApplicationBuilder
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
-@RestController
-@RequestMapping(Array("/api/configuration"))
-class ConfigurationController extends BaseController {
-  @Value("${menas.environment}")
-  private val menasEnvironment: String = ""
+class ServletInitializer extends SpringBootServletInitializer {
 
-  @GetMapping(path = Array("/environment"))
-  def getEnvironment(): String = {
-    menasEnvironment
-  }
+  override def configure(application: SpringApplicationBuilder): SpringApplicationBuilder = application.sources(classOf[Application])
+
 }

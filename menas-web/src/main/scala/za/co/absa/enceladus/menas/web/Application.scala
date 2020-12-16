@@ -12,20 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package za.co.absa.enceladus.menas.web
 
-package za.co.absa.enceladus.menas.controllers
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.context.annotation.Configuration
+import org.springframework.scheduling.annotation.EnableAsync
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
+@SpringBootApplication
+@EnableAsync
+@Configuration
+class Application() {
 
-@RestController
-@RequestMapping(Array("/api/configuration"))
-class ConfigurationController extends BaseController {
-  @Value("${menas.environment}")
-  private val menasEnvironment: String = ""
+}
 
-  @GetMapping(path = Array("/environment"))
-  def getEnvironment(): String = {
-    menasEnvironment
-  }
+object Application extends App {
 }

@@ -13,19 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.controllers
+package za.co.absa.enceladus.menas.web
 
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
-
-@RestController
-@RequestMapping(Array("/api/configuration"))
-class ConfigurationController extends BaseController {
-  @Value("${menas.environment}")
-  private val menasEnvironment: String = ""
-
-  @GetMapping(path = Array("/environment"))
-  def getEnvironment(): String = {
-    menasEnvironment
-  }
-}
+case class Metadata(version: String, apiUrl: String)
