@@ -68,7 +68,7 @@ package object dataFrameFilter {
   }
 
   /**
-    * Trait JoinFilters is a foundation how to join several filters together using some logical operator
+    * Trait JoinFilters is a foundation on how to join several filters together using a logical operator
     */
   sealed trait JoinFilters extends DataFrameFilter {
     @JsonIgnore protected def operator: (Column, Column) => Column
@@ -86,7 +86,7 @@ package object dataFrameFilter {
   }
 
   /**
-    * Trait SingleColumnAndValueFilter is a foundation to compare a column value with a constant using some operator.
+    * Trait SingleColumnAndValueFilter is a foundation to compare a column value with a constant using an operator.
     */
   sealed trait SingleColumnAndValueFilter extends DataFrameFilter {
     def columnName: String
@@ -129,10 +129,10 @@ package object dataFrameFilter {
   }
 
   /**
-    * Joins a set of filters with an or operator. Therefor at least one of the filter items has to be evaluated as true
+    * Joins a set of filters with an "or" operator. Therefore at least one of the filter items has to be evaluated as true
     * the filter to be itself true.
     * JSON representation: {"_t":"OrJoinedFilters","filterItems":[FILTER_ITEMS]}
-    * FILTER_ITEMS is a comma separated list of other filters JSON entries
+    * FILTER_ITEMS is a comma-separated list of other filters JSON entries
     * @param filterItems the filters that will be joined with the or operator
     */
   case class OrJoinedFilters(filterItems: Set[DataFrameFilter]) extends JoinFilters {
@@ -143,7 +143,7 @@ package object dataFrameFilter {
     * Joins a set of filters with an and operator. Therefor all the filter items has to be evaluated as true
     * the filter to be itself true.
     * JSON representation: {"_t":"AndJoinedFilters","filterItems":[FILTER_ITEMS]}
-    * FILTER_ITEMS is a comma separated list of other filters JSON entries
+    * FILTER_ITEMS is a comma-separated list of other filters JSON entries
     * @param filterItems the filters that will be joined with the and operator
     */
   case class AndJoinedFilters(filterItems: Set[DataFrameFilter]) extends JoinFilters {
@@ -154,7 +154,7 @@ package object dataFrameFilter {
     * Reverses the boolean value of the input filter
     * JSON representation: {"_t":"NotFilter","inputFilter":[FILTER_ITEM]}
     * FILTER_ITEM JSON representation of the filter to reverse
-    * @param inputFilter The filter which boolean evaluation is to be reversed true->false, false->tr
+    * @param inputFilter The filter which boolean evaluation is to be reversed true->false, false->true
     */
   case class NotFilter(inputFilter: DataFrameFilter) extends DataFrameFilter {
     override def filter: Column = columnNot(inputFilter.filter)
@@ -216,5 +216,4 @@ package object dataFrameFilter {
     override def filter: Column = col(columnName).isNull
   }
 }
-
 
