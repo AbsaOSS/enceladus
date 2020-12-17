@@ -22,6 +22,7 @@ spring.mvc.async.request-timeout=60000
 
 menas.ui.version=@project.version@
 menas.api.url=http://localhost:8081
+menas.lineage.readApiUrl=//localhost:8082/consumer
 
 # Set the total request size for a multipart/form-data (default 10Mb)
 spring.servlet.multipart.max-request-size=16MB
