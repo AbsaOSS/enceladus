@@ -15,9 +15,8 @@
 
 package za.co.absa.enceladus.menas.web
 
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.{Bean, Configuration}
-import org.springframework.web.servlet.config.annotation.{CorsRegistry, ResourceHandlerRegistry, WebMvcConfigurer}
+import org.springframework.web.servlet.config.annotation.{ResourceHandlerRegistry, WebMvcConfigurer}
 import org.webjars.WebJarAssetLocator
 
 @Configuration

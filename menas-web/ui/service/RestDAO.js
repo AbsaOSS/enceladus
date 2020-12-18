@@ -30,13 +30,14 @@ class RestClient {
     return jqXHR.then(this.identity(jqXHR), this.handleExpiredSession);
   }
 
-  static getSync(url, shouldUseCache = false) {
+  static getSync(url, shouldUseCache = false, isWeb = false) {
+    let requestUrl = isWeb ? url : window.apiUrl + "/" + url;
     let request = {
       headers: {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       },
-      url: window.apiUrl + "/" + url,
+      url: requestUrl,
       async: false
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
@@ -233,7 +234,11 @@ class ConfigRestClient {
   }
 
   static getLineageExecutionIdApiTemplate() {
-    return RestClient.get(`metadata/lineageExecutionIdApiTemplate`)
+    let request = {
+      url: `lineageExecutionIdApiTemplate`,
+      async: true
+    };
+    return $.ajax(request);
   }
 
 }

@@ -184,7 +184,7 @@ sap.ui.define([
         };
 
         jQuery.ajax({
-          url: "api/schema/registry",
+          url: window.apiUrl + "/api/schema/registry",
           type: 'POST',
           data: $.param(data),
           contentType: 'application/x-www-form-urlencoded',
@@ -216,7 +216,7 @@ sap.ui.define([
       };
 
       jQuery.ajax({
-        url: "api/schema/remote",
+        url: window.apiUrl + "/api/schema/remote",
         type: 'POST',
         data: $.param(data),
         contentType: 'application/x-www-form-urlencoded',
@@ -384,7 +384,7 @@ sap.ui.define([
 
     checkRegistryIntegration: function () {
       jQuery.ajax({
-        url: "api/schema/features",
+        url: window.apiUrl + "/api/schema/features",
         type: 'GET',
         context: this,
         complete: this.handleRegistryIntegrationResponse
