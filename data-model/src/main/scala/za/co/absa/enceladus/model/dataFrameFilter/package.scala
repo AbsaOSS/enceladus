@@ -140,7 +140,7 @@ package object dataFrameFilter {
   }
 
   /**
-    * Joins a set of filters with an "and" operator. Therefor all the filter items has to be evaluated as true
+    * Joins a set of filters with an "and" operator. Therefore all the filter items has to be evaluated as true
     * the filter to be itself true.
     * JSON representation: {"_t":"AndJoinedFilters","filterItems":[FILTER_ITEMS]}
     * FILTER_ITEMS is a comma-separated list of other filters JSON entries
