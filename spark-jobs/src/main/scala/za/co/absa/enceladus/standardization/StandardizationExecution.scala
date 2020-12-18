@@ -77,6 +77,10 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
+    // Add Dataset properties marked with putIntoInfoFile=true
+    val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
+    addCustomDataToInfoFile(conf, dataForInfoFile)
+
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.rawPath,
       preparationResult.pathCfg.standardizationPath,

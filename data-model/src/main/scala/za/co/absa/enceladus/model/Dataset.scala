@@ -24,29 +24,31 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
-case class Dataset(
-  name:    String,
-  version: Int = 1,
-  description: Option[String] = None,
+case class Dataset(name: String,
+                   version: Int = 1,
+                   description: Option[String] = None,
 
-  hdfsPath:        String,
-  hdfsPublishPath: String,
+                   hdfsPath: String,
+                   hdfsPublishPath: String,
 
-  schemaName:    String,
-  schemaVersion: Int,
+                   schemaName: String,
+                   schemaVersion: Int,
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
+                   userCreated: String = null,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+                   userUpdated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule],
-  parent:       Option[MenasReference] = None,
-  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
+                   disabled: Boolean = false,
+                   dateDisabled: Option[ZonedDateTime] = None,
+                   userDisabled: Option[String] = None,
+                   conformance: List[ConformanceRule],
+                   parent: Option[MenasReference] = None,
+                   schedule: Option[OozieSchedule] = None,
+                   properties: Option[Map[String, String]] = Some(Map.empty),
+                   propertiesValidation: Option[Validation] = None
+                  ) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -65,6 +67,8 @@ case class Dataset(
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
 
+  def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
+
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
@@ -80,7 +84,7 @@ case class Dataset(
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
     menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
+      AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
   )
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
@@ -113,6 +117,8 @@ case class Dataset(
   override def exportItem(): String = {
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
 
+    val propertiesJsonList: ArrayNode = objectMapperBase.valueToTree(propertiesAsMap.toArray)
+
     val objectItemMapper = objectMapperRoot.`with`("item")
 
     objectItemMapper.put("name", name)
@@ -122,6 +128,7 @@ case class Dataset(
     objectItemMapper.put("schemaName", schemaName)
     objectItemMapper.put("schemaVersion", schemaVersion)
     objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
+    objectItemMapper.putArray("properties").addAll(propertiesJsonList)
 
     objectMapperRoot.toString
   }

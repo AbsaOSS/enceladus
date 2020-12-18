@@ -56,7 +56,7 @@
         <dependency>
             <groupId>za.co.absa.enceladus</groupId>
             <artifactId>utils</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
     </dependencies>
 
