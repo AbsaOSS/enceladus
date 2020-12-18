@@ -140,7 +140,7 @@ package object dataFrameFilter {
   }
 
   /**
-    * Joins a set of filters with an and operator. Therefor all the filter items has to be evaluated as true
+    * Joins a set of filters with an "and" operator. Therefor all the filter items has to be evaluated as true
     * the filter to be itself true.
     * JSON representation: {"_t":"AndJoinedFilters","filterItems":[FILTER_ITEMS]}
     * FILTER_ITEMS is a comma-separated list of other filters JSON entries
@@ -161,15 +161,17 @@ package object dataFrameFilter {
   }
 
   /**
-    * EqualsFilter evaluates to true if the value in the column identified by name equals to the constant value provided.
+    * EqualsFilter compares values of the specified column to the provided constant. Only rows where the column value
+    * equals the constant are kept.
     * JSON representation: {"_t":"EqualsFilter","columnName":"COLUMN_NAME","value":"VALUE","valueType":"VALUE_TYPE"}
     * JSON representation: {"_t":"EqualsFilter","columnName":"COLUMN_NAME","value":"VALUE"}
     * COLUMN_NAME       name of the column which values are taken in by the filter
     * VALUE             value to compare to
-    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
+    *
     * @param columnName name of the column which values are taken in by the filter
     * @param value      value to compare to
-    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
     */
   case class EqualsFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) => {
@@ -184,15 +186,16 @@ package object dataFrameFilter {
   }
 
   /**
-    * DiffersFilter evaluates to true if the value in the column identified by name differs from the constant value provided.
+    * DiffersFilter compares values of the specified column to the provided constant. Only rows where the column value
+    * differs from the constant are kept.
     * JSON representation: {"_t":"DiffersFilter","columnName":"COLUMN_NAME","value":"VALUE","valueType":"VALUE_TYPE"}
     * JSON representation: {"_t":"DiffersFilter","columnName":"COLUMN_NAME","value":"VALUE"}
     * COLUMN_NAME       name of the column which values are taken in by the filter
     * VALUE             value to compare to
-    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
     * @param columnName name of the column which values are taken in by the filter
     * @param value      value to compare to
-    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if noll StringType is defaulted
+    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
     */
   case class DiffersFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) =>  {
