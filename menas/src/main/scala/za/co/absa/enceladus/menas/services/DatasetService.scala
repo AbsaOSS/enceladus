@@ -64,11 +64,12 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
         coordId <- latest.schedule match {
           case Some(sched) => sched.activeInstance match {
             case Some(instance) =>
-              //Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it might have been updated)
-              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ res =>
+              // Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it
+              // might have been updated)
+              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ _ =>
                 oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               }).recoverWith({
-                case ex =>
+                case _ =>
                   logger.warn("First attempt to kill previous coordinator failed, submitting a new one.")
                   oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               })
@@ -154,7 +155,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   /**
-   * Retireves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false, it behaves as [[VersionedModelService#getVersion()]]
+   * Retrieves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false,
+    * it behaves as [[VersionedModelService#getVersion()]]
    * @param datasetName dataset name to retrieve
    * @param datasetVersion dataset version to retrieve
    * @param addPropertiesValidation true if populate dataset's `propertiesValidation` field
