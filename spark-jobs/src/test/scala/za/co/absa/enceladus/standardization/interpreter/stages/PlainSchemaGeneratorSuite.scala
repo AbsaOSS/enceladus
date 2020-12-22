@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class PlainSchemaGeneratorSuite extends FunSuite with SparkTestBase {
+class PlainSchemaGeneratorSuite extends AnyFunSuite with SparkTestBase {
   private val schema = StructType(Seq(
     StructField("a", IntegerType, nullable = false),
     StructField("b", IntegerType, nullable = false, new MetadataBuilder().putString("meta", "data").build),

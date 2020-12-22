@@ -1,6 +1,7 @@
 package za.co.absa.enceladus.standardization.csv
 
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.funsuite.FixtureAnyFunSuite
+import org.scalatest.Outcome
 import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
 class NoneParameterStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture {

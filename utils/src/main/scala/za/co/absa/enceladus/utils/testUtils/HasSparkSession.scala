@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.exceptions
+package za.co.absa.enceladus.utils.testUtils
 
-import org.springframework.web.bind.annotation.ResponseStatus
-import org.springframework.http.HttpStatus
+import org.apache.spark.sql.SparkSession
 
-case class OozieActionException(message: String = "", cause: Throwable = None.orNull) extends RuntimeException(message, cause)
+trait HasSparkSession {
+  def spark: SparkSession
+}

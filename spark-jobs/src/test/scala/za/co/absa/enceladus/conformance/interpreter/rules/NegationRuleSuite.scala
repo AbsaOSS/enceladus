@@ -17,16 +17,16 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.Dataset
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level.ERROR
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   import spark.implicits._
 
@@ -119,7 +119,8 @@ class NegationRuleSuite extends FunSuite with SparkTestBase with LoggerTestBase{
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
-    val conformed = DynamicInterpreter.interpret(enceladusDataset, inputDf).cache
+
+    val conformed = DynamicInterpreter().interpret(enceladusDataset, inputDf).cache
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
     if (conformedJSON != expectedJSON) {
       logger.error("EXPECTED:")

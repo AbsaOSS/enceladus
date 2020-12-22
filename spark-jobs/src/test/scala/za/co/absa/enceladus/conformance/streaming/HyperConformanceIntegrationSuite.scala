@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.fixtures.{NestedStructsFixture, StreamingFixture}
 
-class HyperConformanceIntegrationSuite extends FunSuite with StreamingFixture with NestedStructsFixture {
+class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture with NestedStructsFixture {
 
   test("Test with catalyst workaround, literal factory") {
     implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")

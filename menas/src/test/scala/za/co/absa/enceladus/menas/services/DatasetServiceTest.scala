@@ -43,7 +43,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
 
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
-    Mockito.when(modelRepository.create(any[Dataset](), eqTo("user"))).thenReturn(Future.failed(writeException))
+    Mockito.when(modelRepository.create(any[Dataset], eqTo("user"))).thenReturn(Future.failed(writeException))
 
     val result = intercept[ValidationException] {
       await(service.create(dataset, "user"))
@@ -58,7 +58,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     Mockito.when(modelRepository.getVersion("dataset", 1)).thenReturn(Future.successful(Some(dataset)))
     Mockito.when(modelRepository.getLatestVersionValue("dataset")).thenReturn(Future.successful(Some(1)))
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
-    Mockito.when(modelRepository.update(eqTo("user"), any[Dataset]())).thenReturn(Future.failed(writeException))
+    Mockito.when(modelRepository.update(eqTo("user"), any[Dataset])).thenReturn(Future.failed(writeException))
 
     val result = intercept[ValidationException] {
       await(service.update("user", dataset))

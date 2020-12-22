@@ -13,8 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.models
 
-import org.apache.oozie.client.Job.Status
+package za.co.absa.enceladus.utils.config
 
-case class OozieCoordinatorStatus(status: Status, nextMaterializedTime: String)
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
+import za.co.absa.enceladus.utils.fs.FileSystemUtils
+
+case class PathWithFs(path: String, fileSystem: FileSystem)
+
+object PathWithFs {
+  def fromPath(path: String)(implicit hadoopConf: Configuration): PathWithFs =
+    PathWithFs(path, FileSystemUtils.getFileSystemFromPath(path))
+}

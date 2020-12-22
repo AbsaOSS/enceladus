@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.utils.general
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class JsonUtilsSuite extends FunSuite with SparkTestBase {
+class JsonUtilsSuite extends AnyFunSuite with SparkTestBase {
   test("Test JSON pretty formatting from a JSON string") {
     val inputJson = """[{"id":1,"items":[{"itemid":100,"subitems":[{"elems":[{"numbers":["1","2","3b","4","5c","6"]}],"code":100}]}]}]"""
     val expected = """[ {

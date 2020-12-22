@@ -52,7 +52,6 @@ package object implicits {
 
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(
     classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
-    classOf[HDFSFolder],
     classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],

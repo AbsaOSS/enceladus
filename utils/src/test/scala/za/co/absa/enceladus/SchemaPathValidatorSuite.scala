@@ -16,13 +16,13 @@
 package za.co.absa.enceladus
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.validation.{SchemaPathValidator, ValidationError, ValidationIssue, ValidationWarning}
 
 /**
   * A test suite for validation of schema path fields existence.
   */
-class SchemaPathValidatorSuite extends FunSuite {
+class SchemaPathValidatorSuite extends AnyFunSuite {
 
   private val schema = StructType(
     Array(

@@ -34,10 +34,8 @@ html, body {
   margin-top: 1rem !important;
 }
 
-.menasAddMappingFlex {
-  div {
+.menasAddMappingFlex div {
     width: calc(100% - 38px);
-  }
 }
 
 .monitoringBlockLayoutCell {
@@ -46,11 +44,11 @@ html, body {
 }
 
 .monitoringTitle {
-  textAlign: Center;
+  text-align: Center;
   width: 100%;
 }
 
-.monitoringRecordspopover {
+.monitoringRecordsPopover {
     top: 5rem !important;
     left: calc(50% - 18rem) !important;
 }
@@ -58,13 +56,13 @@ html, body {
 .auditTrailNestedListItem {
   max-width: 100%;
   background-color: inherit !important;
-  border-bottom: 0px !important;
+  border-bottom: 0 !important;
 }
 
 .auditTrailNestedList > ul > .sapMListNoData {
   background-color: inherit !important;
-  border-bottom: 0px !important;
-  padding-left: 0px !important;
+  border-bottom: 0 !important;
+  padding-left: 0 !important;
 }
 
 .lineageIframe {
@@ -74,8 +72,8 @@ html, body {
 
 .auditTrailNestedList > ul > .sapMListNoData {
   background-color: inherit !important;
-  border-bottom: 0px !important;
-  padding-left: 0px !important;
+  border-bottom: 0 !important;
+  padding-left: 0 !important;
 }
 
 .lineageIframe {
@@ -83,18 +81,9 @@ html, body {
   height: 100% !important;
 }
 
-.scheduleMenuButton {
-  margin-top: -1rem !important;
-  position: absolute !important;
-}
-
-.scheduleMenuHBox {
-  height: 2rem !important;
-  margin-top: 1rem !important;
-}
-
-h5[id$=datasetDetailView--scheduleTimingTitle] {
-  margin-top: 1rem !important;
+.lineageErrorLabel {
+  font-size: 200%;
+  padding-top: 2rem;
 }
 
 /* Conformance indicator styling */

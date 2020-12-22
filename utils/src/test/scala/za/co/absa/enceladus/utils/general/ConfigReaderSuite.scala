@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.utils.general
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.config.ConfigReader
 
-class ConfigReaderSuite extends WordSpec {
+class ConfigReaderSuite extends AnyWordSpec {
   private val config = ConfigFactory.parseString(
     """
       |top = default

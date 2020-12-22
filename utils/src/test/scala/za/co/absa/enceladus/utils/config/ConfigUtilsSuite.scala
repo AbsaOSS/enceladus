@@ -16,11 +16,13 @@
 package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+
 import scala.collection.JavaConverters._
 
-class ConfigUtilsSuite extends FlatSpec with Matchers {
+class ConfigUtilsSuite extends AnyFlatSpec with Matchers {
 
   val conf = ConfigFactory.parseMap(Map(
     "some.string.key" -> "string1",

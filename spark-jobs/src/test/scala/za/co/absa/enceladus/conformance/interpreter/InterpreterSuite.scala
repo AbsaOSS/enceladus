@@ -16,18 +16,19 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.json4s._
-import org.json4s.native.JsonParser._
+import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -70,7 +71,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
+    val conformed = DynamicInterpreter().interpret(EmployeeConformance.employeeDS, dfs)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -84,7 +85,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
-    val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
     assertResult(expected)(data)
     // test drop
@@ -127,7 +128,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cache
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
@@ -148,7 +149,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
     implicit val formats: DefaultFormats.type = DefaultFormats
 
-    val checkpoints = parse(infoFile).extract[ControlMeasure].checkpoints
+    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
     if (data != expected) {
       logger.error("EXPECTED:")

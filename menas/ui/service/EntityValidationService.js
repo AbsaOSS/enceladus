@@ -18,8 +18,8 @@ jQuery.sap.require("sap.m.MessageBox");
 var EntityValidationService = new function () {
 
   this.hasValidHDFSPath = function (sHDFSPath, sEntityType, oInput) {
-    let rHDFSPathRegex = /^\/[\w\-\.\/=]+$/;
-    let isOk = rHDFSPathRegex.test(sHDFSPath);
+    // let rHDFSPathRegex = /^\/[\w\-\.\/=]+$/;
+    let isOk = true; // rHDFSPathRegex.test(sHDFSPath);
 
     if (!isOk) {
       let notOkReason = "can only contain alphanumeric characters, dot, underscore, dash or equals";

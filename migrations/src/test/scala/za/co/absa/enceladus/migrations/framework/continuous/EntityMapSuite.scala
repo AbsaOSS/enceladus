@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.migrations.framework.continuous
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.continuous.EntityVersionMap
 import za.co.absa.enceladus.migrations.framework.continuous.fixture.EntityVersionMapMock
 
-class EntityMapSuite extends FunSuite {
+class EntityMapSuite extends AnyFunSuite {
 
   test("Test entity version map returns correct mapping when it is available") {
     val enp: EntityVersionMap = new EntityVersionMapMock

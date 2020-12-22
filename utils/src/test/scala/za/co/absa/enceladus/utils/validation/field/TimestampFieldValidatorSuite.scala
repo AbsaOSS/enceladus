@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{MetadataBuilder, StructField, TimestampType}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
-class TimestampFieldValidatorSuite extends FunSuite  {
+class TimestampFieldValidatorSuite extends AnyFunSuite  {
   TimeZoneNormalizer.normalizeJVMTimeZone()
   private implicit val defaults: Defaults = GlobalDefaults
 

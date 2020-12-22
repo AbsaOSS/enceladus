@@ -15,11 +15,27 @@
 
 package za.co.absa.enceladus.common.config
 
+import org.apache.hadoop.conf.Configuration
+import za.co.absa.enceladus.utils.config.PathWithFs
+
 /**
  *
- * @param rawPath Input path of the job
- * @param publishPath Output path of the job
- * @param standardizationPath In case of StandardizationJob and ConformanceJob it should be None and for
+ * @param raw             Input path+fs of the job
+ * @param publish         Output path+fs of the job
+ * @param standardization In case of StandardizationJob and ConformanceJob it should be None and for
  *                            StandardizationConformanceJob it should represent the intermediate standardization path
  */
-case class PathConfig(rawPath: String, publishPath: String, standardizationPath: String)
+case class PathConfig(raw: PathWithFs,
+                      publish: PathWithFs,
+                      standardization: PathWithFs)
+
+object PathConfig {
+  def fromPaths(rawPath: String, publishPath: String, standardizationPath: String)
+               (implicit hadoopConf: Configuration): PathConfig =
+    PathConfig(
+      PathWithFs.fromPath(rawPath),
+      PathWithFs.fromPath(publishPath),
+      PathWithFs.fromPath(standardizationPath)
+    )
+}
+

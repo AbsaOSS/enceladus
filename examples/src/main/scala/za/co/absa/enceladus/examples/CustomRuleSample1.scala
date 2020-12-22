@@ -23,9 +23,10 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample1 {
+object CustomRuleSample1 extends HadoopFsTestBase {
 
   case class ExampleRow(id: Int, makeUpper: String, leave: String)
   case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
@@ -78,7 +79,7 @@ object CustomRuleSample1 {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 
     outputData.show(false)
     //scalastyle:on magicnumber

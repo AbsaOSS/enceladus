@@ -19,7 +19,6 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
@@ -31,7 +30,6 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
-    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     implicit val udfLib: UDFLibrary = new UDFLibrary
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)

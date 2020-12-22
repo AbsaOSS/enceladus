@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.menas.repositories
 
+import org.mongodb.scala.model.Filters
+import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
@@ -22,12 +24,13 @@ import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema}
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 
 import scala.reflect.ClassTag
-import za.co.absa.enceladus.model.menas.MenasReference
-import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Projections._
 import za.co.absa.enceladus.model
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.menas.MenasReference
 
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 object DatasetMongoRepository {
   val collectionBaseName: String = "dataset"
@@ -114,15 +117,4 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .toFuture()
   }
-
-  /** Find dataset by coordinatorId
-   *  @param coordId Coordinator ID
-   */
-  def findByCoordId(coordId: String): Future[Seq[Dataset]] = {
-    val filter = Filters.eq("schedule.activeInstance.coordinatorId", coordId)
-    collection
-      .find[Dataset](filter)
-      .toFuture()
-  }
-
 }

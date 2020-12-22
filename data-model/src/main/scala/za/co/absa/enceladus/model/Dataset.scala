@@ -64,7 +64,6 @@ case class Dataset(name: String,
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
-  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
 
   def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)

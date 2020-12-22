@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.utils.testUtils
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql. SparkSession
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkConf
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
@@ -26,7 +26,7 @@ import java.io.File
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import com.typesafe.config.Config
 
-trait SparkTestBase { self =>
+trait SparkTestBase extends HasSparkSession { self =>
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
   val config: Config = ConfigFactory.load()

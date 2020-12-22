@@ -17,10 +17,11 @@ package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
 
+import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.AtumImplicits.DataSetWrapper
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
@@ -34,7 +35,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
@@ -50,21 +52,23 @@ trait ConformanceExecution extends CommonJobExecution {
   protected def prepareConformance[T](preparationResult: PreparationResult)
                                      (implicit dao: MenasDAO,
                                       cmd: ConformanceConfigParser[T],
-                                      fsUtils: FileSystemVersionUtils,
                                       spark: SparkSession): Unit = {
-    val stdDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.standardizationPath)
+
+    val stdFsUtils = HadoopFsUtils.getOrCreate(preparationResult.pathCfg.standardization.fileSystem)
+
+    val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
     import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
 
     // reinitialize Control Framework in case of combined job
-    if(cmd.isInstanceOf[StandardizationConformanceConfig]) {
+    if (cmd.isInstanceOf[StandardizationConformanceConfig]) {
       spark.disableControlMeasuresTracking()
     }
 
     // InputPath is standardizationPath in the combined job
-    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardizationPath}/_INFO")
+    spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardization.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -79,11 +83,12 @@ trait ConformanceExecution extends CommonJobExecution {
       preparationResult.reportVersion)
   }
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val initialConfig = super.getPathConfig(cmd, dataset, reportVersion)
     cmd.asInstanceOf[ConformanceConfig].publishPathOverride match {
       case None => initialConfig
-      case Some(providedRawPath) => initialConfig.copy(publishPath = providedRawPath)
+      case Some(providedPublishPath) => initialConfig.copy(publish = PathWithFs.fromPath(providedPublishPath))
     }
   }
 
@@ -95,7 +100,7 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
-    spark.read.parquet(pathCfg.standardizationPath)
+    spark.read.parquet(pathCfg.standardization.path)
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
@@ -103,10 +108,11 @@ trait ConformanceExecution extends CommonJobExecution {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
+    implicit val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
     Try {
       handleControlInfoValidation()
-      DynamicInterpreter.interpret(preparationResult.dataset, inputData)
+      DynamicInterpreter().interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
         AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
@@ -130,14 +136,15 @@ trait ConformanceExecution extends CommonJobExecution {
                                             preparationResult: PreparationResult,
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
-                                            cmd: ConformanceConfigParser[T],
-                                            fsUtils: FileSystemVersionUtils): Unit = {
+                                            cmd: ConformanceConfigParser[T]): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
+    val stdFs = preparationResult.pathCfg.standardization.fileSystem
+    val publishFs = preparationResult.pathCfg.publish.fileSystem
 
     PerformanceMetricTools.addJobInfoToAtumMetadata(
       "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
+      preparationResult.pathCfg.standardization,
+      preparationResult.pathCfg.publish.path,
       menasCredentials.username, cmdLineArgs
     )
 
@@ -146,7 +153,7 @@ trait ConformanceExecution extends CommonJobExecution {
       .withColumnIfDoesNotExist(InfoDateColumnString, lit(cmd.reportDate))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(preparationResult.reportVersion))
 
-    val recordCount = result.lastCheckpointRowCount match {
+    val recordCount: Long = result.lastCheckpointRowCount match {
       case None => withPartCols.count
       case Some(p) => p
     }
@@ -154,26 +161,23 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    // ensure the whole path but version exists
-    fsUtils.createAllButLastSubDir(preparationResult.pathCfg.publishPath)
+    withPartCols.write.parquet(preparationResult.pathCfg.publish.path)
 
-    withPartCols.write.parquet(preparationResult.pathCfg.publishPath)
-
-    val publishDirSize = fsUtils.getDirectorySize(preparationResult.pathCfg.publishPath)
+    val publishDirSize = HadoopFsUtils.getOrCreate(publishFs).getDirectorySize(preparationResult.pathCfg.publish.path)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
     PerformanceMetricTools.addPerformanceMetricsToAtumMetadata(
       spark,
       "conform",
-      preparationResult.pathCfg.standardizationPath,
-      preparationResult.pathCfg.publishPath,
+      preparationResult.pathCfg.standardization,
+      preparationResult.pathCfg.publish,
       menasCredentials.username, cmdLineArgs
     )
 
-    withPartCols.writeInfoFile(preparationResult.pathCfg.publishPath)
+    withPartCols.writeInfoFile(preparationResult.pathCfg.publish.path)(publishFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
 
     if (conformanceReader.isAutocleanStdFolderEnabled()) {
-      fsUtils.deleteDirectoryRecursively(preparationResult.pathCfg.standardizationPath)
+      HadoopFsUtils.getOrCreate(stdFs).deleteDirectoryRecursively(preparationResult.pathCfg.standardization.path)
     }
     log.info(s"$sourceId finished successfully")
   }

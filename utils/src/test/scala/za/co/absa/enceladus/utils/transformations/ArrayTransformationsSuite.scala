@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.utils.transformations
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import scala.util.Random
 import org.apache.spark.sql.functions._
@@ -36,7 +36,7 @@ case class MyC2(something: Int, somethingByTwo: Int)
 case class Nested2Levels(a: List[List[Option[Int]]])
 case class Nested1Level(a: List[Option[Int]])
 
-class ArrayTransformationsSuite extends FunSuite with SparkTestBase {
+class ArrayTransformationsSuite extends AnyFunSuite with SparkTestBase {
 
   private val inputData = (0 to 10).toList.map(x => (x, Random.shuffle((0 until x).toList)))
   private val inputDataOrig = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(InnerStruct(_))) })

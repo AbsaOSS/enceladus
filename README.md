@@ -67,11 +67,11 @@ The coverage reports are written in each module's `target` directory and aggrega
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
- in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
+- [**Spline service deployment**](https://absaoss.github.io/spline/#get-spline)
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
-The _Spline UI_ can be omitted; in such case the **Menas** `spline.urlTemplate` setting should be set to empty string. 
+The _Spline service_ can be omitted; in such case the **Standardization** and **Conformance** `spline.producer.url` setting
+as well as **Menas** `menas.lineage.readApiUrl` and `menas.oozie.lineageWriteApiUrl` settings should be all set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -106,7 +106,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
@@ -130,7 +130,7 @@ password=changeme
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \

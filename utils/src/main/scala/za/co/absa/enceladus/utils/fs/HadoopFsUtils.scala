@@ -17,31 +17,50 @@ package za.co.absa.enceladus.utils.fs
 
 import java.io.{File, FileNotFoundException}
 import java.net.ConnectException
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Paths}
 
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 
+import scala.collection.concurrent.TrieMap
 import scala.util.Try
+
+object HadoopFsUtils {
+  private val fsUtilsCache = TrieMap[FileSystem, HadoopFsUtils]()
+
+  /**
+   * Given the FileSystem object `fs`, an appropriate HadoopFsUtils is either
+   * newly created or returned form cache.
+   *
+   * @return cached [[HadoopFsUtils]] instance
+   */
+  def getOrCreate(fs: FileSystem): HadoopFsUtils = {
+    fsUtilsCache.getOrElseUpdate(fs, {
+      log.debug(s"reusing cached fsUtils for FS ${fs.getUri} / ${fs.toString}")
+      new HadoopFsUtils()(fs)
+    })
+
+  }
+}
 
 /**
  * A set of functions to help with the date partitioning and version control
+ *
+ * This class has a private constructor - to achieve instance cache control - use
+ * [[za.co.absa.enceladus.utils.fs.HadoopFsUtils#getOrCreate(org.apache.hadoop.fs.FileSystem)]]
  */
+class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtils {
 
-class FileSystemVersionUtils(conf: Configuration) {
+  private val log = LogManager.getLogger("enceladus.utils.fs.HadoopFsUtils")
 
-  private val log = LogManager.getLogger("enceladus.utils.fs")
-  private val fs = FileSystem.get(conf)
   /**
-   * Split path URI by separating scheme+server and path part
+   * Split HDFS path URI by separating scheme+server and path part
    * Example:
    * hdfs://server:8020/user/data/input -> (hdfs://server:8020, /user/data/input)
    * /user/data/input -> ("", /user/data/input)
    */
-  def splitUriPath(path: Path): (String, String) = {
+  private[fs] def splitUriPath(path: Path): (String, String) = {
     val uri = path.toUri
     val scheme = uri.getScheme
     val authority = uri.getAuthority
@@ -73,39 +92,23 @@ class FileSystemVersionUtils(conf: Configuration) {
     })
   }
 
-  /**
-    * Creates a temporary directory in the local filesystem.
-    *
-    * @param prefix A prefix to use for the temporary directory.
-    * @return A path to a temporary directory.
-    */
-  def getLocalTemporaryDirectory(prefix: String): String = {
-    val tmpPath = Files.createTempDirectory(prefix)
-    tmpPath.toAbsolutePath.toString
-  }
 
   /**
    * Check if a given path exists on HDFS
    */
-  def hdfsExists(path: String): Boolean = {
+  override def exists(path: String): Boolean = {
     log.info(s"Cheking if $path exists")
     fs.exists(new Path(path))
   }
 
-  /**
-   * Check if a given files exists on the local file system
-   */
-  def localExists(path: String): Boolean = {
-    new File(path).exists()
-  }
 
   /**
    * Function which determines whether the file exists on HDFS or local file system
    *
    */
-  def exists(path: String): Boolean = {
+  def existsLocallyOrDistributed(path: String): Boolean = {
     val local = try {
-      localExists(path)
+      LocalFsUtils.localExists(path)
     } catch {
       case e: IllegalArgumentException => false
     }
@@ -114,10 +117,10 @@ class FileSystemVersionUtils(conf: Configuration) {
       true
     } else {
       val hdfs = try {
-        hdfsExists(path)
+        exists(path)
       } catch {
         case e: IllegalArgumentException => false
-        case e: ConnectException  => false
+        case e: ConnectException => false
       }
       if (hdfs) {
         log.debug(s"HDFS file $path exists")
@@ -129,51 +132,41 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
-    * Checks if a file is located on HDFS or the local file system.
-    * If the file is in HDFS, it is copied to a temporary location.
-    *
-    * @param path A path to a file.  Can be either local or HDFS location.
-    * @return A path to a file in the local filesystem.
-    */
+   * Checks if a file is located on HDFS or the local file system.
+   * If the file is in HDFS, it is copied to a temporary location.
+   *
+   * @param path A path to a file.  Can be either local or HDFS location.
+   * @return A path to a file in the local filesystem.
+   */
   @throws[FileNotFoundException]
-  def getLocalPathToFile(path: String): String = {
-    val absolutePath = replaceHome(path)
-    if (localExists(absolutePath)) {
+  def getLocalPathToFileOrCopyToLocal(path: String): String = {
+    val absolutePath = LocalFsUtils.replaceHome(path)
+    if (LocalFsUtils.localExists(absolutePath)) {
       absolutePath
-    } else if (hdfsExists(path)) {
-      hdfsFileToLocalTempFile(path)
+    } else if (exists(path)) {
+      copyDistributedFileToLocalTempFile(path)
     } else {
       throw new FileNotFoundException(s"File not found: $path.")
     }
   }
 
   /**
-    * Reads a file fully and returns its content.
-    * The file can be either in a HDFS or in a local file system.
-    *
-    * @param path A path to a file.  Can be either local or HDFS location.
-    * @return The file's content.
-    */
+   * Reads a file fully and returns its content.
+   * The file can be either in a HDFS or in a local file system.
+   *
+   * @param path A path to a file.  Can be either local or HDFS location.
+   * @return The file's content.
+   */
   @throws[FileNotFoundException]
-  def getFileContent(path: String): String = {
-    val absolutePath = replaceHome(path)
-    if (localExists(absolutePath)) {
-      readLocalFile(absolutePath)
-    } else if (hdfsExists(path)) {
-      hdfsRead(path)
+  def getLocalOrDistributedFileContent(path: String): String = {
+    val absolutePath = LocalFsUtils.replaceHome(path)
+    if (LocalFsUtils.localExists(absolutePath)) {
+      LocalFsUtils.readLocalFile(absolutePath)
+    } else if (exists(path)) {
+      read(path)
     } else {
       throw new FileNotFoundException(s"File not found: $path.")
     }
-  }
-
-  /**
-    * Reads a local file fully and returns its content.
-    *
-    * @param path A path to a file.
-    * @return The file's content.
-    */
-  def readLocalFile(path: String): String = {
-    Files.readAllLines(Paths.get(path), StandardCharsets.UTF_8).toArray.mkString("\n")
   }
 
   /**
@@ -181,7 +174,7 @@ class FileSystemVersionUtils(conf: Configuration) {
    *
    * @return The path of the local temp file
    */
-  def hdfsFileToLocalTempFile(hdfsPath: String): String = {
+  def copyDistributedFileToLocalTempFile(hdfsPath: String): String = {
     val in = fs.open(new Path(hdfsPath))
     val content = Array.fill(in.available())(0.toByte)
     in.readFully(content)
@@ -189,10 +182,13 @@ class FileSystemVersionUtils(conf: Configuration) {
     tmpFile.deleteOnExit()
     FileUtils.writeByteArrayToFile(tmpFile, content)
     tmpFile.getAbsolutePath
+
+    // why not use
+    // fs.copyToLocalFile(false, new Path(hdfsPath), new Path("someLocalName"), true)
   }
 
-  def hdfsRead(path: String): String = {
-    val in = fs.open(new Path(path))
+  override def read(distPath: String): String = {
+    val in = fs.open(new Path(distPath))
     val content = Array.fill(in.available())(0.toByte)
     in.readFully(content)
     new String(content, "UTF-8")
@@ -207,11 +203,11 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
-    * Returns directory size in bytes, skipping hidden files and directories (starting from '_' or '.').
-    *
-    * @param path A path to a directory or a file.
-    * @return Directory size in bytes
-    */
+   * Returns directory size in bytes, skipping hidden files and directories (starting from '_' or '.').
+   *
+   * @param path A path to a directory or a file.
+   * @return Directory size in bytes
+   */
   def getDirectorySizeNoHidden(path: String): Long = {
     def getDirSizeHelper(f: Path): Long = {
       var totalLength = 0L
@@ -242,13 +238,11 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
-   * Checks if the path contains non-splittable files
+   * Checks if the HDFS path contains non-splittable files
    */
-  def isNonSplittable(path: String): Boolean = {
-    val nonSplittableExtensions = List("gz")
-
+  override def isNonSplittable(path: String): Boolean = {
     val files = getFilePaths(path)
-    files.exists(file => nonSplittableExtensions.exists(file.endsWith))
+    files.exists(file => DistributedFsUtils.nonSplittableExtensions.exists(file.endsWith))
   }
 
   /**
@@ -256,14 +250,14 @@ class FileSystemVersionUtils(conf: Configuration) {
    * Example:
    * /path/to/dir -> ("path/to/dir/file1.extension", "path/to/dir/file2.extension")
    */
-  def getFilePaths(path: String): Array[String] = {
+  private def getFilePaths(path: String): Array[String] = {
     val hdfsPath = new Path(path)
     fs.listStatus(hdfsPath).map(_.getPath.toString)
   }
 
   /**
-    * Deletes a directory and all its contents recursively
-    */
+   * Deletes a HDFS directory and all its contents recursively
+   */
   def deleteDirectoryRecursively(path: String): Unit = {
     log.info(s"Deleting '$path' recursively...")
     val hdfsPath = new Path(path)
@@ -279,10 +273,10 @@ class FileSystemVersionUtils(conf: Configuration) {
   }
 
   /**
-   * Finds the latest version given a publish folder
+   * Finds the latest version given a publish folder on HDFS
    *
    * @param publishPath The HDFS path to the publish folder containing versions
-   * @param reportDate The string representation of the report date used to infer the latest version
+   * @param reportDate  The string representation of the report date used to infer the latest version
    * @return the latest version or 0 in case no versions exist
    */
   def getLatestVersion(publishPath: String, reportDate: String): Int = {
@@ -294,23 +288,9 @@ class FileSystemVersionUtils(conf: Configuration) {
         val versions = files.filter(_.isDirectory()).map({
           file => file.getPath.getName.replace("enceladus_info_version=", "").toInt
         })
-        if(versions.isEmpty) 0 else versions.max
+        if (versions.isEmpty) 0 else versions.max
       case None => 0
     }
   }
 
-  /**
-    * Replaces tilde ('~') with the home dir.
-    *
-    * @param path An input path.
-    * @return An absolute output path.
-    */
-  def replaceHome(path: String): String = {
-    if (path.matches("^~.*")) {
-      //not using replaceFirst as it interprets the backslash in Windows path as escape character mangling the result
-      System.getProperty("user.home") + path.substring(1)
-    } else {
-      path
-    }
-  }
 }

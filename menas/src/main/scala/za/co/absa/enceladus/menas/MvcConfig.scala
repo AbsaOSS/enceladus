@@ -15,13 +15,24 @@
 
 package za.co.absa.enceladus.menas
 
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.web.servlet.config.annotation.{ResourceHandlerRegistry, ViewControllerRegistry, WebMvcConfigurer}
+import org.webjars.WebJarAssetLocator
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
-  def addViewControllers(registry: ViewControllerRegistry) {
+  @Bean
+  def webJarAssetLocator: WebJarAssetLocator = new WebJarAssetLocator()
+
+  override def addResourceHandlers(registry: ResourceHandlerRegistry) {
+    registry
+      .addResourceHandler(LineageConfig.resourceHandler)
+      .addResourceLocations(LineageConfig.resourceLocation)
+      .resourceChain(true)
+      .addResolver(new WebJarsResourceFuzzyResolver(webJarAssetLocator))
+  }
+
+  override def addViewControllers(registry: ViewControllerRegistry) {
     registry.addViewController("/login").setViewName("login")
   }
 }
