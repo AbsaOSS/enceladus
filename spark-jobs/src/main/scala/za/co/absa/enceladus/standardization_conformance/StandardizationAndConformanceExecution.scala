@@ -40,13 +40,13 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
     )
   }
 
-  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    log.info(s"raw path: ${pathConfig.rawPath}")
-    log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    log.info(s"publish path: ${pathConfig.publishPath}")
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"raw path: ${pathConfig.raw.path}")
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    log.info(s"publish path: ${pathConfig.publish.path}")
 
-    validateInputPath(fsUtils, pathConfig.rawPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.publishPath)
+    validateInputPath(pathConfig.raw)
+    validateIfOutputPathAlreadyExists(pathConfig.standardization)
+    validateIfOutputPathAlreadyExists(pathConfig.publish)
   }
 }

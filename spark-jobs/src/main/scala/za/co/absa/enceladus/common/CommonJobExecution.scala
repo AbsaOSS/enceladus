@@ -36,7 +36,7 @@ import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
-import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
@@ -85,7 +85,7 @@ trait CommonJobExecution extends ProjectMetadata {
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
     dao.authenticate()
 
-    implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
+    implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
 
     val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, validateProperties = true)
     dataset.propertiesValidation match {
@@ -100,7 +100,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
 
-    validatePaths(fsUtils, pathCfg)
+    validatePaths(pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.harvester.SparkLineageInitializer._
@@ -112,20 +112,22 @@ trait CommonJobExecution extends ProjectMetadata {
     PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+  protected def validatePaths(pathConfig: PathConfig): Unit
 
-  protected def validateIfOutputPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    if (fsUtils.hdfsExists(path)) {
+  protected def validateIfOutputPathAlreadyExists(entry: PathWithFs): Unit = {
+    val fsUtils = HadoopFsUtils.getOrCreate(entry.fileSystem)
+    if (fsUtils.exists(entry.path)) {
       throw new IllegalStateException(
         s"Path ${entry.path} already exists. Increment the run version, or delete ${entry.path}"
       )
     }
   }
 
-  protected def validateInputPath(fsUtils: FileSystemVersionUtils, path: String): Unit = {
-    if (!fsUtils.hdfsExists(path)) {
+  protected def validateInputPath(entry: PathWithFs): Unit = {
+    val fsUtils = HadoopFsUtils.getOrCreate(entry.fileSystem)
+    if (!fsUtils.exists(entry.path)) {
       throw new IllegalStateException(
-        s"Input path $path does not exist"
+        s"Input path ${entry.path} does not exist"
       )
     }
   }

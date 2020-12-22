@@ -25,6 +25,7 @@ import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
+
 class ArrayConformanceSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with HadoopFsTestBase {
 
   import spark.implicits._
@@ -59,7 +60,7 @@ class ArrayConformanceSuite extends AnyFunSuite with SparkTestBase with BeforeAn
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformedDf = DynamicInterpreter.interpret(ArraySamples.conformanceDef, df)
+    val conformedDf = DynamicInterpreter().interpret(ArraySamples.conformanceDef, df)
     val expected = ArraySamples.conformedData.toArray.sortBy(_.order).toList
     val conformed = conformedDf.as[ConformedOuter].collect().sortBy(_.order).toList
     assertResult(expected)(conformed)

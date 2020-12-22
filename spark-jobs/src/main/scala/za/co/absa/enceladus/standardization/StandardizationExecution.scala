@@ -102,11 +102,11 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    log.info(s"raw path: ${pathConfig.rawPath}")
-    log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    validateInputPath(fsUtils, pathConfig.rawPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"raw path: ${pathConfig.raw.path}")
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    validateInputPath(pathConfig.raw)
+    validateIfOutputPathAlreadyExists(pathConfig.standardization)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
@@ -215,6 +215,7 @@ trait StandardizationExecution extends CommonJobExecution {
     standardizedDF.writeInfoFile(preparationResult.pathCfg.standardization.path)(stdFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
+    standardizedDF
   }
 
   //scalastyle:off parameter.number

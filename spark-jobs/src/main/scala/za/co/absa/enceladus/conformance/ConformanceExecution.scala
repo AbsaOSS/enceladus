@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance
 import java.io.{PrintWriter, StringWriter}
 
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
@@ -92,11 +93,11 @@ trait ConformanceExecution extends CommonJobExecution {
     }
   }
 
-  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    log.info(s"publish path: ${pathConfig.publishPath}")
-    validateInputPath(fsUtils, pathConfig.standardizationPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.publishPath)
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    log.info(s"publish path: ${pathConfig.publish.path}")
+    validateInputPath(pathConfig.standardization)
+    validateIfOutputPathAlreadyExists(pathConfig.publish)
   }
 
   protected def readConformanceInputData(pathCfg: PathConfig)(implicit spark: SparkSession): DataFrame = {
@@ -108,7 +109,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
-    implicit val stdFs = preparationResult.pathCfg.standardization.fileSystem
+    implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem
 
     Try {
       handleControlInfoValidation()

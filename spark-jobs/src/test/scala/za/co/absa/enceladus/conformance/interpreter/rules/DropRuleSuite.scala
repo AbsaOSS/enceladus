@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples

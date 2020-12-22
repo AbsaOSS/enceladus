@@ -241,6 +241,17 @@
             <artifactId>client-ui</artifactId>
             <version>${spline.ui.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.oozie</groupId>
+            <artifactId>oozie-client</artifactId>
+            <version>${oozie.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.oozie</groupId>
+                    <artifactId>oozie-hadoop-auth</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- Plot -->
         <dependency>
             <groupId>org.webjars.bower</groupId>
