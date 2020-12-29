@@ -64,6 +64,7 @@ case class Dataset(name: String,
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
+  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
 
   def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
@@ -88,11 +89,10 @@ case class Dataset(name: String,
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
-      case m: MappingConformanceRule => {
+      case m: MappingConformanceRule =>
         m.copy(attributeMappings = m.attributeMappings.map(key => {
           (key._1.replace(from, to), key._2)
         }))
-      }
       case c: ConformanceRule => c
     }
 

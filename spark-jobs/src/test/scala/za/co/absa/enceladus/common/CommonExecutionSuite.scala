@@ -39,6 +39,7 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
       val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil,
         properties = Some(Map("prop1" -> "value1")), propertiesValidation = mockedPropertiesValidation) // (not) validated props
       Mockito.when(dao.getDataset("DatasetA", 1, true)).thenReturn(dataset)
+      doNothing.when(dao).authenticate()
 
       val commonJob = new CommonJobExecution {
         def testRun: PreparationResult = {
