@@ -167,11 +167,12 @@ package object dataFrameFilter {
     * JSON representation: {"_t":"EqualsFilter","columnName":"COLUMN_NAME","value":"VALUE"}
     * COLUMN_NAME       name of the column which values are taken in by the filter
     * VALUE             value to compare to
-    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
-    *
+    * VALUE_TYPE        data type of the value, valid  entries are any of  Spark DataType.typeName strings, if valueType
+    *                   is null (missing) StringType is used as default
     * @param columnName name of the column which values are taken in by the filter
     * @param value      value to compare to
-    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
+    * @param valueType  data type of the value, valid  entries are any of  Spark DataType.typeName strings, if valueType
+    *                   is null (missing) StringType is used as default
     */
   case class EqualsFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) => {
@@ -192,10 +193,12 @@ package object dataFrameFilter {
     * JSON representation: {"_t":"DiffersFilter","columnName":"COLUMN_NAME","value":"VALUE"}
     * COLUMN_NAME       name of the column which values are taken in by the filter
     * VALUE             value to compare to
-    * VALUE_TYPE        data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
+    * VALUE_TYPE        data type of the value, valid  entries are any of  Spark DataType.typeName strings, if valueType
+    *                   is null (missing) StringType is used as default
     * @param columnName name of the column which values are taken in by the filter
     * @param value      value to compare to
-    * @param valueType  data type of the value, valid values are Spark DataType.typeName string, if null StringType is defaulted
+    * @param valueType  data type of the value, valid  entries are any of  Spark DataType.typeName strings, if valueType
+    *                   is null (missing) StringType is used as default
     */
   case class DiffersFilter(columnName: String, value: String, valueType: String) extends SingleColumnAndValueFilter {
     protected val operator: (Column, Column) => Column = (column: Column, valueColumn: Column) =>  {
