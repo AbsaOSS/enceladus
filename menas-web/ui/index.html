@@ -17,45 +17,53 @@
 
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta http-equiv='Content-Type' content='text/html;charset=UTF-8' />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv='Content-Type' content='text/html;charset=UTF-8'/>
 
-<script src="webjars/openui5/sap-ui-core.js" id="sap-ui-bootstrap"
-  data-sap-ui-compatVersion="edge"
-  data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout"
-  data-sap-ui-bindingSyntax="complex"
-  data-sap-ui-theme='sap_belize'></script>
+    <script src="node_modules/@openui5/sap.ui.core/src/sap-ui-core.js" id="sap-ui-bootstrap"
+            data-sap-ui-compatVersion="edge"
+            data-sap-ui-libs="sap.m,sap.ui.table,sap.ui.layout,sap.tnt"
+            data-sap-ui-bindingSyntax="complex"
+            data-sap-ui-resourceroots='{
+            "sap.m": "../node_modules/@openui5/sap.m/src/sap/m",
+            "sap.ui": "../node_modules/@openui5/sap.ui.core/src/sap/ui",
+            "sap.tnt": "../node_modules/@openui5/sap.tnt/src/sap/tnt",
+            "sap.ui.table": "../node_modules/@openui5/sap.ui.table/src/sap/ui/table",
+            "sap.ui.layout": "../node_modules/@openui5/sap.ui.layout/src/sap/ui/layout",
+            "sap.ui.unified": "../node_modules/@openui5/sap.ui.unified/src/sap/ui/unified"
+            }'
+            data-sap-ui-theme='sap_belize'
+            data-sap-ui-theme-roots='{
+              "sap_belize": "theme"
+            }'></script>
 
-<script src="webjars/momentjs/min/moment.min.js"></script>
-<script src="webjars/lodash/lodash.js"></script>
-<script src="webjars/cronstrue-webjar/cronstrue-webjar.js"></script>
+    <script src="node_modules/moment/min/moment.min.js"></script>
+    <script src="node_modules/lodash/lodash.js"></script>
+    <script src="node_modules/cronstrue/dist/cronstrue.js"></script>
 
-<script>
-      function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
-        const el = document.createElement(sElemType);
-        const srcAttr = sElemType === "link" ? "href" : "src";
-        el[srcAttr] = `${window.menasVersion}/${sSrc}`;
-        aAttrs.forEach((attr) => {
-          el.setAttribute(attr.k, attr.v);
-        })
-        if(fnOnLoad) {
-          el.addEventListener("load", fnOnLoad);
+    <script>
+        function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
+            const el = document.createElement(sElemType);
+            const srcAttr = sElemType === "link" ? "href" : "src";
+            el[srcAttr] = `${sSrc}`;
+            aAttrs.forEach((attr) => {
+                el.setAttribute(attr.k, attr.v);
+            })
+            if (fnOnLoad) {
+                el.addEventListener("load", fnOnLoad);
+            }
+            document.getElementsByTagName("head").item(0).append(el);
         }
-        document.getElementsByTagName("head").item(0).append(el);
-      }
 
-      fetch("/metadata/").then((resp) => resp.json())
-          .then((metadata) => {
-            window.menasVersion = metadata.version;
-            window.apiUrl = metadata.apiUrl
+        $.getJSON('package.json', function(json) {
+            window.apiUrl = json.config.apiUrl;
 
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
                 {k: "rel", v: "stylesheet"}
             ]);
 
-          //Load deps which require sap on load
-            sap.ui.getCore().attachInit(function() {
+            sap.ui.getCore().attachInit(function () {
                 _menasLoadElem("script", "generic/model.js", []);
                 _menasLoadElem("script", "generic/prop.js", []);
                 _menasLoadElem("script", "generic/functions.js", []);
@@ -85,27 +93,27 @@
                 _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleDialog.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleForm.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/ConformanceRuleFormFactory.js", [],
-                    function() {
+                    function () {
 
-                sap.ui.loader.config({
-                    async: true,
-                    paths: {
-                    'components': `${window.menasVersion}/components/`
-                    }
-                });
+                        sap.ui.loader.config({
+                            async: true,
+                            paths: {
+                                'components': `components/`
+                            }
+                        });
 
-              var component = new sap.ui.core.ComponentContainer("MenasComponent", {
-                  name: "components",
-              });
+                        var component = new sap.ui.core.ComponentContainer("MenasComponent", {
+                            name: "components",
+                        });
 
-              component.placeAt("content");
-              });
-            });
-      })
+                        component.placeAt("content");
+                    });
+            })
+        });
     </script>
 
 </head>
 <body class="sapUiBody" role="application">
-  <div id="content"></div>
+<div id="content"></div>
 </body>
 </html>

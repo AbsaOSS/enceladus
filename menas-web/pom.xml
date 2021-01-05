@@ -26,157 +26,66 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <scala.xml.version>1.0.4</scala.xml.version>
         <webui.basedir>${project.basedir}/ui</webui.basedir>
-        <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-library</artifactId>
-            <version>${scala.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_${scala.compat.version}</artifactId>
-            <version>${scala.xml.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-            <version>${spring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-            <version>${spring.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-java8-compat_${scala.compat.version}</artifactId>
-            <version>${scala.java8.compat.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>africa.absa</groupId>
-            <artifactId>openui5</artifactId>
-            <version>${openui5.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>africa.absa</groupId>
-            <artifactId>cronstrue-webjar</artifactId>
-            <version>${cronstrue.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>lodash</artifactId>
-            <version>${lodash.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>momentjs</artifactId>
-            <version>${momentjs.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator-core</artifactId>
-            <version>${webjars.locator.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>client-ui</artifactId>
-            <version>${spline.ui.version}</version>
-        </dependency>
-        <!-- Plot -->
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>chart.js</artifactId>
-            <version>${bower.chart.js.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-scala_${scala.compat.version}</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>utils</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-log4j12</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
-
-        <!-- GSON -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.scalastyle</groupId>
-                <artifactId>scalastyle-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring.version}</version>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.7.6</version>
                 <configuration>
-                    <mainClass>za.co.absa.enceladus.menas.web.Application</mainClass>
+                    <installDirectory>target</installDirectory>
+                    <workingDirectory>ui</workingDirectory>
+                    <nodeVersion>v10.16.0</nodeVersion>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>${maven.scala.version}</version>
                 <executions>
                     <execution>
+                        <id>install node and npm</id>
                         <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
+                            <goal>install-node-and-npm</goal>
                         </goals>
+                    </execution>
+                    <execution>
+                        <id>install grunt-openui5</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>install grunt grunt-cli grunt-openui5 --save-dev</arguments>
+                        </configuration>
+                    </execution>
+                    <!--<execution>
+                        <id>sync version to package.json</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>sync-pom-version</arguments>
+                        </configuration>
+                    </execution>-->
+                    <execution>
+                        <id>generate preload</id>
+                        <goals>
+                            <goal>grunt</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>openui5_preload</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>prune</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>prune --production</arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -198,100 +107,7 @@
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <configuration>
-                    <useDefaultDelimiters>false</useDefaultDelimiters>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.ant.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.basedir}/src/main/resources/application.properties.template"
-                                      tofile="${project.basedir}/src/main/resources/application.properties"
-                                      overwrite="false"/>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
-   <profiles>
-       <profile>
-           <id>generateComponentPreload</id>
-           <build>
-           <plugins>
-           <plugin>
-               <groupId>com.github.eirslett</groupId>
-               <artifactId>frontend-maven-plugin</artifactId>
-               <version>1.7.6</version>
-               <executions>
-                   <execution>
-                       <id>install node and npm</id>
-                       <goals>
-                           <goal>install-node-and-npm</goal>
-                       </goals>
-                       <phase>generate-resources</phase>
-                   </execution>
-                   <execution>
-                       <id>install grunt-openui5</id>
-                       <goals>
-                           <goal>npm</goal>
-                       </goals>
-                       <configuration>
-                           <arguments>install grunt grunt-cli grunt-openui5 --save-dev</arguments>
-                       </configuration>
-                   </execution>
-                   <execution>
-                       <id>generate preload</id>
-                       <goals>
-                           <goal>grunt</goal>
-                       </goals>
-                       <configuration>
-                           <arguments>openui5_preload</arguments>
-                       </configuration>
-                   </execution>
-               </executions>
-               <configuration>
-                   <workingDirectory>ui</workingDirectory>
-                   <nodeVersion>v10.16.0</nodeVersion>
-               </configuration>
-           </plugin>
-           <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-antrun-plugin</artifactId>
-               <version>${maven.ant.plugin.version}</version>
-               <executions>
-                   <execution>
-                       <id>Clean up after generating component preload</id>
-                       <phase>generate-resources</phase>
-                       <configuration>
-                           <target>
-                               <delete dir="${project.basedir}/ui/node_modules"/>
-                               <delete dir="${project.basedir}/ui/node"/>
-                           </target>
-                       </configuration>
-                       <goals>
-                           <goal>run</goal>
-                       </goals>
-                   </execution>
-               </executions>
-           </plugin>
-           </plugins>
-           </build>
-       </profile>
-   </profiles>
 
 </project>
