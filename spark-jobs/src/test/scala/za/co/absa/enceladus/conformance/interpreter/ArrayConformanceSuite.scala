@@ -46,7 +46,7 @@ class ArrayConformanceSuite extends FunSuite with SparkTestBase with BeforeAndAf
 
     spark.sessionState.conf.setConfString("za.co.absa.myVal", "myConf")
 
-    DataSource.setData("mapping", mapDF)
+    DataSource.setData("mapping/reportDate=2017-11-01", mapDF)
   }
 
   def testArrayTypeConformance(useExperimentalMappingRule: Boolean): Unit = {
