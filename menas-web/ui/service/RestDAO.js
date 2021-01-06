@@ -232,13 +232,4 @@ class ConfigRestClient {
   static getEnvironmentName() {
     return RestClient.get(`api/configuration/environment`)
   }
-
-  static getLineageExecutionIdApiTemplate() {
-    let request = {
-      url: `lineageExecutionIdApiTemplate`,
-      async: true
-    };
-    return $.ajax(request);
-  }
-
 }

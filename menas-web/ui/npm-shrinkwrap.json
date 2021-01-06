@@ -4,11 +4,6 @@
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
-    "@absa-oss/spline-ui": {
-      "version": "0.5.3",
-      "resolved": "https://registry.npmjs.org/@absa-oss/spline-ui/-/spline-ui-0.5.3.tgz",
-      "integrity": "sha512-KCDEB2++k3c+DjE3o64yt+d5myCfI2LmG1NNBgwWy/sBQ+wTOlTSQlm9yC35Xh2R0wq3jpCPqpxOG/a/Cbz3pw=="
-    },
     "@openui5/sap.m": {
       "version": "1.67.1",
       "resolved": "https://registry.npmjs.org/@openui5/sap.m/-/sap.m-1.67.1.tgz",
@@ -57,11 +52,6 @@
       "requires": {
         "@openui5/sap.ui.core": "1.67.1"
       }
-    },
-    "@openui5/themelib_sap_belize": {
-      "version": "1.67.1",
-      "resolved": "https://registry.npmjs.org/@openui5/themelib_sap_belize/-/themelib_sap_belize-1.67.1.tgz",
-      "integrity": "sha512-cqd0cYDihzy40Lg9X5eOPK3qsxYvKokRgzihh+L370cgFjnSGrcXqJOWZnyRXqhNK2aOQe48WD/NCYSIUp81Dw=="
     },
     "@zeit/schemas": {
       "version": "2.6.0",

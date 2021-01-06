@@ -29,6 +29,14 @@
         <webui.basedir>${project.basedir}/ui</webui.basedir>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>za.co.absa.spline</groupId>
+            <artifactId>client-ui</artifactId>
+            <version>${spline.ui.version}</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>

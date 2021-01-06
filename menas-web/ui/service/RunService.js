@@ -104,11 +104,8 @@ var RunService = new function () {
   };
 
   if (this._getLineageExecutionIdApiTemplate() === undefined) {
-    ConfigRestClient.getLineageExecutionIdApiTemplate()
-      .then( sApiTemplate => {
-        sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", sApiTemplate);
-      })
-      .fail( () => console.log("Failed to get Lineage API address"));
+    let template = "execution-events?dataSourceUri=%s&applicationId=%s";
+    sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", template);
   }
 
   this._bindRunSummaries = function (oRunSummaries, oControl) {

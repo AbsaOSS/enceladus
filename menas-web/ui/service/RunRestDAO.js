@@ -48,7 +48,7 @@ class RunRestDAO {
       .replace("%s", outputPath)
       .replace("%s", applicationId);
 
-    RestClient.getSync(url, false, true).then((response) => {
+    RestClient.getSync(window.lineageReadApiUrl + "/" + url, false, true).then((response) => {
       this._totalCount = response.totalCount;
       if (this._totalCount > 0) {
         this._executionEventId = response.items[0].executionEventId;

@@ -29,7 +29,18 @@ var GenericService = new function () {
       model().setProperty("/menasVersion", oInfo.menasVersion);
     };
 
+    function getCookie(name) {
+      let v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+      return v ? v[2] : null;
+    }
+
+    let cookie = getCookie("JWT");
+    let jwt = cookie ? cookie : localStorage.getItem("jwtToken");
+
     $.ajax(window.apiUrl + "/api/user/info", {
+      headers: {
+        "JWT": jwt
+      },
       method: "GET",
       success: fnSuccess,
       async: false
