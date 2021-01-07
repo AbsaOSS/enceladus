@@ -237,11 +237,6 @@
             <version>${webjars.locator.version}</version>
         </dependency>
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>client-ui</artifactId>
-            <version>${spline.ui.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
             <version>${oozie.version}</version>

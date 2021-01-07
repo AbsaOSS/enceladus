@@ -21,12 +21,12 @@ import org.mockito.scalatest.MockitoSugar
 import org.scalatest.BeforeAndAfter
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.concurrent.{Await, Future}
 
 abstract class BaseServiceTest extends AnyFunSuite with MockitoSugar with BeforeAndAfter {
-  val shortTimeout = Duration(100, TimeUnit.MILLISECONDS)
-  val longTimeout = Duration(2000, TimeUnit.MILLISECONDS)
+  val shortTimeout: FiniteDuration = Duration(100, TimeUnit.MILLISECONDS)
+  val longTimeout: FiniteDuration = Duration(2000, TimeUnit.MILLISECONDS)
 
   def await[T](future: Future[T], awaitDuration: Duration = longTimeout): T = { // default set for longTimeout as shortTimeout fails on some systems in some cases
     Await.result(future, awaitDuration)
