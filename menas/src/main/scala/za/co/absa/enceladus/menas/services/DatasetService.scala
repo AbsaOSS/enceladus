@@ -23,6 +23,8 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import scala.language.reflectiveCalls
+import DatasetService.RuleValidationsAndFields
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.util.{Failure, Success}
@@ -35,18 +37,6 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   extends VersionedModelService(datasetMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  // Local class for the representation of validation of conformance rules.
-  final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
-    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
-      validations = validations ++ ruleValidationsAndFields.validations,
-      fields = ruleValidationsAndFields.fields
-    )
-
-    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
-
-    def mergeAndGetValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
-  }
 
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
@@ -75,11 +65,12 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
         coordId <- latest.schedule match {
           case Some(sched) => sched.activeInstance match {
             case Some(instance) =>
-              //Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it might have been updated)
-              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ res =>
+              // Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it
+              // might have been updated)
+              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ _ =>
                 oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               }).recoverWith({
-                case ex =>
+                case _ =>
                   logger.warn("First attempt to kill previous coordinator failed, submitting a new one.")
                   oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
               })
@@ -166,7 +157,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   /**
-   * Retireves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false, it behaves as [[VersionedModelService#getVersion()]]
+   * Retrieves dataset by name & version, optionally with validating properties. When addPropertiesValidation is false,
+    * it behaves as [[VersionedModelService#getVersion()]]
    * @param datasetName dataset name to retrieve
    * @param datasetVersion dataset version to retrieve
    * @param addPropertiesValidation true if populate dataset's `propertiesValidation` field
@@ -286,7 +278,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       }
     }
 
-    ruleValidationsAndFields.mergeAndGetValidations()
+    ruleValidationsAndFields.mergeValidations()
   }
 
   private def validateDrop(currentColumns: Future[Set[String]],
@@ -373,4 +365,20 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     RuleValidationsAndFields(Seq(Future(validation)), fields)
   }
 
+}
+
+object DatasetService {
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  // Local class for the representation of validation of conformance rules.
+  final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
+    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
+      validations = validations ++ ruleValidationsAndFields.validations,
+      fields = ruleValidationsAndFields.fields
+    )
+
+    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+
+    def mergeValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
+  }
 }

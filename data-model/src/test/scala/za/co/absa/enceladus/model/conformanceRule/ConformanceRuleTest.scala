@@ -56,7 +56,7 @@ class ConformanceRuleTest extends WordSpec with Matchers {
     val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
       mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
       targetAttribute = "country_name")
-    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false}"""
+    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false,"mappingTableFilter":null,"overrideMappingTableOwnFilter":false}"""
     assertSerDe(rule, json)
   }
 
