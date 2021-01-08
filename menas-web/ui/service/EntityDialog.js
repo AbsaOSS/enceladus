@@ -101,8 +101,11 @@ class DatasetDialog extends EntityDialog {
     let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
       "Dataset publish HDFS path",
       this.oController.byId("selectedPublishHDFSPathLabel"));
+    let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
+    let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
+      this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasValidRawHDFSPath && hasValidPublishHDFSPath;
+    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
   }
 
   onNameChange() {
@@ -264,8 +267,9 @@ class MappingTableDialog extends EntityDialog {
     let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
       "Mapping Table HDFS path",
       this.oController.byId("selectedHDFSPathLabel"));
+    let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasValidHDFSPath;
+    return hasValidName && hasValidSchema && hasExistingHDFSPath;
   }
 
   onNameChange() {

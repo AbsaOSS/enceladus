@@ -96,17 +96,8 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
     //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
-    this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
+    this._updateLineageIframeSrc(oRun.splineUrl)
   };
-
-  this._getLineageExecutionIdApiTemplate = function() {
-    return sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
-  };
-
-  if (this._getLineageExecutionIdApiTemplate() === undefined) {
-    let template = "execution-events?dataSourceUri=%s&applicationId=%s";
-    sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", template);
-  }
 
   this._bindRunSummaries = function (oRunSummaries, oControl) {
     oRunSummaries.forEach(run => {
@@ -128,9 +119,7 @@ var RunService = new function () {
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
-    let lineageInfo = this._buildLineageUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
-    oRun.lineageUrl = lineageInfo.lineageUrl;
-    oRun.lineageError = lineageInfo.lineageError;
+    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -138,30 +127,19 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
+  this._buildSplineUrl = function (outputPath, applicationId) {
+    return this._getSplineUrlTemplate()
+      .replace("%s", outputPath)
+      .replace("%s", applicationId)
+  };
 
-  this._buildLineageUrl = function(outputPath, applicationId) {
-    const urlTemplate = "lineage/app/lineage-overview?executionEventId=%s";
-    const lineageExecutionIdApiTemplate = this._getLineageExecutionIdApiTemplate();
-    if (lineageExecutionIdApiTemplate) {
-      const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
-
-      if (lineageIdInfo.totalCount === 1) {
-        return {
-          lineageUrl: urlTemplate.replace("%s", lineageIdInfo.executionEventId),
-          lineageError: ""
-        };
-      } else {
-        return {
-          lineageUrl: "",
-          lineageError: !!lineageIdInfo.totalCount ? "Multiple lineage records found" : "No lineage found"
-        };
-      }
-    } else {
-      return {
-        lineageUrl: "",
-        lineageError: "Lineage service not configured"
-      };
+  this._getSplineUrlTemplate = function () {
+    if (!this.splineUrlTemplate) {
+      const runRestDAO = new RunRestDAO();
+      runRestDAO.getSplineUrlTemplate()
+        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
     }
+    return this.splineUrlTemplate
   };
 
   this._mapAdditionalInfo = function (info) {
@@ -269,19 +247,12 @@ var RunService = new function () {
     return this._durationAsString(duration);
   };
 
-  this._updateLineageIframeSrc = function (oControl, sNewUrl, sErrorMessage) {
+  this._updateLineageIframeSrc = function (sNewUrl) {
     let iframe = document.getElementById("lineage_iframe");
     if (iframe) {
       // the iframe doesn't necessary exists yet
       // (but if it doesn't it will be created, and initial data binding actually works)
-      iframe.visible = (sNewUrl !== "");
       iframe.src = sNewUrl;
-    }
-    let view = oControl.getParent();
-    let label = view.byId("LineageErrorLabel");
-    if (label) {
-      label.setVisible(sErrorMessage !== "");
-      label.setText(sErrorMessage);
     }
   };
 

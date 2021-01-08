@@ -27,11 +27,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.RestError
 import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
 import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
-import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.model.Validation
+import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
