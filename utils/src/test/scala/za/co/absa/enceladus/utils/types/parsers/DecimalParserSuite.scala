@@ -33,6 +33,19 @@ class DecimalParserSuite extends AnyFunSuite {
     assert(parser.parse("271E-2") == Success(BigDecimal("2.71")))
   }
 
+  test("No pattern, strict parsing") {
+    val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols
+    val pattern = NumericPattern(decimalSymbols)
+    val parser = DecimalParser(pattern,maxScale = Some(2))
+    assert(parser.parse("3.14") == Success(BigDecimal("3.14")))
+    assert(parser.parse("1.") == Success(BigDecimal.valueOf(1)))
+    assert(parser.parse("-7") == Success(BigDecimal.valueOf(-7)))
+    assert(parser.parse("12.123455").isFailure)
+    assert(parser.parse(".271E1") == Success(BigDecimal("2.71")))
+
+    assert(parser.parse("271E-2") == Success(BigDecimal("2.71")))
+  }
+
   test("No pattern, no limitations, minus sign and decimal separator altered") {
     val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols.copy(minusSign = 'N', decimalSeparator = ',')
     val pattern = NumericPattern(decimalSymbols)

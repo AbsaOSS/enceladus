@@ -72,7 +72,7 @@ sap.ui.define([
 
       this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
       this._schemaService = new SchemaService(this._model, this._oEventBus);
-      this._schemaTable = new SchemaTable(this);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
       this._schemaFieldSelector = new SimpleSchemaFieldSelector(this, this._addDefaultDialog)
 
       const auditTable = this.byId("auditTrailTable");

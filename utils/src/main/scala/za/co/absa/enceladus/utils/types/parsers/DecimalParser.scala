@@ -16,11 +16,15 @@
 package za.co.absa.enceladus.utils.types.parsers
 
 import java.text.DecimalFormat
+
 import za.co.absa.enceladus.utils.numeric.NumericPattern
+
+import scala.util.{Failure, Success, Try}
 
 class DecimalParser(override val pattern: NumericPattern,
                     override val min: Option[BigDecimal],
-                    override val max: Option[BigDecimal])
+                    override val max: Option[BigDecimal],
+                    val maxScale: Option[Int] = None)
   extends NumericParser(pattern, min, max) with ParseViaDecimalFormat[BigDecimal] {
 
   override protected val stringConversion: String => BigDecimal = BigDecimal(_)
@@ -31,12 +35,23 @@ class DecimalParser(override val pattern: NumericPattern,
     format.setParseBigDecimal(true)
     format
   })
+
+  override def parse(string: String): Try[BigDecimal] = {
+    super.parse(string).flatMap(number => {
+      maxScale match {
+        case Some(maxSc) if maxSc < number.scale =>
+            Failure(new IllegalArgumentException(s"$string exceeds the defined scale limit in the schema"))
+        case _ => Success(number)
+      }
+    })
+  }
 }
 
 object DecimalParser {
   def apply(pattern: NumericPattern,
             min: Option[BigDecimal] = None,
-            max: Option[BigDecimal] = None): DecimalParser = {
-    new DecimalParser(pattern, min, max)
+            max: Option[BigDecimal] = None,
+            maxScale: Option[Int] = None): DecimalParser = {
+    new DecimalParser(pattern, min, max, maxScale)
   }
 }

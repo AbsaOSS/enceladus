@@ -16,8 +16,8 @@ package za.co.absa.enceladus.menas.services
 
 import org.mockito.Mockito
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
+import za.co.absa.enceladus.model.Validation
 
 import scala.concurrent.{Await, Future}
 import za.co.absa.enceladus.model.menas.audit.Auditable

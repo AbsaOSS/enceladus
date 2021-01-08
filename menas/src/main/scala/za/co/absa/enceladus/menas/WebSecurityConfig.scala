@@ -29,13 +29,13 @@ import org.springframework.security.web.authentication._
 import za.co.absa.enceladus.menas.auth._
 import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 @EnableWebSecurity
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")
-                                     authMechanism: String) {
-
+                                     authMechanism: String) extends ProjectMetadata {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Configuration
@@ -58,7 +58,8 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers( "/admin/health", "/api/user/version", "/api/configuration/**")
+          .antMatchers("/admin/health", "/api/oozie/isEnabled",
+            "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
           .permitAll()
         .anyRequest()
           .authenticated()

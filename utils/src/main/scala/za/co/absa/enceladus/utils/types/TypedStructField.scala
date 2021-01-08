@@ -349,14 +349,20 @@ object TypedStructField {
       DecimalTypeStructField.minPossible(dataType),
       DecimalTypeStructField.maxPossible(dataType)
     ){
+    val strictParsing: Boolean = getMetadataStringAsBoolean(MetadataKeys.StrictParsing).getOrElse(false)
 
-    override val parser: Try[DecimalParser] =
+    override val parser: Try[DecimalParser] = {
+      val maxScale = if(strictParsing) Some(scale) else None
       pattern.map { patternOpt =>
-        DecimalParser(patternOpt.getOrElse(NumericPattern(defaults.getDecimalSymbols)), Option(typeMin), Option(typeMax))
+        val pattern: NumericPattern = patternOpt.getOrElse(NumericPattern(defaults.getDecimalSymbols))
+        DecimalParser(pattern, Option(typeMin), Option(typeMax), maxScale)
       }
+    }
+
+    override def needsUdfParsing: Boolean = strictParsing || super.needsUdfParsing
 
     override def validate(): Seq[ValidationIssue] = {
-      NumericFieldValidator.validate(this)
+      DecimalFieldValidator.validate(this)
     }
 
     def precision: Int = dataType.precision

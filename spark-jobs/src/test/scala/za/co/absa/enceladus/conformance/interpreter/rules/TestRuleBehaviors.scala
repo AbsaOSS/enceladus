@@ -27,21 +27,26 @@ import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, S
 
 trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
-  def conformanceRuleShouldMatchExpected(inputDf: DataFrame, inputDataset: Dataset, expectedJSON: String) {
+  def conformanceRuleShouldMatchExpected(inputDf: DataFrame,
+                                         inputDataset: Dataset,
+                                         expectedJSON: String,
+                                         featureSwitchesOverride: Option[FeatureSwitches] = None) {
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
+    val originalColumnsMutability: Boolean = true
 
     mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
     mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
 
     import spark.implicits._
-    implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
+    implicit val featureSwitches: FeatureSwitches = featureSwitchesOverride.getOrElse(FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
+      .setOriginalColumnsMutability(originalColumnsMutability))
 
     val conformed = DynamicInterpreter().interpret(inputDataset, inputDf)
 

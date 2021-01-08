@@ -58,6 +58,10 @@ var Formatters = new function() {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && (Object.keys(oObj).length !== 0)
   };
 
+  this.isDefinedAndTrue = function(oObj) {
+    return (oObj !== null) && (typeof (oObj) !== "undefined") && oObj == true
+  };
+
   this.objToKVArray = function(oObj) {
     if(oObj === null || typeof(oObj) === "undefined") return []
     else {

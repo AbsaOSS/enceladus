@@ -114,12 +114,13 @@ object ArraySamples {
     Outer(1, Seq(), false),
     Outer(2, null, true))
 
-    val conformanceDef = ConfDataset(name="test", version = 0, hdfsPath = "test", hdfsPublishPath = "", schemaName = "test", schemaVersion = 0,
+    val conformanceDef: ConfDataset = ConfDataset(name="test", version = 0, hdfsPath = "test", hdfsPublishPath = "", schemaName = "test", schemaVersion = 0,
       conformance = List(
         new MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "mapping", mappingTableVersion = 0,
           attributeMappings = Map("ind" -> "a.c.d", "otherFlag" -> "myFlag"), targetAttribute = "value", outputColumn = "a.c.conformedD" ),
         new ConcatenationConformanceRule(order = 2, controlCheckpoint = false, outputColumn = "a.c.conformedConcat", inputColumns = List("a.c.conformedD", "a.c.toDrop")),
-        new DropConformanceRule(order = 3, controlCheckpoint = false, outputColumn = "a.c.toDrop"),
+        new LiteralConformanceRule(order = 4, controlCheckpoint = false, outputColumn = "a.c.toDropNonOriginal", value = "DropThis"),
+        new DropConformanceRule(order = 3, controlCheckpoint = false, outputColumn = "a.c.toDropNonOriginal"),
         new LiteralConformanceRule(order = 4, controlCheckpoint = false, outputColumn = "a.c.conformedLit", value = "Hello world"),
         new SingleColumnConformanceRule(order = 5, controlCheckpoint = false, outputColumn = "a.c.conformedStruct", inputColumn = "a.c.conformedLit", inputColumnAlias = "myInnerThingy"),
         new SparkSessionConfConformanceRule(order = 6, controlCheckpoint = false, outputColumn = "a.c.conformedSparkConf", sparkConfKey = "za.co.absa.myVal"),

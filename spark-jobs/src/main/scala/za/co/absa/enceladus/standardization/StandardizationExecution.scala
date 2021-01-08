@@ -63,9 +63,6 @@ trait StandardizationExecution extends CommonJobExecution {
     spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
-    log.info(s"raw path: ${preparationResult.pathCfg.raw.path}")
-    log.info(s"standardization path: ${preparationResult.pathCfg.standardization.path}")
-
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
@@ -84,6 +81,10 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
+    // Add Dataset properties marked with putIntoInfoFile=true
+    val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
+    addCustomDataToInfoFile(conf, dataForInfoFile)
+
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization.path,
@@ -101,9 +102,11 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  override def validateOutputPath(pathConfig: PathConfig): Unit = {
-    // Std output is validated in the std FS
-    validateIfPathAlreadyExists(pathConfig.standardization)
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"raw path: ${pathConfig.raw.path}")
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    validateInputPath(pathConfig.raw)
+    validateIfOutputPathAlreadyExists(pathConfig.standardization)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,

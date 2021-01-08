@@ -35,7 +35,7 @@ class HyperConformanceSuite extends AnyFlatSpec with Matchers {
 
   behavior of "Service Provider Interface (META-INF/services)"
 
-  it should "load ColumnSelectorStreamTransformer" in {
+  it should "load HyperConformanceTransformer" in {
     val factoryProviders = loadServices[StreamTransformerFactoryProvider, StreamTransformerFactory]()
     factoryProviders should contain only HyperConformance
   }

@@ -18,6 +18,7 @@ package za.co.absa.enceladus.common.config
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 import scala.util.matching.Regex
 
@@ -45,13 +46,15 @@ trait JobConfigParser[R] {
   def keytabFile: Option[String]
 }
 
-object JobConfigParser {
+object JobConfigParser extends ProjectMetadata {
 
   //scalastyle:off method.length the length is legit for parsing input paramters
   def jobConfigParser[R <: JobConfigParser[R]]: OParser[_, R] = {
     val builder = OParser.builder[R]
     import builder._
-    OParser.sequence(head("Job Parameters"),
+    OParser.sequence(
+
+      head(s"Enceladus v${projectVersion}"),
       opt[String]('D', "dataset-name").required().action((value, config) =>
         config.withDatasetName(value)).text("Dataset name"),
 

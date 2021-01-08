@@ -42,15 +42,17 @@ case class StandardizationConformanceConfig(datasetName: String = "",
 
                                             rawFormat: String = "xml",
                                             charset: Option[String] = None,
+                                            nullValue: Option[String] = None,
                                             rowTag: Option[String] = None,
                                             csvDelimiter: Option[String] = None,
-                                            csvHeader: Option[Boolean] = Some(false),
+                                            csvHeader: Option[Boolean] = None,
                                             csvQuote: Option[String] = None,
                                             csvEscape: Option[String] = None,
                                             cobolOptions: Option[CobolOptions] = None,
-                                            fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                            fixedWidthTrimValues: Option[Boolean] = None,
                                             rawPathOverride: Option[String] = None,
                                             failOnInputNotPerSchema: Boolean = false,
+                                            fixedWidthTreatEmptyValuesAsNulls: Option[Boolean] = None,
 
                                             credsFile: Option[String] = None,
                                             keytabFile: Option[String] = None)
@@ -59,10 +61,12 @@ case class StandardizationConformanceConfig(datasetName: String = "",
 
   override def withPublishPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(publishPathOverride = value)
   override def withExperimentalMappingRule(value: Option[Boolean]): StandardizationConformanceConfig = copy(experimentalMappingRule = value)
-  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = copy(isCatalystWorkaroundEnabled = value) //scalastyle:ignore
-  //better readability than multiline
-  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = copy(autocleanStandardizedFolder = value) //scalastyle:ignore
-  //better readability than multiline
+  override def withIsCatalystWorkaroundEnabled(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(isCatalystWorkaroundEnabled = value)
+  }
+  override def withAutocleanStandardizedFolder(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(autocleanStandardizedFolder = value)
+  }
   override def withDatasetName(value: String): StandardizationConformanceConfig = copy(datasetName = value)
   override def withDatasetVersion(value: Int): StandardizationConformanceConfig = copy(datasetVersion = value)
   override def withReportDate(value: String): StandardizationConformanceConfig = copy(reportDate = value)
@@ -73,6 +77,7 @@ case class StandardizationConformanceConfig(datasetName: String = "",
 
   override def withRawFormat(value: String): StandardizationConformanceConfig = copy(rawFormat = value)
   override def withCharset(value: Option[String]): StandardizationConformanceConfig = copy(charset = value)
+  override def withNullValue(value: Option[String]): StandardizationConformanceConfig = copy(nullValue = value)
   override def withRowTag(value: Option[String]): StandardizationConformanceConfig = copy(rowTag = value)
   override def withCsvDelimiter(value: Option[String]): StandardizationConformanceConfig = copy(csvDelimiter = value)
   override def withCsvHeader(value: Option[Boolean]): StandardizationConformanceConfig = copy(csvHeader = value)
@@ -82,6 +87,9 @@ case class StandardizationConformanceConfig(datasetName: String = "",
   override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTrimValues = value)
   override def withRawPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(rawPathOverride = value)
   override def withFailOnInputNotPerSchema(value: Boolean): StandardizationConformanceConfig = copy(failOnInputNotPerSchema = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConformanceConfig = {
+    copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  }
 
   override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConformanceConfig = {
     copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
@@ -106,6 +114,7 @@ object StandardizationConformanceConfig {
     import builder._
     OParser.sequence(
       programName("Standardization Conformance Job"),
+      help("help"),
       StandardizationConfigParser.standardizationParser,
       ConformanceConfigParser.conformanceParser,
       JobConfigParser.jobConfigParser

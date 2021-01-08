@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.codehaus.jackson.annotate.JsonProperty
 
 case class SchemaField
@@ -32,7 +33,12 @@ case class SchemaField
   children: Seq[SchemaField]
 ) {
   @JsonProperty("absolutePath")
-  def getAbsolutePath(): String = {
-    if(path.isEmpty) name else s"${path}.${name}"
+  def getAbsolutePath: String = {
+    if(path.isEmpty) name else s"$path.$name"
+  }
+
+  @JsonIgnore
+  def getAllChildren: Seq[String] = {
+    children.flatMap(child => child.getAllChildren :+ child.getAbsolutePath)
   }
 }

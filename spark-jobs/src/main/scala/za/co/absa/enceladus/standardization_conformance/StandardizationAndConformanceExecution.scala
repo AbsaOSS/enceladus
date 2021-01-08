@@ -40,11 +40,13 @@ trait StandardizationAndConformanceExecution extends StandardizationExecution
     )
   }
 
-  override def validateOutputPath(pathConfig: PathConfig): Unit = {
-    // Std output is validated in the std FS
-    validateIfPathAlreadyExists(pathConfig.standardization)
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"raw path: ${pathConfig.raw.path}")
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    log.info(s"publish path: ${pathConfig.publish.path}")
 
-    // publish output is validated in the publish FS
-    validateIfPathAlreadyExists(pathConfig.publish)
+    validateInputPath(pathConfig.raw)
+    validateIfOutputPathAlreadyExists(pathConfig.standardization)
+    validateIfOutputPathAlreadyExists(pathConfig.publish)
   }
 }

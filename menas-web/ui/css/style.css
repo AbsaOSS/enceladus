@@ -85,3 +85,13 @@ html, body {
   font-size: 200%;
   padding-top: 2rem;
 }
+
+/* Conformance indicator styling */
+.conformIcon {
+  margin: 0 3px;
+}
+
+/* Making IconTabBar tabs slightly wider (default is 5rem), so we don't get so many ellipsized labels (e.g. Conformance Rules, Conformed Schema) */
+.sapMITBFilter .sapMITBText, .sapMITBTab {
+  width: 7rem;
+}

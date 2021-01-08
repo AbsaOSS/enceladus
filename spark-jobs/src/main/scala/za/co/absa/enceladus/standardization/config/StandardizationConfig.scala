@@ -31,13 +31,14 @@ import scala.util.Try
  */
 case class StandardizationConfig(rawFormat: String = "xml",
                                  charset: Option[String] = None,
+                                 nullValue: Option[String] = None,
                                  rowTag: Option[String] = None,
                                  csvDelimiter: Option[String] = None,
-                                 csvHeader: Option[Boolean] = Some(false),
+                                 csvHeader: Option[Boolean] = None,
                                  csvQuote: Option[String] = None,
                                  csvEscape: Option[String] = None,
                                  cobolOptions: Option[CobolOptions] = None,
-                                 fixedWidthTrimValues: Option[Boolean] = Some(false),
+                                 fixedWidthTrimValues: Option[Boolean] = None,
                                  rawPathOverride: Option[String] = None,
                                  failOnInputNotPerSchema: Boolean = false,
                                  datasetName: String = "",
@@ -49,9 +50,11 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  folderPrefix: Option[String] = None,
                                  persistStorageLevel: Option[StorageLevel] = None,
                                  credsFile: Option[String] = None,
-                                 keytabFile: Option[String] = None)
+                                 keytabFile: Option[String] = None,
+                                 fixedWidthTreatEmptyValuesAsNulls: Option[Boolean] = None)
   extends StandardizationConfigParser[StandardizationConfig]{
   override def withRawFormat(value: String): StandardizationConfig = copy(rawFormat = value)
+  override def withNullValue(value: Option[String]): StandardizationConfig = copy(nullValue = value)
   override def withCharset(value: Option[String]): StandardizationConfig = copy(charset = value)
   override def withRowTag(value: Option[String]): StandardizationConfig = copy(rowTag = value)
   override def withCsvDelimiter(value: Option[String]): StandardizationConfig = copy(csvDelimiter = value)
@@ -76,6 +79,9 @@ case class StandardizationConfig(rawFormat: String = "xml",
   override def withPerformanceMetricsFile(value: Option[String]): StandardizationConfig = copy(performanceMetricsFile = value)
   override def withFolderPrefix(value: Option[String]): StandardizationConfig = copy(folderPrefix = value)
   override def withPersistStorageLevel(value: Option[StorageLevel]): StandardizationConfig = copy(persistStorageLevel = value)
+  override def withFixedWidthTreatEmptyValuesAsNulls(value: Option[Boolean]): StandardizationConfig = {
+    copy(fixedWidthTreatEmptyValuesAsNulls = value)
+  }
 }
 
 object StandardizationConfig {
@@ -92,6 +98,7 @@ object StandardizationConfig {
     import builder._
     OParser.sequence(
       programName("Standardization Job"),
+      help("help"),
       StandardizationConfigParser.standardizationParser,
       JobConfigParser.jobConfigParser
     )

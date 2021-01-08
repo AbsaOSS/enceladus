@@ -39,7 +39,7 @@ sap.ui.define([
       this._eventBus.subscribe("schemas", "updated", this.onEntityUpdated, this);
 
       this._schemaService = new SchemaService(this._model, this._eventBus);
-      this._schemaTable = new SchemaTable(this);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
 
       const auditTable = this.byId("auditTrailTable");
       const auditUtils = new AuditTrail(auditTable);
@@ -291,18 +291,22 @@ sap.ui.define([
       } else if (status === 400) {
         const errorMessage = ajaxResponse.responseJSON.message;
         const errorMessageDetails = errorMessage ? `\n\nDetails:\n${errorMessage}` : "";
+
+        const errorCause = ajaxResponse.responseJSON.error.causeDesc;
+        const errorMessageCause = errorCause ? `\n\nCaused by:\n${errorCause}` : "";
+
         const errorType = ajaxResponse.responseJSON.error.errorType;
 
         let msg;
         if (errorType === "schema_retrieval_error") {
           if (source === "remote") {
-            msg = `Error retrieving the schema file from "${this.byId("remoteUrl").getValue()}".${errorMessageDetails}`
+            msg = `Error retrieving the schema file from "${this.byId("remoteUrl").getValue()}".${errorMessageDetails}${errorMessageCause}`
           } else {
-            msg = `Error retrieving the schema file by topic-name stem "${this.byId("subjectName").getValue()}".${errorMessageDetails}`
+            msg = `Error retrieving the schema file by topic-name stem "${this.byId("subjectName").getValue()}".${errorMessageDetails}${errorMessageCause}`
           }
         } else {
           msg = `Error parsing the schema file. Ensure that the file is a valid avro schema and ` +
-            `try again.${errorMessageDetails}`
+            `try again.${errorMessageDetails}${errorMessageCause}`
         }
 
         MessageBox.error(msg)

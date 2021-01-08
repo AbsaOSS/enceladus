@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.model.menas.scheduler
 
-import com.typesafe.config.{Config, ConfigFactory}
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Seq[String], month: Seq[String], dayOfWeek: Seq[String]) {
+  def getCronSchedule: String = {
+    val minuteSep = minute.mkString(",")
+    val hourSep = hour.mkString(",")
+    val dayOfMonthSep = dayOfMonth.mkString(",")
+    val monthSep = month.mkString(",")
+    val dayOfWeekSep = dayOfWeek.mkString(",")
 
-object ProjectMetadataTools {
-  private val conf: Config = ConfigFactory.load()
-
-  private val enceladusVersionKey = "enceladus.version"
-
-  /** Returns Enceladus version from the application configuration properties */
-  def getEnceladusVersion: String = conf.getOptionString(enceladusVersionKey).getOrElse("N/A")
-
+    s"$minuteSep $hourSep $dayOfMonthSep $monthSep $dayOfWeekSep"
+  }
 }
