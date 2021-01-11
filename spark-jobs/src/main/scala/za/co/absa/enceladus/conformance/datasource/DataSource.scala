@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance.datasource
 
 import org.apache.spark.sql._
 import org.slf4j.LoggerFactory
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 
 import scala.collection.mutable
 import scala.util.control.NonFatal
@@ -26,7 +27,8 @@ import scala.util.control.NonFatal
   */
 object DataSource {
   private val log = LoggerFactory.getLogger("enceladus.conformance.DataSource")
-  private val dfs = mutable.HashMap[String, Dataset[Row]]()
+  private type DataFrameId = (String, Option[DataFrameFilter])
+  private var dataFrameCache = Map.empty[DataFrameId, DataFrame]
 
   /**
     * Get loaded dataframe or load data given the report date.
@@ -39,9 +41,24 @@ object DataSource {
   def getDataFrame(path: String,
                    reportDate: String)
                   (implicit spark: SparkSession): Dataset[Row] = {
-    getDataFrame(path, reportDate, PartitioningUtils.mappingTablePattern)
+    getDataFrame(path, reportDate, PartitioningUtils.mappingTablePattern, None)
   }
 
+  /**
+    * Get loaded dataframe or load data given the report date.
+    * The partitioning pattern is determined by the current configuration.
+    *
+    * @param path       The base path in HDFS of the data
+    * @param reportDate A string representing a report date in `yyyy-mm-dd` format
+    * @param filter     The optional expression to filter the DataFrame with
+    * @return Dataframe with the required data (cached if requested more than once)
+    */
+  def getDataFrame(path: String,
+                   reportDate: String,
+                   filter: Option[DataFrameFilter])
+                  (implicit spark: SparkSession): Dataset[Row] = {
+    getDataFrame(path, reportDate, PartitioningUtils.mappingTablePattern, filter)
+  }
 
   /**
     * Get loaded dataframe or load data given the report date and partitioning pattern.
@@ -49,31 +66,35 @@ object DataSource {
     * @param path                The base path in HDFS of the data
     * @param reportDate          A string representing a report date in `yyyy-mm-dd` format
     * @param partitioningPattern Pattern representing the date partitioning where {0} stands for year, {1} for month, {2} for day
+    * @param filter              The optional expression to filter the DataFrame with
     * @return Dataframe with the required data (cached if requested more than once)
     */
   def getDataFrame(path: String,
                    reportDate: String,
-                   partitioningPattern: String)
-                  (implicit spark: SparkSession): Dataset[Row] = {
-    if (dfs.contains(path)) {
-      dfs(path)
+                   partitioningPattern: String,
+                   filter: Option[DataFrameFilter] = None)
+                  (implicit spark: SparkSession): DataFrame = {
+    val fullPath = PartitioningUtils.getPartitionedPathName(path, reportDate, partitioningPattern)
+    val dataFrameId = (fullPath, filter)
+    if (dataFrameCache.contains(dataFrameId)) {
+      dataFrameCache(dataFrameId)
     } else {
-      val fullPath = PartitioningUtils.getPartitionedPathName(path, reportDate, partitioningPattern)
       log.info(s"Use partitioned path for: '$path' -> '$fullPath'")
-      val df = loadDataFrame(fullPath)
-      dfs += (path -> df)
+      val df = loadDataFrame(fullPath, filter)
+      dataFrameCache = dataFrameCache + (dataFrameId -> df)
       df
     }
   }
 
-  private[conformance] def setData(path: String, data: Dataset[Row]) {
-    dfs += (path -> data)
+  private[conformance] def setData(path: String, data: DataFrame, filter: Option[DataFrameFilter] = None) {
+    dataFrameCache = dataFrameCache + ((path, filter) -> data)
   }
 
-  private def loadDataFrame(path: String)
+  private def loadDataFrame(path: String, filter: Option[DataFrameFilter])
                            (implicit spark: SparkSession): DataFrame = {
     try {
-      spark.read.parquet(path)
+      val dfLoaded = spark.read.parquet(path)
+      filter.foldLeft(dfLoaded) { case(df, filterDef) => df.filter(filterDef.filter) }
     } catch {
       case ex: AnalysisException if ex.getMessage.contains("Unable to infer schema for Parquet") =>
         throw new RuntimeException(s"Unable to read the mapping table from '$path'. " +
@@ -82,4 +103,5 @@ object DataSource {
         throw e
     }
   }
+
 }
