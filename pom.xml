@@ -146,7 +146,7 @@
 
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
-        <atum.version>3.1.1-SNAPSHOT</atum.version>
+        <atum.version>3.2.0</atum.version>
         <aws.java.sdk.version>2.13.65</aws.java.sdk.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
@@ -341,7 +341,7 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>atum</artifactId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
             <version>${atum.version}</version>
         </dependency>
     </dependencies>

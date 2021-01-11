@@ -267,7 +267,7 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>atum</artifactId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
             <version>${atum.version}</version>
             <exclusions>
                 <exclusion>  <!-- declare the exclusion here -->
