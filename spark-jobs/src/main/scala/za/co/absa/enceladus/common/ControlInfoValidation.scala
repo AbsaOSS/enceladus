@@ -57,7 +57,7 @@ object ControlInfoValidation {
       case (Failure(er1), Failure(er2)) =>
         Failure(new ValidationException(s"$errorMessage ${er1.getMessage}, ${er2.getMessage}",
           Seq(er1.getMessage, er2.getMessage)))
-      case (_, _) => Success()
+      case (_, _) => Success(Unit)
     }
   }
 

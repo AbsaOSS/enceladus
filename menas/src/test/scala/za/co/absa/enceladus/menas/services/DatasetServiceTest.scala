@@ -79,8 +79,8 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val validations = Seq(Future(Validation()), validationWithErrors1, validationWithErrors2)
     val fields = Future(Set("someField"))
-    val validation = service.RuleValidationsAndFields(validations, fields)
-    val result = await(validation.mergeAndGetValidations())
+    val validation = DatasetService.RuleValidationsAndFields(validations, fields)
+    val result = await(validation.mergeValidations())
 
     assert(expectedResult == result)
   }
@@ -88,9 +88,9 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
   test("RuleValidationsAndFields - merge empty"){
     val validations = Seq.empty[Future[Validation]]
     val fields = Future(Set("a"))
-    val validation = service.RuleValidationsAndFields(validations, fields)
+    val validation = DatasetService.RuleValidationsAndFields(validations, fields)
 
-    assert(await(validation.mergeAndGetValidations()).isValid())
+    assert(await(validation.mergeValidations()).isValid())
   }
 
   { // common scope for properties validation checks

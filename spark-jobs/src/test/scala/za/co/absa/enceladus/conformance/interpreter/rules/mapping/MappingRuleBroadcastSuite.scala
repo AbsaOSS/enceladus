@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.interpreter.rules
+package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._

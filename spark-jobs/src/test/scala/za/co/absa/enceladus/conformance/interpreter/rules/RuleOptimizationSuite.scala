@@ -17,13 +17,13 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.MappingRuleInterpreterGroupExplode
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._
-import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
-class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase {
+class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase{
 
   private val schemaJson =
     """{
