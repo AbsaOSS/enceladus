@@ -47,6 +47,7 @@ import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait CommonJobExecution extends ProjectMetadata {
+  implicit val atum: Atum = Atum // basic Atum usage
 
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
@@ -265,6 +266,7 @@ trait CommonJobExecution extends ProjectMetadata {
       log.warn(s"Empty output after running $job. Previous checkpoints show this is correct.")
     } else {
       val errMsg = s"Empty output after running $job, while previous checkpoints show non zero record count"
+      implicit val atum: Atum = Atum // basic Atum usage
       AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(job.toString, errMsg, "")
       throw new IllegalStateException(errMsg)
     }
