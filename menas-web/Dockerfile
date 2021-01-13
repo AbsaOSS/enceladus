@@ -1,13 +1,4 @@
-# To build, first build menas and be in enceladus/menas folder. Then run:
-# $> docker build -t menas .
-# Run image using:
-# $> docker run \
-#       -e JAVA_OPTS=' \
-#           -Dmenas.mongo.connection.string=mongodb://host.docker.internal:27017 \
-#           -Dmenas.mongo.connection.database=menas \
-#       -p 8080:8080 \
-#       menas
-FROM tomcat:9-jre8-alpine
+FROM nginx:1-alpine
 
 LABEL \
     vendor="AbsaOSS" \
@@ -15,8 +6,7 @@ LABEL \
     license="Apache License, version 2.0" \
     name="Menas Web"
 
-EXPOSE 8080
-EXPOSE 8009
+ADD start_menas_web.sh /docker-entrypoint.d/start_menas_web.sh
+RUN chmod +x /docker-entrypoint.d/start_menas_web.sh && rm -rf /usr/share/nginx/html/*
 
-RUN rm -rf /usr/local/tomcat/webapps/*
-COPY target/*.war /usr/local/tomcat/webapps/ROOT.war
+COPY ./ui /usr/share/nginx/html/

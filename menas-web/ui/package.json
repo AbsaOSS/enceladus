@@ -13,8 +13,8 @@
     "sync-pom-version-to-package": "^1.6.0"
   },
   "config": {
-    "apiUrl": "http://localhost:8081",
-    "lineageReadApiUrl": "http://localhost:8082/consumer"
+    "apiUrl": "${API_URL}",
+    "lineageReadApiUrl": "${SPLINE_URL}"
   },
   "dependencies": {
     "@openui5/sap.m": "^1.67.1",
