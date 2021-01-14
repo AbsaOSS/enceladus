@@ -19,7 +19,6 @@ import org.apache.hadoop.conf.{Configuration => HadoopConfiguration}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.security.{SecurityUtil, UserGroupInformation}
 import org.apache.hadoop.security.UserGroupInformation.AuthenticationMethod
-import org.springframework.beans.factory.annotation.Autowired
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
