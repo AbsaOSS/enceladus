@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.testUtils
+package za.co.absa.enceladus.testutils
 
 import za.co.absa.atum.core.Atum
 

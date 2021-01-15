@@ -48,6 +48,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Atum -->
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
+            <version>${atum.version}</version>
+        </dependency>
+
         <!-- Data formats support -->
         <dependency>
             <groupId>com.databricks</groupId>

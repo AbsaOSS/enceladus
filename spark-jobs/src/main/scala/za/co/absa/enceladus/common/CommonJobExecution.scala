@@ -40,7 +40,7 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.util.control.NonFatal

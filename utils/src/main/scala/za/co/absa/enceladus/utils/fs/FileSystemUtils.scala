@@ -21,7 +21,7 @@ import java.net.URI
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.atum.utils.S3LocationUtils.StringS3LocationExt
+import za.co.absa.atum.location.S3Location.StringS3LocationExt
 
 object FileSystemUtils {
 

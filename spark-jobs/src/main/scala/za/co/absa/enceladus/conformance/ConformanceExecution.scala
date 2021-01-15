@@ -40,7 +40,7 @@ import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.util.control.NonFatal

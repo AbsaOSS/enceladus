@@ -265,11 +265,6 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
-        <dependency>
-            <groupId>za.co.absa</groupId>
-            <artifactId>atum_${scala.compat.version}</artifactId>
-            <version>${atum.version}</version>
-        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

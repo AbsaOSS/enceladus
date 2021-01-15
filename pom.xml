@@ -338,11 +338,6 @@
             <version>${mockito.core.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>za.co.absa</groupId>
-            <artifactId>atum_${scala.compat.version}</artifactId>
-            <version>${atum.version}</version>
-        </dependency>
     </dependencies>
 
     <build>

@@ -36,7 +36,7 @@ import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 
