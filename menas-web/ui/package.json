@@ -17,12 +17,6 @@
     "lineageReadApiUrl": "${SPLINE_URL}"
   },
   "dependencies": {
-    "@openui5/sap.m": "^1.67.1",
-    "@openui5/sap.tnt": "1.67.1",
-    "@openui5/sap.ui.core": "^1.67.1",
-    "@openui5/sap.ui.layout": "1.67.1",
-    "@openui5/sap.ui.table": "1.67.1",
-    "@openui5/sap.ui.unified": "1.67.1",
     "chart.js": "^2.7.3",
     "cronstrue": "^1.106.0",
     "jquery": "^3.5.1",
