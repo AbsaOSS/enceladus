@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits.DataSetWrapper
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
@@ -60,14 +60,12 @@ trait ConformanceExecution extends CommonJobExecution {
     val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
-    // Enable Control Framework
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-
     // reinitialize Control Framework in case of combined job
     if (cmd.isInstanceOf[StandardizationConformanceConfig]) {
       spark.disableControlMeasuresTracking()
     }
 
+    // Enable Control Framework
     // InputPath is standardizationPath in the combined job
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardization.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)

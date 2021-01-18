@@ -23,7 +23,6 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
@@ -43,8 +42,6 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
-  implicit val atum: Atum = Atum // basic Atum usage
-
 
   /**
     * Interpret conformance rules defined in a dataset.

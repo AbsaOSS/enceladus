@@ -21,7 +21,7 @@ import java.util.UUID
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
@@ -59,7 +59,6 @@ trait StandardizationExecution extends CommonJobExecution {
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
     spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
 
@@ -153,12 +152,12 @@ trait StandardizationExecution extends CommonJobExecution {
     } catch {
       case e@ValidationException(msg, errors) =>
         val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError("Schema Validation", errorDescription, "")
+        spark.setControlMeasurementError("Schema Validation", errorDescription, "")
         throw e
       case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
     }
   }
@@ -170,8 +169,6 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
                                                (implicit spark: SparkSession): DataFrame = {
-    import za.co.absa.atum.AtumImplicits._
-
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
 

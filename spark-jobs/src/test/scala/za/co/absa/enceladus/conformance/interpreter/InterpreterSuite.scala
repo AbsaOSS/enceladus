@@ -20,16 +20,16 @@ import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.testutils.AtumBase
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase with AtumBase {
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -44,7 +44,6 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
 
     //configure conf value
@@ -103,7 +102,6 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
