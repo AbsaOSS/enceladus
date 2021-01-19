@@ -45,7 +45,7 @@ class DatasetTest extends FunSuite {
     s"""{"metadata":{"exportVersion":$modelVersion},"item":{"name":"Test DS","hdfsPath":"newPath","hdfsPublishPath":"newPublishPath",
       |"schemaName":"newSchema","schemaVersion":1,"conformance":[{"_t":"LiteralConformanceRule","order":0,
       |"outputColumn":"something","controlCheckpoint":true,"value":"1.01"}],
-      |"properties":[["property1","value1"],["property2.sub","value2"]]}}""".stripMargin.replaceAll("[\\r\\n]", "")
+      |"properties":{"property1":"value1","property2.sub":"value2"}}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Dataset") {
     assert(dataset.exportItem() == expectedDataset)

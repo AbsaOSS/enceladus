@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 
-import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
@@ -65,6 +65,7 @@ case class Dataset(name: String,
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
+  def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
 
   def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
@@ -116,8 +117,7 @@ case class Dataset(name: String,
 
   override def exportItem(): String = {
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
-
-    val propertiesJsonList: ArrayNode = objectMapperBase.valueToTree(propertiesAsMap.toArray)
+    val propertiesJsonList: ObjectNode = objectMapperBase.valueToTree(propertiesAsMap)
 
     val objectItemMapper = objectMapperRoot.`with`("item")
 
@@ -128,7 +128,7 @@ case class Dataset(name: String,
     objectItemMapper.put("schemaName", schemaName)
     objectItemMapper.put("schemaVersion", schemaVersion)
     objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
-    objectItemMapper.putArray("properties").addAll(propertiesJsonList)
+    objectItemMapper.putObject("properties").setAll(propertiesJsonList)
 
     objectMapperRoot.toString
   }

@@ -97,7 +97,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
               |"schemaName":"dummySchema",
               |"schemaVersion":1,
               |"conformance":[],
-              |"properties":[["key2","val2"],["key1","val1"]]
+              |"properties":{"key2":"val2","key1":"val1"}
               |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
         }
       }
