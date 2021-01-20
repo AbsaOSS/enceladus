@@ -47,6 +47,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPath(dataset.hdfsPath)
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
+          .setProperties(dataset.properties)
           .setDescription(dataset.description).asInstanceOf[Dataset]
       })
     }
@@ -97,7 +98,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       hdfsPublishPath = newDataset.hdfsPublishPath,
       schemaName = newDataset.schemaName,
       schemaVersion = newDataset.schemaVersion,
-      conformance = List())
+      conformance = List(),
+      properties = newDataset.properties)
     super.create(dataset, username)
   }
 
