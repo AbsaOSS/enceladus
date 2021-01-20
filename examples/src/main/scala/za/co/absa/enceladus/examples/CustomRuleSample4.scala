@@ -26,10 +26,9 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample4 extends HadoopFsTestBase {
+object CustomRuleSample4 extends CustomRuleSampleFs {
   TimeZoneNormalizer.normalizeJVMTimeZone() //normalize JVM time zone as soon as possible
 
   /**

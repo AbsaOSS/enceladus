@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.general
+package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.ConfigFactory
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.config.ConfigReader
 
 class ConfigReaderSuite extends AnyWordSpec {
   private val config = ConfigFactory.parseString(
