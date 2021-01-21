@@ -208,7 +208,7 @@ class DatasetService @Autowired() (datasetMongoRepository: DatasetMongoRepositor
                                                   cr: C): RuleValidationsAndFields = {
     val withOutputValidated = validateOutputColumn(fields, cr.outputColumn)
     val validationInputFields = validateInputColumn(fields, cr.inputColumn)
-    withOutputValidated.update(validationInputFields)
+    validationInputFields.update(withOutputValidated)
   }
 
   def validateMappingTable(fields: Future[Set[String]],
