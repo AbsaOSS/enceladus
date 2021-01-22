@@ -182,9 +182,7 @@ class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtil
     tmpFile.deleteOnExit()
     FileUtils.writeByteArrayToFile(tmpFile, content)
     tmpFile.getAbsolutePath
-
-    // why not use
-    // fs.copyToLocalFile(false, new Path(hdfsPath), new Path("someLocalName"), true)
+    //TODO #1645 Possible simplification of this code
   }
 
   override def read(distPath: String): String = {
