@@ -13,13 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.models
+package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 object Validation {
 
   val NotSpecified = "not specified"
+
+  val empty = Validation()
+
+  def merge(a: Validation, b: Validation) : Validation = a.merge(b)
 
 }
 

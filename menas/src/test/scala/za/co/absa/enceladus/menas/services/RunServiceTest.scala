@@ -21,9 +21,8 @@ import org.mockito.Mockito
 import org.mongodb.scala.Completed
 import org.mongodb.scala.bson.BsonDocument
 import za.co.absa.enceladus.menas.exceptions.ValidationException
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
-import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.model.test.factories.RunFactory
 
 import scala.concurrent.Future

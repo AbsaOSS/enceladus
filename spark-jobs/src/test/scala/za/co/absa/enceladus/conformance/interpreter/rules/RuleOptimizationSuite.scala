@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.FunSuite
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.MappingRuleInterpreterGroupExplode
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._

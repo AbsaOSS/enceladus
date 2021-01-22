@@ -39,6 +39,6 @@ class MappingTableTest extends FunSuite {
       |{"columnName":"otherColumn","value":"beta"}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Mapping Table") {
-    assert(expectedMappingTable == mappingTable.exportItem())
+    assert(mappingTable.exportItem() == expectedMappingTable)
   }
 }

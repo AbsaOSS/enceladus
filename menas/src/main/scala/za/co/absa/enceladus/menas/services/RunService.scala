@@ -24,9 +24,9 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.menas.exceptions.{NotFoundException, ValidationException}
-import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics}
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -44,7 +44,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import za.co.absa.enceladus.menas.models.Validation._
+  import za.co.absa.enceladus.model.Validation._
 
   @Value("${spline.urlTemplate}")
   val splineUrlTemplate: String = ""

@@ -17,8 +17,7 @@ package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.models.Validation
-import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Schema, UsedIn}
+import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
 
 import scala.concurrent.Future
@@ -31,7 +30,8 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
 
   override def getUsedIn(mappingTableName: String, mappingTableVersion: Option[Int]): Future[UsedIn] = {
     val used = mappingTableVersion match {
-      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
+      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName),
+        ("mappingTableVersion", version))
       case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
     }
 

@@ -36,10 +36,19 @@ trait MenasDAO {
     *
     * @param name    The dataset's name
     * @param version The dataset's version
+    * @param validateProperties true when want to populate datasets's `propertiesValidation` field
     * @return The retrieved dataset
     */
-  def getDataset(name: String,
-                 version: Int): Dataset
+  def getDataset(name: String, version: Int, validateProperties: Boolean = false): Dataset
+
+  /**
+   * Retrieves properties to be written to the info file
+   *
+   * @param datasetName The dataset's name
+   * @param datasetVersion The dataset's version
+   * @return
+   */
+  def getDatasetPropertiesForInfoFile(datasetName: String, datasetVersion: Int): Map[String, String]
 
   /**
     * Retrieves a specific mapping table

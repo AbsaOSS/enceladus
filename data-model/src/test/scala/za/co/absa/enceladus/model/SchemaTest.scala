@@ -44,6 +44,6 @@ class SchemaTest extends FunSuite {
       |"nullable":true,"metadata":{},"children":[],"absolutePath":"someField"}]}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
   test("export Schema") {
-    assert(expectedSchema == schema.exportItem())
+    assert(schema.exportItem() == expectedSchema)
   }
 }

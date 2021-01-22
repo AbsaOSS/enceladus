@@ -77,6 +77,10 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
+    // Add Dataset properties marked with putIntoInfoFile=true
+    val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
+    addCustomDataToInfoFile(conf, dataForInfoFile)
+
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.rawPath,
       preparationResult.pathCfg.standardizationPath,
@@ -93,10 +97,11 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  override def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
+  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
     log.info(s"raw path: ${pathConfig.rawPath}")
     log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, pathConfig.standardizationPath)
+    validateInputPath(fsUtils, pathConfig.rawPath)
+    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
   }
 
   protected def readStandardizationInputData[T](schema: StructType,
