@@ -36,7 +36,7 @@ html, body {
 
 .menasAddMappingFlex div {
     width: calc(100% - 38px);
-}
+  }
 
 .monitoringBlockLayoutCell {
   min-width: 20rem !important;
@@ -81,7 +81,26 @@ html, body {
   height: 100% !important;
 }
 
-.lineageErrorLabel {
-  font-size: 200%;
-  padding-top: 2rem;
+.scheduleMenuButton {
+  margin-top: -1rem !important;
+  position: absolute !important;
+}
+
+.scheduleMenuHBox {
+  height: 2rem !important;
+  margin-top: 1rem !important;
+}
+
+h5[id$=datasetDetailView--scheduleTimingTitle] {
+  margin-top: 1rem !important;
+}
+
+/* Conformance indicator styling */
+.conformIcon {
+  margin: 0 3px;
+}
+
+/* Making IconTabBar tabs slightly wider (default is 5rem), so we don't get so many ellipsized labels (e.g. Conformance Rules, Conformed Schema) */
+.sapMITBFilter .sapMITBText, .sapMITBTab {
+  width: 7rem;
 }

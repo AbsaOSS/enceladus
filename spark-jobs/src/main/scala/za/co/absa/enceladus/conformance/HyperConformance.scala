@@ -94,20 +94,21 @@ class HyperConformance (implicit cmd: ConformanceConfig,
 /**
  * This is the definition of Dynamic Conformance as a component of Hyperdrive.
  *
- * In order to use it in hyperdrive the component needs to be configured in 'ingestion.properties' as follows:
+ * See https://github.com/AbsaOSS/hyperdrive#configuration for instructions how the component needs to be configured in Hyperdrive.
+ * Example values are given below:
  * {{{
- * transformer.hyperconformance.menas.rest.uri=http://localhost:8080
- * transformer.hyperconformance.dataset.name=example
- * transformer.hyperconformance.dataset.version=1
- * transformer.hyperconformance.report.date=2020-01-29
- * transformer.hyperconformance.report.version=1
- * transformer.hyperconformance.event.timestamp.column=EV_TIME
+ * menas.rest.uri=http://localhost:8080
+ * dataset.name=example
+ * dataset.version=1
+ * report.date=2020-01-29
+ * report.version=1
+ * event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
- * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
+ * menas.credentials.file=/path/menas.credentials
  *
  * # Or a keytab
- * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
+ * menas.auth.keytab=/path/to/keytab
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {

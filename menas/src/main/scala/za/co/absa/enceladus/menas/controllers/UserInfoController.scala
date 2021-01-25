@@ -16,30 +16,27 @@
 package za.co.absa.enceladus.menas.controllers
 
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.user.UserInfo
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 @RestController
 @RequestMapping(Array("/api/user"))
-class UserInfoController extends BaseController {
-
-  @Value("${menas.version}")
-  val menasVersion: String = ""
+class UserInfoController extends BaseController with ProjectMetadata {
 
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
     val groups = auth.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority)
-    UserInfo(principal.getUsername, groups, menasVersion)
+    UserInfo(principal.getUsername, groups, projectVersion)
   }
 
   @GetMapping(path = Array("/version"))
   def getVersion(): String = {
-    menasVersion
+    projectVersion
   }
 }

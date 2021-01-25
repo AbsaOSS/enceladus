@@ -28,25 +28,48 @@ import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api.versionedModelDetail._
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.menas.scheduler._
+import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
+import za.co.absa.enceladus.model.menas.scheduler.oozie._
+import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality
+import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.versionedModel._
+import scala.collection.immutable
 
 import scala.compat.java8.FutureConverters._
+import scala.collection.JavaConverters
 import scala.concurrent.Future
 import scala.language.implicitConversions
 
 package object implicits {
-  implicit def optJavaScala[C](in: Optional[C]): Option[C] = if (in.isPresent) Some(in.get) else None
+  implicit class JavaOptExt[C](javaOptional: Optional[C]) {
+    def toScalaOption: Option[C] = if (javaOptional.isPresent) Some(javaOptional.get) else None
+  }
 
   implicit def scalaToJavaFuture[T](in: Future[T]): CompletableFuture[T] = in.toJava.toCompletableFuture
 
   val codecRegistry: CodecRegistry = fromRegistries(fromProviders(
     classOf[DatasetDetail], classOf[MappingTableDetail], classOf[SchemaDetail],
+    classOf[HDFSFolder],
     classOf[ConformanceRule],
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
     classOf[RunDatasetNameGroupedSummary], classOf[RunDatasetVersionGroupedSummary],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference]),
+    classOf[RuntimeConfig], classOf[OozieSchedule], classOf[OozieScheduleInstance], classOf[ScheduleTiming], classOf[DataFormat],
+    classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference],
+    classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality]
+  ),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
+
+  def javaMapToScalaMap[K, V](javaMap: java.util.Map[K, V]): immutable.Map[K, V] = {
+    // in Scala 2.12, we could just do javaMap.asScala.toMap // https://stackoverflow.com/a/64614317/1773349
+    JavaConverters.mapAsScalaMapConverter(javaMap).asScala.toMap(Predef.$conforms[(K, V)])
+  }
+
+  implicit class JavaMapExt[K, V](javaMap: java.util.Map[K, V]) {
+    def toScalaMap: immutable.Map[K, V] = javaMapToScalaMap(javaMap)
+  }
 
 }

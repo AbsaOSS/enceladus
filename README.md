@@ -67,11 +67,11 @@ The coverage reports are written in each module's `target` directory and aggrega
 #### Menas requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline service deployment**](https://absaoss.github.io/spline/#get-spline)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
+ in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
-The _Spline service_ can be omitted; in such case the **Standardization** and **Conformance** `spline.producer.url` setting
-as well as **Menas** `menas.lineage.readApiUrl` and `menas.oozie.lineageWriteApiUrl` settings should be all set to empty string. 
+The _Spline UI_ can be omitted; in such case the **Menas** `spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
@@ -106,7 +106,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
@@ -130,7 +130,7 @@ password=changeme
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.producer.url=<url_for_spline_consumer> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
@@ -168,11 +168,13 @@ password=changeme
 
 The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
 
-Steps to configure the scripts are as follows:
-* Copy all the scripts in `scripts` directory to a location in your environment.
+Steps to configure the scripts are as follows (_Linux_):
+* Copy all the scripts in `scripts/bash` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
 * Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+Similar scripts exist for _Windows_ in directory `scripts/cmd`.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference is that
 you don't have to provide environment-specific settings. Several resource options, like driver memory and driver cores also have
@@ -218,6 +220,23 @@ The basic command to run Standardization and Conformance combined becomes:
 --row-tag <tag>
 ```
 
+
+Similarly for Windows:
+```
+<path to scripts>/run_standardization.cmd ^
+--num-executors <num> ^
+--deploy-mode <client/cluster> ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <date> ^
+--report-version <data_run_version> ^
+--raw-format <data_format> ^
+--row-tag <tag>
+```
+Etc...
+
+
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
 
 |            Option                            |                           Description                                                                       |
@@ -250,22 +269,28 @@ The list of all options for running Standardization, Conformance and the combine
 
 The list of additional options available for running Standardization:
 
-|            Option                    |                           Description                                                                                                              |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| --raw-format **format**              | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
-| --charset **charset**                | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
-| --row-tag **tag**                    | A row tag if the input format is `xml`.                                                                                                            |
-| --header **true/false**              | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
-| --delimiter **character**            | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
-| --csv-quote **character**            | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
-| --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
-| --trimValues **true/false**          | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
-| --is-xcom **true/false**             | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
-| --cobol-encoding **encoding**        | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
-| --cobol-trimming-policy **policy**   | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
-| --folder-prefix **prefix**           | Adds a folder prefix before the date tokens.                                                                                                       |
-| --debug-set-raw-path **path**        | Override the path of the raw data (used for testing purposes).                                                                                     |
-| --strict-schema-check **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
+|            Option                      |                           Description                                                                                                              |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| --raw-format **format**                | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
+| --charset **charset**                  | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
+| --cobol-encoding **encoding**          | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-is-text **true/false**         | Specifies if the mainframe file is ASCII text file                                                                                                 |
+| --cobol-trimming-policy **policy**     | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
+| --copybook **string**                  | Path to a copybook for COBOL data format                                                                                                           |
+| --csv-escape **character**             | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
+| --csv-quote **character**              | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
+| --debug-set-raw-path **path**          | Override the path of the raw data (used for testing purposes).                                                                                     |
+| --delimiter **character**              | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
+| --empty-values-as-nulls **true/false** | If `true` treats empty values as `null`s                                                                                                           |
+| --folder-prefix **prefix**             | Adds a folder prefix before the date tokens.                                                                                                       |
+| --header **true/false**                | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
+| --is-xcom **true/false**               | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --null-value **string**                | Defines how null values are represented in a  `csv` and `fixed-width` file formats                                                                 |
+| --row-tag **tag**                      | A row tag if the input format is `xml`.                                                                                                            |
+| --strict-schema-check **true/false**   | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ |
+| --trimValues **true/false**            | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
+
+Most of these options are format specific. For details see [the documentation](https://absaoss.github.io/enceladus/docs/usage/standardization-formats). 
 
 <sup>*</sup> Can also be specified as a unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
 

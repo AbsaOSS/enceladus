@@ -17,6 +17,5 @@
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
     <Label text="Value"/>
     <Input type="Text" id="fillNullsValue" placeholder="literal value" width="100%" value="{/newRule/value}"/>
-    <Label text="Input Column"/>
-    <core:Fragment fragmentName="components.schemaFieldSelector" type="XML"/>
+    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.inputColumn"/>
 </core:FragmentDefinition>

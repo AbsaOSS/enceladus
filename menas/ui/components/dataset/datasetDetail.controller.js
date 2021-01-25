@@ -45,6 +45,7 @@ sap.ui.define([
 
       let cont = new ConformanceRuleDialog(this);
       let view = this.getView();
+      this._scheduleActionMenu = this.byId("scheduleActionMenuButton");
 
       // Monitoring
 
@@ -65,6 +66,8 @@ sap.ui.define([
       });
 
       this._upsertConformanceRuleDialog = this.byId("upsertConformanceRuleDialog");
+      this._editScheduleDialog = sap.ui.xmlfragment("components.dataset.schedule.editSchedule", this);
+      sap.ui.getCore().getMessageManager().registerObject(this._editScheduleDialog, true);
 
       new DatasetDialogFactory(this, Fragment.load).getEdit();
 
@@ -73,24 +76,61 @@ sap.ui.define([
 
       this._datasetService = new DatasetService(this._model, this._oEventBus);
       this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
-      this._schemaService = new SchemaService(this._model, this._oEventBus)
-      this._schemaTable = new SchemaTable(this)
+      this._schemaService = new SchemaService(this._model, this._oEventBus);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
+      this._conformedSchemaTable = new SchemaTable(this, "conformedSchemaFragment");
 
       this._validator = new Validator();
 
+      this.byId("datasetIconTabBar").attachSelect(oEv => {
+        if(oEv.getParameter("selectedKey") === "schedule") {
+          OozieService.getCoordinatorStatus();
+        }
+      });
+
       this._rb = sap.ui.getCore().getModel("i18n").getResourceBundle();
+
+      // Cron time picker
+      let cronTemplate = {
+        "minute" : this._generateCronTemplateRange(0, 60, this._rb),
+        "hour": this._generateCronTemplateRange(0, 24, this._rb),
+        "dayOfMonth": this._generateCronTemplateRange(1, 32, this._rb),
+        "month": this._generateCronTemplateRange(1, 13, this._rb, "MENAS_SCHEDULE_MONTH"),
+        "dayOfWeek": this._generateCronTemplateRange(0, 7, this._rb, "MENAS_SCHEDULE_DAY")
+      };
+      this._model.setProperty("/cronFormTemplate", cronTemplate);
 
       const auditTable = this.byId("auditTrailTable");
       const auditUtils = new AuditTrail(auditTable);
       auditUtils.applyTableUtils();
     },
 
+    _generateCronTemplateRange: function(iStart, iEnd, oRb, oRbProperty) {
+      return ["*", ...(_.range(iStart, iEnd, 1))].map(n => {
+        let description = n.toString();
+        if(oRbProperty) {
+          description = oRb.getText(`${oRbProperty}[${n}]`);
+        } else if(n === "*") {
+          description = oRb.getText("MENAS_SCHEDULE_ANY");
+        }
+        return {
+        "key": n.toString(),
+        "name": description
+        }
+      });
+    },
+
     onEntityUpdated: function (sTopic, sEvent, oData) {
       this._model.setProperty("/currentDataset", oData);
+      OozieService.getCoordinatorStatus();
+      this._editScheduleDialog.setBusy(false);
+      this._editScheduleDialog.close();
       this.load();
     },
 
     onEntityUpdateFailed: function() {
+      this._editScheduleDialog.setBusy(false);
+      this._editScheduleDialog.close();
     },
 
     onAddConformanceRulePress: function () {
@@ -315,7 +355,9 @@ sap.ui.define([
           this._model.setProperty("/currentDataset/schema", schema);
           this._schemaTable.model = schema;
           transitiveSchemas.push(schema);
-          SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+          SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance);
+
+          this._conformedSchemaTable.model = transitiveSchemas[transitiveSchemas.length-1] // last schema has all conf rules applied
         });
 
         this._datasetRestDAO = new DatasetRestDAO();
@@ -357,6 +399,55 @@ sap.ui.define([
       return sap.ui.xmlfragment(sId, sFragmentName, this);
     },
 
+    onScheduleEditPress: function(oEv) {
+      this._editScheduleDialog.open();
+      this._validator.clearAll(this._editScheduleDialog);
+
+      const oCurrentDataset = this._model.getProperty("/currentDataset");
+
+      const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
+      const aAuditEntries = !oAuditModel ? [] : oAuditModel.getProperty("/entries").map(e => {
+        return {
+          menasRef: e.menasRef
+        };
+      })
+      aAuditEntries.unshift({
+        menasRef: {
+          name: oCurrentDataset.name,
+          description: "Version created by this update",
+          version: oCurrentDataset.version + 1
+        }
+      });
+
+      this._editScheduleDialog.setModel(new sap.ui.model.json.JSONModel({entries: aAuditEntries}), "versions");
+
+      const currSchedule = this._model.getProperty("/currentDataset/schedule");
+      if(currSchedule) {
+        this._model.setProperty("/newSchedule", jQuery.extend(true, {}, currSchedule));
+      } else {
+        this._model.setProperty("/newSchedule", jQuery.extend(true, {}, this._model.getProperty("/newScheduleDefault")));
+      }
+    },
+
+    onScheduleSave: function() {
+      const newSchedule = this._model.getProperty("/newSchedule")
+      if(!this._validator.validate(this._editScheduleDialog)) {
+        MessageToast.show("Please correct highlighted errors");
+      } else {
+        const oSchedule = this._model.getProperty("/newSchedule");
+        let oDataset = this._model.getProperty("/currentDataset");
+        oDataset.schedule = oSchedule;
+
+        this._datasetService.update(oDataset);
+
+        this._editScheduleDialog.setBusy(true).setBusyIndicatorDelay(0);
+      }
+    },
+
+    closeScheduleDialog: function() {
+      this._editScheduleDialog.close();
+    },
+
     _setBusy: function(oCtl) {
       if(oCtl && oCtl.setBusy && oCtl.setBusyIndicatorDelay) {
         oCtl.setBusyIndicatorDelay(0);
@@ -378,6 +469,24 @@ sap.ui.define([
       } else {
         this._clearBusy(oCtl);
       }
+    },
+
+    scheduleActionCall: function(fnServiceCall) {
+      this._setBusy(this._scheduleActionMenu);
+      const prom = fnServiceCall();
+      this._clearBusyPromise(this._scheduleActionMenu, prom)
+    },
+
+    scheduleRunNow: function() {
+      this.scheduleActionCall(OozieService.runNow);
+    },
+
+    scheduleSuspend: function() {
+      this.scheduleActionCall(OozieService.suspend);
+    },
+
+    scheduleResume: function() {
+      this.scheduleActionCall(OozieService.resume);
     },
 
     // Monitoring related part

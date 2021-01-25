@@ -24,9 +24,9 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.menas.exceptions.{NotFoundException, ValidationException}
-import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics}
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -44,7 +44,10 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
-  import za.co.absa.enceladus.menas.models.Validation._
+  import za.co.absa.enceladus.model.Validation._
+
+  @Value("${spline.urlTemplate}")
+  private val splineUrlTemplate: String = ""
 
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
@@ -102,6 +105,17 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       case Some(run) => run
       case None      => throw NotFoundException()
     }
+  }
+
+  def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
+    getRun(datasetName, datasetVersion, runId).map { run =>
+      val splineRef = run.splineRef
+      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
+    }
+  }
+
+  def getSplineUrlTemplate(): Future[String] = {
+    Future.successful(splineUrlTemplate)
   }
 
   def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {

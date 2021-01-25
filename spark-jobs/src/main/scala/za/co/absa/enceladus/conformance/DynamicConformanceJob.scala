@@ -27,9 +27,9 @@ object DynamicConformanceJob extends ConformanceExecution {
   def main(args: Array[String]) {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    initialValidation()
-
     implicit val cmd: ConformanceConfig = ConformanceConfig.getFromArguments(args)
+
+    initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
@@ -41,6 +41,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     try {
       val result = conform(inputData, preparationResult)
       processConformanceResult(args, result, preparationResult, menasCredentials)
+      // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
       finishJob(cmd)

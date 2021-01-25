@@ -12,7 +12,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-jobs</artifactId>
     <packaging>jar</packaging>
@@ -20,12 +21,12 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.12.0-AWS-SNAPSHOT</version>
+        <version>2.18.0-SNAPSHOT</version>
     </parent>
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>3.0.0</hyperdrive.version>
+        <hyperdrive.version>4.0.0</hyperdrive.version>
         <commons.version>0.0.10</commons.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
@@ -56,8 +57,8 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-fixedWidth</artifactId>
-            <version>1.7.0</version>
+            <artifactId>fixed-width_${scala.compat.version}</artifactId>
+            <version>0.1.0</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
@@ -103,9 +104,52 @@
 
         <!-- Lineage tracking -->
         <dependency>
-            <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>agent-core_${scala.compat.version}</artifactId>
-            <version>${spline.agent.version}</version>
+            <groupId>za.co.absa.spline</groupId>
+            <artifactId>spline-core</artifactId>
+            <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.spline</groupId>
+            <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
+            <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.spline</groupId>
+            <artifactId>spline-persistence-mongo</artifactId>
+            <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.spline</groupId>
+            <artifactId>spline-persistence-hdfs</artifactId>
+            <version>${spline.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.jpountz.lz4</groupId>
+                    <artifactId>lz4</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-common</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     <build>
@@ -206,6 +250,18 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

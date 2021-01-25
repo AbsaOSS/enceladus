@@ -219,6 +219,49 @@ class TypedStructFieldSuite extends AnyFunSuite {
     ))
   }
 
+  test("Decimal type with strictParsing enabled, incorrect value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.89899"), Map( MetadataKeys.StrictParsing -> "true" ))
+    val typed = TypedStructField(field)
+    val errMsg = "'1000.89899' cannot be cast to decimal(10,2)"
+    val fail = Failure(new IllegalArgumentException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
+  }
+  test("Decimal type with strictParsing enabled, correct value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.9"), Map( MetadataKeys.StrictParsing -> "true" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.9))), Success(Some(1000.9)), nullable, Seq())
+  }
+
+  test("Decimal type with incorrect strictParsing value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.889"), Map( MetadataKeys.StrictParsing -> "t" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.889))), Success(Some(1000.889)), nullable, Seq(
+      ValidationError(s"${MetadataKeys.StrictParsing} metadata value of field 'test_field' is not Boolean in String format"))
+    )
+  }
+
+  test("Decimal type with false strictParsing") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.8889"), Map( MetadataKeys.StrictParsing -> "false" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.8889))), Success(Some(1000.8889)), nullable, Seq())
+  }
+
+  test("Decimal type with no set strictParsing") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.8889"), Map())
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.8889))), Success(Some(1000.8889)), nullable, Seq())
+  }
+
   test("Array type with long element data type and correct associated metadata") {
     val fieldType = ArrayType(LongType)
     val nullable = true

@@ -33,13 +33,13 @@ import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.menas.models.rest.RestResponse
 import za.co.absa.enceladus.menas.models.rest.errors.{SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.{SchemaApiFeatures, Validation}
+import za.co.absa.enceladus.menas.models.SchemaApiFeatures
 import za.co.absa.enceladus.menas.repositories.RefCollection
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
-import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 
 import scala.collection.immutable.HashMap
 
@@ -48,7 +48,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
 
-  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistryBaseUrl` key
+  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -106,7 +106,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           assertCreated(response)
 
           val actual = response.getBody
-          val expected = toExpected(schema.setVersion(2), actual).copy(parent = Some(SchemaFactory.toParent(schema)))
+          val expected = toExpected(schema.setVersion(2).setParent(Some(SchemaFactory.toParent(schema))), actual)
           assert(actual == expected)
         }
       }
@@ -1061,20 +1061,11 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           assert(response.getStatusCode == HttpStatus.OK)
           val responseBody = response.getBody
 
-          // test-config contains populated menas.schemaRegistryBaseUrl
+          // test-config contains populated menas.schemaRegistry.baseUrl
           assert(responseBody == SchemaApiFeatures(registry = true))
         }
       }
     }
   }
 
-  private def toExpected(schema: Schema, actual: Schema): Schema = {
-    schema.copy(
-      dateCreated = actual.dateCreated,
-      userCreated = actual.userCreated,
-      lastUpdated = actual.lastUpdated,
-      userUpdated = actual.userUpdated,
-      dateDisabled = actual.dateDisabled,
-      userDisabled = actual.userDisabled)
-  }
 }

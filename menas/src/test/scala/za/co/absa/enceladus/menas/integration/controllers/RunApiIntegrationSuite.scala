@@ -23,9 +23,9 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
-import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.model.test.factories.RunFactory
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
-  import za.co.absa.enceladus.menas.models.Validation._
+  import za.co.absa.enceladus.model.Validation._
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -688,6 +688,66 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
         setUpSimpleRun()
 
         val response = sendGet[Run](s"$apiUrl/dataset/datasetVersion/latestrun")
+
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"GET $apiUrl/splineUrl/{datasetName}/{datasetVersion}/{runId}" can {
+    val endpointBase = s"$apiUrl/splineUrl"
+
+    "return 200" when {
+      "there is a Run of the specified Dataset with the specified runId" should {
+        "return the Spline URL for the Run" in {
+          val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+          val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2)
+          val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+          runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+          val response = sendGet[String](s"$endpointBase/dataset/1/2")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body == "http://localhost:8080/spline/dataset/lineage/_search?path=dummyOutputPath&application_id=dummySparkApplicationId")
+        }
+      }
+    }
+
+    "return 404" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/DATASET/1/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified datasetVersion" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/dataset/2/1")
+
+        assertNotFound(response)
+      }
+      "there is no Run with the specified runId" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/dataset/1/2")
+
+        assertNotFound(response)
+      }
+      "the datasetVersion is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/datasetVersion/1")
+
+        assertNotFound(response)
+      }
+      "the runId is not a valid numeric type" in {
+        setUpSimpleRun()
+
+        val response = sendGet[String](s"$endpointBase/1/runId")
 
         assertNotFound(response)
       }

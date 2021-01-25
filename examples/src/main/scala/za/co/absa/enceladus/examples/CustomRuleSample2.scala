@@ -24,10 +24,9 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConformanceRule
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample2 extends HadoopFsTestBase {
+object CustomRuleSample2 extends CustomRuleSampleFs {
 
   case class ExampleRow(id: Int, addPad: String, leave: String)
   case class OutputRow(id: Int, addPad: String, leave: String, donePad: String)

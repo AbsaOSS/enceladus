@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 
 package object conformanceRule {
 
@@ -40,6 +41,8 @@ package object conformanceRule {
     val controlCheckpoint: Boolean
 
     def withUpdatedOrder(newOrder: Int): ConformanceRule
+    def connectedEntities: Seq[ConnectedEntity] = Seq.empty
+    def hasConnectedEntities: Boolean = connectedEntities.nonEmpty
   }
 
   case class ConcatenationConformanceRule(order: Int,
@@ -78,8 +81,15 @@ package object conformanceRule {
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
                                     targetAttribute: String,
                                     outputColumn: String,
-                                    isNullSafe: Boolean = false) extends ConformanceRule {
+                                    isNullSafe: Boolean = false,
+                                    mappingTableFilter: Option[DataFrameFilter] = None,
+                                    overrideMappingTableOwnFilter: Boolean = false
+                                   ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
+
+    override def connectedEntities: Seq[ConnectedEntity] = Seq(
+      ConnectedMappingTable(mappingTable, mappingTableVersion)
+    )
   }
 
   case class NegationConformanceRule(order: Int,

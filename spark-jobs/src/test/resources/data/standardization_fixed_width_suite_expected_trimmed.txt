@@ -1,12 +1,12 @@
-+---+---------------+---------+------+
-|id |first_name     |last_name|errCol|
-+---+---------------+---------+------+
-|1  |Georgina       |Richardt |[]    |
-|2  |Seamus         |Klaes    |[]    |
-|3  |Griff          |Leaning  |[]    |
-|4  |Klarrisa       |Corps    |[]    |
-|5  |Cornie         |Hewertson|[]    |
-|6  |Maybeeeeeeeeeee|a        |[]    |
-+---+---------------+---------+------+
++---+----------+---------+------+
+|id |first_name|last_name|errCol|
++---+----------+---------+------+
+|1  |Georgina  |Richardt |[]    |
+|2  |Seamus    |Klaes    |[]    |
+|3  |Griff     |Leaning  |[]    |
+|4  |Klarrisa  |Corps    |[]    |
+|5  |Cornie    |Hewertson|[]    |
+|6  |          |a        |[]    |
++---+----------+---------+------+
 
 

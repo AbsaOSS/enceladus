@@ -1,0 +1,16 @@
+{
+  "type" : "struct",
+  "fields" : [ {
+    "name" : "id",
+    "type" : "string",
+    "nullable" : false
+  }, {
+    "name" : "first_name",
+    "type" : "string",
+    "nullable" : true
+  }, {
+    "name" : "last_name",
+    "type" : "string",
+    "nullable" : false
+  } ]
+}

@@ -33,6 +33,8 @@ object MetadataKeys {
   val Radix = "radix"
   // binary
   val Encoding = "encoding"
+  //decimal
+  val StrictParsing = "strict_parsing"
 }
 
 object MetadataValues {

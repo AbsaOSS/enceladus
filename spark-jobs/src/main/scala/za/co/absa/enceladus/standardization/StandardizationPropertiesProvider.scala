@@ -100,7 +100,8 @@ class StandardizationPropertiesProvider {
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {
           if (numberOfColumns > SparkCSVReaderMaxColumnsDefault) Some(LongParameter(numberOfColumns)) else None
-        }
+        },
+        "nullValue" -> cmd.nullValue.map(StringParameter)
       )
     } else {
       HashMap()
@@ -109,7 +110,12 @@ class StandardizationPropertiesProvider {
 
   private def getFixedWidthOptions[T](cmd: StandardizationConfigParser[T]): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
-      HashMap("trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter))
+      HashMap(
+        "trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter),
+        "treatEmptyValuesAsNulls" -> cmd.fixedWidthTreatEmptyValuesAsNulls.map(BooleanParameter),
+        "nullValue" -> cmd.nullValue.map(StringParameter),
+        "charset" -> cmd.charset.map(StringParameter)
+      )
     } else {
       HashMap()
     }

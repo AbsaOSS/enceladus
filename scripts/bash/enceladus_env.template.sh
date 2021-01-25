@@ -16,9 +16,10 @@
 # Environment configuration
 STD_HDFS_PATH="/bigdata/std/std-{0}-{1}-{2}-{3}"
 
-# Configuration for Spline
+# MongoDB connection configuration for Spline
 # Important! Special characters should be escaped using triple backslashes (\\\)
-SPLINE_PRODUCER_URL="http://localhost:8080/spline/producer"
+SPLINE_MONGODB_URL="mongodb://localhost:27017"
+SPLINE_MONGODB_NAME="spline"
 
 export SPARK_HOME="/opt/spark-2.4.4"
 SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
@@ -26,8 +27,6 @@ SPARK_SUBMIT="$SPARK_HOME/bin/spark-submit"
 HDP_VERSION="2.7.3"
 
 SPARK_JOBS_JAR="enceladus-spark-jobs.jar"
-
-STD_CLASS="za.co.absa.enceladus.standardization.StandardizationJob"
 
 # Environment-specific resource defaults for Standardization.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
@@ -47,8 +46,6 @@ STD_DEFAULT_DRA_MAX_EXECUTORS=4
 STD_DEFAULT_DRA_MIN_EXECUTORS=0
 STD_DEFAULT_DRA_ALLOCATION_RATIO=0.5
 STD_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
-
-CONF_CLASS="za.co.absa.enceladus.conformance.DynamicConformanceJob"
 
 # Environment-specific resource defaults for Conformance.
 # If empty and not specified explicitly, Spark configuration defaults will be used.
@@ -70,8 +67,6 @@ CONF_DEFAULT_DRA_MIN_EXECUTORS=0
 CONF_DEFAULT_DRA_ALLOCATION_RATIO=0.5
 CONF_DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE=134217728
 
-STD_CONF_CLASS="za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob"
-
 DEFAULT_DEPLOY_MODE="client"
 
 LOG_DIR="/tmp"
@@ -91,6 +86,8 @@ ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
 # To specify several configuration options prepend '--conf' to each config key.
 # Example: ADDITIONAL_SPARK_CONF="--conf spark.driver.host=myhost --conf spark.driver.port=12233"
+# For secured HDFS the following two usually needs to be specified:
+# ADDITIONAL_SPARK_CONF="--conf spark.yarn.principal=<principal_name> --conf spark.yarn.keytab=<path_to_keytab>"
 ADDITIONAL_SPARK_CONF=""
 
 # Additional JVM options
@@ -99,4 +96,11 @@ ADDITIONAL_SPARK_CONF=""
 ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $JAAS_CLIENT"
 
 # for deployment mode: cluster
+# Warning!
+# Avoid suppression of Info level logger. This will lead to the fact that, we are not able to get application_id
+# and thus the scripts will not be able to continue properly, not giving the status update or kill option on interrupt
 ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $JAAS_CLUSTER"
+
+# Switch that tells the script if it should exit if it encounters unrecognized.
+# On true it prints an Error and exits with 127, on false it only prints a warning
+EXIT_ON_UNRECOGNIZED_OPTIONS="true"

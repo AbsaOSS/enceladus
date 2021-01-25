@@ -26,6 +26,11 @@ import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, F
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+import za.co.absa.enceladus.model.menas.scheduler.ScheduleTiming
+import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
+import za.co.absa.enceladus.model.menas.scheduler.dataFormats.ParquetDataFormat
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -471,14 +476,14 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   "DatasetMongoRepository::getLatestVersions" should {
     "return an empty Seq" when {
       "no datasets exist and search query is provided" in {
-        val actual = await(datasetMongoRepository.getLatestVersions(Some("abc")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("abc")))
         assert(actual.isEmpty)
       }
       "only disabled dataset exists" in {
         val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
         datasetFixture.add(dataset1)
-        assert(await(datasetMongoRepository.getLatestVersions(Some("dataset1"))).isEmpty)
+        assert(await(datasetMongoRepository.getLatestVersionsSummary(Some("dataset1"))).isEmpty)
       }
     }
 
@@ -490,7 +495,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
-        val actual = await(datasetMongoRepository.getLatestVersions(Some("dataset2")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("dataset2")))
 
         val expected = Seq(dataset3).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -502,7 +507,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
-        val actual = await(datasetMongoRepository.getLatestVersions(Some("tas")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("tas")))
 
         val expected = Seq(dataset3, dataset4).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -517,7 +522,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val abc1 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset1ver1, dataset1ver2, dataset2ver1, abc1)
-        val actual = await(datasetMongoRepository.getLatestVersions(Some("")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("")))
 
         val expected = Seq(abc1, dataset1ver2, dataset2ver1).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -534,7 +539,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       val dataset1ver2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2)
       datasetFixture.add(dataset1ver2)
 
-      val actual = await(datasetMongoRepository.getLatestVersions(None))
+      val actual = await(datasetMongoRepository.getLatestVersionsSummary(None))
 
       val expected = Seq(dataset1ver2, dataset2ver2).map(DatasetFactory.toSummary)
       assert(actual == expected)
@@ -576,6 +581,36 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset4 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
         datasetFixture.add(dataset4)
         assert(await(datasetMongoRepository.distinctCount) == 2)
+      }
+    }
+  }
+
+  "DatasetMongoRepository::findByCoordId" should {
+    "return empty seq" when {
+      "there are no datasets" in {
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")) == Seq())
+      }
+      "there are no datasets matching the coordinator ID" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset())
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")) == Seq())
+      }
+    }
+    "return datasets witch matching coordinator ID" when {
+      "such datasets exist" in {
+        val schedule = OozieSchedule(scheduleTiming = ScheduleTiming(Seq(), Seq(), Seq(), Seq(), Seq()),
+            runtimeParams = RuntimeConfig(sysUser = "user", menasKeytabFile = "/a/b/c"), datasetVersion = 0,
+            mappingTablePattern = None, rawFormat = ParquetDataFormat(),
+            activeInstance = Some(OozieScheduleInstance("/abc", "/def", "SomeCoordId")))
+        val ds1 = DatasetFactory.getDummyDataset().copy(name = "ds1", schedule = Some(schedule))
+        val ds2 = DatasetFactory.getDummyDataset().copy(name = "ds2", schedule = Some(schedule))
+
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 0)
+
+        datasetFixture.add(ds1)
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 1)
+
+        datasetFixture.add(ds2)
+        assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")).size == 2)
       }
     }
   }

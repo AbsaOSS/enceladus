@@ -35,9 +35,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.utils.general.ProjectMetadata
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
-import za.co.absa.enceladus.utils.general.ProjectMetadataTools
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
@@ -46,7 +46,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
-trait CommonJobExecution {
+trait CommonJobExecution extends ProjectMetadata {
 
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
@@ -61,7 +61,7 @@ trait CommonJobExecution {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
-    val enceladusVersion = ProjectMetadataTools.getEnceladusVersion
+    val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
     val spark = SparkSession.builder()
@@ -85,16 +85,25 @@ trait CommonJobExecution {
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
     dao.authenticate()
 
-    implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
+    implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
 
-    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, validateProperties = true)
+    dataset.propertiesValidation match {
+      case Some(validation) if !validation.isValid =>
+        throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
+          validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
+        )
+      case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
+      case _ => // no problems found
+    }
+
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
 
-    validateOutputPath(pathCfg)
+    validatePaths(pathCfg)
 
     // Enable Spline
-    import za.co.absa.spline.harvester.SparkLineageInitializer._
+    import za.co.absa.spline.core.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable non-default persistence storage level if provided in the command line
@@ -103,9 +112,9 @@ trait CommonJobExecution {
     PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(pathConfig: PathConfig): Unit
+  protected def validatePaths(pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(entry: PathWithFs): Unit = {
+  protected def validateIfOutputPathAlreadyExists(entry: PathWithFs): Unit = {
     val fsUtils = HadoopFsUtils.getOrCreate(entry.fileSystem)
     if (fsUtils.exists(entry.path)) {
       throw new IllegalStateException(
@@ -114,6 +123,18 @@ trait CommonJobExecution {
     }
   }
 
+  protected def validateInputPath(entry: PathWithFs): Unit = {
+    val fsUtils = HadoopFsUtils.getOrCreate(entry.fileSystem)
+    if (!fsUtils.exists(entry.path)) {
+      throw new IllegalStateException(
+        s"Input path ${entry.path} does not exist"
+      )
+    }
+  }
+
+  /**
+   * Post processing rereads the data from a path on FS (based on `sourcePhase`)
+   */
   protected def runPostProcessing[T](sourcePhase: SourcePhase, preparationResult: PreparationResult, jobCmdConfig: JobConfigParser[T])
                                     (implicit spark: SparkSession): Unit = {
     val outputPath = sourcePhase match {
@@ -221,6 +242,15 @@ trait CommonJobExecution {
     })
   }
 
+  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+
+    log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
+    data.foreach { case (key, value) =>
+      Atum.setAdditionalInfo((s"$keyPrefix$key", value))
+    }
+  }
+
   protected def handleEmptyOutput(job: SourcePhase)(implicit spark: SparkSession): Unit = {
 
     val areCountMeasurementsAllZero = Atum.getControlMeasure.checkpoints
@@ -245,8 +275,7 @@ trait CommonJobExecution {
       case Some(version) => version
       case None =>
 
-        // publishFs for this specific feature (needed for missing reportVersion until reusable
-        // common "PathConfig" with FS objects is established)
+        // Since `pathConfig.publish.fileSystem` is not available at this point yet, a temporary publish-FS is create & used here instead
         val tempPublishFs: FileSystem = FileSystemUtils.getFileSystemFromPath(dataset.hdfsPublishPath)
         val fsUtils = HadoopFsUtils.getOrCreate(tempPublishFs)
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, jobConfig.reportDate) + 1

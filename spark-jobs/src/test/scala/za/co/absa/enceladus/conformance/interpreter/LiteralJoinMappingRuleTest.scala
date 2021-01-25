@@ -41,7 +41,7 @@ class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with Log
     mockWhen(dao.getMappingTable("countryMT", 0)) thenReturn MappingTable(name = "countryMT", version = 0,
         hdfsPath = "countryMT", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
-    DataSource.setData("countryMT", mappingDf)
+    DataSource.setData("countryMT/reportDate=2018-03-23", mappingDf)
 
     val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow",
