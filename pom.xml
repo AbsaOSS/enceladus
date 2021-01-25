@@ -200,7 +200,7 @@
         <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
         <dockerfile.tag>${project.version}</dockerfile.tag>
         <!-- Name of property file that will be used by the Docker image. -->
-        <dockerfile.property.file>application</dockerfile.property.file>
+        <dockerfile.property.file>docker</dockerfile.property.file>
         <skip.integration.tests>true</skip.integration.tests>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>

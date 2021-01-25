@@ -378,6 +378,9 @@
                                 <copy file="${project.basedir}/src/main/resources/application.properties.template"
                                       tofile="${project.basedir}/src/main/resources/application.properties"
                                       overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/docker.properties.template"
+                                      tofile="${project.basedir}/src/main/resources/docker.properties"
+                                      overwrite="false"/>
                             </target>
                         </configuration>
                         <goals>
