@@ -200,7 +200,8 @@
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
         <dockerfile.tag>${project.version}</dockerfile.tag>
-        <dockerfile.property.file>docker</dockerfile.property.file>
+        <!-- Name of property file that will be used by the Docker image. -->
+        <dockerfile.property.file>application</dockerfile.property.file>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
         <log.level.testcode>ERROR</log.level.testcode>
