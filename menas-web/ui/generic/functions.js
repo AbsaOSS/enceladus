@@ -28,7 +28,7 @@ var Functions = new function () {
       oFormattedData = oData;
     }
 
-    return $.ajax(window.apiUrl + "/" + sPath, {
+    return $.ajax(window.apiUrl + sPath, {
       beforeSend: (oJqXHR, oSettings) => {
           let csrfToken = localStorage.getItem("csrfToken");
           let jwtToken = localStorage.getItem("jwtToken");

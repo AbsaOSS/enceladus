@@ -23,7 +23,7 @@ class RestClient {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       },
-      url: window.apiUrl + "/" + url,
+      url: window.apiUrl + url,
       async: true
     };
     const jqXHR = shouldUseCache ? RestClient.cache(request) : $.ajax(request);
@@ -46,7 +46,7 @@ class RestClient {
 
   static post(url, data) {
     const jqXHR = $.post({
-      url: window.apiUrl + "/" + url,
+      url: window.apiUrl + url,
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
@@ -59,7 +59,7 @@ class RestClient {
 
   static put(url, data) {
     const jqXHR = $.ajax({
-      url: window.apiUrl + "/" + url,
+      url: window.apiUrl + url,
       type: "PUT",
       data: JSON.stringify(data),
       contentType: "application/json",
@@ -73,7 +73,7 @@ class RestClient {
 
   static delete(url) {
     const jqXHR = $.ajax({
-      url: window.apiUrl + "/" + url,
+      url: window.apiUrl + url,
       type: "DELETE",
       headers: {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
@@ -110,47 +110,47 @@ class RestDAO {
 
   getList(searchQuery) {
     let query = searchQuery ? `/${encodeURI(searchQuery)}` : "";
-    return RestClient.get(`api/${this.entityType}/list${query}`)
+    return RestClient.get(`${this.entityType}/list${query}`)
   }
 
   getSearchSuggestions() {
-    return RestClient.get(`api/${this.entityType}/searchSuggestions`)
+    return RestClient.get(`${this.entityType}/searchSuggestions`)
   }
 
   getAllVersionsByName(name) {
-    return RestClient.get(`api/${this.entityType}/allVersions/${encodeURI(name)}`)
+    return RestClient.get(`${this.entityType}/allVersions/${encodeURI(name)}`)
   }
 
   getLatestVersionByName(name) {
-    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latestVersion`)
+    return RestClient.get(`${this.entityType}/detail/${encodeURI(name)}/latestVersion`)
   }
 
   getLatestByName(name) {
-    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/latest`)
+    return RestClient.get(`${this.entityType}/detail/${encodeURI(name)}/latest`)
   }
 
   getByNameAndVersion(name, version) {
-    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
+    return RestClient.get(`${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
   }
 
   getByNameAndVersionSync(name, version) {
-    return RestClient.getSync(`api/${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
+    return RestClient.getSync(`${this.entityType}/detail/${encodeURI(name)}/${encodeURI(version)}`, true)
   }
 
   getAuditTrail(name) {
-    return RestClient.get(`api/${this.entityType}/detail/${encodeURI(name)}/audit`)
+    return RestClient.get(`${this.entityType}/detail/${encodeURI(name)}/audit`)
   }
 
   create(entity) {
-    return RestClient.post(`api/${this.entityType}/create`, entity)
+    return RestClient.post(`${this.entityType}/create`, entity)
   }
 
   update(entity) {
-    return RestClient.put(`api/${this.entityType}/edit`, entity)
+    return RestClient.put(`${this.entityType}/edit`, entity)
   }
 
   disable(name, version) {
-    let url = `api/${this.entityType}/disable/${encodeURI(name)}`;
+    let url = `${this.entityType}/disable/${encodeURI(name)}`;
     if (version !== undefined) {
       url += `/${encodeURI(version)}`
     }
@@ -175,7 +175,7 @@ class DependentRestDAO extends RestDAO {
   }
 
   getUsedIn(name, version) {
-    return RestClient.get(`api/${this.entityType}/usedIn/${encodeURI(name)}/${encodeURI(version)}`)
+    return RestClient.get(`${this.entityType}/usedIn/${encodeURI(name)}/${encodeURI(version)}`)
   }
 
 }
@@ -187,11 +187,11 @@ class SchemaRestDAO extends DependentRestDAO {
   }
 
   getSchemaFile(name, version) {
-    return RestClient.get(`api/${this.entityType}/export/${encodeURI(name)}/${encodeURI(version)}`)
+    return RestClient.get(`${this.entityType}/export/${encodeURI(name)}/${encodeURI(version)}`)
   }
 
   getSchemaStruct(name, version) {
-    return RestClient.get(`api/${this.entityType}/json/${encodeURI(name)}/${encodeURI(version)}?pretty=true`)
+    return RestClient.get(`${this.entityType}/json/${encodeURI(name)}/${encodeURI(version)}?pretty=true`)
   }
 
 }
@@ -203,7 +203,7 @@ class MappingTableRestDAO extends DependentRestDAO {
   }
 
   addDefaultValue(sName, iVersion, oDefault) {
-    return RestClient.post(`api/${this.entityType}/addDefault`, {
+    return RestClient.post(`${this.entityType}/addDefault`, {
       id: {
         name: sName,
         version: iVersion
@@ -216,7 +216,7 @@ class MappingTableRestDAO extends DependentRestDAO {
   }
 
   editDefaultValues(sName, iVersion, aDefaults) {
-    return RestClient.post(`api/${this.entityType}/updateDefaults`, {
+    return RestClient.post(`${this.entityType}/updateDefaults`, {
       id: {
         name: sName,
         version: iVersion
@@ -230,6 +230,6 @@ class MappingTableRestDAO extends DependentRestDAO {
 class ConfigRestClient {
 
   static getEnvironmentName() {
-    return RestClient.get(`api/configuration/environment`)
+    return RestClient.get(`configuration/environment`)
   }
 }

@@ -37,7 +37,7 @@ var GenericService = new function () {
     let cookie = getCookie("JWT");
     let jwt = cookie ? cookie : localStorage.getItem("jwtToken");
 
-    $.ajax(window.apiUrl + "/api/user/info", {
+    $.ajax(window.apiUrl + "user/info", {
       headers: {
         "JWT": jwt
       },
@@ -70,7 +70,7 @@ var GenericService = new function () {
   };
 
   this.getLandingPageInfo = function() {
-    RestClient.get("api/landing/info").then((oData) => {
+    RestClient.get("landing/info").then((oData) => {
       model().setProperty("/landingPageInfo", oData);
       const graphData = jQuery.extend({}, oData.todaysRunsStatistics);
       delete graphData["total"];
@@ -91,7 +91,7 @@ var GenericService = new function () {
   };
 
   this.getOozieInfo = function() {
-    Functions.ajax("api/oozie/isEnabled", "GET", {}, oData => {
+    Functions.ajax("oozie/isEnabled", "GET", {}, oData => {
       model().setProperty("/appInfo/oozie/isEnabled", oData);
     });
   };
@@ -134,7 +134,7 @@ var GenericService = new function () {
 
   this.isNameUnique = function(sName, oModel, sEntityType) {
     oModel.setProperty("/nameUsed", undefined);
-    Functions.ajax("api/" + sEntityType + "/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
+    Functions.ajax(sEntityType + "/isUniqueName/" + encodeURI(sName), "GET", {}, function(oData) {
       oModel.setProperty("/nameUnique", oData)
     }, function() {
       sap.m.MessageBox.error("Failed to retrieve isUniqueName. Please try again later.")

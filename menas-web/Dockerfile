@@ -10,4 +10,4 @@ ADD start_menas_web.sh /docker-entrypoint.d/start_menas_web.sh
 COPY nginx.conf nginx.conf
 RUN chmod +x /docker-entrypoint.d/start_menas_web.sh && rm -rf /usr/share/nginx/html/*
 
-COPY ./ui /usr/share/nginx/html/
+COPY ./ui/dist /usr/share/nginx/html/

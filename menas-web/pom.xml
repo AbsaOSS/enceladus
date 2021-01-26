@@ -26,7 +26,6 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <webui.basedir>${project.basedir}/ui</webui.basedir>
     </properties>
 
     <dependencies>
@@ -56,40 +55,55 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>install grunt-openui5</id>
+                        <id>install</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>install grunt grunt-cli grunt-openui5 --save-dev</arguments>
+                            <arguments>install</arguments>
                         </configuration>
                     </execution>
-                    <!--<execution>
-                        <id>sync version to package.json</id>
+                    <execution>
+                        <id>ui5 build</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>sync-pom-version</arguments>
-                        </configuration>
-                    </execution>-->
-                    <execution>
-                        <id>generate preload</id>
-                        <goals>
-                            <goal>grunt</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>openui5_preload</arguments>
+                            <arguments>run ui5-build</arguments>
                         </configuration>
                     </execution>
                     <execution>
-                        <id>prune</id>
+                        <id>clean node_modules</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
                             <arguments>prune --production</arguments>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>${maven.ant.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>Clean up after generating component preload</id>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <target>
+                                <delete dir="${project.basedir}/ui/dist/dist"/>
+                                <delete dir="${project.basedir}/ui/node"/>
+                                <move toDir="${project.basedir}/ui/dist/node_modules">
+                                    <fileset dir="${project.basedir}/ui/node_modules/" includes="**/*" />
+                                </move>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
