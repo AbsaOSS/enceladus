@@ -15,12 +15,17 @@ LABEL \
     license="Apache License, version 2.0" \
     name="Menas"
 
-ADD src/main/resources/start_menas.sh start_menas.sh
+ARG WAR_FILE
+ARG PROPERTY_FILE
+
+ENV SPRING_CONFIG_NAME=${PROPERTY_FILE:-"application"}
+
+ADD ./src/main/resources/docker/start_menas.sh start_menas.sh
 RUN chmod +x start_menas.sh && \
     rm -rf webapps/*
 
-ADD ./target/*.war webapps/ROOT.war
-ADD ./src/main/resources/server.xml /tmp/server.xml
+ADD ./target/${WAR_FILE} webapps/ROOT.war
+ADD src/main/resources/docker/server.xml /tmp/server.xml
 
 EXPOSE 8080
 EXPOSE 8443

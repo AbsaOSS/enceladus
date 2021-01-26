@@ -275,8 +275,7 @@ trait CommonJobExecution extends ProjectMetadata {
       case Some(version) => version
       case None =>
 
-        // publishFs for this specific feature (needed for missing reportVersion until reusable
-        // common "PathConfig" with FS objects is established)
+        // Since `pathConfig.publish.fileSystem` is not available at this point yet, a temporary publish-FS is create & used here instead
         val tempPublishFs: FileSystem = FileSystemUtils.getFileSystemFromPath(dataset.hdfsPublishPath)
         val fsUtils = HadoopFsUtils.getOrCreate(tempPublishFs)
         val newVersion = fsUtils.getLatestVersion(dataset.hdfsPublishPath, jobConfig.reportDate) + 1

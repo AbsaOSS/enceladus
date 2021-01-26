@@ -24,10 +24,9 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample3 extends HadoopFsTestBase {
+object CustomRuleSample3 extends CustomRuleSampleFs {
   implicit val spark: SparkSession = SparkSession.builder
     .master("local[*]")
     .appName("CustomRuleSample3")

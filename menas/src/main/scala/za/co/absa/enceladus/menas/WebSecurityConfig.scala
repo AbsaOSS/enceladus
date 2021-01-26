@@ -72,9 +72,6 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .and()
           .addFilterBefore(kerberosFilter, classOf[UsernamePasswordAuthenticationFilter])
           .addFilterAfter(jwtAuthFilter, classOf[SpnegoAuthenticationProcessingFilter])
-        .headers()
-          .frameOptions()
-          .sameOrigin()
     }
 
     @Bean
