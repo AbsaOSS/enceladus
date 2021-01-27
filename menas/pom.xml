@@ -91,6 +91,12 @@
             <version>${hadoop.version}</version>
             <scope>compile</scope>
         </dependency>
+        <!-- Fix for #1653 - HDFS browser doesn't work on EMR HDFS -->
+        <dependency>
+            <groupId>org.apache.htrace</groupId>
+            <artifactId>htrace-core</artifactId>
+            <version>${htrace.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-scala_${scala.compat.version}</artifactId>
