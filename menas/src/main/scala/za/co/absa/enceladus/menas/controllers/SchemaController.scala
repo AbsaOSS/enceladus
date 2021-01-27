@@ -62,7 +62,7 @@ class SchemaController @Autowired()(
                        @RequestParam name: String,
                        @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
-    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
+    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format.toScalaOption)
     val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
@@ -85,7 +85,7 @@ class SchemaController @Autowired()(
                       @RequestParam name: String,
                       @RequestParam format: Optional[String]): CompletableFuture[Option[Schema]] = {
 
-    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format)
+    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format.toScalaOption)
 
     val valueSchemaResponse = Try {
       schemaRegistryService.loadSchemaBySubjectName(s"$subject")
@@ -117,7 +117,7 @@ class SchemaController @Autowired()(
 
     val fileContent = new String(file.getBytes)
 
-    val schemaType = SchemaType.fromOptSchemaName(format)
+    val schemaType = SchemaType.fromOptSchemaName(format.toScalaOption)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     // for avro schema type, always force the same mime-type to be persisted

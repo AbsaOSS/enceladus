@@ -84,11 +84,20 @@ trait CommonJobExecution extends ProjectMetadata {
     confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
 
     dao.authenticate()
-    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, validateProperties = true)
+    dataset.propertiesValidation match {
+      case Some(validation) if !validation.isValid =>
+        throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
+          validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
+        )
+      case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
+      case _ => // no problems found
+    }
+
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg = getPathConfig(cmd, dataset, reportVersion)
 
-    validateOutputPath(fsUtils, pathCfg)
+    validatePaths(fsUtils, pathCfg)
 
     // Enable Spline
     import za.co.absa.spline.core.SparkLineageInitializer._
@@ -100,12 +109,20 @@ trait CommonJobExecution extends ProjectMetadata {
     PreparationResult(dataset, reportVersion, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
   }
 
-  protected def validateOutputPath(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
+  protected def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit
 
-  protected def validateIfPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+  protected def validateIfOutputPathAlreadyExists(fsUtils: FileSystemVersionUtils, path: String): Unit = {
     if (fsUtils.hdfsExists(path)) {
       throw new IllegalStateException(
         s"Path $path already exists. Increment the run version, or delete $path"
+      )
+    }
+  }
+
+  protected def validateInputPath(fsUtils: FileSystemVersionUtils, path: String): Unit = {
+    if (!fsUtils.hdfsExists(path)) {
+      throw new IllegalStateException(
+        s"Input path $path does not exist"
       )
     }
   }
@@ -215,6 +232,15 @@ trait CommonJobExecution extends ProjectMetadata {
     } catch {
       case NonFatal(e) => log.error(s"Unable to write performance metrics to file '$fileName': ${e.getMessage}")
     })
+  }
+
+  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+
+    log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
+    data.foreach { case (key, value) =>
+      Atum.setAdditionalInfo((s"$keyPrefix$key", value))
+    }
   }
 
   protected def handleEmptyOutput(job: SourcePhase)(implicit spark: SparkSession): Unit = {

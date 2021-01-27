@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference, Validation}
 
 /**
   * Implementation of Menas REST API DAO
@@ -30,10 +30,17 @@ protected class MenasRestDAO(private[rest] val apiCaller: ApiCaller,
     restClient.authenticate()
   }
 
-  def getDataset(name: String, version: Int): Dataset = {
+  def getDataset(name: String, version: Int, validateProperties: Boolean = false): Dataset = {
     apiCaller.call { apiBaseUrl =>
-      val url = s"$apiBaseUrl/api/dataset/detail/$name/$version"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=$validateProperties"
       restClient.sendGet[Dataset](url)
+    }
+  }
+
+  def getDatasetPropertiesForInfoFile(datasetName: String, datasetVersion: Int): Map[String, String] = {
+    apiCaller.call { apiBaseUrl =>
+      val url = s"$apiBaseUrl/api/dataset/$datasetName/$datasetVersion/properties/?putIntoInfoFile=true"
+      restClient.sendGet[Map[String, String]](url)
     }
   }
 

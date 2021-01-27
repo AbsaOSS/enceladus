@@ -63,8 +63,8 @@ class SchemaFieldTest extends FunSuite {
   )
 
   test("testGetAllChildren") {
-    val allChildren = List("String", "AnyStruct2", "AnyStruct.Number")
-    assert(allChildren == schemaFieldRoot.getAllChildren)
+    val expectedAllChildren = List("String", "AnyStruct2", "AnyStruct.Number")
+    assert(schemaFieldRoot.getAllChildren == expectedAllChildren)
   }
 
 }
