@@ -17,11 +17,11 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{NumericType, StringType, StructType}
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class LocalMappingTableSuite extends WordSpec with SparkTestBase {
+class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
 
   import spark.implicits._
 

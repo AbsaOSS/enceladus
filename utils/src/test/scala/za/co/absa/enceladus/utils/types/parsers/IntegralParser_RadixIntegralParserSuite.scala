@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.Radix
 import za.co.absa.enceladus.utils.numeric.Radix.RadixFormatException
 import za.co.absa.enceladus.utils.types.parsers.NumericParser.NumericParserException
 
 import scala.util.Success
 
-class IntegralParser_RadixIntegralParserSuite extends FunSuite {
+class IntegralParser_RadixIntegralParserSuite extends AnyFunSuite {
 
   test("base 10 parsing succeeds") {
     val parser = IntegralParser.ofRadix(Radix(10))

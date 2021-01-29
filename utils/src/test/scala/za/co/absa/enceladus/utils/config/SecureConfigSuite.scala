@@ -16,11 +16,12 @@
 package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.utils.config.SecureConfig.StoreDef
 
-class SecureConfigSuite extends FlatSpec with Matchers {
+class SecureConfigSuite extends AnyFlatSpec with Matchers {
 
   private val emptyConfig = ConfigFactory.empty()
   private val keyStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.keyStore", "/path/to/keystore")

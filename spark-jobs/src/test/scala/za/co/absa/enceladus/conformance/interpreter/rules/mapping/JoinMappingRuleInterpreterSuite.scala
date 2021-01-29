@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class JoinMappingRuleInterpreterSuite extends FunSuite with SparkTestBase {
+class JoinMappingRuleInterpreterSuite extends AnyFunSuite with SparkTestBase {
   test("Mapping rule fields existence validation test") {
 
     val df = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", "{0}/{1}/{2}")

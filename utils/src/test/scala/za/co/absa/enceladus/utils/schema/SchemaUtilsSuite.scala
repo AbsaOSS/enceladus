@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.scalatest.{FunSuite, Matchers}
 import org.apache.spark.sql.types._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
 
-class SchemaUtilsSuite extends FunSuite with Matchers {
+class SchemaUtilsSuite extends AnyFunSuite with Matchers {
   // scalastyle:off magic.number
 
   private val schema = StructType(Seq(

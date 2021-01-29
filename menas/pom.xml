@@ -265,6 +265,17 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
+            <version>${atum.version}</version>
+            <exclusions>
+                <exclusion>  <!-- declare the exclusion here -->
+                    <groupId>software.amazon.awssdk</groupId>
+                    <artifactId>s3</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -288,6 +299,19 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile.maven.version}</version>
+                <configuration>
+                    <repository>${dockerfile.repository}</repository>
+                    <tag>${dockerfile.tag}</tag>
+                    <buildArgs>
+                        <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
+                        <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
@@ -353,6 +377,9 @@
                             <target>
                                 <copy file="${project.basedir}/src/main/resources/application.properties.template"
                                       tofile="${project.basedir}/src/main/resources/application.properties"
+                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/docker.properties.template"
+                                      tofile="${project.basedir}/src/main/resources/docker.properties"
                                       overwrite="false"/>
                             </target>
                         </configuration>

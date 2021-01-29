@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.utils.testUtils
 
-import org.scalatest.FunSuiteLike
+import org.scalatest.funsuite.AnyFunSuiteLike
 
 import scala.language.reflectiveCalls
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe
 
 trait SparkJobRunnerMethods {
-  this: FunSuiteLike =>
+  this: AnyFunSuiteLike =>
 
   private def runSparkJob[T](implicit ct: ClassTag[T]): Unit = {
     type MainClass = {def main(args: Array[String]): Unit}

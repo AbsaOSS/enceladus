@@ -17,13 +17,13 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 import scala.collection.mutable
 
-class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBase {
+class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTestBase {
 
   import spark.implicits._
 

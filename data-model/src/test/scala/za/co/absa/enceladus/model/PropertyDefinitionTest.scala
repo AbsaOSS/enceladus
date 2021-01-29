@@ -15,12 +15,12 @@
 
 package za.co.absa.enceladus.model
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyTypeValidationException, StringPropertyType}
 
-class PropertyDefinitionTest extends FunSuite {
+class PropertyDefinitionTest extends AnyFunSuite {
 
   private val modelVersion = ModelVersion
 

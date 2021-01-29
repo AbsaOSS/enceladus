@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.migrations.framework
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.framework.fixture.MigrationTestData._
 import za.co.absa.enceladus.migrations.framework.fixture.MigrationTestDoubles._
 
-class BaseMigrationSuite extends FunSuite {
+class BaseMigrationSuite extends AnyFunSuite {
 
   test("Test collection names are determined properly for a given db version") {
     val mig = new Migrator(DocumentDbStub, MigrationExample0 :: MigrationExample1 :: Nil)

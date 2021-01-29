@@ -17,8 +17,9 @@ package za.co.absa.enceladus.menas.controllers
 
 import org.mockito.Mockito
 import org.scalatest.concurrent.Futures
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{AsyncFlatSpec, Matchers}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.flatspec.AsyncFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.models.SchemaApiFeatures
 import za.co.absa.enceladus.menas.services.SchemaRegistryService
 

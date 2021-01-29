@@ -16,7 +16,8 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types._
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.common.error.ErrorMessageFactory
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
@@ -25,7 +26,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationInterpreter_ArraySuite extends FunSuite with SparkTestBase with LoggerTestBase with Matchers {
+class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary

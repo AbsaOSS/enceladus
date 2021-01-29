@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.migrations.framework.integration
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.framework.Configuration.DatabaseVersionCollectionName
 import za.co.absa.enceladus.migrations.framework.Migrator
 import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MigrationsFixture
 import za.co.absa.enceladus.migrations.framework.integration.data.IntegrationTestData
 
-class MigrationsIntegrationSuite extends FunSuite with MigrationsFixture {
+class MigrationsIntegrationSuite extends AnyFunSuite with MigrationsFixture {
   val testData = new IntegrationTestData
 
   import testData._
