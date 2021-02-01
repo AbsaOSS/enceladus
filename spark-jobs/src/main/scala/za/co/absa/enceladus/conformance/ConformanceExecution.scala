@@ -21,7 +21,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.atum.AtumImplicits
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
@@ -114,12 +113,12 @@ trait ConformanceExecution extends CommonJobExecution {
       DynamicInterpreter().interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
         throw e
       case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
