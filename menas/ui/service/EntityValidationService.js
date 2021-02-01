@@ -72,8 +72,6 @@ var EntityValidationService = new function () {
   };
 
   this.hasValidProperties = function(aProperties) {
-    console.log(aProperties);
-
     let isOk = true;
 
     aProperties.map((oProp) => {
@@ -92,7 +90,6 @@ var EntityValidationService = new function () {
         }
       }
     })
-
     return isOk;
   };
 
