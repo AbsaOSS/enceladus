@@ -367,6 +367,16 @@ sap.ui.define([
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);
       }
+      //transform properties into a bindable format
+      if(currentDataset && currentDataset.properties) {
+        currentDataset.propertiesDisplay = [];
+        for(let sName in currentDataset.properties) {
+          currentDataset.propertiesDisplay.push({
+            name: sName,
+            value: currentDataset.properties[sName]
+          });
+        }
+      } 
     },
 
     conformanceRuleFactory: function (sId, oContext) {

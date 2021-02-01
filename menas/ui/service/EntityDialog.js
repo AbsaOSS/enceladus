@@ -86,6 +86,13 @@ class DatasetDialog extends EntityDialog {
 
     this.oController.byId("selectedPublishHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("selectedPublishHDFSPathLabel").setValueStateText("");
+
+    //properties
+    this.oDialog.getModel("entity").getProperty("/_properties").map(oProp => {
+      oProp.validation = "None";
+      oProp.validationText = "";
+    });
+    this.oDialog.getModel("entity").checkUpdate();
   }
 
   isValid(oDataset) {
@@ -105,7 +112,11 @@ class DatasetDialog extends EntityDialog {
     let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
       this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
+    //here the validation modifies the model's underlying data, trigger a check
+    let hasValidProperties = EntityValidationService.hasValidProperties(oDataset._properties);
+    this.oDialog.getModel("entity").checkUpdate();
+
+    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath && hasValidProperties;
   }
 
   onNameChange() {
@@ -135,6 +146,18 @@ class AddDatasetDialog extends DatasetDialog {
   onPress() {
     this.oDialog.open();
 
+    const aPropTemplate = sap.ui.getCore().getModel().getProperty("/properties") || [];
+
+    const aProps = aPropTemplate.map(oProp => {
+      const oPreparedProp = jQuery.extend(true, {}, oProp);
+      oPreparedProp.validation = "None";
+      oPreparedProp.value = oProp.propertyType.suggestedValue;
+      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+        oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
+      }
+      return oPreparedProp;
+    })
+   
     this.schemaService.getList(this.oDialog).then(oData => {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
@@ -144,7 +167,8 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPath: "/",
         hdfsPublishPath: "/",
         isEdit: false,
-        title: "Add"
+        title: "Add",
+        _properties: aProps
       }), "entity");
     })
   }
@@ -156,9 +180,27 @@ class EditDatasetDialog extends DatasetDialog {
   onPress() {
     this.oDialog.open();
 
+    const aPropTemplate = sap.ui.getCore().getModel().getProperty("/properties") || [];
+
     this.schemaService.getList(this.oDialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
+      const aProps = aPropTemplate.map(oProp => {
+        const oPreparedProp = jQuery.extend(true, {}, oProp);
+        oPreparedProp.validation = "None";
+        if(current.properties && current.properties[oPreparedProp.name]) {
+          oPreparedProp.value = current.properties[oPreparedProp.name];
+        } else {
+          oPreparedProp.value = oProp.propertyType.suggestedValue;
+        }
+
+        if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+          oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
+        }
+        return oPreparedProp;
+      })
+      
+      current._properties = aProps;
       current.isEdit = true;
       current.title = "Edit";
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
