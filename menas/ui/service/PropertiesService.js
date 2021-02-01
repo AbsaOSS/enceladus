@@ -29,9 +29,9 @@ const PropertiesService = new function () {
   }
 
   this.getProperties = function () {
-      return PropertiesDAO.getProperties().then((oData) => {
-        model().setProperty("/properties", oData);
-      });
+    return PropertiesDAO.getProperties().then((oData) => {
+      model().setProperty("/properties", oData);
+    });
   };
 
 }();
