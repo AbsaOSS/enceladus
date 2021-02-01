@@ -178,8 +178,8 @@
         <scala.java8.compat.version>0.9.0</scala.java8.compat.version>
         <scala.version>2.11.12</scala.version>
         <scalatest.maven.version>2.0.0</scalatest.maven.version>
-        <scalatest.version>3.0.5</scalatest.version>
-        <scopt.version>4.0.0-RC2</scopt.version>
+        <scalatest.version>3.2.2</scalatest.version>
+        <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
         <spark.hats.version>0.2.1</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
