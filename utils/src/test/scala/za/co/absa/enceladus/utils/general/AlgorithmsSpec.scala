@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.utils.general
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class AlgorithmsSpec extends FunSuite {
+class AlgorithmsSpec extends AnyFunSuite {
   case class Person(firstName: String, lastName: String)
 
   private val people = Seq(Person("Andrew", "Mikels"), Person("Andrew", "Gross"),

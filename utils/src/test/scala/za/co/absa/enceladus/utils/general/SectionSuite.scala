@@ -17,11 +17,11 @@ package za.co.absa.enceladus.utils.general
 
 import java.security.InvalidParameterException
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.{Failure, Try}
 
-class SectionSuite extends FunSuite {
+class SectionSuite extends AnyFunSuite {
 
   private def checkSectionRemoveExtractInject(
                                                section: Section,

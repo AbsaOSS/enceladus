@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, Rest
 @RequestMapping(Array("/api/configuration"))
 class ConfigurationController extends BaseController {
   @Value("${menas.environment}")
-  val menasEnvironment: String = ""
+  private val menasEnvironment: String = ""
 
   @GetMapping(path = Array("/environment"))
   def getEnvironment(): String = {

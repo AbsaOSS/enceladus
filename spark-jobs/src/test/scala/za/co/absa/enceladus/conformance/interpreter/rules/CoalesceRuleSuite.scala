@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import CoalesceRuleSuite._
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
@@ -83,7 +83,7 @@ object CoalesceRuleSuite {
   )
 }
 
-class CoalesceRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class CoalesceRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   test("Coalesce conformance rule on root level fields") {
     val inputDf: DataFrame = spark.createDataFrame(shopItems)
 

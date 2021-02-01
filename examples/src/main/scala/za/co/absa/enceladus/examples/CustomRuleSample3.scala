@@ -26,7 +26,7 @@ import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConform
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample3 {
+object CustomRuleSample3 extends CustomRuleSampleFs {
   implicit val spark: SparkSession = SparkSession.builder
     .master("local[*]")
     .appName("CustomRuleSample3")
@@ -79,7 +79,7 @@ object CustomRuleSample3 {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 
     outputData.show()
   }

@@ -16,14 +16,14 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.DropConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class DropRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class DropRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
   private val dropRule = DropConformanceRule(order = 1, controlCheckpoint = false, outputColumn = "name" )

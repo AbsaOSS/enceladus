@@ -26,7 +26,7 @@ import za.co.absa.enceladus.examples.interpreter.rules.custom.LPadCustomConforma
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample2 {
+object CustomRuleSample2 extends CustomRuleSampleFs {
 
   case class ExampleRow(id: Int, addPad: String, leave: String)
   case class OutputRow(id: Int, addPad: String, leave: String, donePad: String)
@@ -81,7 +81,7 @@ object CustomRuleSample2 {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 
     outputData.show(false)
     // scalastyle:on magic.number

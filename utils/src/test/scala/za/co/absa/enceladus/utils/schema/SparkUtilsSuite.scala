@@ -18,10 +18,10 @@ package za.co.absa.enceladus.utils.schema
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class SparkUtilsSuite extends FunSuite with SparkTestBase {
+class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 

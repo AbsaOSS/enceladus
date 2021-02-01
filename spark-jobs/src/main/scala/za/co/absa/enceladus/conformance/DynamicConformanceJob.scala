@@ -19,7 +19,6 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 
 object DynamicConformanceJob extends ConformanceExecution {
@@ -32,7 +31,6 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
-    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 

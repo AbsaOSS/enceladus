@@ -19,14 +19,14 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream, ObjectInputStream, 
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.types.{DecimalType, DoubleType, LongType, MetadataBuilder, ShortType, StructField}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.parsers.{DecimalParser, FractionalParser}
 import za.co.absa.enceladus.utils.types.parsers.IntegralParser.{PatternIntegralParser, RadixIntegralParser}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 
-class UDFBuilderSuite extends FunSuite {
+class UDFBuilderSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
 
   test("Serialization and deserialization of stringUdfViaNumericParser (FractionalParser)") {

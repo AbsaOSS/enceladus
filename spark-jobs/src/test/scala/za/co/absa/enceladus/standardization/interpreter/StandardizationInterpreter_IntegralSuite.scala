@@ -19,13 +19,13 @@ import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationInterpreter_IntegralSuite extends FunSuite with SparkTestBase with LoggerTestBase{
+class StandardizationInterpreter_IntegralSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase{
 
   import spark.implicits._
 

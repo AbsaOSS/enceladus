@@ -42,11 +42,9 @@ html, body {
   margin-top: 1rem !important;
 }
 
-.menasAddMappingFlex {
-  div {
+.menasAddMappingFlex div {
     width: calc(100% - 38px);
   }
-}
 
 .monitoringBlockLayoutCell {
   min-width: 20rem !important;
@@ -54,10 +52,11 @@ html, body {
 }
 
 .monitoringTitle {
+  text-align: Center;
   width: 100%;
 }
 
-.monitoringRecordspopover {
+.monitoringRecordsPopover {
     top: 5rem !important;
     left: calc(50% - 18rem) !important;
 }
@@ -65,13 +64,13 @@ html, body {
 .auditTrailNestedListItem {
   max-width: 100%;
   background-color: inherit !important;
-  border-bottom: 0px !important;
+  border-bottom: 0 !important;
 }
 
 .auditTrailNestedList > ul > .sapMListNoData {
   background-color: inherit !important;
-  border-bottom: 0px !important;
-  padding-left: 0px !important;
+  border-bottom: 0 !important;
+  padding-left: 0 !important;
 }
 
 .lineageIframe {
@@ -81,8 +80,8 @@ html, body {
 
 .auditTrailNestedList > ul > .sapMListNoData {
   background-color: inherit !important;
-  border-bottom: 0px !important;
-  padding-left: 0px !important;
+  border-bottom: 0 !important;
+  padding-left: 0 !important;
 }
 
 .lineageIframe {

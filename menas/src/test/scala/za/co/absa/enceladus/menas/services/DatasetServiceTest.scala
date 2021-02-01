@@ -16,10 +16,9 @@
 package za.co.absa.enceladus.menas.services
 
 import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
-import org.scalatest.Matchers
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.{Dataset, Validation}
@@ -43,7 +42,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
 
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
-    Mockito.when(modelRepository.create(any[Dataset](), eqTo("user"))).thenReturn(Future.failed(writeException))
+    Mockito.when(modelRepository.create(any[Dataset], eqTo("user"))).thenReturn(Future.failed(writeException))
 
     val result = intercept[ValidationException] {
       await(service.create(dataset, "user"))
@@ -58,7 +57,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     Mockito.when(modelRepository.getVersion("dataset", 1)).thenReturn(Future.successful(Some(dataset)))
     Mockito.when(modelRepository.getLatestVersionValue("dataset")).thenReturn(Future.successful(Some(1)))
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
-    Mockito.when(modelRepository.update(eqTo("user"), any[Dataset]())).thenReturn(Future.failed(writeException))
+    Mockito.when(modelRepository.update(eqTo("user"), any[Dataset])).thenReturn(Future.failed(writeException))
 
     val result = intercept[ValidationException] {
       await(service.update("user", dataset))

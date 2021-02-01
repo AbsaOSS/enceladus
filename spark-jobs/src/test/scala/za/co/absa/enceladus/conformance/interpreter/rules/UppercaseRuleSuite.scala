@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.UppercaseConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class UppercaseRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class UppercaseRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
   private val uppercaseRule = UppercaseConformanceRule(order = 1, outputColumn = "ConformedName", controlCheckpoint = false, inputColumn = "name")

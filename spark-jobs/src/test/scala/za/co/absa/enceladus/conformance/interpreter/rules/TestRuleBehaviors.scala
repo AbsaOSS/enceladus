@@ -17,16 +17,15 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-
-trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase {
+trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def conformanceRuleShouldMatchExpected(inputDf: DataFrame,
                                          inputDataset: Dataset,
@@ -49,8 +48,7 @@ trait TestRuleBehaviors  extends FunSuite with SparkTestBase with LoggerTestBase
       .setControlFrameworkEnabled(enableCF)
       .setOriginalColumnsMutability(originalColumnsMutability))
 
-
-    val conformed = DynamicInterpreter.interpret(inputDataset, inputDf)
+    val conformed = DynamicInterpreter().interpret(inputDataset, inputDf)
 
     val conformedJSON = conformed.orderBy($"id").toJSON.collect().mkString("\n")
 

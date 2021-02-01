@@ -18,10 +18,10 @@ package za.co.absa.enceladus.utils.time
 import java.security.InvalidParameterException
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.general.Section
 
-class DateTimePatternSuite extends FunSuite {
+class DateTimePatternSuite extends AnyFunSuite {
 
   test("Pattern for timestamp") {
     val pattern: String = "yyyy~mm~dd_HH.mm.ss"
