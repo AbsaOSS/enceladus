@@ -10,6 +10,5 @@ class SchemaCheckerSuite extends AnyFunSuite with SparkTestBase {
     val sourceFile = FileReader.readFileAsString("src/test/resources/data/bug.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]
     val output = SchemaChecker.validateSchemaAndLog(schema)
-    println(output)
   }
 }
