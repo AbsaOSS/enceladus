@@ -26,12 +26,16 @@ html, body {
   min-width: 55rem !important;
 }
 
-.maxW75p {
-  max-width: 75% !important;
+.maxW65p {
+  max-width: 65% !important;
 }
 
 .w100p {
   width: 100%;
+}
+
+.w50p {
+  width: 50%;
 }
 
 .mt10 {

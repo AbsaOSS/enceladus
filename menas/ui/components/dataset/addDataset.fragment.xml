@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
                          xmlns:hdfs="components.hdfs">
-    <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW55rem maxW75p w100p">
+    <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW55rem maxW65p w50p">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
@@ -43,20 +43,20 @@
                                           pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{entity>/hdfsPublishPath}"/>
                         </VBox>
-                        <Label text="Dataset Tags"/>
+                        <Label text="Dataset Properties"/>
                         <List width="100%" items="{entity>/_properties}">
                           <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
                             <HBox alignItems="Center" justifyContent="End">
-                                <Input type="Text" width="20rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}" 
+                                <Input type="Text" width="12rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}" class="propertyInput"
                                     value="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"></Input>
-                                <Select width="20rem" items="{path: 'entity>propertyType/allowedValues', templateShareable: false}" 
+                                <Select width="12rem" items="{path: 'entity>propertyType/allowedValues', templateShareable: false}" 
                                     selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
                                     visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}">
                                     <core:Item key="{entity>value}" text="{entity>value}"></core:Item>
                                 </Select>
-                                <ObjectStatus text="{entity>essentiality/_t}" class="essentialityStatus" 
-                                    icon="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }">
-                                </ObjectStatus>
+                                <ObjectStatus text="{entity>essentiality/_t}" class="essentialityStatus"></ObjectStatus>
+                                <core:Icon width="1rem" class="sapUiSmallMarginBegin" color="Neutral"
+                                    src="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }"></core:Icon>
                             </HBox>
                           </InputListItem>
                         </List>

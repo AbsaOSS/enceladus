@@ -61,7 +61,7 @@
                     <IconTabFilter id="monitoringTab" icon="sap-icon://vertical-bar-chart-2" key="monitoring" text="Monitoring">
                         <core:Fragment type="XML" fragmentName="components.dataset.monitoring.monitoring"/>
                     </IconTabFilter>
-                    <IconTabFilter id="propertiesTab" icon="sap-icon://tags" key="properties" text="Tags">
+                    <IconTabFilter id="propertiesTab" icon="sap-icon://tags" key="properties" text="Properties">
                         <core:Fragment type="XML" fragmentName="components.dataset.datasetProperties" />
                     </IconTabFilter>
                 </items>

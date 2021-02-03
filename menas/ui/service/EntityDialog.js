@@ -171,6 +171,21 @@ class AddDatasetDialog extends DatasetDialog {
         _properties: aProps
       }), "entity");
     })
+
+    //This hack is attach change handlers on inputs generated as a result of the above async data binding
+    setTimeout(function() {
+      const inputFields = $(".propertyInput").control()
+      const fnChangeHandler = function(oEv) {
+        const oDataset = this.oDialog.getModel("entity").getProperty("/");
+        this.resetValueState();
+        this.isValid(oDataset)
+      }.bind(this);
+      inputFields.map((oInpField) => {
+        //detach first in case these components are re-used
+        oInpField.detachChange(fnChangeHandler);
+        oInpField.attachChange(fnChangeHandler);
+      });
+    }.bind(this), 1500);
   }
 
 }
