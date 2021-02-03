@@ -139,6 +139,20 @@ class DatasetDialog extends EntityDialog {
     super.cancel();
   }
 
+  onPropertiesChange() {
+    const inputFields = $(".propertyInput").control()
+    const fnChangeHandler = function(oEv) {
+      const oDataset = this.oDialog.getModel("entity").getProperty("/");
+      this.resetValueState();
+      this.isValid(oDataset)
+    }.bind(this);
+    inputFields.map((oInpField) => {
+      //detach first in case these components are re-used
+      oInpField.detachChange(fnChangeHandler);
+      oInpField.attachChange(fnChangeHandler);
+    });
+  }
+
 }
 
 class AddDatasetDialog extends DatasetDialog {
@@ -172,20 +186,8 @@ class AddDatasetDialog extends DatasetDialog {
       }), "entity");
     })
 
-    //This hack is to attach change handlers on inputs generated as a result of the above async data binding
-    setTimeout(function() {
-      const inputFields = $(".propertyInput").control()
-      const fnChangeHandler = function(oEv) {
-        const oDataset = this.oDialog.getModel("entity").getProperty("/");
-        this.resetValueState();
-        this.isValid(oDataset)
-      }.bind(this);
-      inputFields.map((oInpField) => {
-        //detach first in case these components are re-used
-        oInpField.detachChange(fnChangeHandler);
-        oInpField.attachChange(fnChangeHandler);
-      });
-    }.bind(this), 1500);
+    //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+    setTimeout(this.onPropertiesChange.bind(this), 1500);
   }
 
 }
@@ -221,6 +223,9 @@ class EditDatasetDialog extends DatasetDialog {
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+
+      //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+      setTimeout(this.onPropertiesChange.bind(this), 1500);
     });
   }
 
