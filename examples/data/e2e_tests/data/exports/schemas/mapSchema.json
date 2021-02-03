@@ -1,33 +1,33 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "mapSchema",
-      "description": "",
-      "fields": [
-        {
-          "name": "string",
-          "type": "string",
-          "path": "",
-          "elementType": null,
-          "containsNull": null,
-          "nullable": false,
-          "metadata": {},
-          "children": [],
-          "absolutePath": "string"
-        },
-        {
-          "name": "order",
-          "type": "string",
-          "path": "",
-          "elementType": null,
-          "containsNull": null,
-          "nullable": false,
-          "metadata": {},
-          "children": [],
-          "absolutePath": "order"
-        }
-      ]
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "mapSchema",
+    "description": "",
+    "fields": [
+      {
+        "name": "string",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "string"
+      },
+      {
+        "name": "order",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "order"
+      }
+    ]
   }
+}

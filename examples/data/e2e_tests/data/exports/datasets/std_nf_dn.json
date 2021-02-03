@@ -1,15 +1,15 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "std_nf_dn",
-      "description": "",
-      "hdfsPath": "/std/std_test",
-      "hdfsPublishPath": "/publish/std_nf_dn",
-      "schemaName": "std_nf_dn",
-      "schemaVersion": 1,
-      "conformance": [],
-      "properties": {}
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "std_nf_dn",
+    "description": "",
+    "hdfsPath": "/std/std_test",
+    "hdfsPublishPath": "/publish/std_nf_dn",
+    "schemaName": "std_nf_dn",
+    "schemaVersion": 1,
+    "conformance": [],
+    "properties": {}
   }
+}

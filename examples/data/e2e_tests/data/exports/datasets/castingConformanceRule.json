@@ -1,144 +1,144 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "castingConformanceRule",
-      "description": "",
-      "hdfsPath": "/std/conformanceRulesData",
-      "hdfsPublishPath": "/publish/castingConformanceRule",
-      "schemaName": "conformanceRulesData",
-      "schemaVersion": 1,
-      "conformance": [
-        {
-          "_t": "CastingConformanceRule",
-          "order": 0,
-          "outputColumn": "integer_string",
-          "controlCheckpoint": false,
-          "inputColumn": "integer",
-          "outputDataType": "string"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 1,
-          "outputColumn": "date_string",
-          "controlCheckpoint": false,
-          "inputColumn": "date",
-          "outputDataType": "string"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 2,
-          "outputColumn": "boolean_string",
-          "controlCheckpoint": false,
-          "inputColumn": "boolean",
-          "outputDataType": "string"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 3,
-          "outputColumn": "string_integer",
-          "controlCheckpoint": false,
-          "inputColumn": "string",
-          "outputDataType": "integer"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 4,
-          "outputColumn": "boolean_integer",
-          "controlCheckpoint": false,
-          "inputColumn": "boolean",
-          "outputDataType": "integer"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 5,
-          "outputColumn": "date_integer",
-          "controlCheckpoint": false,
-          "inputColumn": "date",
-          "outputDataType": "integer"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 6,
-          "outputColumn": "integer_boolean",
-          "controlCheckpoint": false,
-          "inputColumn": "integer",
-          "outputDataType": "boolean"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 7,
-          "outputColumn": "string_boolean",
-          "controlCheckpoint": false,
-          "inputColumn": "string",
-          "outputDataType": "boolean"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 8,
-          "outputColumn": "integer_string_integer",
-          "controlCheckpoint": false,
-          "inputColumn": "integer_string",
-          "outputDataType": "integer"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 9,
-          "outputColumn": "date_string_date",
-          "controlCheckpoint": false,
-          "inputColumn": "date_string",
-          "outputDataType": "date"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 10,
-          "outputColumn": "boolean_string_boolean",
-          "controlCheckpoint": false,
-          "inputColumn": "boolean_string",
-          "outputDataType": "boolean"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 11,
-          "outputColumn": "boolean_integer_boolean",
-          "controlCheckpoint": false,
-          "inputColumn": "boolean_integer",
-          "outputDataType": "boolean"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 12,
-          "outputColumn": "binary_string",
-          "controlCheckpoint": false,
-          "inputColumn": "binary",
-          "outputDataType": "string"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 13,
-          "outputColumn": "string_binary",
-          "controlCheckpoint": false,
-          "inputColumn": "string",
-          "outputDataType": "binary"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 14,
-          "outputColumn": "binary_string_binary",
-          "controlCheckpoint": false,
-          "inputColumn": "binary_string",
-          "outputDataType": "binary"
-        },
-        {
-          "_t": "CastingConformanceRule",
-          "order": 15,
-          "outputColumn": "string_binary_string",
-          "controlCheckpoint": false,
-          "inputColumn": "string_binary",
-          "outputDataType": "string"
-        }
-      ],
-      "properties": []
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "castingConformanceRule",
+    "description": "",
+    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPublishPath": "/publish/castingConformanceRule",
+    "schemaName": "conformanceRulesData",
+    "schemaVersion": 1,
+    "conformance": [
+      {
+        "_t": "CastingConformanceRule",
+        "order": 0,
+        "outputColumn": "integer_string",
+        "controlCheckpoint": false,
+        "inputColumn": "integer",
+        "outputDataType": "string"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 1,
+        "outputColumn": "date_string",
+        "controlCheckpoint": false,
+        "inputColumn": "date",
+        "outputDataType": "string"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 2,
+        "outputColumn": "boolean_string",
+        "controlCheckpoint": false,
+        "inputColumn": "boolean",
+        "outputDataType": "string"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 3,
+        "outputColumn": "string_integer",
+        "controlCheckpoint": false,
+        "inputColumn": "string",
+        "outputDataType": "integer"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 4,
+        "outputColumn": "boolean_integer",
+        "controlCheckpoint": false,
+        "inputColumn": "boolean",
+        "outputDataType": "integer"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 5,
+        "outputColumn": "date_integer",
+        "controlCheckpoint": false,
+        "inputColumn": "date",
+        "outputDataType": "integer"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 6,
+        "outputColumn": "integer_boolean",
+        "controlCheckpoint": false,
+        "inputColumn": "integer",
+        "outputDataType": "boolean"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 7,
+        "outputColumn": "string_boolean",
+        "controlCheckpoint": false,
+        "inputColumn": "string",
+        "outputDataType": "boolean"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 8,
+        "outputColumn": "integer_string_integer",
+        "controlCheckpoint": false,
+        "inputColumn": "integer_string",
+        "outputDataType": "integer"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 9,
+        "outputColumn": "date_string_date",
+        "controlCheckpoint": false,
+        "inputColumn": "date_string",
+        "outputDataType": "date"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 10,
+        "outputColumn": "boolean_string_boolean",
+        "controlCheckpoint": false,
+        "inputColumn": "boolean_string",
+        "outputDataType": "boolean"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 11,
+        "outputColumn": "boolean_integer_boolean",
+        "controlCheckpoint": false,
+        "inputColumn": "boolean_integer",
+        "outputDataType": "boolean"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 12,
+        "outputColumn": "binary_string",
+        "controlCheckpoint": false,
+        "inputColumn": "binary",
+        "outputDataType": "string"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 13,
+        "outputColumn": "string_binary",
+        "controlCheckpoint": false,
+        "inputColumn": "string",
+        "outputDataType": "binary"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 14,
+        "outputColumn": "binary_string_binary",
+        "controlCheckpoint": false,
+        "inputColumn": "binary_string",
+        "outputDataType": "binary"
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 15,
+        "outputColumn": "string_binary_string",
+        "controlCheckpoint": false,
+        "inputColumn": "string_binary",
+        "outputDataType": "string"
+      }
+    ],
+    "properties": []
   }
+}

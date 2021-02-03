@@ -1,13 +1,13 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "ConformanceRuleMappingTable",
-      "description": "",
-      "hdfsPath": "/std/map",
-      "schemaName": "mapSchema",
-      "schemaVersion": 1,
-      "defaultMappingValue": []
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "ConformanceRuleMappingTable",
+    "description": "",
+    "hdfsPath": "/std/map",
+    "schemaName": "mapSchema",
+    "schemaVersion": 1,
+    "defaultMappingValue": []
   }
+}

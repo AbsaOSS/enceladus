@@ -1,31 +1,31 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "mappingConformanceRule",
-      "description": "",
-      "hdfsPath": "/std/conformanceRulesData",
-      "hdfsPublishPath": "/publish/mappingConformanceRule",
-      "schemaName": "conformanceRulesData",
-      "schemaVersion": 1,
-      "conformance": [
-        {
-          "_t": "MappingConformanceRule",
-          "order": 0,
-          "controlCheckpoint": false,
-          "mappingTable": "ConformanceRuleMappingTable",
-          "mappingTableVersion": 1,
-          "attributeMappings": {
-            "string": "string"
-          },
-          "targetAttribute": "order",
-          "outputColumn": "order",
-          "isNullSafe": false,
-          "mappingTableFilter": null,
-          "overrideMappingTableOwnFilter": false
-        }
-      ],
-      "properties": {}
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "mappingConformanceRule",
+    "description": "",
+    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPublishPath": "/publish/mappingConformanceRule",
+    "schemaName": "conformanceRulesData",
+    "schemaVersion": 1,
+    "conformance": [
+      {
+        "_t": "MappingConformanceRule",
+        "order": 0,
+        "controlCheckpoint": false,
+        "mappingTable": "ConformanceRuleMappingTable",
+        "mappingTableVersion": 1,
+        "attributeMappings": {
+          "string": "string"
+        },
+        "targetAttribute": "order",
+        "outputColumn": "order",
+        "isNullSafe": false,
+        "mappingTableFilter": null,
+        "overrideMappingTableOwnFilter": false
+      }
+    ],
+    "properties": {}
   }
+}

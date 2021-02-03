@@ -1,44 +1,44 @@
 {
-    "metadata": {
-      "exportVersion": 1
-    },
-    "item": {
-      "name": "literalConformanceRule",
-      "description": "",
-      "hdfsPath": "/std/conformanceRulesData",
-      "hdfsPublishPath": "/publish/literalConformanceRule",
-      "schemaName": "conformanceRulesData",
-      "schemaVersion": 1,
-      "conformance": [
-        {
-          "_t": "LiteralConformanceRule",
-          "order": 0,
-          "outputColumn": "literal_string",
-          "controlCheckpoint": false,
-          "value": "animal"
-        },
-        {
-          "_t": "LiteralConformanceRule",
-          "order": 1,
-          "outputColumn": "literal_boolean",
-          "controlCheckpoint": false,
-          "value": "TRUE"
-        },
-        {
-          "_t": "LiteralConformanceRule",
-          "order": 2,
-          "outputColumn": "literal_integer",
-          "controlCheckpoint": false,
-          "value": "121"
-        },
-        {
-          "_t": "LiteralConformanceRule",
-          "order": 3,
-          "outputColumn": "literal_date",
-          "controlCheckpoint": false,
-          "value": "2020_04_28"
-        }
-      ],
-      "properties": {}
-    }
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "literalConformanceRule",
+    "description": "",
+    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPublishPath": "/publish/literalConformanceRule",
+    "schemaName": "conformanceRulesData",
+    "schemaVersion": 1,
+    "conformance": [
+      {
+        "_t": "LiteralConformanceRule",
+        "order": 0,
+        "outputColumn": "literal_string",
+        "controlCheckpoint": false,
+        "value": "animal"
+      },
+      {
+        "_t": "LiteralConformanceRule",
+        "order": 1,
+        "outputColumn": "literal_boolean",
+        "controlCheckpoint": false,
+        "value": "TRUE"
+      },
+      {
+        "_t": "LiteralConformanceRule",
+        "order": 2,
+        "outputColumn": "literal_integer",
+        "controlCheckpoint": false,
+        "value": "121"
+      },
+      {
+        "_t": "LiteralConformanceRule",
+        "order": 3,
+        "outputColumn": "literal_date",
+        "controlCheckpoint": false,
+        "value": "2020_04_28"
+      }
+    ],
+    "properties": {}
   }
+}
