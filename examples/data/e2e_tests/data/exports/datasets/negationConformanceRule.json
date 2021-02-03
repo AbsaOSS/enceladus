@@ -1,0 +1,44 @@
+{
+    "metadata": {
+      "exportVersion": 1
+    },
+    "item": {
+      "name": "negationConformanceRule",
+      "description": "",
+      "hdfsPath": "/std/conformanceRulesData",
+      "hdfsPublishPath": "/publish/negationConformanceRule",
+      "schemaName": "conformanceRulesData",
+      "schemaVersion": 1,
+      "conformance": [
+        {
+          "_t": "NegationConformanceRule",
+          "order": 0,
+          "outputColumn": "boolean_negation",
+          "controlCheckpoint": false,
+          "inputColumn": "boolean"
+        },
+        {
+          "_t": "NegationConformanceRule",
+          "order": 1,
+          "outputColumn": "integer_negation",
+          "controlCheckpoint": false,
+          "inputColumn": "integer"
+        },
+        {
+          "_t": "NegationConformanceRule",
+          "order": 2,
+          "outputColumn": "boolean_negation_negation",
+          "controlCheckpoint": false,
+          "inputColumn": "boolean_negation"
+        },
+        {
+          "_t": "NegationConformanceRule",
+          "order": 3,
+          "outputColumn": "integer_negation_negation",
+          "controlCheckpoint": false,
+          "inputColumn": "integer_negation"
+        }
+      ],
+      "properties": {}
+    }
+  }

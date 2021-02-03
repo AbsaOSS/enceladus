@@ -1,0 +1,58 @@
+{
+    "metadata": {
+      "exportVersion": 1
+    },
+    "item": {
+      "name": "uppercaseConformanceRule",
+      "description": "",
+      "hdfsPath": "/std/conformanceRulesData",
+      "hdfsPublishPath": "/publish/uppercaseConformanceRule",
+      "schemaName": "conformanceRulesData",
+      "schemaVersion": 1,
+      "conformance": [
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 0,
+          "outputColumn": "upper_string",
+          "controlCheckpoint": false,
+          "inputColumn": "string"
+        },
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 1,
+          "outputColumn": "upper_boolean",
+          "controlCheckpoint": false,
+          "inputColumn": "boolean"
+        },
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 2,
+          "outputColumn": "upper_integer",
+          "controlCheckpoint": false,
+          "inputColumn": "integer"
+        },
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 3,
+          "outputColumn": "upper_date",
+          "controlCheckpoint": false,
+          "inputColumn": "date"
+        },
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 4,
+          "outputColumn": "upper_upper_string",
+          "controlCheckpoint": false,
+          "inputColumn": "upper_string"
+        },
+        {
+          "_t": "UppercaseConformanceRule",
+          "order": 5,
+          "outputColumn": "upper_binary",
+          "controlCheckpoint": false,
+          "inputColumn": "binary"
+        }
+      ],
+      "properties": {}
+    }
+  }

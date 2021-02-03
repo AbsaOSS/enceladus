@@ -1,0 +1,64 @@
+{
+    "metadata": {
+      "exportVersion": 1
+    },
+    "item": {
+      "name": "singleColumnConformanceRule",
+      "description": "",
+      "hdfsPath": "/std/conformanceRulesData",
+      "hdfsPublishPath": "/publish/singleColumnConformanceRule",
+      "schemaName": "conformanceRulesData",
+      "schemaVersion": 1,
+      "conformance": [
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 0,
+          "controlCheckpoint": false,
+          "outputColumn": "single_string",
+          "inputColumn": "string",
+          "inputColumnAlias": "string_alias"
+        },
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 1,
+          "controlCheckpoint": false,
+          "outputColumn": "single_boolean",
+          "inputColumn": "boolean",
+          "inputColumnAlias": "boolean_alias"
+        },
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 2,
+          "controlCheckpoint": false,
+          "outputColumn": "single_integer",
+          "inputColumn": "integer",
+          "inputColumnAlias": "integer_alias"
+        },
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 3,
+          "controlCheckpoint": false,
+          "outputColumn": "single_date",
+          "inputColumn": "date",
+          "inputColumnAlias": "date_alias"
+        },
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 4,
+          "controlCheckpoint": false,
+          "outputColumn": "single_single_string",
+          "inputColumn": "single_string",
+          "inputColumnAlias": "string_alias_alias"
+        },
+        {
+          "_t": "SingleColumnConformanceRule",
+          "order": 5,
+          "controlCheckpoint": false,
+          "outputColumn": "single_binary",
+          "inputColumn": "binary",
+          "inputColumnAlias": "binary_alias"
+        }
+      ],
+      "properties": {}
+    }
+  }

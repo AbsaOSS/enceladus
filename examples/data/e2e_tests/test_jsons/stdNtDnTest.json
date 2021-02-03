@@ -1,0 +1,39 @@
+
+{
+    "vars": {
+      "spark-submit": "spark-submit --num-executors 2 --executor-memory 2G --deploy-mode client",
+      "spark-conf": "--conf 'spark.driver.extraJavaOptions=-Dmenas.rest.uri=http://localhost:8080/menas_war_exploded/api -Dspline.mongodb.name=spline -Dspline.mongodb.url=mongodb://127.0.0.1:27017/'",
+      "enceladus-job-jar": "Projects/enceladus/spark-jobs/target/spark-jobs-2.19.0-SNAPSHOT.jar",
+      "credentials": "--menas-credentials-file ~/.ssh/menasCredential.properties",
+      "ref-std-data-path": "/ref/std_nt_dn/std",
+      "new-std-data-path": "/tmp/conformance-output/standardized-std_nt_dn-1-2019-11-27-1",
+      "results-log-path": "/std/std_nt_dn/results",
+      "dataset": "--dataset-name std_nt_dn --dataset-version 1 --report-date 2019-11-27 --report-version 1"
+    },
+    "runs" : [
+      {
+        "pluginName" : "BashPlugin",
+        "name": "Standardization",
+        "order" : 0,
+        "args" : ["#{spark-submit}# #{spark-conf}# --class za.co.absa.enceladus.standardization.StandardizationJob #{enceladus-job-jar}# #{credentials}# #{dataset}# --raw-format csv --header true "],
+        "writeArgs": []
+    },
+      {
+        "pluginName" : "InfoFileComparison",
+        "name": "InfoFileComparison",
+        "order" : 1,
+        "args" : ["--new-path", "#{new-std-data-path}#/_INFO", "--ref-path", "#{ref-std-data-path}#/_INFO", "--out-path", "#{results-log-path}#/stdInfoDiff"],
+        "writeArgs": [],
+        "dependsOn": "Standardization"
+      },
+      {
+        "pluginName" : "DatasetComparison",
+        "name": "DatasetComparison",
+        "order" : 1,
+        "args" : ["--format", "parquet", "--new-path", "#{new-std-data-path}#", "--ref-path", "#{ref-std-data-path}#", "--keys", "name" ],
+        "writeArgs": ["--out-path", "#{results-log-path}#/stdDataDiff"],
+        "dependsOn": "Standardization"
+      }
+    ]
+  }
+  
