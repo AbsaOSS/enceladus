@@ -187,6 +187,7 @@ class AddDatasetDialog extends DatasetDialog {
     })
 
     //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+    //Suggested approach described in #1668
     setTimeout(this.onPropertiesChange.bind(this), 1500);
   }
 
@@ -225,6 +226,7 @@ class EditDatasetDialog extends DatasetDialog {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
       //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+      //Suggested approach described in #1668
       setTimeout(this.onPropertiesChange.bind(this), 1500);
     });
   }
