@@ -29,25 +29,36 @@
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS raw data folder path"/>
                         <VBox>
-                        	<Input type="Text" id="selectedRawHDFSPathLabel"/>
+                            <!-- HDFS Browser and its label -->
+                        	<Input type="Text" id="selectedRawHDFSPathLabel" visible="{entity>/enableHdfsBrowser}" />
                             <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPath}"/>
+                                          HDFSPath="{entity>/hdfsPath}" visible="{entity>/enableHdfsBrowser}" />
+                            <!-- Simple field as an alternative -->
+                            <Input id="newDatasetRawHdfsPath" type="Text" placeholder="Dataset raw path" width="100%"
+                                   value="{entity>/hdfsPath}"
+                                   visible="{path:'entity>/enableHdfsBrowser', formatter:'Formatters.not'}" />
                         </VBox>
                         <Label text="HDFS conformed data publish folder path"/>
                         <VBox>
-                            <Input type="Text" id="selectedPublishHDFSPathLabel"/>
+                            <!-- HDFS Browser and its label -->
+                            <Input type="Text" id="selectedPublishHDFSPathLabel" visible="{entity>/enableHdfsBrowser}" />
                             <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
                                           pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
-                                          HDFSPath="{entity>/hdfsPublishPath}"/>
+                                          HDFSPath="{entity>/hdfsPublishPath}" visible="{entity>/enableHdfsBrowser}" />
+                            <!-- Simple field as an alternative -->
+                            <Input id="newDatasetPublishHdfsPath" type="Text" placeholder="Dataset publish path" width="100%"
+                                   value="{entity>/hdfsPublishPath}"
+                                   visible="{path:'entity>/enableHdfsBrowser', formatter:'Formatters.not'}" />
                         </VBox>
                     </form:content>
                 </form:SimpleForm>
             </VBox>
         </content>
         <buttons>
+            <Button class="hdfsToggleButton" id="toggleHdfsBrowser" text="Toggle HDFS browser/simple input" icon="sap-icon://journey-change"/>
             <Button id="newDatasetAddButton" text="Save" icon="sap-icon://accept"/>
             <Button id="newDatasetCancelButton" text="Cancel" icon="sap-icon://cancel"/>
         </buttons>

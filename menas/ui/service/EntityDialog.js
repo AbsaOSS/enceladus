@@ -68,6 +68,8 @@ class DatasetDialog extends EntityDialog {
     oController.byId("newDatasetAddButton").attachPress(this.submit, this);
     oController.byId("newDatasetCancelButton").attachPress(this.cancel, this);
     oController.byId("newDatasetName").attachChange(this.onNameChange, this);
+
+    oController.byId("toggleHdfsBrowser").attachPress(this.toggleHdfsBrowser, this);
   }
 
   get schemaService() {
@@ -117,6 +119,11 @@ class DatasetDialog extends EntityDialog {
     }
   }
 
+  toggleHdfsBrowser() {
+    let enabled = this.oDialog.getModel("entity").getProperty("/enableHdfsBrowser");
+    this.oDialog.getModel("entity").setProperty("/enableHdfsBrowser", !enabled);
+  }
+
   onSchemaSelect(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey();
     this.schemaService.getAllVersions(sSchemaId, this.oController.byId("schemaVersionSelect"),
@@ -144,7 +151,8 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPath: "/",
         hdfsPublishPath: "/",
         isEdit: false,
-        title: "Add"
+        title: "Add",
+        enableHdfsBrowser: true
       }), "entity");
     })
   }
