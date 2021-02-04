@@ -26,9 +26,25 @@
                         <Label text="Dataset Description"/>
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
+                        <Label text="Dataset Properties"/>
+                        <List width="100%" items="{path: 'entity>/_properties', sorter: {path: 'order'}}" class="sapUiMediumMarginBottom">
+                          <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
+                            <HBox alignItems="Center" justifyContent="End" renderType="Bare">
+                                <Input type="Text" width="18rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}" class="propertyInput"
+                                    value="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"></Input>
+                                <Select width="18rem" items="{path: 'entity>propertyType/allowedValues', templateShareable: false}" 
+                                    selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
+                                    visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}">
+                                    <core:Item key="{entity>value}" text="{entity>value}"></core:Item>
+                                </Select>
+                                <core:Icon width="1rem" class="sapUiSmallMarginBegin" color="Neutral" tooltip="{entity>essentiality/_t}"
+                                    src="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }"></core:Icon>
+                            </HBox>
+                          </InputListItem>
+                        </List>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
-                        <Label text="HDFS raw data folder path"/>
-                        <VBox>
+                        <Label text="HDFS raw data folder path" class="sapUiMediumMarginTop"/>
+                        <VBox class="sapUiMediumMarginTop">
                             <Input type="Text" id="selectedRawHDFSPathLabel"/>
                             <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="250px" width="100%"
                                           busyControl="addDatasetDialog"
@@ -43,23 +59,6 @@
                                           pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
                                           HDFSPath="{entity>/hdfsPublishPath}"/>
                         </VBox>
-                        <Label text="Dataset Properties"/>
-                        <List width="100%" items="{entity>/_properties}">
-                          <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
-                            <HBox alignItems="Center" justifyContent="End">
-                                <Input type="Text" width="12rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}" class="propertyInput"
-                                    value="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"></Input>
-                                <Select width="12rem" items="{path: 'entity>propertyType/allowedValues', templateShareable: false}" 
-                                    selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
-                                    visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}">
-                                    <core:Item key="{entity>value}" text="{entity>value}"></core:Item>
-                                </Select>
-                                <ObjectStatus text="{entity>essentiality/_t}" class="essentialityStatus"></ObjectStatus>
-                                <core:Icon width="1rem" class="sapUiSmallMarginBegin" color="Neutral"
-                                    src="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }"></core:Icon>
-                            </HBox>
-                          </InputListItem>
-                        </List>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

@@ -30,6 +30,16 @@ const PropertiesService = new function () {
 
   this.getProperties = function () {
     return PropertiesDAO.getProperties().then((oData) => {
+      const essentialityOrder = {
+          "Optional": 2,
+          "Recommended": 1,
+          "Mandatory": 0
+      }
+      oData.map((oProp) => {
+        if(oProp && oProp.essentiality){
+          oProp.order = essentialityOrder[oProp.essentiality._t];
+        }
+      })
       model().setProperty("/properties", oData);
     });
   };
