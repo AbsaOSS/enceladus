@@ -127,7 +127,5 @@ class DecimalParserSuite extends AnyFunSuite {
     assert(parser.parse("113.8%") == Success(BigDecimal("1.138")))
     assert(parser.parse("-5,000.1%") == Success(BigDecimal("-50.001")))
     assert(parser.parse("113.8").isFailure)
-
-    println(s"=${decimalSymbols.permillSign}=")
   }
 }

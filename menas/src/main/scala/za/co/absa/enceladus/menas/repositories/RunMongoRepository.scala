@@ -30,7 +30,7 @@ import org.mongodb.scala.{Completed, Document, MongoDatabase, Observable}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.model
 import za.co.absa.enceladus.model.{Run, SplineReference}
@@ -106,13 +106,13 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   def getAllLatest(): Future[Seq[Run]] = {
     getLatestOfEach()
       .toFuture()
-      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def getByStartDate(startDate: String): Future[Seq[Run]] = {
     getLatestOfEach(Option(startDate))
       .toFuture()
-      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def getAllSummaries(): Future[Seq[RunSummary]] = {
@@ -288,7 +288,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection
       .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
       .toFuture()
-      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Option[Run]] = {
@@ -298,7 +298,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection
       .find[BsonDocument](and(datasetFilter, runIdEqFilter))
       .headOption()
-      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def getLatestRun(datasetName: String, datasetVersion: Int): Future[Option[Run]] = {
@@ -308,48 +308,48 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .find[BsonDocument](datasetFilter)
       .sort(descending("runId"))
       .headOption()
-      .map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   override def create(item: Run): Future[Completed] = {
-    val bson = BsonDocument(ControlUtils.asJson(item))
+    val bson = BsonDocument(SerializationUtils.asJson(item))
     collection.withDocumentClass[BsonDocument].insertOne(bson).head()
   }
 
   def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
-    val bsonCheckpoint = BsonDocument(ControlUtils.asJson(checkpoint))
+    val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(checkpoint))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
-    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def updateControlMeasure(uniqueId: String, controlMeasure: ControlMeasure): Future[Option[Run]] = {
-    val bsonControlMeasure = BsonDocument(ControlUtils.asJson(controlMeasure))
+    val bsonControlMeasure = BsonDocument(SerializationUtils.asJson(controlMeasure))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.set("controlMeasure", bsonControlMeasure),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
-    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def updateSplineReference(uniqueId: String, splineRef: SplineReference): Future[Option[Run]] = {
-    val bsonSplineRef = BsonDocument(ControlUtils.asJson(splineRef))
+    val bsonSplineRef = BsonDocument(SerializationUtils.asJson(splineRef))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.set("splineRef", bsonSplineRef),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
-    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Option[Run]] = {
-    val bsonRunStatus = BsonDocument(ControlUtils.asJson(runStatus))
+    val bsonRunStatus = BsonDocument(SerializationUtils.asJson(runStatus))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
       Updates.set("runStatus", bsonRunStatus),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
-    ).headOption().map(_.map(bson => ControlUtils.fromJson[Run](bson.toJson)))
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
   def existsId(uniqueId: String): Future[Boolean] = {

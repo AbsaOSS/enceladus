@@ -21,8 +21,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import za.co.absa.atum.AtumImplicits
-import za.co.absa.atum.AtumImplicits.DataSetWrapper
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
@@ -40,7 +39,7 @@ import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.performance.PerformanceMetricTools
+import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.util.control.NonFatal
@@ -60,14 +59,12 @@ trait ConformanceExecution extends CommonJobExecution {
     val stdDirSize = stdFsUtils.getDirectorySize(preparationResult.pathCfg.standardization.path)
     preparationResult.performance.startMeasurement(stdDirSize)
 
-    // Enable Control Framework
-    import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-
     // reinitialize Control Framework in case of combined job
     if (cmd.isInstanceOf[StandardizationConformanceConfig]) {
       spark.disableControlMeasuresTracking()
     }
 
+    // Enable Control Framework
     // InputPath is standardizationPath in the combined job
     spark.enableControlMeasuresTracking(s"${preparationResult.pathCfg.standardization.path}/_INFO")
       .setControlMeasuresWorkflow(sourceId.toString)
@@ -116,12 +113,12 @@ trait ConformanceExecution extends CommonJobExecution {
       DynamicInterpreter().interpret(preparationResult.dataset, inputData)
     } match {
       case Failure(e: ValidationException) =>
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, e.techDetails)
         throw e
       case Failure(NonFatal(e)) =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
-        AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
         if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {

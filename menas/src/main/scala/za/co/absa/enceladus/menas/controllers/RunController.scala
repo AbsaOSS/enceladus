@@ -23,7 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.menas.services.RunService
@@ -39,13 +39,13 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @GetMapping()
   @ResponseStatus(HttpStatus.OK)
   def list(): CompletableFuture[String] = {
-    runService.getAllLatest().map(ControlUtils.asJson)
+    runService.getAllLatest().map(SerializationUtils.asJson)
   }
 
   @GetMapping(Array("/startDate/{startDate}"))
   @ResponseStatus(HttpStatus.OK)
   def getByStartDate(@PathVariable startDate: String): CompletableFuture[String] = {
-    runService.getByStartDate(startDate).map(ControlUtils.asJson)
+    runService.getByStartDate(startDate).map(SerializationUtils.asJson)
   }
 
   @GetMapping(Array("/summaries"))
@@ -75,7 +75,7 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @GetMapping(Array("/bySparkAppId/{appId}"))
   @ResponseStatus(HttpStatus.OK)
   def getRunBySparkAppId(@PathVariable appId: String): CompletableFuture[String] = {
-    runService.getRunBySparkAppId(appId).map(ControlUtils.asJson)
+    runService.getRunBySparkAppId(appId).map(SerializationUtils.asJson)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}"))
@@ -90,14 +90,14 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   def getRun(@PathVariable datasetName: String,
              @PathVariable datasetVersion: Int,
              @PathVariable runId: Int): CompletableFuture[String] = {
-    runService.getRun(datasetName, datasetVersion, runId).map(ControlUtils.asJson)
+    runService.getRun(datasetName, datasetVersion, runId).map(SerializationUtils.asJson)
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/latestrun"))
   @ResponseStatus(HttpStatus.OK)
   def getLatestRun(@PathVariable datasetName: String,
                    @PathVariable datasetVersion: Int): CompletableFuture[String] = {
-    runService.getLatestRun(datasetName, datasetVersion).map(ControlUtils.asJson)
+    runService.getLatestRun(datasetName, datasetVersion).map(SerializationUtils.asJson)
   }
 
   @GetMapping(path = Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"), produces = Array("text/plain"))

@@ -20,7 +20,7 @@ import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.BsonDocument
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
 import za.co.absa.enceladus.model.Run
 
@@ -33,7 +33,7 @@ class RunFixtureService @Autowired()(mongoDb: MongoDatabase)
 
   override def add(runs: Run*): Unit = {
     val bsonRuns = runs.map { run =>
-      BsonDocument(ControlUtils.asJson(run))
+      BsonDocument(SerializationUtils.asJson(run))
     }
     try {
       Await.result(collection.withDocumentClass[BsonDocument].insertMany(bsonRuns).toFuture(), Duration.Inf)
