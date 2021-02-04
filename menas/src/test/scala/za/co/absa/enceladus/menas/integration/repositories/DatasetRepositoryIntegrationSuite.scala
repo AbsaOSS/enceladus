@@ -96,7 +96,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     DatasetFactory.getDummyMappingRule(order = 3, targetAttribute = "ab",
       attributeMappings = Map("ab" -> "ab")),
     DatasetFactory.getDummyMappingRule(order = 4, targetAttribute = "a.b",
-      attributeMappings = Map(s"a${MappingConformanceRule.DOT_REPLACEMENT_SYMBOL}b" -> "a.b"))
+      attributeMappings = Map(s"a${MappingConformanceRule.DotReplacementSymbol}b" -> "a.b"))
   )
 
   val materializedMappingConformanceRules = List(

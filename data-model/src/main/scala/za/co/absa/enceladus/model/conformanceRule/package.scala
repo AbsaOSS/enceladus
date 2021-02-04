@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule.DEFAULT_OVERRIDE_MAPPING_TABLE_OWN_FILTER
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule.DefaultOverrideMappingTableOwnFilter
 
 package object conformanceRule {
 
@@ -83,7 +83,7 @@ package object conformanceRule {
                                     outputColumn: String,
                                     isNullSafe: Boolean = false,
                                     mappingTableFilter: Option[DataFrameFilter] = None,
-                                    overrideMappingTableOwnFilter: Option[Boolean] = Some(DEFAULT_OVERRIDE_MAPPING_TABLE_OWN_FILTER)
+                                    overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
                                    ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
 
@@ -92,7 +92,7 @@ package object conformanceRule {
     )
 
     def getOverrideMappingTableOwnFilter: Boolean = {
-      overrideMappingTableOwnFilter.getOrElse(DEFAULT_OVERRIDE_MAPPING_TABLE_OWN_FILTER)
+      overrideMappingTableOwnFilter.getOrElse(DefaultOverrideMappingTableOwnFilter)
     }
   }
 
@@ -157,8 +157,8 @@ package object conformanceRule {
 
   object MappingConformanceRule {
     // attributeMappings property has key's with dot's that mongo doesn't accept; this symbol is used to replace the dots
-    final val DOT_REPLACEMENT_SYMBOL: Char = '^'
-    final val DEFAULT_OVERRIDE_MAPPING_TABLE_OWN_FILTER: Boolean = false
+    final val DotReplacementSymbol: Char = '^'
+    final val DefaultOverrideMappingTableOwnFilter: Boolean = false
   }
 
 }
