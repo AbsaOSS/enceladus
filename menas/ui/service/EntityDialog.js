@@ -83,11 +83,20 @@ class DatasetDialog extends EntityDialog {
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
 
+    // hdfs browser-based
     this.oController.byId("selectedRawHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("selectedRawHDFSPathLabel").setValueStateText("");
 
     this.oController.byId("selectedPublishHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("selectedPublishHDFSPathLabel").setValueStateText("");
+
+    // simple path-based
+    this.oController.byId("newDatasetRawSimplePath").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("newDatasetRawSimplePath").setValueStateText("");
+
+    this.oController.byId("newDatasetPublishSimplePath").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("newDatasetPublishSimplePath").setValueStateText("");
+
   }
 
   isValid(oDataset) {
@@ -97,17 +106,30 @@ class DatasetDialog extends EntityDialog {
       this.oController.byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
         this.oController.byId("schemaVersionSelect"));
-    let hasValidRawHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPath,
-      "Dataset Raw HDFS path",
-      this.oController.byId("selectedRawHDFSPathLabel"));
-    let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
-      "Dataset publish HDFS path",
-      this.oController.byId("selectedPublishHDFSPathLabel"));
-    let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
-    let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
-      this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
+    if (oDataset.hdfsBrowserEnabled) {
+      let hasValidRawHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPath,
+        "Dataset Raw HDFS path",
+        this.oController.byId("selectedRawHDFSPathLabel"));
+      let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
+        "Dataset publish HDFS path",
+        this.oController.byId("selectedPublishHDFSPathLabel"));
+      let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
+      let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
+        this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
+
+      return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
+    } else {
+
+      let hasValidRawSimplePath = EntityValidationService.hasValidSimplePath(oDataset.hdfsPath,
+        "Dataset Raw path",
+        this.oController.byId("newDatasetRawSimplePath"));
+      let hasValidPublishSimplePath = EntityValidationService.hasValidSimplePath(oDataset.hdfsPublishPath,
+        "Dataset publish path",
+        this.oController.byId("newDatasetPublishSimplePath"));
+
+      return hasValidName && hasValidSchema && hasValidRawSimplePath && hasValidPublishSimplePath;
+    }
   }
 
   onNameChange() {
@@ -120,8 +142,8 @@ class DatasetDialog extends EntityDialog {
   }
 
   toggleHdfsBrowser() {
-    let enabled = this.oDialog.getModel("entity").getProperty("/enableHdfsBrowser");
-    this.oDialog.getModel("entity").setProperty("/enableHdfsBrowser", !enabled);
+    let enabled = this.oDialog.getModel("entity").getProperty("/hdfsBrowserEnabled");
+    this.oDialog.getModel("entity").setProperty("/hdfsBrowserEnabled", !enabled);
   }
 
   onSchemaSelect(oEv) {
@@ -152,7 +174,7 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPublishPath: "/",
         isEdit: false,
         title: "Add",
-        enableHdfsBrowser: true
+        hdfsBrowserEnabled: true
       }), "entity");
     })
   }
@@ -169,6 +191,8 @@ class EditDatasetDialog extends DatasetDialog {
 
       current.isEdit = true;
       current.title = "Edit";
+      current.hdfsBrowserEnabled = true;
+
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");

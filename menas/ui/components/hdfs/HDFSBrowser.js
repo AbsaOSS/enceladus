@@ -298,7 +298,7 @@ sap.ui.define([], function() {
         this._setValueState(sap.ui.core.MessageType.Warning, "Path does not exist.");
         this.unselectAll();
       } else {
-        sap.m.MessageBox.error("Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");
+        this._setValueState(sap.ui.core.MessageType.Error, "Failed to retreive the HDFS folder contents for " + sPath + ", please try again later.");
       }
 
     }.bind(this), oControl)
