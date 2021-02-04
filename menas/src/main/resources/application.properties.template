@@ -50,6 +50,9 @@ menas.auth.mechanism=inmemory
 
 menas.auth.inmemory.user=user
 menas.auth.inmemory.password=changeme
+menas.auth.inmemory.admin.user=admin
+menas.auth.inmemory.admin.password=admin
+
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system

@@ -20,10 +20,12 @@ import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
+import za.co.absa.enceladus.model.ExportableObject
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -42,11 +44,12 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
-    propertyDefService.getLatestVersions
+    propertyDefService.getLatestVersions()
   }
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("'menas_admin' == authentication.name")
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
     // basically an alias for /create with Location header response
@@ -75,4 +78,16 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     super.getVersionDetail(propertyName, version)
   }
 
+  @PostMapping(Array("/importItem"))
+  @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("'menas_admin' == authentication.name")
+  override def importSingleEntity(principal: UserDetails,
+                                  importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
+    super.importSingleEntity(principal, importObject)
+
+  @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
+  @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("'menas_admin' == authentication.name")
+  override def edit(user: UserDetails, item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+    super.edit(user, item)
 }

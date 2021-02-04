@@ -27,6 +27,10 @@ class InMemoryMenasAuthentication extends MenasAuthentication {
   private val username: String = ""
   @Value("${menas.auth.inmemory.password:}")
   private val password: String = ""
+  @Value("${menas.auth.inmemory.admin.user:}")
+  private val adminUsername: String = ""
+  @Value("${menas.auth.inmemory.admin.password:}")
+  private val adminPassword: String = ""
 
   protected val passwordEncoder = new BCryptPasswordEncoder()
 
@@ -51,6 +55,10 @@ class InMemoryMenasAuthentication extends MenasAuthentication {
       .withUser(username)
       .password(passwordEncoder.encode(password))
       .authorities("ROLE_USER")
+      .and()
+      .withUser(adminUsername)
+      .password(passwordEncoder.encode(adminPassword))
+      .authorities("ROLE_ADMIN")
   }
 
 }
