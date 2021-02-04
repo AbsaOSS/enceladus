@@ -83,25 +83,28 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("'menas_admin' == authentication.name")
-  override def importSingleEntity(principal: UserDetails,
-                                  importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
+  override def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+                                  @RequestBody importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
     super.importSingleEntity(principal, importObject)
 
   @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("'menas_admin' == authentication.name")
-  override def edit(user: UserDetails, item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+  override def edit(@AuthenticationPrincipal user: UserDetails,
+                    @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.edit(user, item)
 
   @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("'menas_admin' == authentication.name")
-  override def disable(name: String, version: Optional[String]): CompletableFuture[UpdateResult] =
+  override def disable(@PathVariable name: String,
+                       @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] =
     super.disable(name, version)
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("'menas_admin' == authentication.name")
-  override def create(principal: UserDetails, item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+  override def create(@AuthenticationPrincipal principal: UserDetails,
+                      @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)
 }

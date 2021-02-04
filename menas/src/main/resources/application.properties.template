@@ -50,8 +50,8 @@ menas.auth.mechanism=inmemory
 
 menas.auth.inmemory.user=user
 menas.auth.inmemory.password=changeme
-menas.auth.inmemory.admin.user=admin
-menas.auth.inmemory.admin.password=admin
+menas.auth.inmemory.admin.user=menas_admin
+menas.auth.inmemory.admin.password=admin123
 
 
 # Define how menas authenticates to Hadoop. Supported options are:
