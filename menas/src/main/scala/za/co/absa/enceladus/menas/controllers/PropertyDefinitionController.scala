@@ -16,8 +16,10 @@
 package za.co.absa.enceladus.menas.controllers
 
 import java.net.URI
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
+import com.mongodb.client.result.UpdateResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -90,4 +92,16 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @PreAuthorize("'menas_admin' == authentication.name")
   override def edit(user: UserDetails, item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.edit(user, item)
+
+  @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("'menas_admin' == authentication.name")
+  override def disable(name: String, version: Optional[String]): CompletableFuture[UpdateResult] =
+    super.disable(name, version)
+
+  @PostMapping(Array("/create"))
+  @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("'menas_admin' == authentication.name")
+  override def create(principal: UserDetails, item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+    super.create(principal, item)
 }
