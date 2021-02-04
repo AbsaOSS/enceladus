@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-jQuery.sap.require("sap.m.MessageToast");
-jQuery.sap.require("sap.m.MessageBox");
-
 class PropertiesDAO {
   static getProperties() {
     return RestClient.get(`api/properties/datasets`);
