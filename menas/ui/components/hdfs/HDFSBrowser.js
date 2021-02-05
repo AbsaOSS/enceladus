@@ -279,7 +279,6 @@ sap.ui.define([], function() {
    */
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
 
-    console.log("hdfsService is being used now");
     HdfsService.getHdfsList(sPath, function(oData) {
       let original = this._model.getProperty(sModelPath)
 
