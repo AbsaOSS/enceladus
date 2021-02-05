@@ -21,7 +21,7 @@
     <Label text="Schema Version"/>
     <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
         <Select id="schemaVersionSelect" class="menasAddMappingSelect"
-                items="{/currentSchemaVersions}"
+                items="{path: '/currentSchemaVersions', sorter: {path: 'version', descending: true}}"
                 showSecondaryValues="true" width="auto" selectedKey="{entity>/schemaVersion}">
             <core:ListItem key="{version}" text="{version}"
                            additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
