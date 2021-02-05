@@ -62,6 +62,8 @@ class EntityDialog {
 
 class DatasetDialog extends EntityDialog {
 
+  get hdfsRestUri() { return "api/hdfs/list"; }
+
   constructor(oDialog, datasetService, schemaService, oController) {
     super(oDialog, datasetService, oController);
     this._schemaService = schemaService;
@@ -70,6 +72,9 @@ class DatasetDialog extends EntityDialog {
     oController.byId("newDatasetName").attachChange(this.onNameChange, this);
 
     oController.byId("toggleHdfsBrowser").attachPress(this.toggleHdfsBrowser, this);
+
+    //todo find out if hdfs paths are ok, if not switch to simple mode:
+    //this.oDialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false);
   }
 
   get schemaService() {
@@ -142,6 +147,9 @@ class DatasetDialog extends EntityDialog {
   }
 
   toggleHdfsBrowser() {
+    // todo remove
+    console.log(`model : ${this.oDialog.getModel("entity").getJSON()}`);
+
     let enabled = this.oDialog.getModel("entity").getProperty("/hdfsBrowserEnabled");
     this.oDialog.getModel("entity").setProperty("/hdfsBrowserEnabled", !enabled);
   }
@@ -174,7 +182,8 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPublishPath: "/",
         isEdit: false,
         title: "Add",
-        hdfsBrowserEnabled: true
+        hdfsBrowserEnabled: true,
+        hdfsRestUri: this.hdfsRestUri
       }), "entity");
     })
   }
@@ -192,6 +201,7 @@ class EditDatasetDialog extends DatasetDialog {
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
+      current.hdfsRestUri = this.hdfsRestUri;
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 

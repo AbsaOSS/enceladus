@@ -33,7 +33,7 @@
                         	<Input type="Text" id="selectedRawHDFSPathLabel" visible="{entity>/hdfsBrowserEnabled}" />
                             <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
-                                          pathInput ="selectedRawHDFSPathLabel" restURI="api/hdfs/list"
+                                          pathInput ="selectedRawHDFSPathLabel" restURI="{entity>/hdfsRestUri}"
                                           HDFSPath="{entity>/hdfsPath}" visible="{entity>/hdfsBrowserEnabled}" />
                             <!-- Simple field as an alternative -->
                             <Input id="newDatasetRawSimplePath" type="Text" placeholder="Dataset raw path" width="100%"
@@ -46,7 +46,7 @@
                             <Input type="Text" id="selectedPublishHDFSPathLabel" visible="{entity>/hdfsBrowserEnabled}" />
                             <hdfs:HDFSBrowser id="newDatasetPublishHDFSBrowser" height="300px" width="100%"
                                           busyControl="addDatasetDialog"
-                                          pathInput="selectedPublishHDFSPathLabel" restURI="api/hdfs/list"
+                                          pathInput="selectedPublishHDFSPathLabel" restURI="{entity>/hdfsRestUri}"
                                           HDFSPath="{entity>/hdfsPublishPath}" visible="{entity>/hdfsBrowserEnabled}" />
                             <!-- Simple field as an alternative -->
                             <Input id="newDatasetPublishSimplePath" type="Text" placeholder="Dataset publish path" width="100%"
