@@ -32,11 +32,13 @@ const PropertiesService = new function () {
           "Recommended": 1,
           "Mandatory": 0
       }
-      oData.map((oProp) => {
-        if(oProp && oProp.essentiality){
-          oProp.order = essentialityOrder[oProp.essentiality._t];
-        }
-      })
+      if(oData && oData.map) {
+        oData.map((oProp) => {
+          if(oProp && oProp.essentiality){
+            oProp.order = essentialityOrder[oProp.essentiality._t];
+          }
+        });
+      }
       model().setProperty("/properties", oData);
     });
   };
