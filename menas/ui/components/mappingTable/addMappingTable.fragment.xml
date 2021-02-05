@@ -33,17 +33,23 @@
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="HDFS Path"/>
                         <VBox>
-                            <Input type="Text" id="selectedHDFSPathLabel"/>
+                            <!-- HDFS Browser and its label -->
+                            <Input type="Text" id="selectedHDFSPathLabel" visible="{entity>/hdfsBrowserEnabled}"/>
                             <hdfs:HDFSBrowser id="addMtHDFSBrowser" height="300px" width="100%"
-                                              busyControl="addMappingTableDialog"
+                                              busyControl="addMappingTableDialog" visible="{entity>/hdfsBrowserEnabled}"
                                               pathInput="selectedHDFSPathLabel"
                                               HDFSPath="{entity>/hdfsPath}"/>
+                            <!-- Simple field as an alternative -->
+                            <Input id="addMtSimplePath" type="Text" placeholder="Mapping table path" width="100%"
+                                   value="{entity>/hdfsPath}"
+                                   visible="{path:'entity>/hdfsBrowserEnabled', formatter:'Formatters.not'}" />
                         </VBox>
                     </form:content>
                 </form:SimpleForm>
             </VBox>
         </content>
         <buttons>
+            <Button class="hdfsToggleButton" id="toggleHdfsBrowser" text="Toggle HDFS browser/simple input" icon="sap-icon://journey-change"/>
             <Button id="newMappingTableAddButton" text="Save" icon="sap-icon://save" press="onMTSubmit"/>
             <Button id="newMappingTableCancelButton" text="Cancel" icon="sap-icon://cancel" press="onMTCancel"/>
         </buttons>

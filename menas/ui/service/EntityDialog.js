@@ -58,9 +58,31 @@ class EntityDialog {
     this.oDialog.close();
   }
 
+  setupInputPathsMode(dialog, hdfsPropertyNames) {
+    const checkPropertyName = function (propertyName) {
+      const path = dialog.getModel("entity").getProperty(propertyName);
+
+      const errorFn = function (data) {
+        console.log(`Switching off HDFS Browser in the dialog due to an unsuccessful HDFS listing of '${path}' (property '${propertyName}')`); // 4xx or 5xx code
+        dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false)
+      };
+
+      HdfsService.getHdfsList(path, () => {}, errorFn);
+    };
+
+    // each propertyName is checked to be suitable for hdfsBrowser. Should any fail, hdfsBrowser will be disabled (hdfsBrowserEnabled=>false)
+    hdfsPropertyNames.forEach(propertyName => checkPropertyName(propertyName))
+ }
+
+  onHdfsBrowserToggle() {
+    let enabled = this.oDialog.getModel("entity").getProperty("/hdfsBrowserEnabled");
+    this.oDialog.getModel("entity").setProperty("/hdfsBrowserEnabled", !enabled);
+  }
 }
 
 class DatasetDialog extends EntityDialog {
+
+  static hdfsPropertyNames = ["/hdfsPath", "/hdfsPublishPath"];
 
   constructor(oDialog, datasetService, schemaService, oController) {
     super(oDialog, datasetService, oController);
@@ -69,25 +91,11 @@ class DatasetDialog extends EntityDialog {
     oController.byId("newDatasetCancelButton").attachPress(this.cancel, this);
     oController.byId("newDatasetName").attachChange(this.onNameChange, this);
 
-    oController.byId("toggleHdfsBrowser").attachPress(this.toggleHdfsBrowser, this);
+    oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
 
  }
 
-  setupInputPathsMode(dialog) {
-    const initModel = dialog.getModel("entity");
-    const hdfsRawPath = initModel.getProperty("/hdfsPath");
-    const hdfsPublishPath = initModel.getProperty("/hdfsPublishPath");
 
-    const errorFn = function (fieldName) {
-      return function(data) {
-        console.log(`Switching off HDFS Browser on dialog open due to unsuccessful HDFS listing of '${fieldName}'`); // 4xx or 5xx code
-        dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false)
-      }
-    };
-
-    HdfsService.getHdfsList(hdfsRawPath, () => {}, errorFn(hdfsRawPath));
-    HdfsService.getHdfsList(hdfsPublishPath, () => {}, errorFn(hdfsPublishPath));
-  }
 
   get schemaService() {
     return this._schemaService;
@@ -158,11 +166,6 @@ class DatasetDialog extends EntityDialog {
     }
   }
 
-  toggleHdfsBrowser() {
-    let enabled = this.oDialog.getModel("entity").getProperty("/hdfsBrowserEnabled");
-    this.oDialog.getModel("entity").setProperty("/hdfsBrowserEnabled", !enabled);
-  }
-
   onSchemaSelect(oEv) {
     let sSchemaId = oEv.getParameter("selectedItem").getKey();
     this.schemaService.getAllVersions(sSchemaId, this.oController.byId("schemaVersionSelect"),
@@ -194,7 +197,7 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsBrowserEnabled: true
       }), "entity");
 
-      this.setupInputPathsMode(this.oDialog)
+      this.setupInputPathsMode(this.oDialog, DatasetDialog.hdfsPropertyNames)
     })
   }
 
@@ -215,7 +218,7 @@ class EditDatasetDialog extends DatasetDialog {
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-      this.setupInputPathsMode(this.oDialog)
+      this.setupInputPathsMode(this.oDialog, DatasetDialog.hdfsPropertyNames)
     });
   }
 
@@ -285,6 +288,7 @@ class EditSchemaDialog extends SchemaDialog {
 
 
 class MappingTableDialog extends EntityDialog {
+  static hdfsPropertyNames = ["/hdfsPath"];
 
   constructor(oDialog, mappingTableService, schemaService, oController) {
     super(oDialog, mappingTableService, oController);
@@ -292,6 +296,8 @@ class MappingTableDialog extends EntityDialog {
     oController.byId("newMappingTableAddButton").attachPress(this.submit, this);
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
+
+    oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
   }
 
   get schemaService() {
@@ -305,8 +311,13 @@ class MappingTableDialog extends EntityDialog {
     this.oController.byId("schemaVersionSelect").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("schemaVersionSelect").setValueStateText("");
 
+    // hdfs browser-based
     this.oController.byId("selectedHDFSPathLabel").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("selectedHDFSPathLabel").setValueStateText("");
+
+    // simple path-based
+    this.oController.byId("addMtSimplePath").setValueState(sap.ui.core.ValueState.None);
+    this.oController.byId("addMtSimplePath").setValueStateText("");
   }
 
   isValid(oMT) {
@@ -316,12 +327,22 @@ class MappingTableDialog extends EntityDialog {
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
-    let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
-      "Mapping Table HDFS path",
-      this.oController.byId("selectedHDFSPathLabel"));
-    let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-    return hasValidName && hasValidSchema && hasExistingHDFSPath;
+    if (oMT.hdfsBrowserEnabled) {
+      let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
+        "Mapping Table HDFS path",
+        this.oController.byId("selectedHDFSPathLabel"));
+      let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
+
+      return hasValidName && hasValidSchema && hasExistingHDFSPath;
+    } else {
+
+      let hasValidSimplePath = EntityValidationService.hasValidSimplePath(oMT.hdfsPath,
+        "Mapping Table path",
+        this.oController.byId("addMtSimplePath"));
+
+      return hasValidName && hasValidSchema && hasValidSimplePath;
+    }
   }
 
   onNameChange() {
@@ -347,9 +368,12 @@ class AddMappingTableDialog extends MappingTableDialog {
         schemaVersion: "",
         hdfsPath: "/",
         isEdit: false,
-        title: "Add"
+        title: "Add",
+        hdfsBrowserEnabled: true
       }), "entity");
-    })
+
+      this.setupInputPathsMode(this.oDialog, MappingTableDialog.hdfsPropertyNames)
+    });
   }
 
 }
@@ -364,9 +388,11 @@ class EditMappingTableDialog extends MappingTableDialog {
 
       current.isEdit = true;
       current.title = "Edit";
+      current.hdfsBrowserEnabled = true;
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+      this.setupInputPathsMode(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
 
