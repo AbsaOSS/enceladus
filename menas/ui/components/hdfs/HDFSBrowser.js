@@ -40,9 +40,6 @@ sap.ui.define([], function() {
           type : "boolean",
           defaultValue : true
         },
-        "restURI" : {
-          type : "string"
-        },
         "HDFSPath" : {
           type : "string",
           defaultValue : "/"

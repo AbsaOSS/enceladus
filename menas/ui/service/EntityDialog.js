@@ -62,8 +62,6 @@ class EntityDialog {
 
 class DatasetDialog extends EntityDialog {
 
-  get hdfsRestUri() { return "api/hdfs/list"; } // todo remove?
-
   constructor(oDialog, datasetService, schemaService, oController) {
     super(oDialog, datasetService, oController);
     this._schemaService = schemaService;
@@ -76,25 +74,20 @@ class DatasetDialog extends EntityDialog {
  }
 
   setupInputPathsMode(dialog) {
-    const model = dialog.getModel("entity");
-    console.log(`model = ${model.getJSON()}`);
-    const hdfsRawPath = model.getProperty("/hdfsPath");
-    const hdfsPublishPath = model.getProperty("/hdfsPublishPath");
-    console.log(`hdfsRawPath = ${hdfsRawPath}, hdfsPublishPath = ${hdfsPublishPath}`);
+    const initModel = dialog.getModel("entity");
+    const hdfsRawPath = initModel.getProperty("/hdfsPath");
+    const hdfsPublishPath = initModel.getProperty("/hdfsPublishPath");
 
-    const successFn = function (data) {
-      console.log(`success: ${JSON.stringify(data)}`);
-    };
-    const errorFn = function (data) {
-      console.log(`error: ${JSON.stringify(data)}`);
-      console.log("Making HDFS Browser disabled on dialog open due to HDFS listing error");
-      dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false)
+    const errorFn = function (fieldName) {
+      return function(data) {
+        console.log(`Switching off HDFS Browser on dialog open due to unsuccessful HDFS listing of '${fieldName}'`); // 4xx or 5xx code
+        dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false)
+      }
     };
 
-    HdfsService.getHdfsList(hdfsRawPath, () => {}, errorFn);
-    HdfsService.getHdfsList(hdfsPublishPath, () => {}, errorFn);
+    HdfsService.getHdfsList(hdfsRawPath, () => {}, errorFn(hdfsRawPath));
+    HdfsService.getHdfsList(hdfsPublishPath, () => {}, errorFn(hdfsPublishPath));
   }
-
 
   get schemaService() {
     return this._schemaService;
@@ -198,8 +191,7 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPublishPath: "/",
         isEdit: false,
         title: "Add",
-        hdfsBrowserEnabled: true,
-        hdfsRestUri: this.hdfsRestUri
+        hdfsBrowserEnabled: true
       }), "entity");
 
       this.setupInputPathsMode(this.oDialog)
@@ -219,7 +211,6 @@ class EditDatasetDialog extends DatasetDialog {
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
-      current.hdfsRestUri = this.hdfsRestUri; // todo remove?
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
