@@ -278,8 +278,9 @@ sap.ui.define([], function() {
    * Service for retrieving the directory listings
    */
   HDFSBrowser.prototype._getList = function(sPath, sModelPath, oControl, fnSuccCallback) {
-    Functions.ajax(this.getRestURI(), "POST", sPath, function(oData) {
 
+    console.log("hdfsService is being used now");
+    HdfsService.getHdfsList(sPath, function(oData) {
       let original = this._model.getProperty(sModelPath)
 
       let merged = {};
