@@ -21,11 +21,11 @@ PUBLISH_DIR="${DATA_DIR}/publish"
 TARGET_DIR=""
 TO_CREATE=""
 
-if [ $1 != "with" ]; then
+if [ "$1" != "with" ]; then
   read -p 'HDFS root folder for data: ' TARGET_DIR
 else
   if [ "$2" = "defaults" ]; then
-    TARGET_DIR="" # Will to root
+    TARGET_DIR="" # default user folder
     TO_CREATE="n" # No need to create
   else
     TARGET_DIR=$2
@@ -34,12 +34,13 @@ else
 fi
 
 echo "Checking HDFS for ${TARGET_DIR}"
-hdfs dfs -ls "$TARGET_DIR" > /dev/null 2>&1
+# shellcheck disable=SC2086
+hdfs dfs -ls $TARGET_DIR > /dev/null 2>&1
 
 if [ $? != 0 ]; then
   echo "${TARGET_DIR} folder does not exist."
 
-  if [ $1 != "with" ]; then
+  if [ "$1" != "with" ]; then
     read -n1 -r -p "Create? (y/n): " TO_CREATE
   fi
 
@@ -47,7 +48,7 @@ if [ $? != 0 ]; then
     echo "Creating folder ${TARGET_DIR} on HDFS"
     hdfs dfs -mkdir -p "$TARGET_DIR"
   else
-    exit 0
+    exit 127
   fi
 fi
 
