@@ -13,7 +13,7 @@
 
 # Examples of Enceladus E2E data
 
-Main purpos of the data presented here is to for use in Enceldus e2e automated tests,
+Main purpose of the data presented here is for use in Enceldus e2e automated tests,
 but it also nicely shows examples of data and combinations possible.
 
 There are 3 folders
@@ -61,7 +61,7 @@ To run this script with user prompts, run:
 ```
 
 This will start the script and ask you for the root folder of to use. 
-This si a folder into which it will copy the 3 folders.
+This is a folder into which it will copy the 3 folders.
 
 If the folder does not exist, you will be asked if you want to create it.
 
@@ -70,7 +70,7 @@ To run without user prompts use
 ```shell
 ./setup_scripts/copy_to_hdfs.sh with /path/on/hdfs n
 ```
-First parameters is the root folder and second if to crete or not. Second parameter is options.
+First parameter is the root folder and second if to create or not. Second parameter is optional.
 
 If you run it with defaults, then it will copy everything into the root of the hdfs (`/`) 
 ```shell
