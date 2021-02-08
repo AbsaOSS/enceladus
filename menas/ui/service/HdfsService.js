@@ -15,20 +15,35 @@
 
 var HdfsService = new function () {
 
+  /**
+   * Callback-based service call to list HDFS path
+   * @param sPath path to list
+   * @param successFn success fn callback
+   * @param errorFn error fn callback
+   * @param oControl control to be set to 'busy' and unbussied
+   * @returns  jqXHR
+   */
   this.getHdfsList = function(sPath, successFn, errorFn, oControl) {
     return Functions.ajax("api/hdfs/list", "POST", sPath, successFn, errorFn, oControl);
   };
 
-  // jquery Promise
+  /**
+   * jQuery-Promise version of [[HdfsService.getHdfsList]], not using busyControl
+   * @param sPath path to list
+   * @param oControl
+   * @returns jQuery Promise
+   */
   this.getHdfsListJqPromise = function(sPath, oControl) {
-    return $.when(Functions.ajax("api/hdfs/list", "POST", sPath, () => {}, () => {}, oControl));
+    return $.when(this.getHdfsList(sPath, () => {}, () => {}, oControl));
   };
 
-  // not using oControl
+  /**
+   * ES6-Promise version of [[HdfsService.getHdfsListJqPromise]], not using busyControl
+   * @param sPath path to list
+   * @returns {Promise<jQuery>}
+   */
   this.getHdfsListEs6Promise = function(sPath) {
-    console.log(`getHdfsListEs6Promise(${sPath})'`); // 4xx or 5xx code
     return Promise.resolve(this.getHdfsListJqPromise(sPath))
   }
-
 
 }();

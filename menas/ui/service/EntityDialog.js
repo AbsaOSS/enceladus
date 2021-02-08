@@ -68,7 +68,7 @@ class EntityDialog {
         console.log(`Successful HDFS listing of '[${hdfsPaths}]' -> HDFS Browser is kept`);
       })
       .catch(() => {
-        console.log(`Switching off HDFS Browser in the dialog due to an unsuccessful HDFS listing of '[${hdfsPaths}]`); // 4xx or 5xx code
+        console.log(`Switching off HDFS Browser in the dialog due to an unsuccessful HDFS listing of '[${hdfsPaths}]'`); // 4xx or 5xx code
         dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false);
       })
       .finally(() => {
@@ -184,10 +184,8 @@ class DatasetDialog extends EntityDialog {
 class AddDatasetDialog extends DatasetDialog {
 
   onPress() {
-    const dialog = this.oDialog;
-
-    this.schemaService.getList(dialog).then(() => {
-      dialog.setModel(new sap.ui.model.json.JSONModel({
+    this.schemaService.getList(this.oDialog).then(() => {
+      this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
         schemaName: "",
@@ -199,7 +197,7 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsBrowserEnabled: true
       }), "entity");
 
-      this.openSimpleOrHdfsBrowsingDialog(dialog, DatasetDialog.hdfsPropertyNames)
+      this.openSimpleOrHdfsBrowsingDialog(this.oDialog, DatasetDialog.hdfsPropertyNames)
     })
   }
 
@@ -208,9 +206,7 @@ class AddDatasetDialog extends DatasetDialog {
 class EditDatasetDialog extends DatasetDialog {
 
   onPress() {
-    const dialog = this.oDialog;
-
-    this.schemaService.getList(dialog).then(() => {
+    this.schemaService.getList(this.oDialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
       current.isEdit = true;
@@ -218,9 +214,9 @@ class EditDatasetDialog extends DatasetDialog {
       current.hdfsBrowserEnabled = true;
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
-      dialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+      this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
-      this.openSimpleOrHdfsBrowsingDialog(dialog, DatasetDialog.hdfsPropertyNames);
+      this.openSimpleOrHdfsBrowsingDialog(this.oDialog, DatasetDialog.hdfsPropertyNames);
     });
   }
 
