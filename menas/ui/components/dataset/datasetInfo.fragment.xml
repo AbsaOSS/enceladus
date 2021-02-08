@@ -13,80 +13,66 @@
   ~ limitations under the License.
   -->
 
-
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:f="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-                         xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-  <f:Form editable="false" id="info">
+<core:FragmentDefinition xmlns="sap.m"
+  xmlns:core="sap.ui.core" xmlns:f="sap.ui.layout.form"
+  xmlns:l="sap.ui.layout" xmlns:table="sap.ui.table"
+  xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+  <f:Form editable="false" id="info" class="formWithSmallContainerMargins">
     <f:layout>
-      <f:ResponsiveGridLayout labelSpanXL="4" labelSpanL="3" labelSpanM="4" labelSpanS="12"
-        adjustLabelSpan="false" emptySpanXL="0" emptySpanL="4" emptySpanM="0" emptySpanS="0" 
-        columnsXL="1" columnsL="1" columnsM="1" singleContainerFullSize="false"></f:ResponsiveGridLayout>
+      <f:ResponsiveGridLayout labelSpanXL="4"
+        labelSpanL="3" labelSpanM="4" labelSpanS="12"
+        adjustLabelSpan="false" emptySpanXL="0" emptySpanL="4"
+        emptySpanM="0" emptySpanS="0" columnsXL="1" columnsL="1"
+        columnsM="1" singleContainerFullSize="true"></f:ResponsiveGridLayout>
     </f:layout>
     <f:formContainers>
       <f:FormContainer>
-        <f:formElements>
-          <f:FormElement label="Dataset">
-            <f:fields>
-              <Text id="currentDatasetName" text="{dataset>/name}"/>
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Description">
-            <f:fields>
-              <Text id="currentDatasetDescription" text="{dataset>/description}"/>
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Version">
-            <f:fields>
-              <Text id="currentDatasetVersion" text="{dataset>/version}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="HDFS raw data folder path">
-            <f:fields>
-              <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="HDFS conformed data publish folder path">
-            <f:fields>
-              <Text id="currentDatasetPublishedPath" text="{dataset>/hdfsPublishPath}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Schema">
-            <f:fields>
-              <Link text="{dataset>/schemaName} (v{dataset>/schemaVersion})"
-                press="toSchema"
-                cust:name="{dataset>/schemaName}"
-                cust:version="{dataset>/schemaVersion}"
-                id="currentDatasetSchema"/>
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Last Updated">
-            <f:fields>
-              <Text id="currentDatasetLastUpdate" text="{path: 'dataset>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Last Updated By">
-            <f:fields>
-              <Text id="currentDatasetUserUpdated" text="{dataset>/userUpdated}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Created">
-            <f:fields>
-              <Text id="currentDatasetCreated" text="{path: 'dataset>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}" />
-            </f:fields>
-          </f:FormElement>
-          <f:FormElement label="Created By">
-            <f:fields>
-              <Text id="currentDatasetUserCreated" text="{dataset>/userCreated}" />
-            </f:fields>
-          </f:FormElement>
-        </f:formElements>
+        <f:FormElement label="Dataset Name">
+          <Text id="currentDatasetName" text="{dataset>/name}" />
+        </f:FormElement>
+        <f:FormElement label="Dataset Version">
+          <Text id="currentDatasetVersion" text="{dataset>/version}" />
+        </f:FormElement>
+        <f:FormElement label="Dataset Description">
+          <Text id="currentDatasetDescription" text="{dataset>/description}" />
+        </f:FormElement>
       </f:FormContainer>
       <f:FormContainer formElements="{/currentDataset/propertiesDisplay}">
-          <f:FormElement label="{name}">
-            <f:fields>
-              <Text text="{value}" />
-            </f:fields>
-          </f:FormElement>
+        <f:FormElement label="{name}">
+          <Text text="{value}" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="Schema">
+          <Link text="{dataset>/schemaName} (v{dataset>/schemaVersion})"
+            press="toSchema" cust:name="{dataset>/schemaName}"
+            cust:version="{dataset>/schemaVersion}"
+            id="currentDatasetSchema" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="HDFS raw data folder path">
+          <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}" />
+        </f:FormElement>
+        <f:FormElement label="HDFS conformed data publish folder path">
+          <Text id="currentDatasetPublishedPath" text="{dataset>/hdfsPublishPath}" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="Last Updated">
+          <Text id="currentDatasetLastUpdate" 
+            text="{path: 'dataset>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
+        </f:FormElement>
+        <f:FormElement label="Last Updated By">
+          <Text id="currentDatasetUserUpdated" text="{dataset>/userUpdated}" />
+        </f:FormElement>
+        <f:FormElement label="Created">
+          <Text id="currentDatasetCreated" 
+            text="{path: 'dataset>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}" />
+        </f:FormElement>
+        <f:FormElement label="Created By">
+          <Text id="currentDatasetUserCreated" text="{dataset>/userCreated}" />
+        </f:FormElement>
       </f:FormContainer>
     </f:formContainers>
   </f:Form>

@@ -124,3 +124,7 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 .essentialityStatus {
   width: 9rem !important;
 }
+
+.formWithSmallContainerMargins > div > div > div > div {
+  padding-bottom: 0.9rem !important;
+}
