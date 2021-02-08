@@ -19,4 +19,16 @@ var HdfsService = new function () {
     return Functions.ajax("api/hdfs/list", "POST", sPath, successFn, errorFn, oControl);
   };
 
+  // jquery Promise
+  this.getHdfsListJqPromise = function(sPath, oControl) {
+    return $.when(Functions.ajax("api/hdfs/list", "POST", sPath, () => {}, () => {}, oControl));
+  };
+
+  // not using oControl
+  this.getHdfsListEs6Promise = function(sPath) {
+    console.log(`getHdfsListEs6Promise(${sPath})'`); // 4xx or 5xx code
+    return Promise.resolve(this.getHdfsListJqPromise(sPath))
+  }
+
+
 }();

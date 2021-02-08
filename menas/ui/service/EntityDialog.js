@@ -58,21 +58,23 @@ class EntityDialog {
     this.oDialog.close();
   }
 
-  setupInputPathsMode(dialog, hdfsPropertyNames) {
-    const checkPropertyName = function (propertyName) {
-      const path = dialog.getModel("entity").getProperty(propertyName);
-
-      const errorFn = function (data) {
-        console.log(`Switching off HDFS Browser in the dialog due to an unsuccessful HDFS listing of '${path}' (property '${propertyName}')`); // 4xx or 5xx code
-        dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false)
-      };
-
-      HdfsService.getHdfsList(path, () => {}, errorFn);
-    };
+  openSimpleOrHdfsBrowsingDialog(dialog, hdfsPropertyNames) {
+    const hdfsPaths = hdfsPropertyNames.map(propertyName => dialog.getModel("entity").getProperty(propertyName));
+    const hdfsCheckPromises = hdfsPaths.map(path => HdfsService.getHdfsListEs6Promise(path));
 
     // each propertyName is checked to be suitable for hdfsBrowser. Should any fail, hdfsBrowser will be disabled (hdfsBrowserEnabled=>false)
-    hdfsPropertyNames.forEach(propertyName => checkPropertyName(propertyName))
- }
+    Promise.all(hdfsCheckPromises) // all ok => ok, one fails => fail
+      .then(() => {
+        console.log(`Successful HDFS listing of '[${hdfsPaths}]' -> HDFS Browser is kept`);
+      })
+      .catch(() => {
+        console.log(`Switching off HDFS Browser in the dialog due to an unsuccessful HDFS listing of '[${hdfsPaths}]`); // 4xx or 5xx code
+        dialog.getModel("entity").setProperty("/hdfsBrowserEnabled", false);
+      })
+      .finally(() => {
+        dialog.open();
+      })
+  }
 
   onHdfsBrowserToggle() {
     let enabled = this.oDialog.getModel("entity").getProperty("/hdfsBrowserEnabled");
@@ -182,10 +184,10 @@ class DatasetDialog extends EntityDialog {
 class AddDatasetDialog extends DatasetDialog {
 
   onPress() {
-    this.oDialog.open();
+    const dialog = this.oDialog;
 
-    this.schemaService.getList(this.oDialog).then(oData => {
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel({
+    this.schemaService.getList(dialog).then(() => {
+      dialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
         schemaName: "",
@@ -197,7 +199,7 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsBrowserEnabled: true
       }), "entity");
 
-      this.setupInputPathsMode(this.oDialog, DatasetDialog.hdfsPropertyNames)
+      this.openSimpleOrHdfsBrowsingDialog(dialog, DatasetDialog.hdfsPropertyNames)
     })
   }
 
@@ -206,9 +208,9 @@ class AddDatasetDialog extends DatasetDialog {
 class EditDatasetDialog extends DatasetDialog {
 
   onPress() {
-    this.oDialog.open();
+    const dialog = this.oDialog;
 
-    this.schemaService.getList(this.oDialog).then(() => {
+    this.schemaService.getList(dialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
       current.isEdit = true;
@@ -216,9 +218,9 @@ class EditDatasetDialog extends DatasetDialog {
       current.hdfsBrowserEnabled = true;
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
+      dialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-      this.setupInputPathsMode(this.oDialog, DatasetDialog.hdfsPropertyNames)
+      this.openSimpleOrHdfsBrowsingDialog(dialog, DatasetDialog.hdfsPropertyNames);
     });
   }
 
@@ -358,9 +360,7 @@ class MappingTableDialog extends EntityDialog {
 class AddMappingTableDialog extends MappingTableDialog {
 
   onPress() {
-    this.oDialog.open();
-
-    this.schemaService.getList(this.oDialog).then(oData => {
+    this.schemaService.getList(this.oDialog).then(() => {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
@@ -372,7 +372,7 @@ class AddMappingTableDialog extends MappingTableDialog {
         hdfsBrowserEnabled: true
       }), "entity");
 
-      this.setupInputPathsMode(this.oDialog, MappingTableDialog.hdfsPropertyNames)
+      this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
 
@@ -381,8 +381,6 @@ class AddMappingTableDialog extends MappingTableDialog {
 class EditMappingTableDialog extends MappingTableDialog {
 
   onPress() {
-    this.oDialog.open();
-
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
 
@@ -392,7 +390,7 @@ class EditMappingTableDialog extends MappingTableDialog {
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
-      this.setupInputPathsMode(this.oDialog, MappingTableDialog.hdfsPropertyNames)
+      this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
 
