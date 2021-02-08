@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.SparkSession
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.atum.AtumImplicits
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
@@ -40,14 +40,13 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
 trait CommonJobExecution extends ProjectMetadata {
-
   protected case class PreparationResult(dataset: Dataset,
                                          reportVersion: Int,
                                          pathCfg: PathConfig,
@@ -265,7 +264,7 @@ trait CommonJobExecution extends ProjectMetadata {
       log.warn(s"Empty output after running $job. Previous checkpoints show this is correct.")
     } else {
       val errMsg = s"Empty output after running $job, while previous checkpoints show non zero record count"
-      AtumImplicits.SparkSessionWrapper(spark).setControlMeasurementError(job.toString, errMsg, "")
+      spark.setControlMeasurementError(job.toString, errMsg, "")
       throw new IllegalStateException(errMsg)
     }
   }

@@ -26,9 +26,12 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.common.config.PathConfig
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
 import za.co.absa.enceladus.model.test.factories.RunFactory
@@ -36,9 +39,7 @@ import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
-import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 
 import scala.util.control.NonFatal
 
@@ -96,14 +97,13 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
         someDataset.write.csv(stdPath)
 
         // Atum framework initialization is part of the 'prepareStandardization'
-        import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
         spark.disableControlMeasuresTracking()
 
         val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
         val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
         // key with prefix from test's application.conf
-        infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+        infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
       }
     }
 

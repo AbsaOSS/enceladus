@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.performance
+package za.co.absa.enceladus.common.performance
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.{col, size, sum}
