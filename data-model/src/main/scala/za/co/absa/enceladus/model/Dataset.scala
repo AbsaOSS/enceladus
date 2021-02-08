@@ -74,13 +74,13 @@ case class Dataset(name: String,
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
    */
-  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, '.', MappingConformanceRule.DOT_REPLACEMENT_SYMBOL)
+  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, '.', MappingConformanceRule.DotReplacementSymbol)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL> are dots
    */
-  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
+  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DotReplacementSymbol, '.')
 
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
     menasRef = MenasReference(collection = None, name = name, version = version),

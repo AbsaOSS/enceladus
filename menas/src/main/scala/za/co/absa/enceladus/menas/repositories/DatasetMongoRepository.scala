@@ -93,7 +93,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   private val ORIGINAL_DELIMETER = '.'
-  private val REPLACEMENT_DELIMETER = MappingConformanceRule.DOT_REPLACEMENT_SYMBOL
+  private val REPLACEMENT_DELIMETER = MappingConformanceRule.DotReplacementSymbol
 
   private def replaceForWrite(key: String): String = key.replace(ORIGINAL_DELIMETER, REPLACEMENT_DELIMETER)
 
