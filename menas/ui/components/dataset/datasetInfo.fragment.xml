@@ -37,7 +37,7 @@
           <Text id="currentDatasetDescription" text="{dataset>/description}" />
         </f:FormElement>
       </f:FormContainer>
-      <f:FormContainer formElements="{/currentDataset/propertiesDisplay}">
+      <f:FormContainer formElements="{path: '/currentDataset/propertiesDisplay', sorter: {path:'order'}}">
         <f:FormElement label="{name}">
           <Text text="{value}" />
         </f:FormElement>
