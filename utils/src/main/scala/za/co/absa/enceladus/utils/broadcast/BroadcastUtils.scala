@@ -15,12 +15,14 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
+import javassist.bytecode.SignatureAttribute.ArrayType
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.expr
-import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructField, StructType}
+import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping, MultiErrorMessage}
 
 object BroadcastUtils {
   // scalastyle:off null
@@ -59,7 +61,7 @@ object BroadcastUtils {
   }
 
   /**
-    * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
+    * Returns a UDF that takes values of join keys and returns the the target attribute values or null
     * if there is no mapping for the specified keys.
     *
     * @param mappingTable A mapping table broadcasted to executors.
@@ -80,8 +82,12 @@ object BroadcastUtils {
       case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
+    val structFields: Seq[StructField] = mappingTable.value.targetAttributes.zip(mappingTable.value.valueTypes)
+      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
+    StructType(structFields)
+
     UserDefinedFunction(lambda,
-      mappingTable.value.valueType,
+      StructType(structFields),
       Some(mappingTable.value.keyTypes))
   }
 
@@ -105,7 +111,7 @@ object BroadcastUtils {
       case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
-    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
+    val errorMessageSchema = ScalaReflection.schemaFor[MultiErrorMessage]
 
     val errorUdf = UserDefinedFunction(lambda,
       errorMessageSchema.dataType,

@@ -35,7 +35,7 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")
-                                     authMechanism: String) extends ProjectMetadata {
+                                     authMechanism: String) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Configuration
@@ -48,6 +48,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .spnegoAuthenticationProcessingFilter(authenticationManager, authenticationSuccessHandler)
 
       http
+        .cors().and()
         .csrf()
           .disable()
         .sessionManagement()
@@ -57,9 +58,8 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/oozie/isEnabled", "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
+          .antMatchers("/admin/health", "/api/oozie/isEnabled",
+            "/api/user/version", "/api/configuration/**")
           .permitAll()
         .anyRequest()
           .authenticated()

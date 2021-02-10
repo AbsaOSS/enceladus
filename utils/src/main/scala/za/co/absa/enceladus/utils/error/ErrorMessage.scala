@@ -29,6 +29,8 @@ import org.apache.spark.sql.types.StructType
  * @param mappings - Sequence of Mappings i.e Mapping Table Column -> Equivalent Mapped Dataset column
  */
 case class ErrorMessage(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String], mappings: Seq[Mapping] = Seq())
+case class MultiErrorMessage(errType: String, errCode: String, errMsg: String, errCols: Seq[String], rawValues: Seq[String],
+                             mappings: Seq[Mapping] = Seq())
 case class Mapping(mappingTableColumn: String, mappedDatasetColumn: String)
 
 object ErrorMessage {

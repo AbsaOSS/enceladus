@@ -231,11 +231,11 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   private def getMappingRuleInterpreter(rule: MappingConformanceRule)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (canMappingRuleBroadcast(rule)) {
+    if (canMappingRuleBroadcast(rule) && rule.attributeMappings.size <= 5) {
       log.info("Broadcast strategy for mapping rules is used")
       MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
-      if (ictx.featureSwitches.experimentalMappingRuleEnabled) {
+      if (ictx.featureSwitches.experimentalMappingRuleEnabled || rule.additionalColumns.nonEmpty) {
         log.info("Group explode strategy for mapping rules used")
         MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
       } else {

@@ -44,7 +44,7 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
   }
 
   private def getAuthentication(request: HttpServletRequest): Option[Authentication] = {
-    getJwtCookie(request).flatMap { jwt =>
+    getJwt(request).flatMap { jwt =>
       Try {
         jwtFactory
           .jwtParser()
@@ -91,10 +91,11 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
 
   }
 
-  private def getJwtCookie(request: HttpServletRequest): Option[String] = {
-    Option(request.getCookies).getOrElse(Array()).collectFirst {
-      case cookie if cookie.getName == JwtCookieKey => cookie.getValue
-    }
+  private def getJwt(request: HttpServletRequest): Option[String] = {
+    val jwtHeader = request.getHeader(JwtKey)
+    if(jwtHeader != null && jwtHeader.nonEmpty){
+      Some(jwtHeader)
+    } else None
   }
 
 }

@@ -27,6 +27,7 @@ import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
+import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
 
 import scala.util.Try
@@ -36,6 +37,15 @@ trait CommonMappingRuleInterpreter {
 
   protected val rule: MappingConformanceRule
   protected val log: Logger
+
+  protected val multiRule: MultiMappingConformanceRule = MultiMappingConformanceRule(rule)
+
+  protected def outputColumnNames(): String =  multiRule.outputColumns.mkString(", ")
+
+  protected val mappings: Seq[Mapping] = multiRule.attributeMappings.map {
+    case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
+  }.toSeq
+
 
   def conform(df: DataFrame)
              (implicit spark: SparkSession,
