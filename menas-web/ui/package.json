@@ -1,6 +1,6 @@
 {
   "name": "menas-web",
-  "version": "2.12.0-AWS-SNAPSHOT",
+  "version": "2.19.0-SNAPSHOT",
   "description": "Menas Client",
   "main": "index.html",
   "author": "ABSA Big Data R&D",

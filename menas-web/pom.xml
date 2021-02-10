@@ -60,6 +60,15 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>sync version to package.json</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <arguments>version ${project.parent.version}</arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>ui5 build</id>
                         <goals>
                             <goal>npm</goal>
