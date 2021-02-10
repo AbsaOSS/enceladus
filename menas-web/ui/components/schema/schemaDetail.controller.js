@@ -388,7 +388,7 @@ sap.ui.define([
 
     checkRegistryIntegration: function () {
       jQuery.ajax({
-        url: window.apiUrl + "/schema/features",
+        url: window.apiUrl + "schema/features",
         type: 'GET',
         context: this,
         complete: this.handleRegistryIntegrationResponse

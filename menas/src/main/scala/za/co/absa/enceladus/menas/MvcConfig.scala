@@ -30,5 +30,6 @@ class MvcConfig extends WebMvcConfigurer {
       .exposedHeaders(JwtKey, CsrfTokenKey)
       .allowedMethods("PUT", "GET", "DELETE", "OPTIONS", "PATCH", "POST")
       .allowedHeaders("*")
+      .allowedOrigins("*")
   }
 }

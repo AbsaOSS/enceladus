@@ -31,7 +31,7 @@ class RestClient {
   }
 
   static getSync(url, shouldUseCache = false, isWeb = false) {
-    let requestUrl = isWeb ? url : window.apiUrl + "/" + url;
+    let requestUrl = isWeb ? url : (window.apiUrl + url);
     let request = {
       headers: {
         "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
