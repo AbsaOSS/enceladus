@@ -112,7 +112,7 @@
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                     <webResources>
                         <resource>
-                            <directory>ui</directory>
+                            <directory>ui/dist</directory>
                             <targetPath>/</targetPath>
                             <filtering>false</filtering>
                         </resource>
