@@ -31,7 +31,7 @@
                                width="100%"
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
-                        <Label text="HDFS Path"/>
+                        <Label text="Mapping table folder path"/>
                         <VBox>
                             <HBox>
                                 <!-- HDFS Browser input -->

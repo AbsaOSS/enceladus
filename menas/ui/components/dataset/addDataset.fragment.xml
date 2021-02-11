@@ -27,7 +27,7 @@
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
-                        <Label text="HDFS raw data folder path"/>
+                        <Label text="Raw data folder path"/>
                         <VBox>
                             <HBox>
                                 <!-- HDFS Browser input -->
@@ -52,7 +52,7 @@
                                               busyControl="addDatasetDialog" pathInput="selectedRawHDFSPathLabel"
                                               HDFSPath="{entity>/hdfsPath}" visible="{entity>/hdfsBrowserEnabled}"/>
                         </VBox>
-                        <Label text="HDFS conformed data publish folder path"/>
+                        <Label text="Conformed data publish folder path"/>
                         <VBox>
                             <!-- HDFS Browser and its label -->
                             <Input type="Text" id="selectedPublishHDFSPathLabel"
