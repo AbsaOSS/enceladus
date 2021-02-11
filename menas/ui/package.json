@@ -1,0 +1,14 @@
+{
+  "name": "enceladus-menas",
+  "version": "1.0.0",
+  "description": "Menas",
+  "main": "index.html",
+  "author": "ABSA Big Data R&D",
+  "license": "Apache License, Version 2.0",
+  "devDependencies": {
+    "grunt": "^1.0.4",
+    "grunt-cli": "^1.3.2",
+    "grunt-openui5": "^0.15.0"
+  },
+  "dependencies": {}
+}

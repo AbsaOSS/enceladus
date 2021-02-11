@@ -1,0 +1,45 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:View id="runMasterView" xmlns:core="sap.ui.core" xmlns="sap.m"
+           controllerName="components.run.runMaster"
+           xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <Page id="masterPage" title="{dataset>/name}(v{dataset>/version}) Runs" showNavButton="true" navButtonPress="onPressMasterBack">
+        <content>
+            <List items="{runs>/}"
+                  mode="SingleSelectMaster"
+                  selectionChange="runSelected"
+                  growing="true"
+                  noDataText="No Runs">
+                <StandardListItem title="Run {runs>runId}"
+                                  description="{
+                                                    path: 'runs>startDateTime',
+                                                    type: 'sap.ui.model.type.DateTime',
+                                                    formatOptions: {
+                                                        source: {
+                                                            pattern: 'dd-MM-yyyy HH:mm:ss ZZZ'
+                                                        }
+                                                    }
+                                                }: {runs>status}"
+                                  cust:dataset="{runs>datasetName}" cust:version="{runs>datasetVersion}"
+                                  cust:runId="{runs>runId}" type="Active">
+                </StandardListItem>
+            </List>
+        </content>
+        <footer>
+            <Bar/>
+        </footer>
+    </Page>
+</core:View>

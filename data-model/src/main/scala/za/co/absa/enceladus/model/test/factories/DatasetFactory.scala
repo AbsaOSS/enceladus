@@ -88,7 +88,7 @@ object DatasetFactory extends EntityFactory[Dataset] {
                           isNullSafe: Boolean = false): MappingConformanceRule = {
 
     MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion,
-      attributeMappings, targetAttribute, outputColumn, isNullSafe)
+      attributeMappings, targetAttribute, outputColumn, None ,isNullSafe)
   }
 
   def getDummyNegationRule(order: Int = 1,

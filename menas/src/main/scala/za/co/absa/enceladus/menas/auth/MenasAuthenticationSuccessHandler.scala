@@ -46,6 +46,7 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
 
     val expiry = Hours.hours(jwtLifespanHours).toStandardSeconds
     val jwtExpirationTime = DateTime.now(DateTimeZone.forID(timezone)).plus(expiry).toDate
+    val cookieLifetime = expiry.getSeconds
 
     val jwt = jwtFactory
       .jwtBuilder()
@@ -54,7 +55,10 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
       .claim(CsrfTokenKey, csrfToken)
       .compact()
 
-    response.addHeader(JwtKey, jwt)
+    val cookie = new Cookie(JwtCookieKey, jwt)
+    cookie.setPath(request.getContextPath)
+    cookie.setMaxAge(cookieLifetime)
+    response.addCookie(cookie)
 
     clearAuthenticationAttributes(request)
   }

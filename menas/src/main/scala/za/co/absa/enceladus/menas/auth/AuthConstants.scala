@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.auth
 
 object AuthConstants {
 
-  val JwtKey: String = "JWT"
+  val JwtCookieKey: String = "JWT"
   val CsrfTokenKey: String = "X-CSRF-TOKEN"
   val GroupsKey: String = "groups"
 

@@ -1,0 +1,44 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+    <form:SimpleForm id="info">
+        <form:content>
+            <Label text="Mapping Table"/>
+            <Text text="{mappingTable>/name}"/>
+            <Label text="Description"/>
+            <Text text="{mappingTable>/description}"/>
+            <Label text="Version"/>
+            <Text text="{mappingTable>/version}"/>
+            <Label text="HDFS Path"/>
+            <Text text="{mappingTable>/hdfsPath}"/>
+            <Label text="Schema"/>
+            <Link text="{mappingTable>/schemaName} (v{mappingTable>/schemaVersion})"
+                  press="toSchema" cust:name="{mappingTable>/schemaName}"
+                  cust:version="{mappingTable>/schemaVersion}"/>
+            <Label text="Last Update"/>
+            <Text
+                text="{path: 'mappingTable>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+            <Label text="Last Update By"/>
+            <Text text="{mappingTable>/userUpdated}"/>
+            <Label text="Created"/>
+            <Text
+                text="{path: 'mappingTable>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+            <Label text="Created By"/>
+            <Text text="{mappingTable>/userCreated}"/>
+        </form:content>
+    </form:SimpleForm>
+</core:FragmentDefinition>

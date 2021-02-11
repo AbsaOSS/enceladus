@@ -1,0 +1,91 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:mvc="sap.ui.core.mvc" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <form:SimpleForm id="scheduleDisplayForm" editable="false">
+        <HBox class="scheduleMenuHBox">
+            <Title text="Active Schedule" />
+            <MenuButton id="scheduleActionMenuButton" class="scheduleMenuButton sapUiTinyMarginBegin" icon="sap-icon://menu" type="Transparent">
+                <Menu>
+                        <MenuItem text="Run Now!" icon="sap-icon://physical-activity" press="scheduleRunNow" />
+                        <MenuItem text="Suspend" icon="sap-icon://pause" press="scheduleSuspend"
+                            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
+                        <MenuItem text="Resume" icon="sap-icon://play" press="scheduleResume"
+                            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'SUSPENDED' }" />
+                </Menu>
+            </MenuButton>
+        </HBox>
+        <Label text="Coordinator ID" />
+        <Text text="{/currentDataset/schedule/activeInstance/coordinatorId}" />
+        <Label text="Coordinator Path" />
+        <Text text="{/currentDataset/schedule/activeInstance/coordinatorPath}" />
+        <Label text="Workflow Path" />
+        <Text text="{/currentDataset/schedule/activeInstance/workflowPath}" />
+        <Label text="Next Materialization Time" visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }"/>
+        <Text text="{path:'/currentDataset/schedule/activeInstance/status/nextMaterializedTime', formatter: 'Formatters.stringDateShortFormatter'}"
+            visible="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' }" />
+        <Label text="Schedule Status" />
+        <ObjectStatus class="sapMObjectStatusLarge"
+            text="{= ${/currentDataset/schedule/activeInstance/status/status} === 'RUNNING' ? 'Active' : ${/currentDataset/schedule/activeInstance/status/status} }"
+            state="{path:'/currentDataset/schedule/activeInstance/status/status', formatter:'Formatters.oozieCoordinatorStatusFormatter'}" />
+        <core:Title id="scheduleTimingTitle" text="Schedule Timing (in UTC)" />
+        <Label text="Will run" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/cronSchedule', formatter: 'Formatters.cronExpressionFormatter'}" />
+        <Label text="Minute" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/minute', type:'components.types.NonEmptyArrType'}" />
+        <Label text="Hour" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/hour', type:'components.types.NonEmptyArrType'}" />
+        <Label text="Day of Month" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/dayOfMonth', type:'components.types.NonEmptyArrType'}" />
+        <Label text="Month" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/month', type:'components.types.NonEmptyArrType'}" />
+        <Label text="Day of Week" />
+        <Text text="{path: '/currentDataset/schedule/scheduleTiming/dayOfWeek', type:'components.types.NonEmptyArrType'}" />
+        <core:Title text="Runtime Parameters" />
+        <Label text="Standardization Number of Executors" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/stdNumExecutors', type:'sap.ui.model.type.Integer'}" />
+        <Label text="Standardization Executor Memory" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/stdExecutorMemory', type:'sap.ui.model.type.Integer'} GB" />
+        <Label text="Conformance Number of Executors" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/confNumExecutors', type:'sap.ui.model.type.Integer'}" />
+        <Label text="Conformance Executor Memory" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/confExecutorMemory', type:'sap.ui.model.type.Integer'} GB" />
+        <Label text="Driver Cores" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/driverCores', type:'sap.ui.model.type.Integer'}" />
+        <Label text="Driver Memory" />
+        <Text text="{path: '/currentDataset/schedule/runtimeParams/driverMemory', type:'sap.ui.model.type.Integer'} GB" />
+        <Label text="System User" />
+        <Text text="{/currentDataset/schedule/runtimeParams/sysUser}" />
+        <Label text="Menas Keytab File" />
+        <Text text="{/currentDataset/schedule/runtimeParams/menasKeytabFile}" />
+        <core:Title text="Schedule Parameters" />
+        <Label text="Dataset Version" />
+        <Text text="{/currentDataset/schedule/datasetVersion}" />
+        <Label text="Mapping Table Folder Pattern" />
+        <Text text="{/currentDataset/schedule/mappingTablePattern}" />
+        <Label text="Report Date Offset" />
+        <Text text="{/currentDataset/schedule/reportDateOffset}" />
+        <Label text="Data Format"></Label>
+        <Text text="{/currentDataset/schedule/rawFormat/name}" />
+        <Label text="XML Row Tag" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'xml' }"></Label>
+        <Text text="{/currentDataset/schedule/rawFormat/rowTag}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'xml' }" />
+        <Label text="CSV Delimiter" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }"></Label>
+        <Text text="{/currentDataset/schedule/rawFormat/csvDelimiter}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }" />
+        <Label text="CSV Header" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }"></Label>
+        <CheckBox enabled="false" selected="{/currentDataset/schedule/rawFormat/csvHeader}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'csv' }" />
+        <Label text="Trim Values" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'fixed-width' }"></Label>
+        <CheckBox enabled="false" selected="{/currentDataset/schedule/rawFormat/trimValues}" visible="{= ${/currentDataset/schedule/rawFormat/name} === 'fixed-width' }" />
+    </form:SimpleForm>
+</core:FragmentDefinition>

@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
@@ -54,16 +53,13 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     multiRule.outputColumns.foldLeft(outputsProjected)((prevDf: DataFrame, outputCol: (String, String)) => {
       val parentPath = getParentPath(outputCol._1)
       val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, outputCol._1, mappings)
-      NestedArrayTransformations.nestedAddColumnExtended(prevDf, outputCol._1, (_, getField) => {
-        errorUDF(inputDfFields.map(a => getField(a)): _ *)
-      })
 
-      /*NestedArrayTransformations.nestedExtendedStructAndErrorMap(
+      NestedArrayTransformations.nestedExtendedStructAndErrorMap(
         prevDf, parentPath, outputCol._1, ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
           mappingUDF(inputDfFields.map(a => getField(a)): _ *)
         }, (_, getField) => {
           errorUDF(inputDfFields.map(a => getField(a)): _ *)
-        })*/
+        })
     })
   }
 

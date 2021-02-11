@@ -69,7 +69,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
     "return a UDF that can be used for joining a dataframe with a simple mapping table" when {
 
       "1 UDF parameter is used without a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf1 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
@@ -82,7 +82,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "1 UDF parameter is used with a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id"),  Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf1 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
@@ -95,7 +95,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "2 UDF parameters are used without a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf2 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
@@ -108,7 +108,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "2 UDF parameters are used with a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf2 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
@@ -121,7 +121,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "3 UDF parameters are used without a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf3 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
@@ -134,7 +134,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "3 UDF parameters are used with a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf3 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
@@ -147,7 +147,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "4 UDF parameters are used without a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf4 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
@@ -160,7 +160,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "4 UDF parameters are used with a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf4 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
@@ -173,7 +173,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "5 UDF parameters are used without a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf5 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
@@ -186,7 +186,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "5 UDF parameters are used with a default value" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         val mappingUdf5 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
@@ -203,12 +203,12 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
 
       "a join without key fields is attempted" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Nil, "val")
+          LocalMappingTable(dfMt, Nil, Seq("val"))
         }
       }
 
       "a join with more than 5 fields attempted" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         intercept[IllegalArgumentException] {
@@ -228,7 +228,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
             |{"key1":3,"key2":4,"key3":4,"errCol":{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"val","rawValues":["4"],"mappings":[{"mappingTableColumn":"id","mappedDatasetColumn":"key2"}]}}"""
             .stripMargin.replace("\r\n", "\n")
 
-        val localMt = LocalMappingTable(dfMt, Seq("id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
         val mappings = Seq(Mapping("id", "key2"))
 
@@ -246,7 +246,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
             |{"key1":3,"key2":4,"key3":4,"errCol":{"errType":"confMapError","errCode":"E00001","errMsg":"Conformance Error - Null produced by mapping conformance rule","errCol":"val","rawValues":["4","4"],"mappings":[{"mappingTableColumn":"id","mappedDatasetColumn":"key2"},{"mappingTableColumn":"id","mappedDatasetColumn":"key2"}]}}"""
             .stripMargin.replace("\r\n", "\n")
 
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
         val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"))
 
@@ -258,7 +258,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "3 UDF parameter is used" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
         val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
 
@@ -273,7 +273,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "4 UDF parameter is used" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
         val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
 
@@ -288,7 +288,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
       }
 
       "5 UDF parameter is used" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), "val")
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
         val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"),
           Mapping("id", "key2"))

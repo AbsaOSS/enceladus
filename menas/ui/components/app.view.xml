@@ -1,0 +1,46 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="components.app">
+    <SplitApp id="menasApp" initialMaster="navPage" mode="ShowHideMode">
+        <masterPages>
+            <Page id="navPage" showHeader="true" title="Navigation">
+                <List>
+                    <items>
+                        <StandardListItem id="Home" title="Home" type="Navigation" press="onHomePress" icon="sap-icon://home" />
+                        <StandardListItem id="Runs" title="Runs" type="Navigation" press="onRunsPress" icon="sap-icon://physical-activity" />
+                        <StandardListItem id="Schemas" title="Schemas" type="Navigation" press="onSchemasPress" icon="sap-icon://SAP-icons-TNT/constrains" />
+                        <StandardListItem id="Datasets" title="Datasets" type="Navigation" press="onDatasetPress" icon="sap-icon://database" />
+                        <StandardListItem id="MappingTables" title="Mapping Tables" type="Navigation" icon="sap-icon://SAP-icons-TNT/value-mapping"
+                                        press="onMappingPress" />
+                    </items>
+                </List>
+                <footer>
+                    <Bar>
+                        <contentMiddle>
+                            <Label text="Menas v{/menasVersion}"/>
+                        </contentMiddle>
+                    </Bar>
+                </footer>
+            </Page>
+            <mvc:XMLView id="runsDatasetNamePage" viewName="components.run.runDatasetNameMaster"/>
+            <mvc:XMLView id="runsDatasetVersionPage" viewName="components.run.runDatasetVersionMaster"/>
+            <mvc:XMLView id="runsPage" viewName="components.run.runMaster"/>
+            <mvc:XMLView id="schemasPage" viewName="components.schema.schemaMaster"/>
+            <mvc:XMLView id="datasetsPage" viewName="components.dataset.datasetMaster"/>
+            <mvc:XMLView id="mappingTablesPage" viewName="components.mappingTable.mappingTableMaster"/>
+        </masterPages>
+    </SplitApp>
+</mvc:View>

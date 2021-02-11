@@ -81,10 +81,16 @@ package object conformanceRule {
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
                                     targetAttribute: String,
                                     outputColumn: String,
+                                    additionalColumns: Option[Map[String, String]] = None,
                                     isNullSafe: Boolean = false,
                                     mappingTableFilter: Option[DataFrameFilter] = None,
                                     overrideMappingTableOwnFilter: Boolean = false
                                    ) extends ConformanceRule {
+
+    def getAllOutputColumns(): Map[String, String] = {
+      additionalColumns.getOrElse(Map()) + (outputColumn -> targetAttribute)
+    }
+
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
 
     override def connectedEntities: Seq[ConnectedEntity] = Seq(

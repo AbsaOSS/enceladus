@@ -30,6 +30,5 @@ ADD src/main/resources/docker/server.xml /tmp/server.xml
 EXPOSE 8080
 EXPOSE 8443
 EXPOSE 8009
-#Debugging
-#EXPOSE 5005
+
 CMD ["./start_menas.sh"]

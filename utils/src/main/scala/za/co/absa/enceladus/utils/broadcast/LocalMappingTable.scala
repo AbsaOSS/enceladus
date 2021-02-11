@@ -69,17 +69,16 @@ object LocalMappingTable {
       var i = 0
       val values = new ListBuffer[Any]
       while (i < numberOfValues) {
-        values += row(i + 1)
+        values += row(i)
         i += 1
       }
 
-      val value = row(i)
       val keys = new ListBuffer[Any]
-      while (i < numberOfKeys) {
-        keys += row(i + 1)
+      while (i < numberOfKeys + numberOfValues) {
+        keys += row(i)
         i += 1
       }
-      (keys.toSeq, value)
+      (keys.toSeq, values.toList)
     }).toMap
 
     LocalMappingTable(mappingTable, keyFields, targetAttributes, keyTypes, valueTypes)

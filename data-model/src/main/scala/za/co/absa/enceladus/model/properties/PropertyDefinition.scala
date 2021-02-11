@@ -65,6 +65,10 @@ case class PropertyDefinition(name: String,
   override def setUserDisabled(user: Option[String]): PropertyDefinition = this.copy(userDisabled = user)
   override def setParent(newParent: Option[MenasReference]): PropertyDefinition = this.copy(parent = newParent)
 
+  def setEssentiality(newEssentiality: Essentiality): PropertyDefinition = this.copy(essentiality = newEssentiality)
+  def setPropertyType(newPropertyType: PropertyType): PropertyDefinition = this.copy(propertyType = newPropertyType)
+  def setPutIntoInfoFile(newPutIntoInfoFile: Boolean): PropertyDefinition = this.copy(putIntoInfoFile = newPutIntoInfoFile)
+
   // Auditable induced methods:
   override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
