@@ -34,6 +34,17 @@
 
     <build>
         <plugins>
+                <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>${basedir}/ui/dist</directory>
+                            <directory>${basedir}/ui/node_modules</directory>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -65,7 +76,7 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>version ${project.parent.version}</arguments>
+                            <arguments>version ${project.parent.version} --allow-same-version</arguments>
                         </configuration>
                     </execution>
                     <execution>
