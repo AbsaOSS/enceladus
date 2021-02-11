@@ -18,6 +18,7 @@ package za.co.absa.enceladus.standardization
 import java.io.File
 
 import org.apache.commons.io.FileUtils
+import org.apache.spark.sql.DataFrame
 import org.mockito.{ArgumentMatchers, Mockito}
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{Assertion, FlatSpec, Matchers}
@@ -38,13 +39,34 @@ import scala.util.control.NonFatal
 
 class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTestBase with MockitoSugar {
 
+  private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
+    private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
+    private val pathCfg = PathConfig(rawPath, s"/$tempDir/some/publish/path/not/used/here", stdPath)
+    private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+
+    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig, fsUtils: FileSystemVersionUtils): Assertion = {
+      prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
+      testDataset.write.csv(stdPath)
+
+      // Atum framework initialization is part of the 'prepareStandardization'
+      import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+      spark.disableControlMeasuresTracking()
+
+      val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
+      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+
+      // key with prefix from test's application.conf
+      infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+    }
+  }
+
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   "StandardizationExecution" should "write dataset properties into info file" in {
     implicit val dao: MenasDAO = mock[MenasDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
-    implicit val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
+    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // fallbacking on local fs we can afford to prepare test files locally:
     val tempDir = fsUtils.getLocalTemporaryDirectory("std_exec_temp")
     val (rawPath, stdPath) = (s"$tempDir/raw/path", s"$tempDir/std/path")
@@ -70,28 +92,9 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
     // This property is expected to appear in the _INFO file, prefixed.
     Mockito.when(dao.getDatasetPropertiesForInfoFile("DatasetA", 1)).thenReturn(Map("keyFromDs1" -> "itsValue1"))
 
-    val std = new StandardizationExecution {
-      val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
-      val pathCfg = PathConfig(rawPath, s"/$tempDir/some/publish/path/not/used/here", stdPath)
-      val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+    val std = new StandardizationExecutionTest(tempDir, rawPath, stdPath)
 
-      def testRun: Assertion = {
-        prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
-        someDataset.write.csv(stdPath)
-
-        // Atum framework initialization is part of the 'prepareStandardization'
-        import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-        spark.disableControlMeasuresTracking()
-
-        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
-
-        // key with prefix from test's application.conf
-        infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
-      }
-    }
-
-    std.testRun
+    std.testRun(someDataset)
     safeDeleteTestDir(tempDir)
   }
 
