@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.standardization.csv
 
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.FunSuite
-import org.scalatest.mockito.MockitoSugar
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
@@ -29,7 +29,7 @@ import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancem
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class NullValueStandardizationCsvSuite  extends FunSuite with SparkTestBase with MockitoSugar{
+class NullValueStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase with MockitoSugar {
   private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")

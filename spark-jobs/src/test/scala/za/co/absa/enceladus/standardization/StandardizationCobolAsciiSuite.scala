@@ -19,15 +19,16 @@ import java.nio.charset.StandardCharsets
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Outcome, fixture}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Outcome
+import org.scalatest.funsuite.FixtureAnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class StandardizationCobolAsciiSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
   type FixtureParam = String
 

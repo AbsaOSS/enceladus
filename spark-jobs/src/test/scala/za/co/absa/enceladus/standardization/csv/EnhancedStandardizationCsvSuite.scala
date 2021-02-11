@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.standardization.csv
 
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.funsuite.FixtureAnyFunSuite
+import org.scalatest.Outcome
 import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
-class EnhancedStandardizationCsvSuite extends fixture.FunSuite with CsvFileFixture {
+class EnhancedStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFileFixture {
 
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 

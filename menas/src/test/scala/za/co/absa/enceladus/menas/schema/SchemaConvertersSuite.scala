@@ -19,10 +19,10 @@ import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
-class SchemaConvertersSuite extends FunSuite {
+class SchemaConvertersSuite extends AnyFunSuite {
 
   val objectMapper: ObjectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)

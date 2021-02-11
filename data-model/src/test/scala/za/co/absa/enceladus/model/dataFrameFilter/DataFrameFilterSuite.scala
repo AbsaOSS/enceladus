@@ -1,10 +1,10 @@
 package za.co.absa.enceladus.model.dataFrameFilter
 
-import org.scalatest.FunSuite
 import org.apache.spark.sql.functions.{col, lit, not => columnNot}
 import org.apache.spark.sql.types._
+import org.scalatest.funsuite.AnyFunSuite
 
-class DataFrameFilterSuite extends FunSuite {
+class DataFrameFilterSuite extends AnyFunSuite {
   test("Filter for equal value") {
     val filterExpr = EqualsFilter("column1", "v").filter.expr
     val expected = (col("column1") === lit("v")).expr

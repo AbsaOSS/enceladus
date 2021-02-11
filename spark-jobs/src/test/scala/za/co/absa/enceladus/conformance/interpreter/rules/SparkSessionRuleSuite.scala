@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.SparkSessionConfConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class SparkSessionRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class SparkSessionRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
   private val sparkSessionRule = SparkSessionConfConformanceRule(order = 1, outputColumn = "TimeZone", controlCheckpoint = false, sparkConfKey = "spark.sql.session.timeZone")

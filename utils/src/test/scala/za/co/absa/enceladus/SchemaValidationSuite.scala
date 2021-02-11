@@ -16,7 +16,7 @@
 package za.co.absa.enceladus
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
 import za.co.absa.enceladus.utils.validation.SchemaValidator
 
@@ -24,7 +24,7 @@ import za.co.absa.enceladus.utils.validation.SchemaValidator
  * A test suite for validation of scalar data types
  */
 //noinspection ZeroIndexToHead
-class SchemaValidationSuite extends FunSuite with LoggerTestBase{
+class SchemaValidationSuite extends AnyFunSuite with LoggerTestBase{
 
   test("Scalar types should be validated") {
     val schema = StructType(

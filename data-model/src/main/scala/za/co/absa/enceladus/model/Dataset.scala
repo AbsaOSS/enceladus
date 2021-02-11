@@ -90,11 +90,10 @@ case class Dataset(name: String,
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
-      case m: MappingConformanceRule => {
+      case m: MappingConformanceRule =>
         m.copy(attributeMappings = m.attributeMappings.map(key => {
           (key._1.replace(from, to), key._2)
         }))
-      }
       case c: ConformanceRule => c
     }
 

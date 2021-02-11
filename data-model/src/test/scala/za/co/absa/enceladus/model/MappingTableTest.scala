@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.model
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class MappingTableTest extends FunSuite {
+
+class MappingTableTest extends AnyFunSuite {
   private val defaultValue1 = DefaultValue("someColumn", "alfa")
   private val defaultValue2 = DefaultValue("otherColumn", "beta")
 

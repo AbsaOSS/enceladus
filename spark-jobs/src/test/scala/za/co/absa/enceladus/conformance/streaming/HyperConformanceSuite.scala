@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.streaming
 
 import java.util.ServiceLoader
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.conformance.HyperConformance
 import za.co.absa.hyperdrive.ingestor.api.{ComponentFactory, ComponentFactoryProvider}
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformerFactory, StreamTransformerFactoryProvider}
@@ -30,7 +31,7 @@ import scala.reflect.ClassTag
  * It is based on:
  * https://github.com/AbsaOSS/hyperdrive/blob/v3.0.0/ingestor-default/src/test/scala/za/co/absa/hyperdrive/ingestor/implementation/TestServiceProviderConfiguration.scala
  */
-class HyperConformanceSuite extends FlatSpec with Matchers {
+class HyperConformanceSuite extends AnyFlatSpec with Matchers {
 
   behavior of "Service Provider Interface (META-INF/services)"
 

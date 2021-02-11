@@ -18,17 +18,18 @@ package za.co.absa.enceladus.menas.utils.parsers
 import org.apache.avro.SchemaParseException
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Inside, Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Inside
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
 import za.co.absa.enceladus.menas.TestResourcePath
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.menas.utils.SchemaType
 import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
 
-class SchemaParserSuite extends WordSpec with Matchers with MockitoSugar with Inside {
+class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with Inside {
   val mockSchemaConvertor: SparkMenasSchemaConvertor = mock[SparkMenasSchemaConvertor]
 
   val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))

@@ -17,10 +17,11 @@ package za.co.absa.enceladus.model.conformanceRule
 
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.{Matchers, WordSpec}
 import za.co.absa.enceladus.model.dataFrameFilter.IsNullFilter
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class ConformanceRuleTest extends WordSpec with Matchers {
+class ConformanceRuleTest extends AnyWordSpec with Matchers {
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)

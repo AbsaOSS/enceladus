@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.model
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SchemaTest extends FunSuite {
+class SchemaTest extends AnyFunSuite {
   private val schemaField = SchemaField(
     name = "someField",
     `type` = "StringType",

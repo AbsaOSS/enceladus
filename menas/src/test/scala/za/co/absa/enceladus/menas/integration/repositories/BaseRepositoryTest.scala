@@ -18,7 +18,8 @@ package za.co.absa.enceladus.menas.integration.repositories
 import java.util.concurrent.TimeUnit
 
 import org.mongodb.scala.MongoDatabase
-import org.scalatest.{BeforeAndAfter, WordSpec}
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.BeforeAndAfter
 import org.springframework.beans.factory.annotation.Autowired
 import za.co.absa.enceladus.menas.integration.TestContextManagement
 import za.co.absa.enceladus.menas.integration.fixtures.FixtureService
@@ -27,7 +28,7 @@ import za.co.absa.enceladus.menas.services.MigrationService
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-abstract class BaseRepositoryTest extends WordSpec with TestContextManagement with BeforeAndAfter {
+abstract class BaseRepositoryTest extends AnyWordSpec with TestContextManagement with BeforeAndAfter {
 
   val awaitDuration: Duration = Duration(2000, TimeUnit.MILLISECONDS)
 

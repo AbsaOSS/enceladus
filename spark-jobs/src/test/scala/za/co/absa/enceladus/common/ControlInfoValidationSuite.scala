@@ -15,39 +15,41 @@
 
 package za.co.absa.enceladus.common
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.atum.core.ControlType
 import za.co.absa.atum.model.{Checkpoint, Measurement}
+
 import scala.util.Success
 
-class ControlInfoValidationSuite extends FunSuite {
+class ControlInfoValidationSuite extends AnyFunSuite {
   import za.co.absa.atum.core.Constants._
 
   private val checkpoints1 = List(
     Checkpoint("raw", None, None, "", "", "", 0, List(
-      Measurement("", controlTypeAbsAggregatedTotal, "", 0),
-      Measurement("", controlTypeRecordCount, "", 11)
+      Measurement("", ControlType.AbsAggregatedTotal.value, "", 0),
+      Measurement("", ControlType.Count.value, "", 11)
     )
     ),
     Checkpoint("source", None, None, "", "", "", 1, List(
-      Measurement("", controlTypeRecordCount, "", 3)
+      Measurement("", ControlType.Count.value, "", 3)
     )
     )
   )
 
   private val checkpoints2 = List(
     Checkpoint("source", None, None, "", "", "", 1, List(
-      Measurement("", controlTypeDistinctCount, "", 1)
+      Measurement("", ControlType.DistinctCount.value, "", 1)
     )
     )
   )
 
   private val checkpoints3 = List(
     Checkpoint("raw", None, None, "", "", "", 0, List(
-      Measurement("", controlTypeRecordCount, "", -3)
+      Measurement("", ControlType.Count.value, "", -3)
     )
     ),
     Checkpoint("source", None, None, "", "", "", 1, List(
-      Measurement("", controlTypeRecordCount, "", "")
+      Measurement("", ControlType.Count.value, "", "")
     )
     )
   )
@@ -65,7 +67,7 @@ class ControlInfoValidationSuite extends FunSuite {
     val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints2)
 
     val rawError = "Missing raw checkpoint"
-    val sourceError = s"source checkpoint does not have a $controlTypeRecordCount control"
+    val sourceError = s"source checkpoint does not have a ${ControlType.Count.value} control"
 
     assert(rawResult.failed.get.getMessage == rawError)
     assert(sourceResult.failed.get.getMessage == sourceError)
@@ -75,8 +77,8 @@ class ControlInfoValidationSuite extends FunSuite {
     val rawResult = ControlInfoValidation.getCountFromGivenCheckpoint("raw", checkpoints3)
     val sourceResult = ControlInfoValidation.getCountFromGivenCheckpoint("source", checkpoints3)
 
-    val rawError = s"Wrong raw $controlTypeRecordCount value: Negative value"
-    val sourceError = s"""Wrong source $controlTypeRecordCount value: For input string: \"\""""
+    val rawError = s"Wrong raw ${ControlType.Count.value} value: Negative value"
+    val sourceError = s"""Wrong source ${ControlType.Count.value} value: For input string: \"\""""
 
     assert(rawResult.failed.get.getMessage == rawError)
     assert(sourceResult.failed.get.getMessage == sourceError)

@@ -16,16 +16,16 @@
 package za.co.absa.enceladus.common
 
 import org.mockito.Mockito
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{FlatSpec, Matchers}
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class CommonExecutionSuite extends FlatSpec with Matchers with SparkTestBase with MockitoSugar {
+class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
 
   private class CommonJobExecutionTest extends CommonJobExecution {
     def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig, fsUtils: FileSystemVersionUtils): PreparationResult = {
