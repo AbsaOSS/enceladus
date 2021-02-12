@@ -10,6 +10,12 @@ class SchemaCheckerSuite extends AnyFunSuite with SparkTestBase {
     val sourceFile = FileReader.readFileAsString("src/test/resources/data/bug.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]
     val output = SchemaChecker.validateSchemaAndLog(schema)
-    println(output)
+    val expected = (
+        List(
+          "Validation error for column 'Conformed_TXN_TIMESTAMP', pattern 'yyyy-MM-ddTHH:mm:ss.SSSX': Illegal pattern character 'T'"
+        ),
+        List()
+      )
+    assert(output == expected)    
   }
 }

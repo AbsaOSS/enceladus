@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.performance
+package za.co.absa.enceladus.common.performance
 
 import java.io.PrintWriter
 import java.time.{Duration, ZonedDateTime}

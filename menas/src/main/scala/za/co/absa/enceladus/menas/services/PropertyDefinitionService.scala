@@ -34,7 +34,11 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
 
   override def update(username: String, propertyDef: PropertyDefinition): Future[Option[PropertyDefinition]] = {
     super.update(username, propertyDef.name, propertyDef.version) { latest =>
-      latest.setDescription(propertyDef.description)
+      latest
+        .setPropertyType(propertyDef.propertyType)
+        .setPutIntoInfoFile(propertyDef.putIntoInfoFile)
+        .setEssentiality(propertyDef.essentiality)
+        .setDescription(propertyDef.description)
     }
   }
 
