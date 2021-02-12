@@ -48,10 +48,14 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
 
   private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
-    private val pathCfg = PathConfig(rawPath, s"/$tempDir/some/publish/path/not/used/here", stdPath)
+    private       val pathCfg: PathConfig = PathConfig(
+      PathWithFs(rawPath, fs),
+      PathWithFs(s"/$tempDir/some/publish/path/not/used/here", fs),
+      PathWithFs(stdPath, fs)
+    )
     private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
 
-    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig, fsUtils: FileSystemVersionUtils): Assertion = {
+    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig): Assertion = {
       prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
       testDataset.write.csv(stdPath)
 
@@ -73,9 +77,8 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     implicit val dao: MenasDAO = mock[MenasDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
-    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // fallbacking on local fs we can afford to prepare test files locally:
-    val tempDir = fsUtils.getLocalTemporaryDirectory("std_exec_temp")
+    val tempDir = Files.createTempDirectory("std_exec_temp").toAbsolutePath.toString
     val (rawPath, stdPath) = (s"$tempDir/raw/path", s"$tempDir/std/path")
 
     import spark.implicits._
@@ -116,7 +119,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     try {
       FileUtils.deleteDirectory(new File(path))
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to delete a test directory $path")
+      case NonFatal(_) => log.warn(s"Unable to delete a test directory $path")
     }
   }
 
