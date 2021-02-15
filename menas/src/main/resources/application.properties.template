@@ -157,3 +157,6 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 #javax.net.ssl.trustStorePassword=somePassword
 #javax.net.ssl.keyStore=/path/to/keystore.jks
 #javax.net.ssl.keyStorePassword=somePassword
+
+# Temporary fix for locking of property definition updates #1673
+# menas.feature.property.definitions.allowUpdate=false
