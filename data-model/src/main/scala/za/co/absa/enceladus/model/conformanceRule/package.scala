@@ -18,6 +18,7 @@ package za.co.absa.enceladus.model
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule.DefaultOverrideMappingTableOwnFilter
 
 package object conformanceRule {
 
@@ -73,7 +74,6 @@ package object conformanceRule {
     override def withUpdatedOrder(newOrder: Int): LiteralConformanceRule = copy(order = newOrder)
   }
 
-
   case class MappingConformanceRule(order: Int,
                                     controlCheckpoint: Boolean,
                                     mappingTable: String,
@@ -84,7 +84,7 @@ package object conformanceRule {
                                     additionalColumns: Option[Map[String, String]] = None,
                                     isNullSafe: Boolean = false,
                                     mappingTableFilter: Option[DataFrameFilter] = None,
-                                    overrideMappingTableOwnFilter: Boolean = false
+                                    overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
                                    ) extends ConformanceRule {
 
     def getAllOutputColumns(): Map[String, String] = {
@@ -96,6 +96,10 @@ package object conformanceRule {
     override def connectedEntities: Seq[ConnectedEntity] = Seq(
       ConnectedMappingTable(mappingTable, mappingTableVersion)
     )
+
+    def getOverrideMappingTableOwnFilter: Boolean = {
+      overrideMappingTableOwnFilter.getOrElse(DefaultOverrideMappingTableOwnFilter)
+    }
   }
 
   case class NegationConformanceRule(order: Int,
@@ -159,7 +163,8 @@ package object conformanceRule {
 
   object MappingConformanceRule {
     // attributeMappings property has key's with dot's that mongo doesn't accept; this symbol is used to replace the dots
-    val DOT_REPLACEMENT_SYMBOL: Char = '^'
+    final val DotReplacementSymbol: Char = '^'
+    final val DefaultOverrideMappingTableOwnFilter: Boolean = false
   }
 
 }

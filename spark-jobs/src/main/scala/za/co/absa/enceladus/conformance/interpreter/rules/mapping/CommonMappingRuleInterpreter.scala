@@ -71,7 +71,7 @@ trait CommonMappingRuleInterpreter {
       // This is a workaround until UI supports filter definition. Until then, the filters can be set via configuration.
       FilterFromConfig.loadFilter(rule.mappingTable)
     }
-    val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.overrideMappingTableOwnFilter)
+    val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.getOverrideMappingTableOwnFilter)
     // find the data frame from the mapping table
     val filter: Option[DataFrameFilter] = (ruleFilter, mappingTableFilter) match {
       case (Some(a), Some(b)) => Option(a and b)
