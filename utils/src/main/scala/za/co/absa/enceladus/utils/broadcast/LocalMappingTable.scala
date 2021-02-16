@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -26,7 +26,7 @@ import scala.collection.mutable.ListBuffer
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
 final case class LocalMappingTable(
-                                    map: Map[Seq[Any], Any],
+                                    map: Map[Seq[Any], Row],
                                     keyFields: Seq[String],
                                     targetAttributes: Seq[String],
                                     keyTypes: Seq[DataType],
@@ -65,7 +65,7 @@ object LocalMappingTable {
     val numberOfKeys = keyFields.size
     val numberOfValues = targetAttributes.size
 
-    val mappingTable: Map[Seq[Any], Any] = projectedDf.collect().map(row => {
+    val mappingTable = projectedDf.collect().map(row => {
       var i = 0
       val values = new ListBuffer[Any]
       while (i < numberOfValues) {
@@ -78,7 +78,7 @@ object LocalMappingTable {
         keys += row(i)
         i += 1
       }
-      (keys.toSeq, values.toList)
+      (keys.toSeq, Row(values.toList))
     }).toMap
 
     LocalMappingTable(mappingTable, keyFields, targetAttributes, keyTypes, valueTypes)

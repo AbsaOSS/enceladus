@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{col, struct}
+import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -47,21 +47,16 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
 
     val projectedCols = multiRule.outputColumns.keys.map(col).toSeq
-    val outputsProjected = df.withColumn("outputs", mappingUDF(projectedCols: _*))
-      .select("outputs.*")
+    val parentPath = getParentPath(rule.outputColumn)
+    val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, multiRule.outputColumns.keys.toSeq, mappings)
 
-    multiRule.outputColumns.foldLeft(outputsProjected)((prevDf: DataFrame, outputCol: (String, String)) => {
-      val parentPath = getParentPath(outputCol._1)
-      val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, outputCol._1, mappings)
-
-      NestedArrayTransformations.nestedExtendedStructAndErrorMap(
-        prevDf, parentPath, outputCol._1, ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
-          mappingUDF(inputDfFields.map(a => getField(a)): _ *)
-        }, (_, getField) => {
-          errorUDF(inputDfFields.map(a => getField(a)): _ *)
-        })
-    })
-  }
+    NestedArrayTransformations.nestedExtendedWithColumnAndErrorMap(
+      df,parentPath,"outputs", ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
+        mappingUDF(inputDfFields.map(a => getField(a)): _ *)
+      }, (_, getField) => {
+        errorUDF(inputDfFields.map(a => getField(a)): _ *)
+      })
+    }
 
   /**
     * Returns the parent path of a field. Returns an empty string if a root level field name is provided.

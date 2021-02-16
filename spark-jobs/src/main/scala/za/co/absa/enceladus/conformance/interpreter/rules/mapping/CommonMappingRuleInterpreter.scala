@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal
 
 trait CommonMappingRuleInterpreter {
@@ -56,7 +56,7 @@ trait CommonMappingRuleInterpreter {
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
                                    dao: MenasDAO,
-                                   progArgs: InterpreterContextArgs): (DataFrame, Option[String]) = {
+                                   progArgs: InterpreterContextArgs): (DataFrame, Map[String, String]) = {
     if (enableCrossJoin) {
       //A fix for cases, where the join condition only uses columns previously created by a literal rule
       //see https://github.com/AbsaOSS/enceladus/issues/892
@@ -92,12 +92,12 @@ trait CommonMappingRuleInterpreter {
     log.info("Join Condition: " + joinConditionStr)
 
     // validate the default value against the mapping table schema
-    val defaultValue = getDefaultValue(mappingTableDef)
+    val defaultValues: Map[String, String] = getDefaultValues(mappingTableDef)
 
     // validate join fields existence
     validateMappingFieldsExist(joinConditionStr, df.schema, mapTable.schema, rule)
 
-    (mapTable, defaultValue)
+    (mapTable, defaultValues)
   }
 
   protected def validateMappingFieldsExist(joinConditionStr: String,
@@ -122,29 +122,27 @@ trait CommonMappingRuleInterpreter {
     * @param mappingTableDef A mapping rule definition
     * @return A default value, if available, as a Spark expression represented as a string.
     */
-  private def getDefaultValue(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
+  private def getDefaultValues(mappingTableDef: MappingTable)
+                             (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
-    val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")
 
-    val defaultValueOpt = attributeDefaultValueOpt match {
-      case Some(_) => attributeDefaultValueOpt
-      case None => genericDefaultValueOpt
-    }
-
-    if (defaultValueOpt.isDefined) {
-      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
-      mappingTableSchemaOpt match {
-        case Some(schema) =>
-          CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            rule.targetAttribute, defaultValueOpt.get)
-        case None =>
-          log.warn("Mapping table schema loading failed")
+    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+    mappingTableSchemaOpt match {
+      case Some(schema) => {
+        defaultMappingValueMap.flatMap { case (field, defaultValue) =>
+          Try(CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+            field, defaultValue)) match {
+            case Failure(_) => genericDefaultValueOpt.map(genDefault => field -> genDefault)
+            case Success(_) => Some(field -> defaultValue)
+          }
+        }
       }
+      case None =>
+        log.warn("Mapping table schema loading failed")
+        defaultMappingValueMap
     }
-    defaultValueOpt
   }
 }
 
