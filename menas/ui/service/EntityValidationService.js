@@ -34,6 +34,22 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
+  // This is for cases when HDFS browser is disabled: entering an S3 path, etc.
+  this.hasValidSimplePath = function (sHDFSPath, sEntityType, oInput) {
+    let rHDFSPathRegex = /^[^\?\*]+$/;
+    let isOk = rHDFSPathRegex.test(sHDFSPath);
+
+    if (!isOk) {
+      let notOkReason = "must not contain unwanted path chars like ? and *";
+      if (sHDFSPath === "") { notOkReason = "cannot be empty" }
+
+      oInput.setValueState(sap.ui.core.ValueState.Error);
+      oInput.setValueStateText(`${sEntityType} ${notOkReason}`);
+    }
+
+    return isOk;
+  };
+
   this.hasValidName = function (oEntity, sEntityType, oInput) {
     let isOk = true;
 

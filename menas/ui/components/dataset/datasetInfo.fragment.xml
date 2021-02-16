@@ -51,10 +51,10 @@
         </f:FormElement>
       </f:FormContainer>
       <f:FormContainer>
-        <f:FormElement label="HDFS raw data folder path">
+        <f:FormElement label="Raw data folder path">
           <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}" />
         </f:FormElement>
-        <f:FormElement label="HDFS conformed data publish folder path">
+        <f:FormElement label="Conformed data publish folder path">
           <Text id="currentDatasetPublishedPath" text="{dataset>/hdfsPublishPath}" />
         </f:FormElement>
       </f:FormContainer>
