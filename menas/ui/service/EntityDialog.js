@@ -208,8 +208,8 @@ class DatasetDialog extends EntityDialog {
 class AddDatasetDialog extends DatasetDialog {
 
   onPress() {
-    const aPropTemplate = sap.ui.getCore().getModel().getProperty("/properties") || [];
-
+    const aPropsDef = sap.ui.getCore().getModel().getProperty("/properties");
+    const aPropTemplate = aPropsDef.map ? aPropsDef : [];
     const aProps = aPropTemplate.map(oProp => {
       const oPreparedProp = jQuery.extend(true, {}, oProp);
       oPreparedProp.validation = "None";
@@ -247,8 +247,9 @@ class AddDatasetDialog extends DatasetDialog {
 class EditDatasetDialog extends DatasetDialog {
 
   onPress() {
-    const aPropTemplate = sap.ui.getCore().getModel().getProperty("/properties") || [];
-
+    const aPropsDef = sap.ui.getCore().getModel().getProperty("/properties");
+    const aPropTemplate = aPropsDef.map ? aPropsDef : [];
+    
     this.schemaService.getList(this.oDialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
