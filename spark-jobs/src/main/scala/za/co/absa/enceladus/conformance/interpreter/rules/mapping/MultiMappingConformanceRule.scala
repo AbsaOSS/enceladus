@@ -25,6 +25,6 @@ object MultiMappingConformanceRule {
   // since different target columns cannot point to the same output column
   def apply(rule: MappingConformanceRule): MultiMappingConformanceRule = {
     val mergedColumns = rule.getAllOutputColumns()
-    MultiMappingConformanceRule(rule.attributeMappings, mergedColumns, rule.mappingTableFilter, rule.overrideMappingTableOwnFilter)
+    MultiMappingConformanceRule(rule.attributeMappings, mergedColumns, rule.mappingTableFilter, rule.getOverrideMappingTableOwnFilter)
   }
 }
