@@ -1,4 +1,4 @@
-REM @ECHO OFF
+@ECHO OFF
 
 :: Copyright 2018 ABSA Group Limited
 ::

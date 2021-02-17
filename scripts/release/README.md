@@ -8,7 +8,7 @@
 * In the _develop_ branch it increases the minor version of all the modules of the project.
 * It commits and pushes the changes.
 
-**NB! This script is not indenpotent. Don't run it repeatedly on the same version.**
+**NB! This script is not idempotent. Don't run it repeatedly on the same version.**
 
 ## release_deploy
 
