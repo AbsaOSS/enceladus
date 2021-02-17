@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.migrations.framework.integration
 
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
 import za.co.absa.enceladus.migrations.framework.migration.{ASC, DESC, IndexField}
 
-class MongoDbIntegrationSuite extends FunSuite with MongoDbFixture {
+class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
 
   test("Test add/drop collections") {

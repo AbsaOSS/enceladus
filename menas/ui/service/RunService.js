@@ -110,9 +110,9 @@ var RunService = new function () {
   this._nameExists = function (aCheckpoints, sName) {
     const aRes = aCheckpoints.find((el) => {
       return el.name === sName
-    })
+    });
     return typeof (aRes) !== "undefined";
-  }
+  };
 
   this._preprocessRun = function (oRun, aCheckpoints) {
     let info = oRun.controlMeasure.metadata.additionalInfo;

@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.model
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.conformanceRule.LiteralConformanceRule
 
-class DatasetTest extends FunSuite {
+class DatasetTest extends AnyFunSuite {
   private val conformanceRule1 = LiteralConformanceRule(
     order = 0,
     controlCheckpoint = true,

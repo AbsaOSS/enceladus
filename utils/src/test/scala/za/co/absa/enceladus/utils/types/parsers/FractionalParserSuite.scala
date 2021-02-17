@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.{DecimalSymbols, NumericPattern}
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 
 import scala.util.Success
 
-class FractionalParserSuite extends FunSuite {
+class FractionalParserSuite extends AnyFunSuite {
   private val reallyBigNumberString = "12345678901234567890123456789012345678901234567890123456789012345678901234567890" +
     "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +
     "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890" +

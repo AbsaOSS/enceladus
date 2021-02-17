@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.menas.utils
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.models.rest.exceptions.SchemaFormatException
 
-class SchemaTypeSuite extends FlatSpec with Matchers {
+class SchemaTypeSuite extends AnyFlatSpec with Matchers {
 
   "SchemaType.fromSchemaName" should "correctly derive SchemaType.Value from string" in {
     SchemaType.fromSchemaName("struct") shouldBe SchemaType.Struct

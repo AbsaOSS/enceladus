@@ -16,12 +16,12 @@
 package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.commons.configuration2.Configuration
-import org.mockito.Mockito._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 
-class InfoDateFactorySuite extends WordSpec with Matchers with MockitoSugar {
+class InfoDateFactorySuite extends AnyWordSpec with Matchers with MockitoSugar {
   private val configStub: Configuration = mock[Configuration]
 
   "InfoDateFactory" should {

@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{CommonMappingRuleInterpreter, MappingRuleInterpreterGroupExplode}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 
-class RulesSuite extends FunSuite with SparkTestBase {
+class RulesSuite extends AnyFunSuite with SparkTestBase {
 
   private val dummyInterpreter = new RuleInterpreter {
     override def conformanceRule: Option[ConformanceRule] = None

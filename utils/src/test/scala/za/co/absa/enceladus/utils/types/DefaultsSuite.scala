@@ -19,11 +19,11 @@ import java.sql.{Date, Timestamp}
 import java.util.TimeZone
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.util.Success
 
-class DefaultsSuite extends FunSuite {
+class DefaultsSuite extends AnyFunSuite {
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
   test("ByteType") {

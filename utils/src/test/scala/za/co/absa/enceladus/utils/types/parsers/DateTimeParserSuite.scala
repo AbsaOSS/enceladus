@@ -18,12 +18,12 @@ package za.co.absa.enceladus.utils.types.parsers
 import java.sql.{Date, Timestamp}
 import java.text.{ParseException, SimpleDateFormat}
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 case class TestInputRow(id: Int, stringField: String)
 
-class DateTimeParserSuite extends FunSuite{
+class DateTimeParserSuite extends AnyFunSuite{
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
   test("EnceladusDateParser class epoch") {

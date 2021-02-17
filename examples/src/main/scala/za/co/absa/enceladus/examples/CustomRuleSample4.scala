@@ -28,7 +28,7 @@ import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConform
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample4 {
+object CustomRuleSample4 extends CustomRuleSampleFs {
   TimeZoneNormalizer.normalizeJVMTimeZone() //normalize JVM time zone as soon as possible
 
   /**
@@ -135,9 +135,10 @@ object CustomRuleSample4 {
     result
   }
 
+  implicit val spark: SparkSession = buildSparkSession()
+
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfigLocal = getCmdLineArguments(args)
-    implicit val spark: SparkSession = buildSparkSession()
 
     val conf = ConfigFactory.load()
     val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
@@ -186,7 +187,7 @@ object CustomRuleSample4 {
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

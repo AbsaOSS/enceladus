@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.model
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SchemaFieldTest extends FunSuite {
+class SchemaFieldTest extends AnyFunSuite {
   private val schemaFieldChildSecondLevel = SchemaField(
     name = "String",
     `type` = "string",

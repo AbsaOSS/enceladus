@@ -15,19 +15,21 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
+import org.json4s._
+import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import org.json4s._
-import org.json4s.jackson._
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase {
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -42,7 +44,6 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
 
     //configure conf value
@@ -70,7 +71,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(EmployeeConformance.employeeDS, dfs)
+    val conformed = DynamicInterpreter().interpret(EmployeeConformance.employeeDS, dfs)
 
     val data = conformed.as[ConformedEmployee].collect.sortBy(_.employee_id).toList
     val expected = EmployeeConformance.conformedEmployees.sortBy(_.employee_id).toList
@@ -101,7 +102,6 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    import za.co.absa.atum.AtumImplicits._
     spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
@@ -127,7 +127,7 @@ class InterpreterSuite extends FunSuite with SparkTestBase with BeforeAndAfterAl
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter.interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cache
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 

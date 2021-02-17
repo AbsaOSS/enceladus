@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.{DecimalSymbols, NumericPattern}
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 
 import scala.util.Success
 
-class DecimalParserSuite extends FunSuite {
+class DecimalParserSuite extends AnyFunSuite {
   test("No pattern, no limitations") {
     val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols
     val pattern = NumericPattern(decimalSymbols)
@@ -127,7 +127,5 @@ class DecimalParserSuite extends FunSuite {
     assert(parser.parse("113.8%") == Success(BigDecimal("1.138")))
     assert(parser.parse("-5,000.1%") == Success(BigDecimal("-50.001")))
     assert(parser.parse("113.8").isFailure)
-
-    println(s"=${decimalSymbols.permillSign}=")
   }
 }

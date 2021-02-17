@@ -3,10 +3,10 @@ package za.co.absa.enceladus.conformance.config
 import java.text.ParseException
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.dataFrameFilter._
 
-class FilterFromConfigSuite extends FunSuite {
+class FilterFromConfigSuite extends AnyFunSuite {
 
   test("Filter for dataset doesn't exist") {
     assert(FilterFromConfig.loadFilter("NotExistent").isEmpty)

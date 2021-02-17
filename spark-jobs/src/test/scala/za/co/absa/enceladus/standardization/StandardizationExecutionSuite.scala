@@ -16,35 +16,46 @@
 package za.co.absa.enceladus.standardization
 
 import java.io.File
+import java.nio.file.Files
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.mockito.scalatest.MockitoSugar
 import org.mockito.{ArgumentMatchers, Mockito}
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Assertion, FlatSpec, Matchers}
+import org.scalatest.Assertion
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.common.config.PathConfig
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
 import za.co.absa.enceladus.model.test.factories.RunFactory
-import za.co.absa.enceladus.model.{Dataset, Run}
+import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.fs.{FileReader, FileSystemVersionUtils}
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
 import scala.util.control.NonFatal
 
-class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTestBase with MockitoSugar {
+class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar {
 
   private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
-    private val pathCfg = PathConfig(rawPath, s"/$tempDir/some/publish/path/not/used/here", stdPath)
+    private       val pathCfg: PathConfig = PathConfig(
+      PathWithFs(rawPath, fs),
+      PathWithFs(s"/$tempDir/some/publish/path/not/used/here", fs),
+      PathWithFs(stdPath, fs)
+    )
     private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
 
-    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig, fsUtils: FileSystemVersionUtils): Assertion = {
+    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig): Assertion = {
       prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
       testDataset.write.csv(stdPath)
 
@@ -66,9 +77,8 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
     implicit val dao: MenasDAO = mock[MenasDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
-    implicit val fsUtils: FileSystemVersionUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
     // fallbacking on local fs we can afford to prepare test files locally:
-    val tempDir = fsUtils.getLocalTemporaryDirectory("std_exec_temp")
+    val tempDir = Files.createTempDirectory("std_exec_temp").toAbsolutePath.toString
     val (rawPath, stdPath) = (s"$tempDir/raw/path", s"$tempDir/std/path")
 
     import spark.implicits._
@@ -88,6 +98,13 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
       writeToHDFS = true)
 
     Mockito.when(dao.storeNewRunObject(ArgumentMatchers.any[Run])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
+    Mockito.when(dao.updateRunStatus(ArgumentMatchers.any[String], ArgumentMatchers.any[RunStatus])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
+    Mockito.when(dao.getSchema(ArgumentMatchers.any[String], ArgumentMatchers.any[Int])).thenReturn(StructType(Array(
+      StructField("id", StringType),
+      StructField("data", StringType)
+    )))
+    Mockito.when(dao.updateControlMeasure(ArgumentMatchers.any[String], ArgumentMatchers.any[ControlMeasure])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
+    Mockito.when(dao.updateSplineReference(ArgumentMatchers.any[String], ArgumentMatchers.any[SplineReference])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
 
     // This property is expected to appear in the _INFO file, prefixed.
     Mockito.when(dao.getDatasetPropertiesForInfoFile("DatasetA", 1)).thenReturn(Map("keyFromDs1" -> "itsValue1"))
@@ -98,11 +115,11 @@ class StandardizationExecutionSuite extends FlatSpec with Matchers with SparkTes
     safeDeleteTestDir(tempDir)
   }
 
-  def safeDeleteTestDir(path: String): Unit = {
+  private def safeDeleteTestDir(path: String): Unit = {
     try {
       FileUtils.deleteDirectory(new File(path))
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to delete a test directory $path")
+      case NonFatal(_) => log.warn(s"Unable to delete a test directory $path")
     }
   }
 

@@ -15,34 +15,38 @@
 
 package za.co.absa.enceladus.standardization_conformance
 
+import org.apache.hadoop.conf.Configuration
 import za.co.absa.enceladus.common.CommonJobExecution
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.config.PathWithFs
 
 trait StandardizationAndConformanceExecution extends StandardizationExecution
   with ConformanceExecution
-  with CommonJobExecution{
+  with CommonJobExecution {
 
-  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int): PathConfig = {
+  override def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
+                               (implicit hadoopConf: Configuration): PathConfig = {
     val defaultConfig = super[CommonJobExecution].getPathConfig(cmd, dataset, reportVersion)
     val jobCmd = cmd.asInstanceOf[StandardizationConformanceConfig]
     val rawPathOverride = jobCmd.rawPathOverride
     val publishPathOverride = jobCmd.publishPathOverride
-    defaultConfig.copy(rawPath = rawPathOverride.getOrElse(defaultConfig.rawPath),
-      publishPath = publishPathOverride.getOrElse(defaultConfig.publishPath))
+    defaultConfig.copy(
+      raw = PathWithFs.fromPath(rawPathOverride.getOrElse(defaultConfig.raw.path)),
+      publish = PathWithFs.fromPath(publishPathOverride.getOrElse(defaultConfig.publish.path))
+    )
   }
 
-  override def validatePaths(fsUtils: FileSystemVersionUtils, pathConfig: PathConfig): Unit = {
-    log.info(s"raw path: ${pathConfig.rawPath}")
-    log.info(s"standardization path: ${pathConfig.standardizationPath}")
-    log.info(s"publish path: ${pathConfig.publishPath}")
+  override def validatePaths(pathConfig: PathConfig): Unit = {
+    log.info(s"raw path: ${pathConfig.raw.path}")
+    log.info(s"standardization path: ${pathConfig.standardization.path}")
+    log.info(s"publish path: ${pathConfig.publish.path}")
 
-    validateInputPath(fsUtils, pathConfig.rawPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.standardizationPath)
-    validateIfOutputPathAlreadyExists(fsUtils, pathConfig.publishPath)
+    validateInputPath(pathConfig.raw)
+    validateIfOutputPathAlreadyExists(pathConfig.standardization)
+    validateIfOutputPathAlreadyExists(pathConfig.publish)
   }
 }

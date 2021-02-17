@@ -114,7 +114,7 @@ object ArraySamples {
     Outer(1, Seq(), false),
     Outer(2, null, true))
 
-    val conformanceDef = ConfDataset(name="test", version = 0, hdfsPath = "test", hdfsPublishPath = "", schemaName = "test", schemaVersion = 0,
+    val conformanceDef: ConfDataset = ConfDataset(name="test", version = 0, hdfsPath = "test", hdfsPublishPath = "", schemaName = "test", schemaVersion = 0,
       conformance = List(
         new MappingConformanceRule(order = 1, controlCheckpoint = false, mappingTable = "mapping", mappingTableVersion = 0,
           attributeMappings = Map("ind" -> "a.c.d", "otherFlag" -> "myFlag"), targetAttribute = "value", outputColumn = "a.c.conformedD" ),

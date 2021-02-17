@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.utils.validation.field
 
 import org.apache.spark.sql.types.{DataType, DecimalType, MetadataBuilder, StructField}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.types.TypedStructField.NumericTypeStructField
 import za.co.absa.enceladus.utils.validation.ValidationError
 
-class NumericFieldValidatorSuite extends FunSuite {
+class NumericFieldValidatorSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
 
   private def field(metadataBuilder: MetadataBuilder): NumericTypeStructField[_] = {

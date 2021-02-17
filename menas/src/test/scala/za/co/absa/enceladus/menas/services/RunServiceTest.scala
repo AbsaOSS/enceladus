@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.services
 
 import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito
+import org.mockito.scalatest.MockitoSugar
 import org.mongodb.scala.Completed
 import org.mongodb.scala.bson.BsonDocument
 import za.co.absa.enceladus.menas.exceptions.ValidationException
@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.test.factories.RunFactory
 
 import scala.concurrent.Future
 
-class RunServiceTest extends BaseServiceTest {
+class RunServiceTest extends BaseServiceTest with MockitoSugar {
 
   //mocks
   private val runRepository = mock[RunMongoRepository]
@@ -40,7 +40,7 @@ class RunServiceTest extends BaseServiceTest {
 
   test("validate Run with non-unique ID") {
     val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
-    Mockito.when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(true))
+    when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(true))
 
     val validation = await(runService.validate(run))
 
@@ -59,7 +59,7 @@ class RunServiceTest extends BaseServiceTest {
 
   test("validate valid Run") {
     val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
-    Mockito.when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(false))
+    when(runRepository.existsId(uniqueId)).thenReturn(Future.successful(false))
 
     val validation = await(runService.validate(run))
 
@@ -71,11 +71,11 @@ class RunServiceTest extends BaseServiceTest {
     val run2 = run1.copy(runId = 2)
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
 
-    Mockito.when(runRepository.getLatestRun("dataset", 1)).thenReturn(
+    when(runRepository.getLatestRun("dataset", 1)).thenReturn(
       Future.successful(None),
       Future.successful(Some(run1)))
-    Mockito.when(runRepository.existsId(any[String]())).thenReturn(Future.successful(false))
-    Mockito.when(runRepository.create(any[Run]())).thenReturn(
+    when(runRepository.existsId(any[String])).thenReturn(Future.successful(false))
+    when(runRepository.create(any[Run])).thenReturn(
       Future.failed(writeException),
       Future.successful(Completed()))
 
@@ -88,12 +88,12 @@ class RunServiceTest extends BaseServiceTest {
     val run2 = run1.copy(runId = 2)
     val writeException = new MongoWriteException(new WriteError(1, "", new BsonDocument()), new ServerAddress())
 
-    Mockito.when(runRepository.getLatestRun("dataset", 1)).thenReturn(
+    when(runRepository.getLatestRun("dataset", 1)).thenReturn(
       Future.successful(None),
       Future.successful(Some(run1)),
       Future.successful(Some(run2)))
-    Mockito.when(runRepository.existsId(any[String]())).thenReturn(Future.successful(false))
-    Mockito.when(runRepository.create(any[Run]())).thenReturn(
+    when(runRepository.existsId(any[String])).thenReturn(Future.successful(false))
+    when(runRepository.create(any[Run])).thenReturn(
       Future.failed(writeException),
       Future.failed(writeException),
       Future.successful(Completed()))

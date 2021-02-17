@@ -25,7 +25,7 @@ import za.co.absa.enceladus.examples.interpreter.rules.custom.UppercaseCustomCon
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample1 {
+object CustomRuleSample1 extends CustomRuleSampleFs {
 
   case class ExampleRow(id: Int, makeUpper: String, leave: String)
   case class OutputRow(id: Int, makeUpper: String, leave: String, doneUpper: String)
@@ -78,7 +78,7 @@ object CustomRuleSample1 {
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
 
     outputData.show(false)
     //scalastyle:on magicnumber

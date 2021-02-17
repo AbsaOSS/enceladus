@@ -19,8 +19,9 @@ import java.util.UUID
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.funsuite.FixtureAnyFunSuite
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Outcome
 import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
@@ -33,7 +34,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
+class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
 
 

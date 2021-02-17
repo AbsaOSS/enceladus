@@ -17,13 +17,13 @@ package za.co.absa.enceladus.conformance.config
 
 import java.time.ZonedDateTime
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.ConformanceExecution
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConformanceParserSuite extends FunSuite with SparkTestBase {
+class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
 
   private val year = "2018"
   private val month = "12"
@@ -55,6 +55,8 @@ class ConformanceParserSuite extends FunSuite with SparkTestBase {
   private val infoVersionColumn = "enceladus_info_version"
 
   private object TestDynamicConformance extends ConformanceExecution
+
+  implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
 
   test("Test credentials file parsing "){
     val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
@@ -180,19 +182,19 @@ class ConformanceParserSuite extends FunSuite with SparkTestBase {
         "--menas-credentials-file", menasCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val publishPathNoFolderPrefix = TestDynamicConformance
-      .getPathConfig(cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get).publishPath
+      .getPathConfig(cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get).publish.path
     assert(publishPathNoFolderPrefix === s"$hdfsPublishPath/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
     val publishPathFolderPrefix = TestDynamicConformance
-      .getPathConfig(cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get).publishPath
+      .getPathConfig(cmdConfigFolderPrefix, conformanceDataset, cmdConfigFolderPrefix.reportVersion.get).publish.path
     assert(publishPathFolderPrefix === s"$hdfsPublishPath/$folderPrefix/$infoDateColumn=$reportDate/$infoVersionColumn=$reportVersion")
     val publishPathPublishPathOverride = TestDynamicConformance
       .getPathConfig(cmdConfigPublishPathOverride, conformanceDataset, cmdConfigPublishPathOverride.reportVersion.get)
-        .publishPath
+        .publish.path
     assert(publishPathPublishPathOverride === hdfsPublishPathOverride)
 
     val publishPathPublishPathOverrideAndFolderPrefix = TestDynamicConformance
       .getPathConfig(cmdConfigPublishPathOverrideAndFolderPrefix,
-        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get).publishPath
+        conformanceDataset, cmdConfigPublishPathOverrideAndFolderPrefix.reportVersion.get).publish.path
     assert(publishPathPublishPathOverrideAndFolderPrefix === hdfsPublishPathOverride)
   }
 

@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{ConcatenationConformanceRule, UppercaseConformanceRule}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class ConcatenationRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class ConcatenationRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   private val concatRule = ConcatenationConformanceRule(order = 1, outputColumn = "CombinedName",
     controlCheckpoint = false, Seq("name", "city", "address"))
   private val concatArrayRule = ConcatenationConformanceRule(order = 2, outputColumn = "rooms.CombinedLabel",

@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class SampleDataSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class SampleDataSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
 
   test("Simple Example Test") {
     import spark.implicits._

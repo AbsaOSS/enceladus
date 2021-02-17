@@ -25,7 +25,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 
 
 /**
@@ -209,13 +210,11 @@ object NestedTestCaseFactory {
     ))
 }
 
-class NestedTestCaseFactory(implicit spark: SparkSession) {
+class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTestBase {
 
   import NestedTestCaseFactory._
 
-  private val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-  private val tempDir = fsUtils.getLocalTemporaryDirectory("test_case_factory")
+  private val tempDir = LocalFsUtils.getLocalTemporaryDirectory("test_case_factory")
 
   /**
     * This method returns all objects necessary to run a dynamic conformance job.

@@ -58,12 +58,12 @@ var Formatters = new function() {
       cronExpr = `${minuteSep} ${hourSep} ${dayOfMonthSep} ${monthSep} ${dayOfWeekSep}`;
     }
     return Formatters.cronExpressionFormatter(cronExpr);
-  }
+  };
 
   this.nonNullArrFormatter = function(aArr) {
     if(!aArr) return [];
     return aArr;
-  }
+  };
 
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)

@@ -19,7 +19,7 @@ import java.sql.{Date, Timestamp}
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
@@ -34,7 +34,7 @@ case class MyWrapperStd(counterparty: MyHolder, errCol: Seq[ErrorMessage])
 case class Time(id: Int, date: String, timestamp: String)
 case class StdTime(id: Int, date: Date, timestamp: Timestamp, errCol: List[ErrorMessage])
 
-class StdInterpreterSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class StdInterpreterSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   case class subCC(subFieldA: Integer, subFieldB: String)

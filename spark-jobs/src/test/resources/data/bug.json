@@ -1,0 +1,26 @@
+{
+  "type": "struct",
+  "fields": [
+    {
+      "name": "Conformed_TXN_TIMESTAMP",
+      "type": "timestamp",
+      "nullable": true,
+      "metadata": {
+        "pattern": "yyyy-MM-ddTHH:mm:ss.SSSX"
+      }
+    },
+    {
+      "name": "Conformed_TXN_TIMESTAMP1",
+      "type": "timestamp",
+      "nullable": true,
+      "metadata": {
+        "pattern": "yyyy-MM-dd HH:mm:ss"
+      }
+    },
+    {
+      "name": "Conformed_TXN_TIMESTAMP2",
+      "type": "timestamp",
+      "nullable": true
+    }
+  ]
+}

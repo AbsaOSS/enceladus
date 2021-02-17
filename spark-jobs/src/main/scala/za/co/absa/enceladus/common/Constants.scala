@@ -31,6 +31,7 @@ object Constants {
     "spark.yarn.dist.files",
     "spline.mongodb.url",
     "sun.boot.class.path",
-    "sun.java.command"
+    "sun.java.command",
+    "s3.kmsKeyId"
   )
 }
