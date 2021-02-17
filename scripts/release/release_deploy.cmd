@@ -33,4 +33,4 @@ IF EXIST %RELEASE_SUBDIR% (
 git clone https://github.com/AbsaOSS/enceladus.git %RELEASE_SUBDIR%
 CD %RELEASE_SUBDIR%
 git checkout master
-echo mvn deploy -Ppublic -Psonatype-oss-release -PgenerateComponentPreload -DskipTests
+mvn deploy -Ppublic -Psonatype-oss-release -PgenerateComponentPreload -DskipTests
