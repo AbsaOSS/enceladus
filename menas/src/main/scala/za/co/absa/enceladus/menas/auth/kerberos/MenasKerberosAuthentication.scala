@@ -128,18 +128,6 @@ class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}"
     val originalLogLevel = Logger.getRootLogger.getLevel
     //something here changes the log level to WARN
 
-//    TODO NEEDS DISCUSSION
-//    It is also possible to add a menas_admin user like to the AD connected auth. This is if we do not want to
-//    add new user to AD. Password would then need to be pulled from a setting in tomcat or props
-//
-//    val passwordEncoder = new BCryptPasswordEncoder()
-//    auth
-//      .inMemoryAuthentication()
-//      .passwordEncoder(passwordEncoder)
-//      .withUser("menas_admin")
-//      .password(passwordEncoder.encode("admin123"))
-//      .authorities("ROLE_ADMIN")
-
     auth
       .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
       .authenticationProvider(kerberosServiceAuthenticationProvider())
