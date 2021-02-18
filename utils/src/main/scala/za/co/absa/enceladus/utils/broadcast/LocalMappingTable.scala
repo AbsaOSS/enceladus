@@ -78,7 +78,7 @@ object LocalMappingTable {
         keys += row(i)
         i += 1
       }
-      (keys.toSeq, Row(values.toList))
+      (keys.toSeq, Row.fromSeq(values.toList))
     }).toMap
 
     LocalMappingTable(mappingTable, keyFields, targetAttributes, keyTypes, valueTypes)

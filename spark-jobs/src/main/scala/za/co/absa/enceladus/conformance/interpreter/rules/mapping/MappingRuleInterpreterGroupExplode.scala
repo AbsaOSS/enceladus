@@ -25,6 +25,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
@@ -49,8 +50,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val outputElements = multiRule.outputColumns.map { case (outputColumn: String, targetAttribute: String) =>
       col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.$targetAttribute") as outputColumn
     }.toSeq
+
+    val outputsStructColumnName = getOutputsStructColumnName(df)
     val columns = Seq(col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
-      struct(outputElements: _*) as "outputs")
+      struct(outputElements: _*) as outputsStructColumnName)
 
     val joined = explodedDf.as(CommonMappingRuleInterpreter.inputDfAlias)
       .join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType)
@@ -61,22 +64,23 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 
-    val placedDf = ExplodeTools.nestedRenameReplace(joined, "outputs", "outputs")
+    val placedDf = ExplodeTools.nestedRenameReplace(joined, outputsStructColumnName, outputsStructColumnName)
 
-    val arrayErrorCondition = getErrorCondition(expCtx)
+    val arrayErrorCondition = getErrorCondition(expCtx, outputsStructColumnName)
 
     log.debug(s"Array Error Condition = $arrayErrorCondition")
-    val withErrorsDf: DataFrame = addErrorsToErrCol(placedDf, multiRule.outputColumns.keys.toSeq, defaultValuesMap, mappingErrUdfCall, arrayErrorCondition)
+    val withErrorsDf: DataFrame = addErrorsToErrCol(placedDf, multiRule.outputColumns.keys.toSeq,
+      outputsStructColumnName, defaultValuesMap, mappingErrUdfCall, arrayErrorCondition)
 
-    val flattenedColumns = multiRule.outputColumns.keys.map(c => col("outputs."+c)).toSeq ++
-      withErrorsDf.columns.filter(! _.contains("outputs")).map(col).toSeq
+    val flattenedColumns = multiRule.outputColumns.keys.map(c => col(outputsStructColumnName + "." + c)).toSeq ++
+      withErrorsDf.columns.filter(! _.contains(outputsStructColumnName)).map(col).toSeq
 
     collectIfNeeded(expCtx, explosionState, withErrorsDf.select(flattenedColumns: _*))
   }
 
-  private def getErrorCondition(expCtx: ExplosionContext) = {
+  private def getErrorCondition(expCtx: ExplosionContext, outputsStructColumnName: String) = {
     multiRule.outputColumns.keys.foldLeft(lit(false))((acc: Column, nestedColumn: String) => {
-      val nestedOutputName = s"outputs.$nestedColumn"
+      val nestedOutputName = s"${outputsStructColumnName}.$nestedColumn"
       val nestedFieldCondition = col(nestedOutputName).isNull.and(expCtx.getArrayErrorCondition(nestedOutputName))
       acc.or(nestedFieldCondition)
     })
@@ -109,10 +113,11 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private def addErrorsToErrCol(df: DataFrame,
                                 outputCols: Seq[String],
+                                outputsStructColumnName: String,
                                 defaultMappingValues: Map[String, String],
                                 mappingErrUdfCall: Column,
                                 errorConditions: Column): DataFrame = {
-      NestedArrayTransformations.nestedWithColumnAndErrorMap(df, "outputs", "outputs",
+      NestedArrayTransformations.nestedWithColumnAndErrorMap(df, outputsStructColumnName, outputsStructColumnName,
         ErrorMessage.errorColumnName,
         c => {
           val defaultAppliedStructCols: Seq[Column] = outputCols.map(field => {

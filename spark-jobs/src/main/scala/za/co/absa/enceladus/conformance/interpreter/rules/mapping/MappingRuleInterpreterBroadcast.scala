@@ -46,17 +46,49 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val broadcastedMt = spark.sparkContext.broadcast(mt)
     val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
 
-    val projectedCols = multiRule.outputColumns.keys.map(col).toSeq
     val parentPath = getParentPath(rule.outputColumn)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, multiRule.outputColumns.keys.toSeq, mappings)
 
-    NestedArrayTransformations.nestedExtendedWithColumnAndErrorMap(
-      df,parentPath,"outputs", ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
+    val outputsStructColumnName = getOutputsStructColumnName(df)
+    val frame = NestedArrayTransformations.nestedExtendedWithColumnAndErrorMap(
+      df, parentPath, outputsStructColumnName, ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
         mappingUDF(inputDfFields.map(a => getField(a)): _ *)
       }, (_, getField) => {
         errorUDF(inputDfFields.map(a => getField(a)): _ *)
       })
+
+    //TODO 1.keep implementation version for one output
+    //TODO 2 Defaults
+    //TODO 2.a) validate outputs are on the same level for now
+    //TODO 3.try struct first, then think about other ways -> PR
+    //TODO 4.try multiple applications for udf -> PR
+
+
+    if (parentPath == ""){
+      flattenOutputsStructInFlatParent(outputsStructColumnName, frame)
     }
+    else {
+      flattenOutputsStructInNestedParent(parentPath, outputsStructColumnName, frame, inputDfFields)
+    }
+  }
+
+  private def flattenOutputsStructInFlatParent(outputsStructColumnName: String, frame: DataFrame) = {
+    val flattenedColumns = multiRule.outputColumns.map{
+      case (outputColumn, targetAttribute) => col(outputsStructColumnName + "." + targetAttribute) as outputColumn}.toSeq ++
+      frame.columns.filter(!_.contains(outputsStructColumnName)).map(col).toSeq
+    frame.select(flattenedColumns: _*)
+  }
+
+  private def flattenOutputsStructInNestedParent(parentPath: String, outputsStructColumnName: String, frame: DataFrame,
+                                                 inputsDfString: Seq[String]) = {
+    NestedArrayTransformations.nestedExtendedStructMap(frame, outputsStructColumnName, parentPath, (_, getField) => {
+      val attributes: Seq[Column] = inputsDfString.map(a => getField(parentPath + "." + a))
+      val flattenedOutputs = multiRule.outputColumns.map { case (outputName, targetAttribute) =>
+        col(parentPath + "." + outputsStructColumnName + "." + targetAttribute) as parentPath + "." + outputName
+      }
+      struct(attributes ++ flattenedOutputs: _*)
+    })
+  }
 
   /**
     * Returns the parent path of a field. Returns an empty string if a root level field name is provided.

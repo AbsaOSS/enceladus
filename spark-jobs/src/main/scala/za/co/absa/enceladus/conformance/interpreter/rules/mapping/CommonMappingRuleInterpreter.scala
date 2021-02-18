@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
 
 import scala.util.{Failure, Success, Try}
@@ -41,6 +42,8 @@ trait CommonMappingRuleInterpreter {
   protected val multiRule: MultiMappingConformanceRule = MultiMappingConformanceRule(rule)
 
   protected def outputColumnNames(): String =  multiRule.outputColumns.mkString(", ")
+
+  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("_outputs", df.schema)
 
   protected val mappings: Seq[Mapping] = multiRule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)

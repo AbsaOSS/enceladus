@@ -126,12 +126,12 @@ object BroadcastUtils {
       case None =>
         param1: Any => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1), null))
+          mt.getOrElse(Seq(param1), null)
         }
       case Some(defaultValue) =>
         param1: Any => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1), defaultValue))
+          mt.getOrElse(Seq(param1), defaultValue)
         }
     }
   }
@@ -141,12 +141,12 @@ object BroadcastUtils {
       case None =>
         (param1: Any, param2: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2), null))
+          mt.getOrElse(Seq(param1, param2), null)
         }
       case Some(defaultValue) =>
         (param1: Any, param2: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2), defaultValue))
+          mt.getOrElse(Seq(param1, param2), defaultValue)
         }
     }
   }
@@ -156,12 +156,12 @@ object BroadcastUtils {
       case None =>
         (param1: Any, param2: Any, param3: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3), null))
+          mt.getOrElse(Seq(param1, param2, param3), null)
         }
       case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3), defaultValue))
+          mt.getOrElse(Seq(param1, param2, param3), defaultValue)
         }
     }
   }
@@ -171,12 +171,12 @@ object BroadcastUtils {
       case None =>
         (param1: Any, param2: Any, param3: Any, param4: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3, param4), null))
+          mt.getOrElse(Seq(param1, param2, param3, param4), null)
         }
       case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any, param4: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue))
+          mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
         }
     }
   }
@@ -186,12 +186,12 @@ object BroadcastUtils {
       case None =>
         (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3, param4, param5), null))
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
         }
       case Some(defaultValue) =>
         (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
           val mt = mappingTable.value.map
-          Row(mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue))
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
         }
     }
   }
