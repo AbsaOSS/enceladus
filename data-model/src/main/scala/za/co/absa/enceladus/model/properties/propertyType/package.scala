@@ -34,13 +34,13 @@ package object propertyType {
   }
 
   case class StringPropertyType(suggestedValue: String = "") extends PropertyType {
-    override def isValueConforming(value: String): Try[Unit] = Success()
+    override def isValueConforming(value: String): Try[Unit] = Success(Unit)
   }
 
   case class EnumPropertyType(allowedValues: Set[String], suggestedValue: String) extends PropertyType {
     override def isValueConforming(value: String): Try[Unit] = {
       if (allowedValues.contains(value)) {
-        Success()
+        Success(Unit)
       } else {
         Failure(new IllegalArgumentException(s"Value '$value' is not one of the allowed values (${allowedValues.mkString(", ")})."))
       }

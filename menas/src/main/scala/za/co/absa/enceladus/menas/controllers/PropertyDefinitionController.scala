@@ -20,12 +20,13 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
 import com.mongodb.client.result.UpdateResult
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.menas.exceptions.EndpointDisabled
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.ExportableObject
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -43,6 +44,9 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   import za.co.absa.enceladus.menas.utils.implicits._
 
+  @Value("${menas.feature.property.definitions.allowUpdate:false}")
+  private val enabled: Boolean = false
+
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
@@ -54,13 +58,17 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
-    // basically an alias for /create with Location header response
-    logger.info(s"creating new property definition '${item.name}'")
+    if (enabled){
+      // basically an alias for /create with Location header response
+      logger.info(s"creating new property definition '${item.name}'")
 
-    import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
-    super.create(principal, item).toScala.map{ entity =>
-      val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
-      ResponseEntity.created(location).body(entity)
+      import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
+      super.create(principal, item).toScala.map{ entity =>
+        val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
+        ResponseEntity.created(location).body(entity)
+      }
+    } else {
+      throw EndpointDisabled("Endpoint Not Found")
     }
 
     // TODO: Location header would make sense for the underlying VersionedModelController.create, too. Issue #1611
@@ -107,4 +115,5 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   override def create(@AuthenticationPrincipal principal: UserDetails,
                       @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)
+    
 }
