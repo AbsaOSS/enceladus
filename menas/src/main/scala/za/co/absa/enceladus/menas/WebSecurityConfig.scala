@@ -32,11 +32,9 @@ import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 
+
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(
-  prePostEnabled = true,
-  securedEnabled = true,
-  jsr250Enabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")

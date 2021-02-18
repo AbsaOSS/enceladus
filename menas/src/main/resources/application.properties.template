@@ -38,6 +38,7 @@ menas.auth.jwt.lifespan.hours=8
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 menas.auth.mechanism=inmemory
+menas.auth.admin.role=ROLE_ADMIN
 
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
@@ -52,7 +53,6 @@ menas.auth.inmemory.user=user
 menas.auth.inmemory.password=changeme
 menas.auth.inmemory.admin.user=menas_admin
 menas.auth.inmemory.admin.password=admin123
-
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system

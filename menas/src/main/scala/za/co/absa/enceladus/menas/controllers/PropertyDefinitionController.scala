@@ -51,7 +51,7 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("'menas_admin' == authentication.name")
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
     // basically an alias for /create with Location header response
@@ -82,28 +82,28 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("'menas_admin' == authentication.name")
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   override def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                                   @RequestBody importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
     super.importSingleEntity(principal, importObject)
 
   @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("'menas_admin' == authentication.name")
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   override def edit(@AuthenticationPrincipal user: UserDetails,
                     @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.edit(user, item)
 
   @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("'menas_admin' == authentication.name")
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   override def disable(@PathVariable name: String,
                        @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] =
     super.disable(name, version)
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("'menas_admin' == authentication.name")
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   override def create(@AuthenticationPrincipal principal: UserDetails,
                       @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)

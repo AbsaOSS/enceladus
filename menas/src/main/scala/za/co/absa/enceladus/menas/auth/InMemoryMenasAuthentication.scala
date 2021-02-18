@@ -31,6 +31,8 @@ class InMemoryMenasAuthentication extends MenasAuthentication {
   private val adminUsername: String = ""
   @Value("${menas.auth.inmemory.admin.password:}")
   private val adminPassword: String = ""
+  @Value("${menas.auth.admin.role}") // Spring throws errors if it is not here as well
+  private val adminRole: String = ""
 
   protected val passwordEncoder = new BCryptPasswordEncoder()
 
@@ -58,7 +60,7 @@ class InMemoryMenasAuthentication extends MenasAuthentication {
       .and()
       .withUser(adminUsername)
       .password(passwordEncoder.encode(adminPassword))
-      .authorities("ROLE_ADMIN")
+      .authorities(adminRole)
   }
 
 }

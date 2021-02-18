@@ -20,14 +20,12 @@ import java.util.UUID
 import javax.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
 import org.joda.time.{DateTime, DateTimeZone, Hours}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import org.springframework.security.core.Authentication
+import org.springframework.security.core.{Authentication, GrantedAuthority}
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.auth.AuthConstants._
 import za.co.absa.enceladus.menas.auth.jwt.JwtFactory
-
-import scala.collection.JavaConverters._
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
@@ -53,6 +51,7 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
       .claim(CsrfTokenKey, csrfToken)
+      .claim(RolesKey, user.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority))
       .compact()
 
     val cookie = new Cookie(JwtCookieKey, jwt)
