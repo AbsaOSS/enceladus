@@ -27,6 +27,13 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
 
+  private class CommonJobExecutionTest extends CommonJobExecution {
+    def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {
+      prepareJob()
+    }
+    override protected def validatePaths(pathConfig: PathConfig): Unit = {}
+  }
+
   Seq(
     ("failed validation", Some(Validation(Map("propX" -> List("Mandatory propX is missing")))), Seq("Dataset validation failed", "Mandatory propX is missing")),
     ("missing validation", None, Seq("Dataset validation was not retrieved correctly"))
@@ -38,15 +45,11 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
 
       val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil,
         properties = Some(Map("prop1" -> "value1")), propertiesValidation = mockedPropertiesValidation) // (not) validated props
-      Mockito.when(dao.getDataset("DatasetA", 1, true)).thenReturn(dataset)
+      Mockito.when(dao.getDataset("DatasetA", 1, validateProperties = true)).thenReturn(dataset)
       doNothing.when(dao).authenticate()
 
-      val commonJob = new CommonJobExecution {
-        def testRun: PreparationResult = {
-          prepareJob()(dao, cmd, spark)
-        }
-        override protected def validatePaths(pathConfig: PathConfig): Unit = {}
-      }
+
+      val commonJob = new CommonJobExecutionTest
 
       val exceptionMessage = intercept[IllegalStateException](commonJob.testRun).getMessage
       expectedMessageSubstrings.foreach { subMsg =>
