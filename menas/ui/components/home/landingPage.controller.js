@@ -28,7 +28,13 @@ sap.ui.define([
         const config = oEvent.getParameter("config");
         this._appId = `${config.targetParent}--${config.controlId}`;
         this._app = sap.ui.getCore().byId(this._appId);
-        GenericService.getLandingPageInfo();
+        const oPage = this.byId("landingPage");
+
+        oPage.setBusyIndicatorDelay(0);
+        oPage.setBusy(true);
+        GenericService.getLandingPageInfo().always(() => {
+          oPage.setBusy(false);
+        });
       }, this);
       this._eventBus = sap.ui.getCore().getEventBus();
       this._tileNumFormat = NumberFormat.getIntegerInstance({
