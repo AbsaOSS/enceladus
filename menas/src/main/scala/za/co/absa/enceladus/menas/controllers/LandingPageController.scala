@@ -61,8 +61,8 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
   }
 
   @Async
-  @Scheduled(fixedDelay = 900000)
-  def scheduledTest(): CompletableFuture[_] = {
+  @Scheduled(initialDelay = 1000, fixedDelay = 900000)
+  def scheduledLandingPageStatsRecalc(): CompletableFuture[_] = {
     logger.info("Running scheduled landing page statistics recalculation")
     for {
       newStats <- landingPageInfo
