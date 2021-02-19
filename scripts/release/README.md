@@ -6,7 +6,9 @@
 
 * Removes the `-SNAPSHOT` version suffix in all submodules in the current _develop_ branch and merges it into the _master_ branch.
 * In the _develop_ branch it increases the minor version of all the modules of the project.
-* It commits and pushes the changes.
+* Tags the _master_ branch with the current version of the project
+* Commits and pushes the changes.
+
 
 **NB! This script is not idempotent. Don't run it repeatedly on the same version.**
 

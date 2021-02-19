@@ -30,7 +30,6 @@ IF EXIST %RELEASE_SUBDIR% (
 	REN %RELEASE_SUBDIR% %RELEASE_SUBDIR%.old
 	RMDIR /S /Q %RELEASE_SUBDIR%.old
 )
-git clone https://github.com/AbsaOSS/enceladus.git %RELEASE_SUBDIR%
+git clone --single-branch --branch master https://github.com/AbsaOSS/enceladus.git  %RELEASE_SUBDIR%
 CD %RELEASE_SUBDIR%
-git checkout master
 mvn deploy -Ppublic -Psonatype-oss-release -PgenerateComponentPreload -DskipTests
