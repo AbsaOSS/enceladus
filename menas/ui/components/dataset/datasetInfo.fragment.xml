@@ -25,9 +25,9 @@
                   text="{dataset>/description}"/>
             <Label text="Version"/>
             <Text id="currentDatasetVersion" text="{dataset>/version}"/>
-            <Label text="HDFS raw data folder path"/>
+            <Label text="Raw data folder path"/>
             <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}"/>
-            <Label text="HDFS conformed data publish folder path"/>
+            <Label text="Conformed data publish folder path"/>
             <Text id="currentDatasetPublishedPath"
                   text="{dataset>/hdfsPublishPath}"/>
             <Label text="Schema"/>

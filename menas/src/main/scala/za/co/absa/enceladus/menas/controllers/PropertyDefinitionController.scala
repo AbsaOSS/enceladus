@@ -16,14 +16,18 @@
 package za.co.absa.enceladus.menas.controllers
 
 import java.net.URI
+import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
-import org.springframework.beans.factory.annotation.Autowired
+import com.mongodb.client.result.UpdateResult
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.menas.exceptions.EndpointDisabled
 import za.co.absa.enceladus.menas.services.PropertyDefinitionService
+import za.co.absa.enceladus.model.ExportableObject
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,6 +43,9 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   import za.co.absa.enceladus.menas.utils.implicits._
 
+  @Value("${menas.feature.property.definitions.allowUpdate:false}")
+  private val enabled: Boolean = false
+
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
@@ -49,13 +56,17 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @ResponseStatus(HttpStatus.CREATED)
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
-    // basically an alias for /create with Location header response
-    logger.info(s"creating new property definition '${item.name}'")
+    if (enabled){
+      // basically an alias for /create with Location header response
+      logger.info(s"creating new property definition '${item.name}'")
 
-    import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
-    super.create(principal, item).toScala.map{ entity =>
-      val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
-      ResponseEntity.created(location).body(entity)
+      import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
+      super.create(principal, item).toScala.map{ entity =>
+        val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
+        ResponseEntity.created(location).body(entity)
+      }
+    } else {
+      throw EndpointDisabled("Endpoint Not Found")
     }
 
     // TODO: Location header would make sense for the underlying VersionedModelController.create, too. Issue #1611
@@ -74,5 +85,34 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
     // basically an alias for /detail/{name}/{version}
     super.getVersionDetail(propertyName, version)
   }
+
+  @PostMapping(Array("/importItem"))
+  @ResponseStatus(HttpStatus.CREATED)
+  override def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+                                  @RequestBody importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
+    if (enabled) { super.importSingleEntity(principal, importObject) }
+    else { throw EndpointDisabled("Endpoint Not Found") }
+
+  @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
+  @ResponseStatus(HttpStatus.CREATED)
+  override def edit(@AuthenticationPrincipal user: UserDetails,
+                    @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+    if (enabled) { super.edit(user, item) }
+    else { throw EndpointDisabled("Endpoint Not Found") }
+
+
+  @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  override def disable(@PathVariable name: String,
+                       @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] =
+    if (enabled) { super.disable(name, version) }
+    else { throw EndpointDisabled("Endpoint Not Found") }
+
+  @PostMapping(Array("/create"))
+  @ResponseStatus(HttpStatus.CREATED)
+  override def create(@AuthenticationPrincipal principal: UserDetails,
+                      @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
+    if (enabled) { super.create(principal, item) }
+    else { throw EndpointDisabled("Endpoint Not Found") }
 
 }
