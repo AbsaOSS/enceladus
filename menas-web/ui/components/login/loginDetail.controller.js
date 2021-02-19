@@ -134,7 +134,7 @@ sap.ui.define([
         localStorage.setItem("csrfToken", csrfToken);
         localStorage.setItem("jwtToken", jwt);
         setCookie("JWT", jwt, 1);
-        Functions.ajax("user/info", "GET", {}, (oInfo) => {
+        Functions.ajax("/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           model.setProperty("/menasVersion", oInfo.menasVersion);
           sap.ui.getCore().byId(this._appId).backToTopMaster();
@@ -149,7 +149,7 @@ sap.ui.define([
         this.byId(usernameField).setValueState(sap.ui.core.ValueState.Error);
         this.byId(passwordField).setValueState(sap.ui.core.ValueState.Error);
       };
-      $.ajax(window.apiUrl + "login", {
+      $.ajax(window.apiUrl + "/login", {
         complete: function () {
           if (oControl) oControl.setBusy(false)
         },
