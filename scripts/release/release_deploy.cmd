@@ -16,7 +16,7 @@ SETLOCAL EnableDelayedExpansion
 SET RELEASE_SUBDIR=enceladus_release
 
 IF NOT DEFINED GIT_CHECKOUT_DIR (
-    ECHO GIT_CHECKOUT_DIR environment variable has to be specified. It specifies the director where release will be executed from.
+    ECHO GIT_CHECKOUT_DIR environment variable has to be specified. It specifies the directory where the release will be executed from.
     EXIT /B 1
 )
 

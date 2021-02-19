@@ -14,7 +14,7 @@
 # limitations under the License.
 
 if [[ -z "$GIT_CHECKOUT_DIR" ]]; then
-    echo "GIT_CHECKOUT_DIR environment variable has to be specified. It specifies the director where release will be executed from."
+    echo "GIT_CHECKOUT_DIR environment variable has to be specified. It specifies the directory where the release will be executed from."
     exit 1
 fi
 

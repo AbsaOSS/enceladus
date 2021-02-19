@@ -4,7 +4,7 @@
 
 `release_prepare.sh` / `release_prepare.cmd`
 
-* Merges the current _develop_ branch into the _master_ branch, while removing the `_SNAPSHOT` suffix from the modules' version.
+* Removes the `-SNAPSHOT` version suffix in all submodules in the current _develop_ branch and merges it into the _master_ branch.
 * In the _develop_ branch it increases the minor version of all the modules of the project.
 * It commits and pushes the changes.
 
