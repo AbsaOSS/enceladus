@@ -302,6 +302,15 @@ class DatasetService extends EntityService {
   }
 
   cleanupEntity(oEntity) {
+
+    const oProps = {};
+
+    if(oEntity._properties && oEntity._properties.map){ 
+      oEntity._properties.map((oProp) => {
+        oProps[oProp.name] = oProp.value
+      });
+    }
+
     return {
       name: oEntity.name,
       version: oEntity.version,
@@ -311,7 +320,8 @@ class DatasetService extends EntityService {
       schemaName: oEntity.schemaName,
       schemaVersion: oEntity.schemaVersion,
       schedule: oEntity.schedule,
-      conformance: (oEntity.conformance || [])
+      conformance: (oEntity.conformance || []),
+      properties: oProps
     }
   }
 
