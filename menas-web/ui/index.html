@@ -50,7 +50,7 @@
         $.getJSON('package.json', function(json) {
             window.apiUrl = json.config.apiUrl + "/api";
             window.lineageReadApiUrl = json.config.lineageReadApiUrl;
-
+            //TODO name modules appropriately
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
                 {k: "rel", v: "stylesheet"}
@@ -76,6 +76,7 @@
                 _menasLoadElem("script", "service/GenericService.js", []);
                 _menasLoadElem("script", "service/HdfsService.js", []);
                 _menasLoadElem("script", "service/MonitoringService.js", []);
+                _menasLoadElem("script", "service/PropertiesService.js", []);
                 _menasLoadElem("script", "service/RuleService.js", []);
                 _menasLoadElem("script", "service/OozieService.js", []);
                 _menasLoadElem("script", "service/RunService.js", []);
