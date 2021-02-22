@@ -59,8 +59,9 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, todaysStats)
   }
 
+  // scalastyle:off magic.number
+  @Scheduled(initialDelay = 1000, fixedDelay = 300000)
   @Async
-  @Scheduled(initialDelay = 1000, fixedDelay = 900000)
   def scheduledLandingPageStatsRecalc(): CompletableFuture[_] = {
     logger.info("Running scheduled landing page statistics recalculation")
     for {
