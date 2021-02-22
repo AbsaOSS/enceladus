@@ -29,7 +29,11 @@ sap.ui.define([
 
     list: function () {
       let masterPage = this.byId("masterPage");
-      RunService.getRunsGroupedByDatasetName(masterPage);
+      masterPage.setBusyIndicatorDelay(0);
+      masterPage.setBusy(true);
+      RunService.getRunsGroupedByDatasetName(masterPage).always(() => {
+        masterPage.setBusy(false);
+      });
     },
 
     onPressMasterBack: function () {

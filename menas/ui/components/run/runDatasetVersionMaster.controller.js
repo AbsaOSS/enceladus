@@ -30,7 +30,11 @@ sap.ui.define([
     list: function (channel, event, data) {
       let masterPage = this.byId("masterPage");
       masterPage.setModel(new sap.ui.model.json.JSONModel(data), "dataset");
-      RunService.getRunsGroupedByDatasetVersion(masterPage, data.name);
+      masterPage.setBusyIndicatorDelay(0);
+      masterPage.setBusy(true);
+      RunService.getRunsGroupedByDatasetVersion(masterPage, data.name).always(() => {
+        masterPage.setBusy(false);
+      })
     },
 
     onPressMasterBack: function () {
