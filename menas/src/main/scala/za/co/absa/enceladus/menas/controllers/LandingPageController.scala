@@ -46,7 +46,7 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
   import za.co.absa.enceladus.menas.utils.implicits._
 
   @GetMapping(path = Array("/info"))
-  def retreiveLandingPageInfo(): CompletableFuture[LandingPageInformation] = {
+  def retrieveLandingPageInfo(): CompletableFuture[LandingPageInformation] = {
     landingPageRepository.get()
   }
 
@@ -65,7 +65,7 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
   def scheduledLandingPageStatsRecalc(): CompletableFuture[_] = {
     logger.info("Running scheduled landing page statistics recalculation")
     for {
-      newStats <- landingPageInfo
+      newStats <- landingPageInfo()
       res <- landingPageRepository.updateStatistics(newStats)
     } yield res 
   }

@@ -35,19 +35,22 @@ class LandingPageStatisticsMongoRepository(mongoDb: MongoDatabase)
   def updateStatistics(newStats: LandingPageInformation): Future[_] = {
     for {
       cnt <- collection.countDocuments.toFuture
-      res <- if(cnt == 0) collection.insertOne(newStats).toFuture 
-               else collection.replaceOne(Filters.where("true"), newStats).toFuture
+      res <- if(cnt == 0) {
+               collection.insertOne(newStats).toFuture
+             } else {
+               collection.replaceOne(Filters.where("true"), newStats).toFuture
+             }
     } yield res
   }
 
   def get(): Future[LandingPageInformation] = {
     for {
       res <- collection.find.toFuture()
-    } yield if(!res.isEmpty) res.head else throw NotFoundException("Landing page statistics not found")
+    } yield if(res.nonEmpty) res.head else throw NotFoundException("Landing page statistics not found")
   }
 }
 
 object LandingPageStatisticsMongoRepository {
-  val collectionBaseName: String = "lading_page_statistics"
+  val collectionBaseName: String = "landing_page_statistics"
   val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
