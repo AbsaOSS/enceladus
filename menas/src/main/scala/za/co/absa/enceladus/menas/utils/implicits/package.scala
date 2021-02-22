@@ -31,6 +31,7 @@ import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 import za.co.absa.enceladus.model.menas.scheduler.oozie._
+import za.co.absa.enceladus.menas.models._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
@@ -59,7 +60,8 @@ package object implicits {
     classOf[RunDatasetNameGroupedSummary], classOf[RunDatasetVersionGroupedSummary],
     classOf[RuntimeConfig], classOf[OozieSchedule], classOf[OozieScheduleInstance], classOf[ScheduleTiming], classOf[DataFormat],
     classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference],
-    classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality]
+    classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality],
+    classOf[LandingPageInformation], classOf[TodaysRunsStatistics]
   ),
     CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
