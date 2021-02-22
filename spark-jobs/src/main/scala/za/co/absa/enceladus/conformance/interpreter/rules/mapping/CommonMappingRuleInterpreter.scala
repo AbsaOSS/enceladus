@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.spark.sql.functions.{col, lit}
-import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.functions.{col, lit, struct}
+import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import org.slf4j.Logger
 import za.co.absa.enceladus.conformance.config.FilterFromConfig
@@ -30,6 +30,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 import scala.util.{Failure, Success, Try}
 import scala.util.control.NonFatal

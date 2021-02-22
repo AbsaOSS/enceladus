@@ -48,16 +48,19 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val outputElements = multiRule.outputColumns.map { case (outputColumn: String, targetAttribute: String) =>
-      col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.$targetAttribute") as outputColumn
+      val newOutputColName = if (outputColumn.contains(".")) outputColumn.split("\\.").last else outputColumn
+      col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.$targetAttribute") as newOutputColName
     }.toSeq
 
-    val outputsStructColumnName = getOutputsStructColumnName(df)
+    val parentPath = getParentPath(rule.outputColumn)
+
+    val outputsStructColumnName = if(rule.outputColumn.contains(".")) parentPath + "." + getOutputsStructColumnName(df) else getOutputsStructColumnName(df)
     val columns = Seq(col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
       struct(outputElements: _*) as outputsStructColumnName)
 
     val joined = explodedDf.as(CommonMappingRuleInterpreter.inputDfAlias)
       .join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType)
-      .select(columns: _*)
+        .select(columns: _*)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
     val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(outputColumnNames()),
@@ -69,13 +72,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val arrayErrorCondition = getErrorCondition(expCtx, outputsStructColumnName)
 
     log.debug(s"Array Error Condition = $arrayErrorCondition")
-    val withErrorsDf: DataFrame = addErrorsToErrCol(placedDf, outputsStructColumnName, mappingErrUdfCall, arrayErrorCondition)
+    val withErrorsDf = addErrorsToErrCol(placedDf, parentPath, multiRule.outputColumns.keys.toSeq,
+      outputsStructColumnName, defaultValuesMap, mappingErrUdfCall, arrayErrorCondition)
 
-    val flatOutputsWithDefaults = getFlatOutputsWithDefaults(outputsStructColumnName, defaultValuesMap)
-    val allOtherColumns = withErrorsDf.columns.filter(! _.contains(outputsStructColumnName)).map(col).toSeq
-
-    val flattenedDefaults = withErrorsDf.select(flatOutputsWithDefaults ++ allOtherColumns: _*)
-    collectIfNeeded(expCtx, explosionState, flattenedDefaults)
+    collectIfNeeded(expCtx, explosionState, withErrorsDf)
   }
 
   private def getFlatOutputsWithDefaults(outputsStructColumnName: String, defaultValuesMap: Map[String, String]) = {
@@ -90,7 +90,8 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private def getErrorCondition(expCtx: ExplosionContext, outputsStructColumnName: String) = {
     multiRule.outputColumns.keys.foldLeft(lit(false))((acc: Column, nestedColumn: String) => {
-      val nestedOutputName = s"${outputsStructColumnName}.$nestedColumn"
+      val newOutputColName = if (nestedColumn.contains(".")) nestedColumn.split("\\.").last else nestedColumn
+      val nestedOutputName = s"${outputsStructColumnName}.$newOutputColName"
       val nestedFieldCondition = col(nestedOutputName).isNull.and(expCtx.getArrayErrorCondition(nestedOutputName))
       acc.or(nestedFieldCondition)
     })
@@ -122,14 +123,35 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def addErrorsToErrCol(df: DataFrame,
-                                outputsStructColumnName: String,
+                                parentPath: String,
+                                outputCols: Seq[String],
+                                outputsStructColumnPath: String,
+                                defaultMappingValues: Map[String, String],
                                 mappingErrUdfCall: Column,
                                 errorConditions: Column): DataFrame = {
-    NestedArrayTransformations.nestedWithColumnAndErrorMap(df, outputsStructColumnName, outputsStructColumnName,
-      ErrorMessage.errorColumnName, c => c, _ => {
-        when(errorConditions, mappingErrUdfCall).otherwise(null) // scalastyle:ignore null
-      }
-    )
+    val outputsStructColumnName = if (outputsStructColumnPath.contains(".")) outputsStructColumnPath.split("\\.").last
+                            else outputsStructColumnPath
+
+    val otherStructFields = df.select(s"${parentPath}.*").schema.fields
+      .filter(_.name != outputsStructColumnName)
+      .map(sF => col(sF.name)).toSeq
+
+      NestedArrayTransformations.nestedWithColumnAndErrorMap(df, parentPath, parentPath,
+        ErrorMessage.errorColumnName,
+        c => {
+          val defaultAppliedStructCols: Seq[Column] = outputCols.map(outputName => {
+            val newOutputColName = if (outputName.contains(".")) outputName.split("\\.").last else outputName
+            val fieldInOutputs = c.getField(outputsStructColumnName).getField(newOutputColName)
+            defaultMappingValues.get(outputName) match {
+              case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as newOutputColName).otherwise(expr(defValue))
+              case None => fieldInOutputs as newOutputColName
+            }
+          }).toSeq
+          struct(otherStructFields ++ defaultAppliedStructCols: _*)
+        }, _ => {
+          when(errorConditions, mappingErrUdfCall).otherwise(null) // scalastyle:ignore null
+        }
+      )
   }
 
   private def logJoinCondition(mappingTableSchema: StructType, joinConditionStr: String): Unit = {
