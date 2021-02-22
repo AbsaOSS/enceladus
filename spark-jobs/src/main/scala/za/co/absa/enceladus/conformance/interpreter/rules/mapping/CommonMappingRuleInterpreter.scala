@@ -43,7 +43,7 @@ trait CommonMappingRuleInterpreter {
 
   protected def outputColumnNames(): String =  multiRule.outputColumns.mkString(", ")
 
-  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("_outputs", df.schema)
+  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
 
   protected val mappings: Seq[Mapping] = multiRule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
@@ -55,6 +55,20 @@ trait CommonMappingRuleInterpreter {
               explosionState: ExplosionState,
               dao: MenasDAO,
               progArgs: InterpreterContextArgs): DataFrame
+
+  /**
+   * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
+   *
+   * @param columnName A fully qualified column name
+   * @return The parent column name or an empty string if the input column is a root level column
+   */
+  protected def getParentPath(columnName: String): String = {
+    if (columnName.contains (".")) {
+      columnName.split('.').dropRight(1).mkString(".")
+    } else {
+      ""
+    }
+  }
 
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
@@ -100,7 +114,17 @@ trait CommonMappingRuleInterpreter {
     // validate join fields existence
     validateMappingFieldsExist(joinConditionStr, df.schema, mapTable.schema, rule)
 
+    validateOutputColumns()
+
     (mapTable, defaultValues)
+  }
+
+  def validateOutputColumns(): Unit = {
+    val outputColParent = getParentPath(rule.outputColumn)
+    val allOutputsOnTheSamePath = multiRule.outputColumns.keys.map(getParentPath).forall(_ == outputColParent)
+    if (! allOutputsOnTheSamePath)
+      throw new ValidationException(
+        s"The output columns of a Mapping Conformance rule have to be on the same level\n")
   }
 
   protected def validateMappingFieldsExist(joinConditionStr: String,
