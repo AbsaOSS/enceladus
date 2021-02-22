@@ -124,6 +124,12 @@ class DatasetDialog extends EntityDialog {
     this.oController.byId("newDatasetPublishSimplePath").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("newDatasetPublishSimplePath").setValueStateText("");
 
+    //properties
+    this.oDialog.getModel("entity").getProperty("/_properties").map(oProp => {
+      oProp.validation = "None";
+      oProp.validationText = "";
+    });
+    this.oDialog.getModel("entity").checkUpdate();
   }
 
   isValid(oDataset) {
@@ -133,6 +139,10 @@ class DatasetDialog extends EntityDialog {
       this.oController.byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
         this.oController.byId("schemaVersionSelect"));
+
+    //here the validation modifies the model's underlying data, trigger a check
+    let hasValidProperties = EntityValidationService.hasValidProperties(oDataset._properties);
+    this.oDialog.getModel("entity").checkUpdate();
 
     if (oDataset.hdfsBrowserEnabled) {
       let hasValidRawHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPath,
@@ -145,7 +155,7 @@ class DatasetDialog extends EntityDialog {
       let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
         this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
-      return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath;
+      return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath && hasValidProperties;
     } else {
 
       let hasValidRawSimplePath = EntityValidationService.hasValidSimplePath(oDataset.hdfsPath,
@@ -155,7 +165,7 @@ class DatasetDialog extends EntityDialog {
         "Dataset publish path",
         this.oController.byId("newDatasetPublishSimplePath"));
 
-      return hasValidName && hasValidSchema && hasValidRawSimplePath && hasValidPublishSimplePath;
+      return hasValidName && hasValidSchema && hasValidRawSimplePath && hasValidPublishSimplePath && hasValidProperties;
     }
   }
 
@@ -179,11 +189,37 @@ class DatasetDialog extends EntityDialog {
     super.cancel();
   }
 
+  onPropertiesChange() {
+    const inputFields = $(".propertyInput").control()
+    const fnChangeHandler = function(oEv) {
+      const oDataset = this.oDialog.getModel("entity").getProperty("/");
+      this.resetValueState();
+      this.isValid(oDataset)
+    }.bind(this);
+    inputFields.map((oInpField) => {
+      //detach first in case these components are re-used
+      oInpField.detachChange(fnChangeHandler);
+      oInpField.attachChange(fnChangeHandler);
+    });
+  }
+
 }
 
 class AddDatasetDialog extends DatasetDialog {
 
   onPress() {
+    const aPropsDef = sap.ui.getCore().getModel().getProperty("/properties");
+    const aPropTemplate = aPropsDef.map ? aPropsDef : [];
+    const aProps = aPropTemplate.map(oProp => {
+      const oPreparedProp = jQuery.extend(true, {}, oProp);
+      oPreparedProp.validation = "None";
+      oPreparedProp.value = oProp.propertyType.suggestedValue;
+      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+        oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
+      }
+      return oPreparedProp;
+    })
+
     this.schemaService.getList(this.oDialog).then(() => {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
@@ -194,11 +230,16 @@ class AddDatasetDialog extends DatasetDialog {
         hdfsPublishPath: "/",
         isEdit: false,
         title: "Add",
+        _properties: aProps,
         hdfsBrowserEnabled: true
       }), "entity");
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, DatasetDialog.hdfsPropertyNames)
     })
+
+    //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+    //Suggested approach described in #1668
+    setTimeout(this.onPropertiesChange.bind(this), 1500);
   }
 
 }
@@ -206,9 +247,28 @@ class AddDatasetDialog extends DatasetDialog {
 class EditDatasetDialog extends DatasetDialog {
 
   onPress() {
+    const aPropsDef = sap.ui.getCore().getModel().getProperty("/properties");
+    const aPropTemplate = aPropsDef.map ? aPropsDef : [];
+    
     this.schemaService.getList(this.oDialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
+      const aProps = aPropTemplate.map(oProp => {
+        const oPreparedProp = jQuery.extend(true, {}, oProp);
+        oPreparedProp.validation = "None";
+        if(current.properties && current.properties[oPreparedProp.name]) {
+          oPreparedProp.value = current.properties[oPreparedProp.name];
+        } else {
+          oPreparedProp.value = oProp.propertyType.suggestedValue;
+        }
+
+        if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+          oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
+        }
+        return oPreparedProp;
+      })
+      
+      current._properties = aProps;
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
@@ -217,6 +277,10 @@ class EditDatasetDialog extends DatasetDialog {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, DatasetDialog.hdfsPropertyNames);
+
+      //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
+      //Suggested approach described in #1668
+      setTimeout(this.onPropertiesChange.bind(this), 1500);
     });
   }
 
