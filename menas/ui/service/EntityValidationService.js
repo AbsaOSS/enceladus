@@ -87,4 +87,30 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
+  this.hasValidProperties = function(aProperties) {
+    let isOk = true;
+
+    aProperties.map((oProp) => {
+      const sDesc = oProp.description ? ` (${oProp.description})` : "";
+      //check essentiality - if Mandatory property has no or empty value, we fail
+      if(oProp.essentiality._t === "Mandatory" && !oProp.value) {
+        isOk = false;
+        oProp.validation = "Error";
+        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
+      } else if(oProp.essentiality._t === "Recommended" && !oProp.value) {
+        oProp.validation = "Warning";
+        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
+      }
+      //for enum type properties, check that the value is allowed
+      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+        if(oProp.propertyType.allowedValues.filter((oVal) => { return oVal.value === oProp.value }).length === 0) {
+          isOk = false;
+          oProp.validation = "Error";
+          oProp.validationText = `Choose one of valid options for ${oProp.name}${sDesc}`;
+        }
+      }
+    })
+    return isOk;
+  };
+
 }();
