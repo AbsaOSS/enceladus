@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
                          xmlns:hdfs="components.hdfs">
-    <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW40rem">
+    <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" class="minW55rem maxW65p w50p">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
@@ -26,6 +26,24 @@
                         <Label text="Dataset Description"/>
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
+                        <Label text="Dataset Properties"/>
+                        <List width="100%" items="{path: 'entity>/_properties', sorter: {path: 'order'}}" class="sapUiMediumMarginBottom">
+                          <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
+                            <HBox alignItems="Center" justifyContent="End" renderType="Bare">
+                              <Input type="Text" width="18rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}"
+                                class="propertyInput" value="{entity>value}" valueState="{entity>validation}" 
+                                valueStateText="{entity>validationText}"></Input>
+                              <Select width="18rem"
+                                items="{path: 'entity>propertyType/allowedValues', templateShareable: false}"
+                                selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
+                                visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}">
+                                <core:Item key="{entity>value}" text="{entity>value}"></core:Item>
+                              </Select>
+                              <core:Icon width="1rem" class="sapUiSmallMarginBegin" color="Neutral" tooltip="{entity>essentiality/_t}"
+                                src="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }"></core:Icon>
+                            </HBox>
+                          </InputListItem>
+                        </List>
                         <core:Fragment type="XML" fragmentName="components.schema.selector.schemaSelector"/>
                         <Label text="Raw data folder path"/>
                         <VBox>
@@ -47,7 +65,6 @@
                                 <Button id="toggleHdfsBrowser" icon="sap-icon://journey-change"
                                         tooltip="{= ${entity>/hdfsBrowserEnabled}? 'Switch to simple path editing' : 'Switch to HDFS Browser editing' }"/>
                             </HBox>
-
                             <hdfs:HDFSBrowser id="newDatasetRawHDFSBrowser" height="300px" width="100%"
                                               busyControl="addDatasetDialog" pathInput="selectedRawHDFSPathLabel"
                                               HDFSPath="{entity>/hdfsPath}" visible="{entity>/hdfsBrowserEnabled}"/>

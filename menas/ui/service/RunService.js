@@ -16,9 +16,10 @@
 jQuery.sap.require("sap.m.MessageBox");
 
 var RunService = new function () {
+  const runRestDAO = new RunRestDAO();
 
   this.getRunsGroupedByDatasetName = function (oMasterPage) {
-    new RunRestDAO().getRunsGroupedByDatasetName()
+    return runRestDAO.getRunsGroupedByDatasetName()
       .then(oData => oMasterPage.setModel(new sap.ui.model.json.JSONModel(oData), "datasets"))
       .fail(() => sap.m.MessageBox
         .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
@@ -26,7 +27,7 @@ var RunService = new function () {
   };
 
   this.getRunsGroupedByDatasetVersion = function (oMasterPage, datasetName) {
-    new RunRestDAO().getRunsGroupedByDatasetVersion(datasetName)
+    return runRestDAO.getRunsGroupedByDatasetVersion(datasetName)
       .then(oData => oMasterPage.setModel(new sap.ui.model.json.JSONModel(oData), "datasetVersions"))
       .fail(() => sap.m.MessageBox
         .error("Failed to get the list of runs. Please wait a moment and try reloading the application")
