@@ -47,6 +47,8 @@ sap.ui.define([
 
       this._model.setProperty("/subjectName", "");
 
+      this._model.setProperty("/schemaUploadUrl", window.apiUrl + "/schema/upload");
+
       // initially, registry integration is disabled in UI - get enabled by querying SchemaApiFeatures
       this._model.setProperty("/registryEnabled", false);
       this.checkRegistryIntegration()
@@ -165,6 +167,10 @@ sap.ui.define([
         oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
           name: "X-CSRF-TOKEN",
           value: localStorage.getItem("csrfToken")
+        }));
+        oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
+          name: "JWT",
+          value: localStorage.getItem("jwtToken")
         }));
         oFileUpload.upload();
       }

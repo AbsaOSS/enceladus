@@ -55,7 +55,7 @@
                                     <core:Item key="copybook" text="COBOL Copybook"/>
                                     <core:Item key="avro" text="Avro Schema (avsc)"/>
                                 </Select>
-                                <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
+                                <u:FileUploader id="fileUploader" name="file" uploadUrl="{/schemaUploadUrl}"
                                                 tooltip="Upload new version of the schema"
                                                 uploadComplete="handleUploadComplete"
                                                 sendXHR="true"
