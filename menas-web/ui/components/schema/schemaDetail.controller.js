@@ -196,6 +196,7 @@ sap.ui.define([
           contentType: 'application/x-www-form-urlencoded',
           context: this, // becomes the result of "this" in handleRemoteLoad*Complete
           headers: {
+            "JWT": localStorage.getItem("jwtToken"),
             'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
           },
           complete: this.handleRemoteLoadFromSubjectNameComplete
@@ -396,6 +397,10 @@ sap.ui.define([
       jQuery.ajax({
         url: window.apiUrl + "/schema/features",
         type: 'GET',
+        headers: {
+          "JWT": localStorage.getItem("jwtToken"),
+          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+        },
         context: this,
         complete: this.handleRegistryIntegrationResponse
       });
