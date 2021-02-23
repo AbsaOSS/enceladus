@@ -67,12 +67,40 @@ object BroadcastUtils {
     * @param mappingTable A mapping table broadcasted to executors.
     * @return A UDF that maps joins keys to a target attribute value.
     */
-  def getMappingUdf(mappingTable: Broadcast[LocalMappingTable],
-                    defaultValueExpressionMap: Map[String, String])(implicit spark: SparkSession): UserDefinedFunction = {
+  def getMappingUdfForMultipleOutputs(mappingTable: Broadcast[LocalMappingTable])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-//    val defaultValueOpt = defaultValueExpressionMap.map(getValueOfSparkExpression)
-    val defaultValueOpt = None
+    val lambda = numberOfArguments match {
+      case 1 => getMappingLambdaParam1(mappingTable, None)
+      case 2 => getMappingLambdaParam2(mappingTable, None)
+      case 3 => getMappingLambdaParam3(mappingTable, None)
+      case 4 => getMappingLambdaParam4(mappingTable, None)
+      case 5 => getMappingLambdaParam5(mappingTable, None)
+      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
+    }
+
+    val structFields: Seq[StructField] = mappingTable.value.targetAttributes.zip(mappingTable.value.valueTypes)
+      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
+
+    UserDefinedFunction(lambda,
+      StructType(structFields),
+      Some(mappingTable.value.keyTypes))
+  }
+
+  /**
+   * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
+   * if there is no mapping for the specified keys.
+   *
+   * @param mappingTable A mapping table broadcasted to executors.
+   * @return A UDF that maps joins keys to a target attribute value.
+   */
+  def getMappingUdfForSingleOutput(mappingTable: Broadcast[LocalMappingTable],
+                                   defaultValueExpr: Option[String])(implicit spark: SparkSession): UserDefinedFunction = {
+    val numberOfArguments = mappingTable.value.keyTypes.size
+
+    val defaultValueOpt = defaultValueExpr.map(getValueOfSparkExpression)
+
+//    val defaultValueOpt = defaultValueOpt.map(a => getValueOfSparkExpression(a))
 
     val lambda = numberOfArguments match {
       case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
@@ -83,11 +111,8 @@ object BroadcastUtils {
       case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
-    val structFields: Seq[StructField] = mappingTable.value.targetAttributes.zip(mappingTable.value.valueTypes)
-      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
-
     UserDefinedFunction(lambda,
-      StructType(structFields),
+      mappingTable.value.valueTypes.head,
       Some(mappingTable.value.keyTypes))
   }
 

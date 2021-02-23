@@ -26,7 +26,7 @@ import scala.collection.mutable.ListBuffer
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
 final case class LocalMappingTable(
-                                    map: Map[Seq[Any], Row],
+                                    map: Map[Seq[Any], Any],
                                     keyFields: Seq[String],
                                     targetAttributes: Seq[String],
                                     keyTypes: Seq[DataType],
@@ -78,7 +78,7 @@ object LocalMappingTable {
         keys += row(i)
         i += 1
       }
-      (keys.toSeq, Row.fromSeq(values.toList))
+      (keys.toSeq, if (values.size == 1) values.head else Row.fromSeq(values.toList))
     }).toMap
 
     LocalMappingTable(mappingTable, keyFields, targetAttributes, keyTypes, valueTypes)

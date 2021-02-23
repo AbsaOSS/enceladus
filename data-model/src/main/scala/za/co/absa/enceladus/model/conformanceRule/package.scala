@@ -87,7 +87,7 @@ package object conformanceRule {
                                     overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
                                    ) extends ConformanceRule {
 
-    def getAllOutputColumns(): Map[String, String] = {
+    def allOutputColumns(): Map[String, String] = {
       additionalColumns.getOrElse(Map()) + (outputColumn -> targetAttribute)
     }
 

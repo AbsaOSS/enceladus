@@ -67,10 +67,10 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
         assert(localMt.targetAttributes == Seq("val"))
         assert(localMt.keyFields.head == "id")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
-//        assert(localMt.valueTypes.isInstanceOf[Seq[StringType]])
-        assert(localMt.map(1 :: Nil) == List("a"))
-        assert(localMt.map(2 :: Nil) == List("b"))
-        assert(localMt.map(3 :: Nil) == List("c"))
+        assert(localMt.valueTypes.isInstanceOf[Seq[StringType]])
+        assert(localMt.map(1 :: Nil) == "a")
+        assert(localMt.map(2 :: Nil) == "b")
+        assert(localMt.map(3 :: Nil) == "c")
       }
 
       "a struct type target attribute is provided" in {
@@ -83,7 +83,7 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
         assert(localMt.targetAttributes == Seq("sval"))
         assert(localMt.keyFields.head == "id")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
-//        assert(localMt.valueType.isInstanceOf[StructType])
+        assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
         assert(localMt.map(1 :: Nil).isInstanceOf[Row])
       }
 
@@ -97,7 +97,7 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
         assert(localMt.targetAttributes == Seq("sval"))
         assert(localMt.keyFields.head == "sval.e")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
-//        assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
+        assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
         assert(localMt.map(21 :: Nil).isInstanceOf[Row])
 
       }
@@ -114,7 +114,7 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
         assert(localMt.keyFields(1) == "sval.e")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
         assert(localMt.keyTypes(1).isInstanceOf[NumericType])
-//        assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
+        assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
         assert(localMt.map(1 :: 21 :: Nil).isInstanceOf[Row])
       }
     }

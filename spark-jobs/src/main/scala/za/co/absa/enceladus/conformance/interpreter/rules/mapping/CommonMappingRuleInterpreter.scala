@@ -40,13 +40,11 @@ trait CommonMappingRuleInterpreter {
   protected val rule: MappingConformanceRule
   protected val log: Logger
 
-  protected val multiRule: MultiMappingConformanceRule = MultiMappingConformanceRule(rule)
-
-  protected def outputColumnNames(): String =  multiRule.outputColumns.mkString(", ")
+  protected def outputColumnNames(): String = rule.allOutputColumns().mkString(", ")
 
   protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
 
-  protected val mappings: Seq[Mapping] = multiRule.attributeMappings.map {
+  protected val mappings: Seq[Mapping] = rule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
   }.toSeq
 
@@ -120,9 +118,49 @@ trait CommonMappingRuleInterpreter {
     (mapTable, defaultValues)
   }
 
+  /**
+   * Returns a default value of the output column, if specified, for a particular mapping rule.
+   * Default values may be specified for each target attribute in a mapping table and must have the same type as
+   * the target attribute and must be presented as a Spark expression string.
+   *
+   * When a mapping table definition has a default value for the target attribute "*", this value acts as a default
+   * value for all target attributes, for which the default value is not set.
+   *
+   * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
+   *
+   * @param mappingTableDef A mapping rule definition
+   * @return A default value, if available, as a Spark expression represented as a string.
+   */
+  private def getDefaultValues(mappingTableDef: MappingTable)
+                              (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
+    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
+
+    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+    val genericDefaultValueOpt = defaultMappingValueMap.get("*")
+    val defaultValuesForTargets = rule.allOutputColumns().flatMap{case (_, targetAttribute) => {
+      val maybeString = defaultMappingValueMap.get(targetAttribute)
+      maybeString match {
+        case None => genericDefaultValueOpt.map(genDefault => targetAttribute -> genDefault)
+        case Some(x) => Some(targetAttribute -> x)
+      }
+    }}
+
+    mappingTableSchemaOpt match {
+      case Some(schema) => {
+        defaultValuesForTargets.foreach { case (targetAttribute, defaultValue: String) =>
+          CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+            targetAttribute, defaultValue)
+        }
+      }
+      case None =>
+        log.warn("Mapping table schema loading failed")
+      }
+    defaultValuesForTargets
+  }
+
   def validateOutputColumns(): Unit = {
     val outputColParent = getParentPath(rule.outputColumn)
-    val allOutputsOnTheSamePath = multiRule.outputColumns.keys.map(getParentPath).forall(_ == outputColParent)
+    val allOutputsOnTheSamePath = rule.allOutputColumns().keys.map(getParentPath).forall(_ == outputColParent)
     if (! allOutputsOnTheSamePath)
       throw new ValidationException(
         s"The output columns of a Mapping Conformance rule have to be on the same level\n")
@@ -136,42 +174,6 @@ trait CommonMappingRuleInterpreter {
   }
 
   protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
-
-  /**
-    * Returns a default value of the output column, if specified, for a particular mapping rule.
-    * Default values may be specified for each target attribute in a mapping table and must have the same type as
-    * the target attribute and must be presented as a Spark expression string.
-    *
-    * When a mapping table definition has a default value for the target attribute "*", this value acts as a default
-    * value for all target attributes, for which the default value is not set.
-    *
-    * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
-    *
-    * @param mappingTableDef A mapping rule definition
-    * @return A default value, if available, as a Spark expression represented as a string.
-    */
-  private def getDefaultValues(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
-    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
-
-    val genericDefaultValueOpt = defaultMappingValueMap.get("*")
-
-    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
-    mappingTableSchemaOpt match {
-      case Some(schema) => {
-        defaultMappingValueMap.flatMap { case (field, defaultValue) =>
-          Try(CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            field, defaultValue)) match {
-            case Failure(_) => genericDefaultValueOpt.map(genDefault => field -> genDefault)
-            case Success(_) => Some(field -> defaultValue)
-          }
-        }
-      }
-      case None =>
-        log.warn("Mapping table schema loading failed")
-        defaultMappingValueMap
-    }
-  }
 }
 
 object CommonMappingRuleInterpreter {

@@ -72,7 +72,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf1 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf1 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
 
         val dfOut1 = df.withColumn("out", mappingUdf1($"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf1($"key3")).orderBy("key1")
@@ -85,7 +85,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id"),  Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf1 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf1 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Some("z"))
 
         val dfOut1 = df.withColumn("out", mappingUdf1($"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf1($"key3")).orderBy("key1")
@@ -98,7 +98,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf2 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf2 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
 
         val dfOut1 = df.withColumn("out", mappingUdf2($"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf2($"key1", $"key2")).orderBy("key1")
@@ -111,7 +111,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf2 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf2 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Some("z"))
 
         val dfOut1 = df.withColumn("out", mappingUdf2($"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf2($"key1", $"key2")).orderBy("key1")
@@ -124,7 +124,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf3 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf3 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
 
         val dfOut1 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key2")).orderBy("key1")
@@ -137,7 +137,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf3 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf3 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Some("z"))
 
         val dfOut1 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key2")).orderBy("key1")
@@ -150,7 +150,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf4 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf4 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
 
         val dfOut1 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -163,7 +163,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf4 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf4 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Some("z"))
 
         val dfOut1 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -176,7 +176,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf5 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf5 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
 
         val dfOut1 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -189,7 +189,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Seq("val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf5 = BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+        val mappingUdf5 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Some("z"))
 
         val dfOut1 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -212,7 +212,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         intercept[IllegalArgumentException] {
-          BroadcastUtils.getMappingUdf(broadcastedMt, Map())
+          BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, None)
         }
       }
     }
