@@ -44,9 +44,6 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
 
   import za.co.absa.enceladus.menas.utils.implicits._
 
-  @Value("${menas.feature.property.definitions.allowUpdate:false}")
-  private val enabled: Boolean = false
-
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
@@ -115,5 +112,5 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   override def create(@AuthenticationPrincipal principal: UserDetails,
                       @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)
-    
+
 }

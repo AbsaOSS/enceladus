@@ -24,7 +24,6 @@ import org.springframework.core.io.FileSystemResource
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.core.AuthenticationException
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.kerberos.authentication.KerberosServiceAuthenticationProvider
 import org.springframework.security.kerberos.authentication.sun.SunJaasKerberosTicketValidator
 import org.springframework.security.kerberos.client.config.SunJaasKrb5LoginConfig
@@ -127,7 +126,6 @@ class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}"
     this.validateParams()
     val originalLogLevel = Logger.getRootLogger.getLevel
     //something here changes the log level to WARN
-
     auth
       .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
       .authenticationProvider(kerberosServiceAuthenticationProvider())
