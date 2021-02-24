@@ -39,6 +39,7 @@ menas.auth.jwt.lifespan.hours=8
 # How will users authenticate to menas. Available options: inmemory, kerberos
 menas.auth.mechanism=inmemory
 menas.auth.admin.role=ROLE_ADMIN
+#menas.auth.roles.regex=^[A-Za-z]+_ADMIN$
 
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
