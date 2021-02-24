@@ -55,17 +55,13 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
-    if (enabled){
-      // basically an alias for /create with Location header response
-      logger.info(s"creating new property definition '${item.name}'")
+    // basically an alias for /create with Location header response
+    logger.info(s"creating new property definition '${item.name}'")
 
-      import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
-      super.create(principal, item).toScala.map{ entity =>
-        val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
-        ResponseEntity.created(location).body(entity)
-      }
-    } else {
-      throw EndpointDisabled("Endpoint Not Found")
+    import scala.compat.java8.FutureConverters.CompletionStageOps // implicit wrapper with toScala for CompletableFuture
+    super.create(principal, item).toScala.map{ entity =>
+      val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
+      ResponseEntity.created(location).body(entity)
     }
 
     // TODO: Location header would make sense for the underlying VersionedModelController.create, too. Issue #1611
