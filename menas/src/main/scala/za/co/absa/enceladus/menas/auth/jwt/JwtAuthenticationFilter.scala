@@ -28,6 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.User
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import za.co.absa.enceladus.menas.auth.AuthConstants
 import za.co.absa.enceladus.menas.auth.AuthConstants._
 
 import scala.collection.JavaConverters._
@@ -35,9 +36,6 @@ import scala.util.{Failure, Success, Try}
 
 @Component
 class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OncePerRequestFilter {
-
-  @Value("${menas.auth.roles.regex:#{null}}")
-  private val rolesRegex: Option[String] = None
 
   override def doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain): Unit = {
     getAuthentication(request)
@@ -77,13 +75,11 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
   }
 
   private def parseJwtAuthorities(jwtClaims: Claims): util.List[SimpleGrantedAuthority] = {
-    val groups = Option(jwtClaims.get(RolesKey, classOf[util.List[String]]))
+    val groups: Seq[String] = Option(jwtClaims.get(RolesKey, classOf[util.List[String]]))
       .getOrElse(new util.ArrayList[String]())
       .asScala
 
-    val filteredGroups =  rolesRegex.map( regex => groups.filter(authority => authority.matches(regex)))
-
-    filteredGroups.getOrElse(groups).map(k => new SimpleGrantedAuthority(k)).asJava
+    AuthConstants.filterByRolesRegex(groups).map(k => new SimpleGrantedAuthority(k)).asJava
   }
 
   private def isCsrfSafe(request: HttpServletRequest, jwtClaims: Claims): Boolean = {

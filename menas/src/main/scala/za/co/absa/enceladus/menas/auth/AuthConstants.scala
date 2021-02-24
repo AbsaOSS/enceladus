@@ -33,4 +33,12 @@ object AuthConstants {
   val JwtCookieKey: String = "JWT"
   val CsrfTokenKey: String = "X-CSRF-TOKEN"
   val RolesKey: String = "Roles"
+
+  @Value("${menas.auth.roles.regex:}")
+  val RolesRegex: String = ""
+
+  def filterByRolesRegex(roles: Seq[String]): Seq[String] = {
+    if (RolesRegex.isEmpty) { roles }
+    else { roles.filter(authority => authority.matches(RolesRegex)) }
+  }
 }
