@@ -367,6 +367,21 @@ sap.ui.define([
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);
       }
+
+      //transform properties into a bindable format
+      const aPropTemplates = this._model.getProperty(`/properties`) || [];
+      if(currentDataset && currentDataset.properties) {
+        currentDataset.propertiesDisplay = [];
+        for(let sName in currentDataset.properties) {
+          const oPropTemplMatch = aPropTemplates.find((oTempl) => { return oTempl.name === sName });
+          const iOrder = oPropTemplMatch ? oPropTemplMatch.order : Infinity;
+          currentDataset.propertiesDisplay.push({
+            name: sName,
+            value: currentDataset.properties[sName],
+            order: iOrder
+          });
+        }
+      } 
     },
 
     conformanceRuleFactory: function (sId, oContext) {

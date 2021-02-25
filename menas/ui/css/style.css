@@ -22,8 +22,20 @@ html, body {
   height: calc(100% - 112px);
 }
 
-.minW40rem {
-  min-width: 40rem !important;
+.minW55rem {
+  min-width: 55rem !important;
+}
+
+.maxW65p {
+  max-width: 65% !important;
+}
+
+.w100p {
+  width: 100%;
+}
+
+.w50p {
+  width: 50%;
 }
 
 .mt10 {
@@ -103,4 +115,16 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 /* Making IconTabBar tabs slightly wider (default is 5rem), so we don't get so many ellipsized labels (e.g. Conformance Rules, Conformed Schema) */
 .sapMITBFilter .sapMITBText, .sapMITBTab {
   width: 7rem;
+}
+
+.inputListItemSmallLabel > div > .sapMILILabel {
+  font-size: 0.9rem !important;
+}
+
+.essentialityStatus {
+  width: 9rem !important;
+}
+
+.formWithSmallContainerMargins > div > div > div > div {
+  padding-bottom: 0.9rem !important;
 }
