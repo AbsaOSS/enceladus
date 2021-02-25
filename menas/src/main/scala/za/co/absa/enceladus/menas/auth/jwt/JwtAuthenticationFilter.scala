@@ -20,7 +20,7 @@ import java.util
 import io.jsonwebtoken.Claims
 import javax.servlet.FilterChain
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -28,7 +28,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.User
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
-import za.co.absa.enceladus.menas.auth.AuthConstants
 import za.co.absa.enceladus.menas.auth.AuthConstants._
 
 import scala.collection.JavaConverters._
@@ -79,7 +78,7 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
       .getOrElse(new util.ArrayList[String]())
       .asScala
 
-    AuthConstants.filterByRolesRegex(groups).map(k => new SimpleGrantedAuthority(k)).asJava
+    groups.map(k => new SimpleGrantedAuthority(k)).asJava
   }
 
   private def isCsrfSafe(request: HttpServletRequest, jwtClaims: Claims): Boolean = {

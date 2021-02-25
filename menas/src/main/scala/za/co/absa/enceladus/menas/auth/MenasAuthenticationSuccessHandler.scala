@@ -35,6 +35,9 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
                                                      timezone: String)
   extends SimpleUrlAuthenticationSuccessHandler {
 
+  @Value("${menas.auth.roles.regex:}")
+  private val rolesRegex: String = ""
+
   override def onAuthenticationSuccess(request: HttpServletRequest,
                                        response: HttpServletResponse,
                                        authentication: Authentication): Unit = {
@@ -47,7 +50,12 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
     val cookieLifetime = expiry.getSeconds
 
     val groups = user.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority)
-    val filteredGroups = AuthConstants.filterByRolesRegex(groups).toArray
+
+    val filteredGroups = if (rolesRegex.isEmpty) {
+      groups
+    } else {
+      groups.filter(authority => rolesRegex.r.findFirstIn(authority).isDefined)
+    }
 
     val jwt = jwtFactory
       .jwtBuilder()
