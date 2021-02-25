@@ -54,7 +54,8 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
     val filteredGroups = if (rolesRegex.isEmpty) {
       groups
     } else {
-      groups.filter(authority => rolesRegex.r.findFirstIn(authority).isDefined)
+      val regex = rolesRegex.r
+      groups.filter(authority => regex.findFirstIn(authority).isDefined)
     }
 
     val jwt = jwtFactory
