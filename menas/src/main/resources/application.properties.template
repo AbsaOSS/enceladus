@@ -38,6 +38,7 @@ menas.auth.jwt.lifespan.hours=8
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 menas.auth.mechanism=inmemory
+# Must be defined and non empty
 menas.auth.admin.role=ROLE_ADMIN
 #menas.auth.roles.regex=^[A-Za-z]+_ADMIN$
 
