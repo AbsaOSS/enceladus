@@ -28,6 +28,6 @@ RELEASE_SUBDIR="enceladus_release"
 cd "$GIT_CHECKOUT_DIR"
 
 rm -rf $RELEASE_SUBDIR
- git clone --single-branch --branch master https://github.com/AbsaOSS/enceladus.git $RELEASE_SUBDIR
+git clone --single-branch --branch master https://github.com/AbsaOSS/enceladus.git $RELEASE_SUBDIR
 cd $RELEASE_SUBDIR
 mvn deploy -Ppublic -Psonatype-oss-release -PgenerateComponentPreload -DskipTests
