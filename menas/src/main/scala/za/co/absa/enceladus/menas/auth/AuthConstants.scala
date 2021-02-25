@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component
 @Component("authConstants")
 class AuthConstants @Autowired()() {
   @Value("${menas.auth.admin.role}")
-  val AdminRole: String = ""
+  private val AdminRole: String = ""
 
   def hasAdminRole(auth: Authentication): Boolean = {
     auth.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority).contains(AdminRole)
