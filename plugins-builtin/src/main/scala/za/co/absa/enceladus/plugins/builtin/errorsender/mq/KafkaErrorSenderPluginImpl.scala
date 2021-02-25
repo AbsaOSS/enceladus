@@ -18,9 +18,9 @@ package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.functions.{col, explode, lit, size, struct, typedLit}
 import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.{Column, DataFrame, Encoder, Encoders}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import za.co.absa.enceladus.utils.schema.SchemaUtils
@@ -145,6 +145,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       .option("kafka.bootstrap.servers", connectionParams.bootstrapServers)
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
+      .withOptionalKafkaSecurityParams(connectionParams.security)
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
   }
@@ -193,6 +194,15 @@ object KafkaErrorSenderPluginImpl {
   def errorCodesForSource(sourceId: SourcePhase): Seq[String] = sourceId match {
     case SourcePhase.Standardization => ErrorCodes.standardizationErrorCodes
     case SourcePhase.Conformance => ErrorCodes.conformanceErrorCodes
+  }
+
+  implicit class DataFrameWriterOptionExt[T](dataFrameWriter: DataFrameWriter[T]) {
+    def withOptionalKafkaSecurityParams(optSecParams: Option[KafkaSecurityParams]): DataFrameWriter[T] = {
+      optSecParams match {
+        case None => dataFrameWriter
+        case Some(secParams) => dataFrameWriter.options(secParams.toMap)
+      }
+    }
   }
 
 }

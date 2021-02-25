@@ -57,7 +57,7 @@ class KafkaPluginSuite extends AnyFunSuite {
     assert(kafkaConnection.topicName == "dummyTopicName")
   }
 
-  test("Test Kafka config parser recognizes security parameters") {
+  {
     val conf = ConfigFactory.parseMap(
       Map[String, String](KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
         KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092",
@@ -66,17 +66,31 @@ class KafkaPluginSuite extends AnyFunSuite {
         KafkaSecurityParams.SecurityProtocolKey -> "SASL_SSL",
         KafkaSecurityParams.SaslMechanismKey -> "GSSAPI"
       ).asJava)
+    def testCreateKafkaConnection = KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")
 
-    val kafkaConnection = KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")
+    test("Test Kafka config parser recognizes security parameters") {
+      val kafkaConnection = testCreateKafkaConnection
 
-    assert(kafkaConnection.security.isDefined)
-    assert(kafkaConnection.security.get.securityProtocol == "SASL_SSL")
-    assert(kafkaConnection.security.get.saslMechanism.isDefined)
-    assert(kafkaConnection.security.get.saslMechanism.get == "GSSAPI")
-    assert(kafkaConnection.bootstrapServers == "127.0.0.1:8081")
-    assert(kafkaConnection.schemaRegistryUrl == "localhost:9092")
-    assert(kafkaConnection.clientId == "dummyClientId")
-    assert(kafkaConnection.topicName == "dummyTopicName")
+      assert(kafkaConnection.security.isDefined)
+      assert(kafkaConnection.security.get.securityProtocol == "SASL_SSL")
+      assert(kafkaConnection.security.get.saslMechanism.isDefined)
+      assert(kafkaConnection.security.get.saslMechanism.get == "GSSAPI")
+      assert(kafkaConnection.bootstrapServers == "127.0.0.1:8081")
+      assert(kafkaConnection.schemaRegistryUrl == "localhost:9092")
+      assert(kafkaConnection.clientId == "dummyClientId")
+      assert(kafkaConnection.topicName == "dummyTopicName")
+    }
+
+    test("KafkaSecurityParams correctly converts to a Map (for a DataFrameWriter usage)") {
+      val kafkaConnection = testCreateKafkaConnection
+
+      val expected = Some(Map(
+        "kafka.security.protocol" -> "SASL_SSL",
+        "kafka.sasl.mechanism" -> "GSSAPI"
+      ))
+
+      assert(kafkaConnection.security.map(_.toMap) == expected)
+    }
   }
 
   test("Test Kafka config parser throws an exception if required properties are missing") {
