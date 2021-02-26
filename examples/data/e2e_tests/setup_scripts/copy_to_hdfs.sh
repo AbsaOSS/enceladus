@@ -17,7 +17,7 @@ SRC_DIR=$(dirname "$0")
 DATA_DIR="${SRC_DIR}/../data/hdfs"
 STD_DIR="${DATA_DIR}/std"
 REF_DIR="${DATA_DIR}/ref"
-PUBLISH_DIR="${DATA_DIR}/publish"
+#PUBLISH_DIR="${DATA_DIR}/publish"
 TARGET_DIR=""
 TO_CREATE=""
 
@@ -54,4 +54,4 @@ fi
 
 hdfs dfs -put "$STD_DIR" "$TARGET_DIR"/std
 hdfs dfs -put "$REF_DIR" "$TARGET_DIR"/ref
-hdfs dfs -put "$PUBLISH_DIR" "$TARGET_DIR"/publish
+#hdfs dfs -put "$PUBLISH_DIR" "$TARGET_DIR"/publish

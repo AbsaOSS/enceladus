@@ -3,11 +3,11 @@
     "exportVersion": 1
   },
   "item": {
-    "name": "mapSchema",
+    "name": "roomsSchema",
     "description": "",
     "fields": [
       {
-        "name": "string",
+        "name": "place",
         "type": "string",
         "path": "",
         "elementType": null,
@@ -15,10 +15,10 @@
         "nullable": false,
         "metadata": {},
         "children": [],
-        "absolutePath": "string"
+        "absolutePath": "place"
       },
       {
-        "name": "order",
+        "name": "opening_hours",
         "type": "string",
         "path": "",
         "elementType": null,
@@ -26,7 +26,7 @@
         "nullable": false,
         "metadata": {},
         "children": [],
-        "absolutePath": "order"
+        "absolutePath": "opening_hours"
       }
     ]
   }

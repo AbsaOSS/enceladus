@@ -17,7 +17,7 @@
         "pluginName" : "BashPlugin",
         "name": "Standardization",
         "order" : 0,
-        "args" : ["#{spark-submit}# #{spark-conf}# --class za.co.absa.enceladus.standardization.StandardizationJob #{enceladus-job-jar}# #{credentials}# #{dataset}# --raw-format csv --header true "],
+        "args" : ["#{spark-submit}# #{spark-conf}# --class za.co.absa.enceladus.standardization.StandardizationJob #{enceladus-job-jar}# #{credentials}# #{dataset}# --raw-format json "],
         "writeArgs": []
     },
       {

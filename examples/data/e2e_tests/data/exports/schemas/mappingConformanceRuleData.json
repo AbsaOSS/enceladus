@@ -1,0 +1,134 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "mappingConformanceRuleData",
+    "description": "",
+    "fields": [
+      {
+        "name": "property",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "property"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "name"
+      },
+      {
+        "name": "location",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "location"
+      },
+      {
+        "name": "adress",
+        "type": "struct",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [
+          {
+            "name": "street",
+            "type": "string",
+            "path": "adress",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "adress.street"
+          },
+          {
+            "name": "town",
+            "type": "string",
+            "path": "adress",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "adress.town"
+          },
+          {
+            "name": "codes",
+            "type": "array",
+            "path": "adress",
+            "elementType": "string",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "adress.codes"
+          }
+        ],
+        "absolutePath": "adress"
+      },
+      {
+        "name": "devices",
+        "type": "array",
+        "path": "",
+        "elementType": "string",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "devices"
+      },
+      {
+        "name": "accesses",
+        "type": "array",
+        "path": "",
+        "elementType": "struct",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [
+          {
+            "name": "place",
+            "type": "string",
+            "path": "accesses",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "accesses.place"
+          },
+          {
+            "name": "time",
+            "type": "string",
+            "path": "accesses",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "accesses.time"
+          }
+        ],
+        "absolutePath": "accesses"
+      }
+    ]
+  }
+}

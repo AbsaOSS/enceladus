@@ -61,8 +61,8 @@ curl -v \
     -D $HEADERS_FILE \
     "$URL/api/login?username=$USER&password=$PASSWORD"
 
-#import_function $SCHEMA_DIR "schema"
-#import_function $MAPPING_TABLE_DIR "mappingTable"
+import_function $SCHEMA_DIR "schema"
+import_function $MAPPING_TABLE_DIR "mappingTable"
 import_function $DATASET_DIR "dataset"
 
 rm $COOKIE_FILE

@@ -3,10 +3,10 @@
     "exportVersion": 1
   },
   "item": {
-    "name": "ConformanceRuleMappingTable",
+    "name": "locationMappingTable",
     "description": "",
-    "hdfsPath": "/std/map",
-    "schemaName": "mapSchema",
+    "hdfsPath": "/std/map/location",
+    "schemaName": "locationSchema",
     "schemaVersion": 1,
     "defaultMappingValue": []
   }

@@ -5,22 +5,52 @@
   "item": {
     "name": "mappingConformanceRule",
     "description": "",
-    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPath": "/std/mappingConcormanceRuleData",
     "hdfsPublishPath": "/publish/mappingConformanceRule",
-    "schemaName": "conformanceRulesData",
+    "schemaName": "mappingConformanceRuleData",
     "schemaVersion": 1,
     "conformance": [
       {
         "_t": "MappingConformanceRule",
         "order": 0,
         "controlCheckpoint": false,
-        "mappingTable": "ConformanceRuleMappingTable",
+        "mappingTable": "locationMappingTable",
         "mappingTableVersion": 1,
         "attributeMappings": {
-          "string": "string"
+          "location": "location"
         },
-        "targetAttribute": "order",
-        "outputColumn": "order",
+        "targetAttribute": "show",
+        "outputColumn": "show",
+        "isNullSafe": false,
+        "mappingTableFilter": null,
+        "overrideMappingTableOwnFilter": false
+      },
+      {
+        "_t": "MappingConformanceRule",
+        "order": 1,
+        "controlCheckpoint": false,
+        "mappingTable": "roomsMappingTable",
+        "mappingTableVersion": 1,
+        "attributeMappings": {
+          "place": "accesses.place"
+        },
+        "targetAttribute": "opening_hours",
+        "outputColumn": "accesses.new_opening_hours",
+        "isNullSafe": false,
+        "mappingTableFilter": null,
+        "overrideMappingTableOwnFilter": false
+      },
+      {
+        "_t": "MappingConformanceRule",
+        "order": 2,
+        "controlCheckpoint": false,
+        "mappingTable": "townsMappingTable",
+        "mappingTableVersion": 1,
+        "attributeMappings": {
+          "town": "adress.town"
+        },
+        "targetAttribute": "shortcut",
+        "outputColumn": "adress.town_shortage",
         "isNullSafe": false,
         "mappingTableFilter": null,
         "overrideMappingTableOwnFilter": false
