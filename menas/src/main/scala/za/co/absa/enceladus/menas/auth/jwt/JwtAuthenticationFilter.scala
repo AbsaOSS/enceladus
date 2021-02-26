@@ -75,8 +75,7 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
 
   private def parseJwtAuthorities(jwtClaims: Claims): util.List[SimpleGrantedAuthority] = {
     val groups: Seq[String] = Option(jwtClaims.get(RolesKey, classOf[util.List[String]]))
-      .getOrElse(new util.ArrayList[String]())
-      .asScala
+    .fold(Seq.empty[String])(_.asScala.toSeq)
 
     groups.map(k => new SimpleGrantedAuthority(k)).asJava
   }

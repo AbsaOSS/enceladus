@@ -40,7 +40,7 @@ menas.auth.jwt.lifespan.hours=8
 menas.auth.mechanism=inmemory
 # Must be defined and non empty
 menas.auth.admin.role=ROLE_ADMIN
-#menas.auth.roles.regex=^[A-Za-z]+_ADMIN$
+#menas.auth.roles.regex=^[A-z]+_ADMIN$
 
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
@@ -162,4 +162,3 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 #javax.net.ssl.trustStorePassword=somePassword
 #javax.net.ssl.keyStore=/path/to/keystore.jks
 #javax.net.ssl.keyStorePassword=somePassword
-
