@@ -2,8 +2,8 @@
 {
     "vars": {
       "spark-submit": "spark-submit --num-executors 2 --executor-memory 2G --deploy-mode client",
-      "spark-conf": "--conf 'spark.driver.extraJavaOptions=-Dmenas.rest.uri=http://localhost:8080/menas_war_exploded/api -Dspline.mongodb.name=spline -Dspline.mongodb.url=mongodb://127.0.0.1:27017/'",
-      "enceladus-job-jar": "Projects/enceladus/spark-jobs/target/spark-jobs-2.19.0-SNAPSHOT.jar",
+      "spark-conf": "--conf 'spark.driver.extraJavaOptions=-Dmenas.rest.uri=http://localhost:8080/menas/api -Dspline.mongodb.name=spline -Dspline.mongodb.url=mongodb://127.0.0.1:27017/'",
+      "enceladus-job-jar": "spark-jobs/target/spark-jobs-2.19.0-SNAPSHOT.jar",
       "credentials": "--menas-credentials-file ~/.ssh/menasCredential.properties",
       "ref-std-data-path": "/ref/uppercaseConformanceRule/std",
       "new-std-data-path": "/tmp/conformance-output/standardized-uppercaseConformanceRule-1-2020-03-23-1",
@@ -45,7 +45,7 @@
       },{
         "pluginName" : "InfoFileComparison",
         "name": "InfoFileComparison",
-        "order" : 3,
+        "order" : 3,hdf
         "args" : ["--new-path", "#{new-publish-data-path}#/_INFO", "--ref-path", "#{ref-publish-data-path}#/_INFO", "--out-path", "#{results-log-path}#/publishInfoDiff"],
         "writeArgs": [],
         "dependsOn": "Conformance"
@@ -60,4 +60,3 @@
       }
     ]
   }
-  

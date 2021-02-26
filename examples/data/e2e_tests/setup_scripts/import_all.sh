@@ -34,7 +34,7 @@ if [ "$1" != "with" ]; then
 else
   if [ "$2" = "defaults" ]; then
     USER="user"
-    PASSWORD="password"
+    PASSWORD="changeme"
     URL="http://localhost:8080/menas"
   else
     USER=$2
@@ -61,8 +61,8 @@ curl -v \
     -D $HEADERS_FILE \
     "$URL/api/login?username=$USER&password=$PASSWORD"
 
-import_function $SCHEMA_DIR "schema"
-import_function $MAPPING_TABLE_DIR "mappingTable"
+#import_function $SCHEMA_DIR "schema"
+#import_function $MAPPING_TABLE_DIR "mappingTable"
 import_function $DATASET_DIR "dataset"
 
 rm $COOKIE_FILE
