@@ -67,7 +67,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).
           otherwise(col(ErrorMessage.errorColumnName)))
 
-      val defaultValue = defaultValuesMap.get(rule.outputColumn)
+      val defaultValue = defaultValuesMap.get(rule.targetAttribute)
       // see if we need to apply default value
       defaultValue match {
         case Some(defaultValue) =>

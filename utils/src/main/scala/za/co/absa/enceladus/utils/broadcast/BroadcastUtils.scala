@@ -100,8 +100,6 @@ object BroadcastUtils {
 
     val defaultValueOpt = defaultValueExpr.map(getValueOfSparkExpression)
 
-//    val defaultValueOpt = defaultValueOpt.map(a => getValueOfSparkExpression(a))
-
     val lambda = numberOfArguments match {
       case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
       case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)

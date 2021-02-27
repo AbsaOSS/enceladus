@@ -62,7 +62,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
       val arrayErrorCondition = col(rule.outputColumn).isNull.and(expCtx.getArrayErrorCondition(rule.outputColumn))
       log.debug(s"Array Error Condition = $arrayErrorCondition")
-      addErrorsAndDefaults(placedDf, rule.outputColumn, defaultValuesMap.get(rule.outputColumn), mappingErrUdfCall, arrayErrorCondition)
+      addErrorsAndDefaults(placedDf, rule.outputColumn, defaultValuesMap.get(rule.targetAttribute), mappingErrUdfCall, arrayErrorCondition)
     } else {
       val outputElements = rule.allOutputColumns().map { case (outputColumn: String, targetAttribute: String) =>
         val newOutputColName = if (outputColumn.contains(".")) outputColumn.split("\\.").last else outputColumn
@@ -87,16 +87,6 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     }
 
     collectIfNeeded(expCtx, explosionState, withErrorsDf)
-  }
-
-  private def getFlatOutputsWithDefaults(outputsStructColumnName: String, defaultValuesMap: Map[String, String]) = {
-    rule.allOutputColumns().keys.map(colName => {
-      val column = col(outputsStructColumnName + "." + colName)
-      defaultValuesMap.get(colName) match {
-        case Some(defValue) => when(column.isNotNull, column).otherwise(expr(defValue))
-        case None => column
-      }
-    }).toSeq
   }
 
   private def getErrorCondition(expCtx: ExplosionContext, outputsStructColumnName: String) = {
