@@ -59,7 +59,7 @@ var GenericService = new function () {
   };
 
   this.getLandingPageInfo = function() {
-    RestClient.get("api/landing/info").then((oData) => {
+    return RestClient.get("api/landing/info").then((oData) => {
       model().setProperty("/landingPageInfo", oData);
       const graphData = jQuery.extend({}, oData.todaysRunsStatistics);
       delete graphData["total"];
@@ -74,6 +74,7 @@ var GenericService = new function () {
           "labels": keys
       };
       model().setProperty("/landingPageInfo/todayRunsGraph", graph);
+      return oData;
     }).fail(() => {
       sap.m.MessageBox.error("Failed to load landing page information");
     })
