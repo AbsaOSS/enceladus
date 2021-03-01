@@ -13,15 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas
+package za.co.absa.enceladus.menas.exceptions
 
-import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+case class EndpointDisabled(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
 
-@Configuration
-class MvcConfig extends WebMvcConfigurer {
-  override def addViewControllers(registry: ViewControllerRegistry) {
-    registry.addViewController("/login").setViewName("login")
-  }
-}
