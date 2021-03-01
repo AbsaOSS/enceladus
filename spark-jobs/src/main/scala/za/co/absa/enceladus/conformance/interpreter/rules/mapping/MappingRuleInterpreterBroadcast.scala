@@ -92,8 +92,9 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val flattenedColumns = rule.allOutputColumns().map{
       case (outputColumn, targetAttribute) => {
         val fieldInOutputs = col(outputsStructColumnName + "." + targetAttribute)
-        defaultMappingValues.get(outputColumn) match {
-          case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as outputColumn).otherwise(expr(defValue))
+        defaultMappingValues.get(targetAttribute) match {
+          case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as outputColumn)
+            .otherwise(expr(defValue)) as outputColumn
           case None => fieldInOutputs as outputColumn
         }
       }}.toSeq ++
@@ -119,8 +120,8 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     NestedArrayTransformations.nestedWithColumnMap(df, parentPath, parentPath, column => {
       val flattenedOutputs = rule.allOutputColumns().map { case (outputName, targetAttribute) =>
         val newOutputColName = if (outputName.contains(".")) outputName.split("\\.").last else outputName
-        val fieldInOutputs = column.getField(outputsColumnName).getField(newOutputColName)
-        defaultMappingValues.get(outputName) match {
+        val fieldInOutputs = column.getField(outputsColumnName).getField(targetAttribute)
+        defaultMappingValues.get(targetAttribute) match {
           case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as newOutputColName).otherwise(expr(defValue))
           case None => fieldInOutputs as newOutputColName
         }

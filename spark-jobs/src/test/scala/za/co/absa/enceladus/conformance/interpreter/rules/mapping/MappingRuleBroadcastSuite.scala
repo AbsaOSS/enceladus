@@ -63,6 +63,24 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/simpleMultiOutSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/simpleMultiOutResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputs)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
   test("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
@@ -81,6 +99,24 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs with defaults") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/simpleMultiOutSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValMultiOutResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputsWithDefaults)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
   test("Test broadcasting rule can output a struct column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
@@ -90,6 +126,25 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule can output a struct column and another output") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/nested1SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/nested1ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule1Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1",
+        $"array2", $"errCol", $"conformedNum1", $"conformedInt")
       .cache
 
     val actualSchema = dfOut.schema.treeString
@@ -135,12 +190,49 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
+  test("Test broadcasting rule can work for struct fields at different levels and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/nested3SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/nested3ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule3Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2",
+        $"conformedNum3", $"conformedInt" , $"errCol")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
   test("Test broadcasting rule can work on arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  test("Test broadcasting rule can work on arrays and multi outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")

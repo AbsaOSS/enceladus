@@ -82,7 +82,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       val arrayErrorCondition = getErrorCondition(expCtx, outputsStructColumnName)
 
       log.debug(s"Array Error Condition = $arrayErrorCondition")
-      flattenOutputsAndAddErrosAndDefaults(placedDf, parentPath, rule.allOutputColumns().keys.toSeq,
+      flattenOutputsAndAddErrosAndDefaults(placedDf, parentPath, rule.allOutputColumns(),
         outputsStructColumnName, defaultValuesMap, mappingErrUdfCall, arrayErrorCondition)
     }
 
@@ -145,7 +145,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private def flattenOutputsAndAddErrosAndDefaults(df: DataFrame,
                                 parentPath: String,
-                                outputCols: Seq[String],
+                                outputCols: Map[String, String],
                                 outputsStructColumnPath: String,
                                 defaultMappingValues: Map[String, String],
                                 mappingErrUdfCall: Column,
@@ -160,14 +160,14 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       NestedArrayTransformations.nestedWithColumnAndErrorMap(df, parentPath, parentPath,
         ErrorMessage.errorColumnName,
         c => {
-          val defaultAppliedStructCols: Seq[Column] = outputCols.map(outputName => {
+          val defaultAppliedStructCols: Seq[Column] = outputCols.map{case (outputName, targetAttribute) => {
             val newOutputColName = if (outputName.contains(".")) outputName.split("\\.").last else outputName
             val fieldInOutputs = c.getField(outputsStructColumnName).getField(newOutputColName)
             defaultMappingValues.get(outputName) match {
               case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as newOutputColName).otherwise(expr(defValue))
               case None => fieldInOutputs as newOutputColName
             }
-          }).toSeq
+          }}.toSeq
           struct(otherStructFields ++ defaultAppliedStructCols: _*)
         }, _ => {
           when(errorConditions, mappingErrUdfCall).otherwise(null) // scalastyle:ignore null
