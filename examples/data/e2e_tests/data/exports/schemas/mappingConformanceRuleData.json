@@ -40,7 +40,7 @@
         "absolutePath": "location"
       },
       {
-        "name": "adress",
+        "name": "address",
         "type": "struct",
         "path": "",
         "elementType": null,
@@ -51,38 +51,38 @@
           {
             "name": "street",
             "type": "string",
-            "path": "adress",
+            "path": "address",
             "elementType": null,
             "containsNull": null,
             "nullable": false,
             "metadata": {},
             "children": [],
-            "absolutePath": "adress.street"
+            "absolutePath": "address.street"
           },
           {
             "name": "town",
             "type": "string",
-            "path": "adress",
+            "path": "address",
             "elementType": null,
             "containsNull": null,
             "nullable": false,
             "metadata": {},
             "children": [],
-            "absolutePath": "adress.town"
+            "absolutePath": "address.town"
           },
           {
             "name": "codes",
             "type": "array",
-            "path": "adress",
+            "path": "address",
             "elementType": "string",
             "containsNull": false,
             "nullable": false,
             "metadata": {},
             "children": [],
-            "absolutePath": "adress.codes"
+            "absolutePath": "address.codes"
           }
         ],
-        "absolutePath": "adress"
+        "absolutePath": "address"
       },
       {
         "name": "devices",

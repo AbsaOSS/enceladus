@@ -47,10 +47,10 @@
         "mappingTable": "townsMappingTable",
         "mappingTableVersion": 1,
         "attributeMappings": {
-          "town": "adress.town"
+          "town": "address.town"
         },
         "targetAttribute": "shortcut",
-        "outputColumn": "adress.town_shortage",
+        "outputColumn": "address.town_shortage",
         "isNullSafe": false,
         "mappingTableFilter": null,
         "overrideMappingTableOwnFilter": false
