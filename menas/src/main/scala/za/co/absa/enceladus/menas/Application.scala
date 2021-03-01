@@ -23,9 +23,11 @@ import org.springframework.context.annotation._
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
 @EnableAsync
+@EnableScheduling
 @Configuration
 class Application() {
   private val DefaultCorePoolSize = 12

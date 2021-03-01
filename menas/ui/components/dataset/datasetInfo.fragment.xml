@@ -13,42 +13,67 @@
   ~ limitations under the License.
   -->
 
-
-<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
-                         xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <form:SimpleForm id="info">
-        <form:content>
-            <Label text="Dataset"/>
-            <Text id="currentDatasetName" text="{dataset>/name}"/>
-            <Label text="Description"/>
-            <Text id="currentDatasetDescription"
-                  text="{dataset>/description}"/>
-            <Label text="Version"/>
-            <Text id="currentDatasetVersion" text="{dataset>/version}"/>
-            <Label text="HDFS raw data folder path"/>
-            <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}"/>
-            <Label text="HDFS conformed data publish folder path"/>
-            <Text id="currentDatasetPublishedPath"
-                  text="{dataset>/hdfsPublishPath}"/>
-            <Label text="Schema"/>
-            <Link
-                text="{dataset>/schemaName} (v{dataset>/schemaVersion})"
-                press="toSchema"
-                cust:name="{dataset>/schemaName}"
-                cust:version="{dataset>/schemaVersion}"
-                id="currentDatasetSchema"/>
-            <Label text="Last Update"/>
-            <Text id="currentDatasetLastUpdate"
-                  text="{path: 'dataset>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-            <Label text="Last Update By"/>
-            <Text id="currentDatasetUserUpdated"
-                  text="{dataset>/userUpdated}"/>
-            <Label text="Created"/>
-            <Text id="currentDatasetCreated"
-                  text="{path: 'dataset>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-            <Label text="Created By"/>
-            <Text id="currentDatasetUserCreated"
-                  text="{dataset>/userCreated}"/>
-        </form:content>
-    </form:SimpleForm>
+<core:FragmentDefinition xmlns="sap.m"
+  xmlns:core="sap.ui.core" xmlns:f="sap.ui.layout.form"
+  xmlns:l="sap.ui.layout" xmlns:table="sap.ui.table"
+  xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+  <f:Form editable="false" id="info" class="formWithSmallContainerMargins">
+    <f:layout>
+      <f:ResponsiveGridLayout labelSpanXL="4"
+        labelSpanL="3" labelSpanM="4" labelSpanS="12"
+        adjustLabelSpan="false" emptySpanXL="0" emptySpanL="4"
+        emptySpanM="0" emptySpanS="0" columnsXL="1" columnsL="1"
+        columnsM="1" singleContainerFullSize="true"></f:ResponsiveGridLayout>
+    </f:layout>
+    <f:formContainers>
+      <f:FormContainer>
+        <f:FormElement label="Dataset Name">
+          <Text id="currentDatasetName" text="{dataset>/name}" />
+        </f:FormElement>
+        <f:FormElement label="Dataset Version">
+          <Text id="currentDatasetVersion" text="{dataset>/version}" />
+        </f:FormElement>
+        <f:FormElement label="Dataset Description">
+          <Text id="currentDatasetDescription" text="{dataset>/description}" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer formElements="{path: '/currentDataset/propertiesDisplay', sorter: {path:'order'}}">
+        <f:FormElement label="{name}">
+          <Text text="{value}" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="Schema">
+          <Link text="{dataset>/schemaName} (v{dataset>/schemaVersion})"
+            press="toSchema" cust:name="{dataset>/schemaName}"
+            cust:version="{dataset>/schemaVersion}"
+            id="currentDatasetSchema" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="Raw data folder path">
+          <Text id="currentDatasetRawPath" text="{dataset>/hdfsPath}" />
+        </f:FormElement>
+        <f:FormElement label="Conformed data publish folder path">
+          <Text id="currentDatasetPublishedPath" text="{dataset>/hdfsPublishPath}" />
+        </f:FormElement>
+      </f:FormContainer>
+      <f:FormContainer>
+        <f:FormElement label="Last Updated">
+          <Text id="currentDatasetLastUpdate" 
+            text="{path: 'dataset>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
+        </f:FormElement>
+        <f:FormElement label="Last Updated By">
+          <Text id="currentDatasetUserUpdated" text="{dataset>/userUpdated}" />
+        </f:FormElement>
+        <f:FormElement label="Created">
+          <Text id="currentDatasetCreated" 
+            text="{path: 'dataset>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}" />
+        </f:FormElement>
+        <f:FormElement label="Created By">
+          <Text id="currentDatasetUserCreated" text="{dataset>/userCreated}" />
+        </f:FormElement>
+      </f:FormContainer>
+    </f:formContainers>
+  </f:Form>
 </core:FragmentDefinition>

@@ -19,6 +19,7 @@ import java.io.File
 import java.nio.file.Files
 
 import org.apache.commons.io.FileUtils
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.mockito.{ArgumentMatchers, Mockito}
@@ -26,9 +27,12 @@ import org.scalatest.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.atum.AtumImplicits._
+import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.ControlUtils
 import za.co.absa.enceladus.common.config.PathConfig
+import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
 import za.co.absa.enceladus.model.test.factories.RunFactory
@@ -36,13 +40,36 @@ import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
-import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 
 import scala.util.control.NonFatal
 
 class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar {
+
+  private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
+    private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
+    private       val pathCfg: PathConfig = PathConfig(
+      PathWithFs(rawPath, fs),
+      PathWithFs(s"/$tempDir/some/publish/path/not/used/here", fs),
+      PathWithFs(stdPath, fs)
+    )
+    private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+
+    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig): Assertion = {
+      prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
+      testDataset.write.csv(stdPath)
+
+      // Atum framework initialization is part of the 'prepareStandardization'
+      import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
+      spark.disableControlMeasuresTracking()
+
+      val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
+      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+
+      // key with prefix from test's application.conf
+      infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+    }
+  }
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -50,7 +77,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     implicit val dao: MenasDAO = mock[MenasDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
-    // fallback on local fs, we can afford to prepare test files locally:
+    // fallbacking on local fs we can afford to prepare test files locally:
     val tempDir = Files.createTempDirectory("std_exec_temp").toAbsolutePath.toString
     val (rawPath, stdPath) = (s"$tempDir/raw/path", s"$tempDir/std/path")
 
@@ -82,32 +109,9 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     // This property is expected to appear in the _INFO file, prefixed.
     Mockito.when(dao.getDatasetPropertiesForInfoFile("DatasetA", 1)).thenReturn(Map("keyFromDs1" -> "itsValue1"))
 
-    val std = new StandardizationExecution {
-      val dataset: Dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
-      val pathCfg: PathConfig = PathConfig(
-        PathWithFs(rawPath, fs),
-        PathWithFs(s"/$tempDir/some/publish/path/not/used/here", fs),
-        PathWithFs(stdPath, fs)
-      )
-      val prepResult: PreparationResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
+    val std = new StandardizationExecutionTest(tempDir, rawPath, stdPath)
 
-      def testRun: Assertion = {
-        prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
-        someDataset.write.csv(stdPath)
-
-        // Atum framework initialization is part of the 'prepareStandardization'
-        import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
-        spark.disableControlMeasuresTracking()
-
-        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
-
-        // key with prefix from test's application.conf
-        infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
-      }
-    }
-
-    std.testRun
+    std.testRun(someDataset)
     safeDeleteTestDir(tempDir)
   }
 
@@ -115,7 +119,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     try {
       FileUtils.deleteDirectory(new File(path))
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to delete a test directory $path")
+      case NonFatal(_) => log.warn(s"Unable to delete a test directory $path")
     }
   }
 
