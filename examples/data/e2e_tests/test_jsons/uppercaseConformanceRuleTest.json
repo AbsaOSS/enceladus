@@ -45,7 +45,7 @@
       },{
         "pluginName" : "InfoFileComparison",
         "name": "InfoFileComparison",
-        "order" : 3,hdf
+        "order" : 3,
         "args" : ["--new-path", "#{new-publish-data-path}#/_INFO", "--ref-path", "#{ref-publish-data-path}#/_INFO", "--out-path", "#{results-log-path}#/publishInfoDiff"],
         "writeArgs": [],
         "dependsOn": "Conformance"
