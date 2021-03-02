@@ -64,7 +64,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
         "a PropertyDefinition is created" should {
           "return the created PropertyDefinition" in {
             val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
-            val response = sendPost[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
+            val response = sendPostByAdmin[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
             assertCreated(response)
             if (locationHeaderSupport) {
               assert(response.getHeaders.getFirst("Location").contains("/api/properties/datasets/dummyName/1"))
@@ -78,7 +78,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
         "a PropertyDefinition is created with most of default values" should {
           "return the created PropertyDefinition" in {
             val propertyDefinition = minimalPdCreatePayload("smallPd", "default1")
-            val response = sendPost[String, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
+            val response = sendPostByAdmin[String, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
             assertCreated(response)
 
             val actual = response.getBody
@@ -91,7 +91,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
             propertyDefinitionFixture.add(propertyDefinition.copy(disabled = true))
 
-            val response = sendPost[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition.setVersion(0)))
+            val response = sendPostByAdmin[PropertyDefinition, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition.setVersion(0)))
             assertCreated(response)
 
             val actual = response.getBody
@@ -105,7 +105,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
           propertyDefinitionFixture.add(propertyDefinition)
 
-          val response = sendPost[PropertyDefinition, Validation](urlPattern, bodyOpt = Some(propertyDefinition))
+          val response = sendPostByAdmin[PropertyDefinition, Validation](urlPattern, bodyOpt = Some(propertyDefinition))
           assertBadRequest(response)
 
           val actual = response.getBody
@@ -113,7 +113,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           assert(actual == expected)
         }
         "an invalid PD payload is sent" in {
-          val response = sendPost[String, String](urlPattern, bodyOpt = Some(invalidPayload("somePd1")))
+          val response = sendPostByAdmin[String, String](urlPattern, bodyOpt = Some(invalidPayload("somePd1")))
           assertBadRequest(response)
 
           response.getBody shouldBe "The suggested value invalidOptionC cannot be used: Value 'invalidOptionC' is not one of the allowed values (a, b)."
@@ -130,7 +130,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
 
           assertOk(response)
 
@@ -145,7 +145,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
 
           assertOk(response)
 
@@ -165,7 +165,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
           assertOk(response)
 
           val actual = response.getBody
@@ -183,7 +183,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
             propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-            val response = sendDelete[PropertyDefinition, String](deleteUrl)
+            val response = sendDeleteByAdmin[PropertyDefinition, String](deleteUrl)
             assertOk(response)
 
             val actual = response.getBody
@@ -195,7 +195,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
       "no PropertyDefinition with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
           assertOk(response)
 
           val actual = response.getBody

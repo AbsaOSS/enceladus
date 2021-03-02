@@ -20,14 +20,12 @@ import java.util.UUID
 import javax.servlet.http.{Cookie, HttpServletRequest, HttpServletResponse}
 import org.joda.time.{DateTime, DateTimeZone, Hours}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
-import org.springframework.security.core.Authentication
+import org.springframework.security.core.{Authentication, GrantedAuthority}
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.menas.auth.AuthConstants._
 import za.co.absa.enceladus.menas.auth.jwt.JwtFactory
-
-import scala.collection.JavaConverters._
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
@@ -36,6 +34,9 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
                                                      @Value("${timezone}")
                                                      timezone: String)
   extends SimpleUrlAuthenticationSuccessHandler {
+
+  @Value("${menas.auth.roles.regex:}")
+  private val rolesRegex: String = ""
 
   override def onAuthenticationSuccess(request: HttpServletRequest,
                                        response: HttpServletResponse,
@@ -47,11 +48,21 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
     val expiry = Hours.hours(jwtLifespanHours).toStandardSeconds
     val jwtExpirationTime = DateTime.now(DateTimeZone.forID(timezone)).plus(expiry).toDate
 
+    val groups = user.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority)
+
+    val filteredGroups = if (rolesRegex.isEmpty) {
+      groups
+    } else {
+      val regex = rolesRegex.r
+      groups.filter(authority => regex.findFirstIn(authority).isDefined)
+    }
+
     val jwt = jwtFactory
       .jwtBuilder()
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
       .claim(CsrfTokenKey, csrfToken)
+      .claim(RolesKey, filteredGroups)
       .compact()
 
     response.addHeader(JwtKey, jwt)

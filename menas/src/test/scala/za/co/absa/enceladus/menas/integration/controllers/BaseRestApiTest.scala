@@ -45,9 +45,14 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   val user: String = ""
   @Value("${menas.auth.inmemory.password}")
   val passwd: String = ""
+  @Value("${menas.auth.inmemory.admin.user}")
+  val adminUser: String = ""
+  @Value("${menas.auth.inmemory.admin.password}")
+  val adminPasswd: String = ""
 
   private lazy val baseUrl = s"http://localhost:$port/api"
   private lazy val authHeaders = getAuthHeaders(user, passwd)
+  private lazy val authHeadersAdmin = getAuthHeaders(adminUser, adminPasswd)
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -91,6 +96,11 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   def sendPost[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.POST, urlPath, headers, bodyOpt)
+  }
+
+  def sendPostByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                     bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    sendByAdmin(HttpMethod.POST, urlPath, headers, bodyOpt)
   }
 
   def sendPostUploadFile[T](urlPath: String,
@@ -141,6 +151,11 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     send(HttpMethod.DELETE, urlPath, headers)
   }
 
+  def sendDeleteByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                       bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    sendByAdmin(HttpMethod.DELETE, urlPath, headers)
+  }
+
   def sendDeleteAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.DELETE, urlPath, headers)
@@ -151,18 +166,28 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     Future { send(method, urlPath, headers, bodyOpt) }
   }
 
-  def send[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
-                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+  private def sendBase[T, B](method: HttpMethod, urlPath: String, headers: HttpHeaders, bodyOpt: Option[B], ct: ClassTag[T]) = {
     val url = s"$baseUrl/$urlPath"
-    headers.addAll(authHeaders)
     headers.add(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
     val httpEntity = bodyOpt match {
       case Some(body) => new HttpEntity[B](body, headers)
-      case None       => new HttpEntity[B](headers)
+      case None => new HttpEntity[B](headers)
     }
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
 
     restTemplate.exchange(url, method, httpEntity, clazz)
+  }
+
+  private def send[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
+                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    headers.addAll(authHeaders)
+    sendBase(method, urlPath, headers, bodyOpt, ct)
+  }
+
+  private def sendByAdmin[B, T](method: HttpMethod, urlPath: String, headers: HttpHeaders = HttpHeaders.EMPTY,
+                        bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    headers.addAll(authHeadersAdmin)
+    sendBase(method, urlPath, headers, bodyOpt, ct)
   }
 
   def upload[T](urlPath: String,

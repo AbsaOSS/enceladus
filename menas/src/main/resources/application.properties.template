@@ -38,6 +38,9 @@ menas.auth.jwt.lifespan.hours=8
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 menas.auth.mechanism=inmemory
+# Must be defined and non empty
+menas.auth.admin.role=ROLE_ADMIN
+#menas.auth.roles.regex=^[A-z]+_ADMIN$
 
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
@@ -50,6 +53,8 @@ menas.auth.mechanism=inmemory
 
 menas.auth.inmemory.user=user
 menas.auth.inmemory.password=changeme
+menas.auth.inmemory.admin.user=menas_admin
+menas.auth.inmemory.admin.password=admin123
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
@@ -157,6 +162,3 @@ menas.oozie.splineMongoURL=mongodb://localhost:27017
 #javax.net.ssl.trustStorePassword=somePassword
 #javax.net.ssl.keyStore=/path/to/keystore.jks
 #javax.net.ssl.keyStorePassword=somePassword
-
-# Temporary fix for locking of property definition updates #1673
-# menas.feature.property.definitions.allowUpdate=false
