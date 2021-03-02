@@ -65,7 +65,7 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>fixed-width_${scala.compat.version}</artifactId>
-            <version>0.1.0</version>
+            <version>${fixed.width.version}</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>

@@ -21,7 +21,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
-  def addViewControllers(registry: ViewControllerRegistry) {
+  override def addViewControllers(registry: ViewControllerRegistry) {
     registry.addViewController("/login").setViewName("login")
   }
 }
