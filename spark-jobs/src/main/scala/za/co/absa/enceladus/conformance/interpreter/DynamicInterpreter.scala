@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.hadoop.fs.FileSystem
+import org.apache.spark.sql.execution.ExtendedMode
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -27,9 +28,7 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{
-  MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode
-}
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
@@ -362,7 +361,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private def logExecutionPlan(df: DataFrame)(implicit spark: SparkSession): Unit = {
     // Need to check this explicitly since the execution plan generation can take significant amount of time
     if (log.isDebugEnabled) {
-      val explain = ExplainCommand(df.queryExecution.logical, extended = true)
+      val explain = ExplainCommand(df.queryExecution.logical, mode = ExtendedMode)
       spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
         r => log.debug("Output Dataset plan: \n" + r.getString(0))
       }
