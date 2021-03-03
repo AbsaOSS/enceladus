@@ -243,6 +243,7 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <arg>-Xfatal-warnings</arg>
                         <arg>-unchecked</arg>
                         <arg>-deprecation</arg>
+                        <arg>-feature</arg>
                     </args>
                 </configuration>
             </plugin>
