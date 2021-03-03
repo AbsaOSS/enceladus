@@ -265,7 +265,7 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>${dockerfile.maven.version}</version>
                 <configuration>
-                    <repository>${dockerfile.repository}</repository>
+                    <repository>${dockerfile.menas.repository}</repository>
                     <tag>${dockerfile.tag}</tag>
                     <buildArgs>
                         <WAR_FILE>${project.build.finalName}.war</WAR_FILE>

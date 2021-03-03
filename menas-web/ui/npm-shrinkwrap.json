@@ -1,6 +1,6 @@
 {
   "name": "menas-web",
-  "version": "2.19.0-SNAPSHOT",
+  "version": "2.21.0-SNAPSHOT",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
