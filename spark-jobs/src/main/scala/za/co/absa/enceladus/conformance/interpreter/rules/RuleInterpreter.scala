@@ -26,10 +26,7 @@ import za.co.absa.enceladus.conformance.interpreter.exceptions.InvalidDataTypeEx
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import za.co.absa.enceladus.utils.udf.UDFNames
 
 import scala.util.Try
 

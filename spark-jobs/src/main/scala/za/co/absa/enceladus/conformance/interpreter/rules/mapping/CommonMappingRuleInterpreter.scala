@@ -119,7 +119,7 @@ trait CommonMappingRuleInterpreter {
   }
 
   /**
-   * Returns a default value of the output column, if specified, for a particular mapping rule.
+   * Returns a map of the default values of the output columns, if specified, for a particular mapping rule.
    * Default values may be specified for each target attribute in a mapping table and must have the same type as
    * the target attribute and must be presented as a Spark expression string.
    *
