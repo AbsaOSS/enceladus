@@ -58,13 +58,13 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
 
     "be created" when {
       "a simple mapping table dataframe is provided" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id"), Seq("val"))
+        val localMt = LocalMappingTable(dfMt, Seq("id"), Map(""->"val"), Map())
 
         assert(localMt.keyFields.length == 1)
         assert(localMt.keyTypes.length == 1)
         assert(localMt.map.size == 3)
 
-        assert(localMt.targetAttributes == Seq("val"))
+        assert(localMt.outputColumns.values.toSeq == Seq("val"))
         assert(localMt.keyFields.head == "id")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
         assert(localMt.valueTypes.isInstanceOf[Seq[StringType]])
@@ -74,13 +74,13 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
       }
 
       "a struct type target attribute is provided" in {
-        val localMt = LocalMappingTable(dfComplexMt, Seq("id"), Seq("sval"))
+        val localMt = LocalMappingTable(dfComplexMt, Seq("id"), Map(""->"sval"), Map())
 
         assert(localMt.keyFields.length == 1)
         assert(localMt.keyTypes.length == 1)
         assert(localMt.map.size == 3)
 
-        assert(localMt.targetAttributes == Seq("sval"))
+        assert(localMt.outputColumns.values.toSeq == Seq("sval"))
         assert(localMt.keyFields.head == "id")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
         assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
@@ -88,13 +88,13 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
       }
 
       "a join key is inside a struct" in {
-        val localMt = LocalMappingTable(dfComplexMt, Seq("sval.e"), Seq("sval"))
+        val localMt = LocalMappingTable(dfComplexMt, Seq("sval.e"), Map(""->"sval"), Map())
 
         assert(localMt.keyFields.length == 1)
         assert(localMt.keyTypes.length == 1)
         assert(localMt.map.size == 3)
 
-        assert(localMt.targetAttributes == Seq("sval"))
+        assert(localMt.outputColumns.values.toSeq == Seq("sval"))
         assert(localMt.keyFields.head == "sval.e")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
         assert(localMt.valueTypes.isInstanceOf[Seq[StructType]])
@@ -103,13 +103,13 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
       }
 
       "a join condition having 2 keys" in {
-        val localMt = LocalMappingTable(dfComplexMt, Seq("id", "sval.e"), Seq("sval"))
+        val localMt = LocalMappingTable(dfComplexMt, Seq("id", "sval.e"), Map(""->"sval"), Map())
 
         assert(localMt.keyFields.length == 2)
         assert(localMt.keyTypes.length == 2)
         assert(localMt.map.size == 3)
 
-        assert(localMt.targetAttributes == Seq("sval"))
+        assert(localMt.outputColumns.values.toSeq == Seq("sval"))
         assert(localMt.keyFields.head == "id")
         assert(localMt.keyFields(1) == "sval.e")
         assert(localMt.keyTypes.head.isInstanceOf[NumericType])
@@ -122,49 +122,49 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
     "throw an exception" when {
       "no join keys are provided" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Nil, Seq("val"))
+          LocalMappingTable(dfMt, Nil, Map(""->"val"), Map())
         }
       }
 
       "a join key does not exists in the schema" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Seq("dummy"), Seq("val"))
+          LocalMappingTable(dfMt, Seq("dummy"), Map(""->"val"), Map())
         }
       }
 
       "a target attribute provided does not exist in the schema" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Seq("id"), Seq("dummy"))
+          LocalMappingTable(dfMt, Seq("id"), Map(""->"dummy"), Map())
         }
       }
 
       "a join key is an array" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Seq("arr"), Seq("val"))
+          LocalMappingTable(dfMt, Seq("arr"), Map(""->"val"), Map())
         }
       }
 
       "a join key is a struct" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfComplexMt, Seq("sval"), Seq("val"))
+          LocalMappingTable(dfComplexMt, Seq("sval"), Map(""->"val"), Map())
         }
       }
 
       "a join key is inside an array" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfComplexMt, Seq("arst.a"), Seq("val"))
+          LocalMappingTable(dfComplexMt, Seq("arst.a"), Map(""->"val"), Map())
         }
       }
 
       "a target attribute is an array" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Seq("id"), Seq("arr"))
+          LocalMappingTable(dfMt, Seq("id"), Map(""->"arr"), Map())
         }
       }
 
       "a target attribute is inside an array" in {
         intercept[IllegalArgumentException] {
-          LocalMappingTable(dfComplexMt, Seq("id"), Seq("arst.a"))
+          LocalMappingTable(dfComplexMt, Seq("id"), Map(""->"arst.a"), Map())
         }
       }
 

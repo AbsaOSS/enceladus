@@ -135,7 +135,7 @@ object NestedTestCaseFactory {
 
   val arrayMappingRule2Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array2.inner2.conformedNum4",
-    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "val1")),
+    additionalOutputs = Some(Map("array2.inner2.conformedSval" -> "sval")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9"),
@@ -151,7 +151,7 @@ object NestedTestCaseFactory {
 
   val arrayMappingRule3Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array1.conformedNum4",
-    additionalOutputs = Some(Map("array.conformedInt" -> "val1")),
+    additionalOutputs = Some(Map("array1.conformedLong" -> "lkey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array1.key7", "ikey" -> "key1"),
@@ -167,7 +167,7 @@ object NestedTestCaseFactory {
 
   val arrayMappingRule4Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array2.inner2.struct3.conformedNum5",
-    additionalOutputs = Some(Map("array2.inner2.struct3.conformedInt" -> "val1")),
+    additionalOutputs = Some(Map("array2.inner2.struct3.conformedString" -> "skey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "key1"),
@@ -185,7 +185,7 @@ object NestedTestCaseFactory {
 
   val arrayMappingRule5Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array2.inner2.conformedNum6",
-    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "val1")),
+    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "ikey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array2.inner2.struct3.k1"),

@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import javassist.bytecode.SignatureAttribute.ArrayType
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.expr
-import org.apache.spark.sql.types.{ArrayType, DataType, MapType, StructField, StructType}
+import org.apache.spark.sql.functions.{expr, lit}
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
+import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
 object BroadcastUtils {
@@ -79,7 +79,9 @@ object BroadcastUtils {
       case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
-    val structFields: Seq[StructField] = mappingTable.value.targetAttributes.zip(mappingTable.value.valueTypes)
+    val structFields: Seq[StructField] = mappingTable.value.outputColumns.keys
+      .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
+      .zip(mappingTable.value.valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
 
     UserDefinedFunction(lambda,
@@ -101,11 +103,11 @@ object BroadcastUtils {
     val defaultValueOpt = defaultValueExpr.map(getValueOfSparkExpression)
 
     val lambda = numberOfArguments match {
-      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
-      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)
-      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
-      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
-      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
+      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt, true)
+      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt, true)
+      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt, true)
+      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt, true)
+      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt, true)
       case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
     }
 
@@ -144,78 +146,142 @@ object BroadcastUtils {
     errorUdf
   }
 
-  private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        param1: Any => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1), null)
+  private def mapMultipleOutputs(mappingTable: Broadcast[LocalMappingTable], row: Option[Any]): Row = {
+    row match {
+      case Some(row: Row) => {
+        val as: Map[String, Any] = row.getValuesMap[Any](mappingTable.value.outputColumns.keys.toSeq)
+        val values = as.zip(mappingTable.value.valueTypes).map { case ((field, value), dType) => {
+          if (value == null) {
+            mappingTable.value.defaultValuesMap.getOrElse(field, lit(value).cast(dType).expr.eval())
+          } else value
         }
-      case Some(defaultValue) =>
-        param1: Any => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1), defaultValue)
-        }
+        }.toSeq
+        new GenericRowWithSchema(values.toArray, row.schema)
+      }
+      case None => {
+        val definedDefaults = mappingTable.value.outputColumns.values.toSeq
+          .zip(mappingTable.value.valueTypes).map{case (target, dType) => {
+          mappingTable.value.defaultValuesMap.get(target) match {
+            case None => null
+            case Some(x) => {
+              val value = lit(x).cast(dType).expr.eval()
+              value
+            }
+          }
+        }}
+        if (definedDefaults.forall(_ == null)) null
+        else Row.fromSeq(definedDefaults)
+      }
     }
   }
 
-  private def getMappingLambdaParam2(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        (param1: Any, param2: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2), null)
+  private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any], hasSingleOutput: Boolean = false): AnyRef = {
+    if (hasSingleOutput) {
+        defaultValueOpt match {
+          case None =>
+            param1: Any => {
+              val mt = mappingTable.value.map
+              mt.getOrElse(Seq(param1), null)
+            }
+          case Some(defaultValue) =>
+            param1: Any => {
+              val mt = mappingTable.value.map
+              mt.getOrElse(Seq(param1), defaultValue)
+            }
         }
-      case Some(defaultValue) =>
-        (param1: Any, param2: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2), defaultValue)
-        }
+    } else {
+      (param1: Any) => {
+        val row = mappingTable.value.map.get(Seq(param1))
+        mapMultipleOutputs(mappingTable, row)
+      }
     }
   }
 
-  private def getMappingLambdaParam3(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        (param1: Any, param2: Any, param3: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3), null)
-        }
-      case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3), defaultValue)
-        }
+  private def getMappingLambdaParam2(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any], hasSingleOutput: Boolean = false): AnyRef = {
+    if (hasSingleOutput) {
+      defaultValueOpt match {
+        case None =>
+          (param1: Any, param2: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2), null)
+          }
+        case Some(defaultValue) =>
+          (param1: Any, param2: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2), defaultValue)
+          }
+      }
+    } else {
+      (param1: Any, param2: Any) => {
+        val row = mappingTable.value.map.get(Seq(param1, param2))
+        mapMultipleOutputs(mappingTable, row)
+      }
     }
   }
 
-  private def getMappingLambdaParam4(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4), null)
-        }
-      case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
-        }
+  private def getMappingLambdaParam3(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any], hasSingleOutput: Boolean = false): AnyRef = {
+    if (hasSingleOutput) {
+      defaultValueOpt match {
+        case None =>
+          (param1: Any, param2: Any, param3: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3), null)
+          }
+        case Some(defaultValue) =>
+          (param1: Any, param2: Any, param3: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3), defaultValue)
+          }
+      }
+    } else {
+      (param1: Any, param2: Any, param3: Any) => {
+        val row = mappingTable.value.map.get(Seq(param1, param2, param3))
+        mapMultipleOutputs(mappingTable, row)
+      }
     }
   }
 
-  private def getMappingLambdaParam5(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
-        }
-      case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
-        }
+  private def getMappingLambdaParam4(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any], hasSingleOutput: Boolean= false): AnyRef = {
+    if(hasSingleOutput) {
+      defaultValueOpt match {
+        case None =>
+          (param1: Any, param2: Any, param3: Any, param4: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4), null)
+          }
+        case Some(defaultValue) =>
+          (param1: Any, param2: Any, param3: Any, param4: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
+          }
+      }
+    } else {
+      (param1: Any, param2: Any, param3: Any, param4: Any) => {
+        val row = mappingTable.value.map.get(Seq(param1, param2, param3, param4))
+        mapMultipleOutputs(mappingTable, row)
+      }
+    }
+  }
+
+  private def getMappingLambdaParam5(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any], hasSingleOutput: Boolean = false): AnyRef = {
+    if (hasSingleOutput) {
+      defaultValueOpt match {
+        case None =>
+          (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
+          }
+        case Some(defaultValue) =>
+          (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
+          }
+      }
+    } else {
+      (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
+        val row = mappingTable.value.map.get(Seq(param1, param2, param3, param4, param5))
+        mapMultipleOutputs(mappingTable, row)
+      }
     }
   }
 

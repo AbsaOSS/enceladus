@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import org.apache.spark.sql.{Column, DataFrame, Row}
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
+import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.collection.mutable.ListBuffer
@@ -28,9 +29,10 @@ import scala.collection.mutable.ListBuffer
 final case class LocalMappingTable(
                                     map: Map[Seq[Any], Any],
                                     keyFields: Seq[String],
-                                    targetAttributes: Seq[String],
+                                    outputColumns: Map[String, String],
                                     keyTypes: Seq[DataType],
-                                    valueTypes: Seq[DataType]
+                                    valueTypes: Seq[DataType],
+                                    defaultValuesMap: Map[String, String]
                                   )
 
 object LocalMappingTable {
@@ -40,14 +42,17 @@ object LocalMappingTable {
     *
     * @param mappingTableDf   A mapping table dataframe.
     * @param keyFields        A list of dataframe columns to be used as mapping keys
-    * @param targetAttributes A list of column names to be used as the mapping values
+    * @param outputColumns    A map of conformed column names and target attributes to be used as the mapping values
     */
   @throws[IllegalArgumentException]
   def apply(mappingTableDf: DataFrame,
             keyFields: Seq[String],
-            targetAttributes: Seq[String]): LocalMappingTable = {
+            outputColumns: Map[String, String],
+            defaultValuesMap: Map[String, String]
+           ): LocalMappingTable = {
 
     validateKeyFields(mappingTableDf, keyFields)
+    val targetAttributes = outputColumns.values.toSeq
     validateTargetAttributes(mappingTableDf, targetAttributes)
 
     val keyTypes = keyFields.map(fieldName =>
@@ -57,6 +62,9 @@ object LocalMappingTable {
     val valueTypes = targetAttributes.map(targetAttribute => {
       SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema).get
     })
+    val structFields: Seq[StructField] = outputColumns.keys.toSeq.zip(valueTypes)
+      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
+    val rowSchema = StructType(structFields)
 
     val targetColumns: Seq[Column] = targetAttributes.map(targetAttribute => col(targetAttribute))
 
@@ -78,10 +86,10 @@ object LocalMappingTable {
         keys += row(i)
         i += 1
       }
-      (keys.toSeq, if (values.size == 1) values.head else Row.fromSeq(values.toList))
+      (keys.toSeq, if (values.size == 1) values.head else new GenericRowWithSchema(values.toArray, rowSchema))
     }).toMap
 
-    LocalMappingTable(mappingTable, keyFields, targetAttributes, keyTypes, valueTypes)
+    LocalMappingTable(mappingTable, keyFields, outputColumns, keyTypes, valueTypes, defaultValuesMap)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
