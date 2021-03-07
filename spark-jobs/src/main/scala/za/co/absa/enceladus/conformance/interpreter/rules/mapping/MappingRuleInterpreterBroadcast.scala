@@ -42,13 +42,12 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val inputDfFields = rule.attributeMappings.values.toSeq
 
     val parentPath = getParentPath(rule.outputColumn)
-
-    val mt = LocalMappingTable(mapTable, mappingTableFields, rule.allOutputColumns(), defaultValuesMap)
+    val mt = LocalMappingTable(mapTable, mappingTableFields, rule.allOutputColumns())
     val broadcastedMt = spark.sparkContext.broadcast(mt)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.allOutputColumns().keys.toSeq, mappings)
 
     if (rule.additionalColumns.isEmpty) {
-      val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValuesMap.get(rule.targetAttribute))
+      val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValuesMap)
 
       val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
         df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
@@ -59,7 +58,8 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
       withMappedFieldsDf
     } else {
-      val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt)
+      //TODO Try multiple applications for udf -> PR
+      val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt, defaultValuesMap)
 
       val outputsStructColumnName = getOutputsStructColumnName(df)
       val outputsStructColumn = if (parentPath == "") outputsStructColumnName else parentPath + "." + outputsStructColumnName
@@ -69,8 +69,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
         }, (_, getField) => {
           errorUDF(inputDfFields.map(a => getField(a)): _ *)
         })
-
-      //TODO Try multiple applications for udf -> PR
       NestedArrayTransformations.nestedUnstruct(dfWithOutputCol, outputsStructColumn)
     }
   }

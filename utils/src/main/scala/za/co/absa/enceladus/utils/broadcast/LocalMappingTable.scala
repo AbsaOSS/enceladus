@@ -31,8 +31,7 @@ final case class LocalMappingTable(
                                     keyFields: Seq[String],
                                     outputColumns: Map[String, String],
                                     keyTypes: Seq[DataType],
-                                    valueTypes: Seq[DataType],
-                                    defaultValuesMap: Map[String, String]
+                                    valueTypes: Seq[DataType]
                                   )
 
 object LocalMappingTable {
@@ -47,8 +46,7 @@ object LocalMappingTable {
   @throws[IllegalArgumentException]
   def apply(mappingTableDf: DataFrame,
             keyFields: Seq[String],
-            outputColumns: Map[String, String],
-            defaultValuesMap: Map[String, String]
+            outputColumns: Map[String, String]
            ): LocalMappingTable = {
 
     validateKeyFields(mappingTableDf, keyFields)
@@ -89,7 +87,7 @@ object LocalMappingTable {
       (keys.toSeq, if (values.size == 1) values.head else new GenericRowWithSchema(values.toArray, rowSchema))
     }).toMap
 
-    LocalMappingTable(mappingTable, keyFields, outputColumns, keyTypes, valueTypes, defaultValuesMap)
+    LocalMappingTable(mappingTable, keyFields, outputColumns, keyTypes, valueTypes)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
