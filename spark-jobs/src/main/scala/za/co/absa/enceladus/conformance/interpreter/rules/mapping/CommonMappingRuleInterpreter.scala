@@ -129,7 +129,7 @@ trait CommonMappingRuleInterpreter {
    * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
    *
    * @param mappingTableDef A mapping rule definition
-   * @return A default value, if available, as a Spark expression represented as a string.
+   * @return A map of defaults wit the values as a String Spark expression.
    */
   private def getDefaultValues(mappingTableDef: MappingTable)
                               (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
