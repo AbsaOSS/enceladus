@@ -161,7 +161,7 @@
         <httpclient.version>4.4.1</httpclient.version>
         <jackson.spark.datatype.version>2.10.4</jackson.spark.datatype.version>
         <jackson.spark.version>2.10.4</jackson.spark.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.10.4</jackson.version>
         <jjwt.version>0.10.7</jjwt.version>
         <junit.version>4.11</junit.version>
         <kafka.spark.version>0-10</kafka.spark.version>
