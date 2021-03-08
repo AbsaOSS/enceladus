@@ -18,7 +18,8 @@ on:
   pull_request:
     types: [opened, labeled, unlabeled, synchronize]
 jobs:
-  QA-check:
+  test_approved_or_docs:
+    name: Test approved or docs
     runs-on: ubuntu-latest
     steps:
       - uses: danielchabr/pr-labels-checker@master
@@ -26,7 +27,8 @@ jobs:
         with:
           hasSome: PR:tested,PR:no testing needed,docs
           githubToken: ${{ secrets.GITHUB_TOKEN }}
-  Do_not_merge-check:
+  merge_blocked:
+    name: Merge blocked
     runs-on: ubuntu-latest
     steps:
       - uses: danielchabr/pr-labels-checker@master
