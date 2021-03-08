@@ -162,6 +162,7 @@ object BroadcastUtils {
         }}
         new GenericRowWithSchema(values.toArray, row.schema)
       }
+      case Some(_) => null
       case None => {
         if (defaults.isEmpty) null
         else {
@@ -315,7 +316,7 @@ object BroadcastUtils {
       if (mt.contains(Seq(param1, param2))) {
         null
       } else {
-        ErrorMessage.confMappingErr(outputColumns.mkString("."), Seq(safeToString(param1), safeToString(param2)), mappings)
+        ErrorMessage.confMappingErr(outputColumns.mkString(","), Seq(safeToString(param1), safeToString(param2)), mappings)
       }
     }
   }

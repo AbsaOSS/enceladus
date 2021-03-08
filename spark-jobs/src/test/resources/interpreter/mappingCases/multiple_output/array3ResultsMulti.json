@@ -70,7 +70,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array1.conformedLong.array1.conformedNum4",
+    "errCol" : "array1.conformedLong,array1.conformedNum4",
     "rawValues" : [ "2", "1" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -83,7 +83,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array1.conformedLong.array1.conformedNum4",
+    "errCol" : "array1.conformedLong,array1.conformedNum4",
     "rawValues" : [ "3", "1" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -160,7 +160,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array1.conformedLong.array1.conformedNum4",
+    "errCol" : "array1.conformedLong,array1.conformedNum4",
     "rawValues" : [ "4", "2" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -173,7 +173,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array1.conformedLong.array1.conformedNum4",
+    "errCol" : "array1.conformedLong,array1.conformedNum4",
     "rawValues" : [ "3", "2" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -322,4 +322,3 @@
   },
   "errCol" : [ ]
 } ]
-

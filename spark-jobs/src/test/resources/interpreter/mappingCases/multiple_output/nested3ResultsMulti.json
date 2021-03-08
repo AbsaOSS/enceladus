@@ -65,7 +65,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "conformedInt.conformedNum3",
+    "errCol" : "conformedInt,conformedNum3",
     "rawValues" : [ "1", "3" ],
     "mappings" : [ {
       "mappingTableColumn" : "ikey",
@@ -195,7 +195,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "conformedInt.conformedNum3",
+    "errCol" : "conformedInt,conformedNum3",
     "rawValues" : [ "3", "1" ],
     "mappings" : [ {
       "mappingTableColumn" : "ikey",
@@ -262,7 +262,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "conformedInt.conformedNum3",
+    "errCol" : "conformedInt,conformedNum3",
     "rawValues" : [ "4", "3" ],
     "mappings" : [ {
       "mappingTableColumn" : "ikey",

@@ -75,7 +75,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "3", "1" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -88,7 +88,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "2", "1" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -165,7 +165,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "1", "2" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -178,7 +178,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "3", "2" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -191,7 +191,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "4", "2" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
@@ -258,7 +258,7 @@
     "errType" : "confMapError",
     "errCode" : "E00001",
     "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
-    "errCol" : "array2.inner2.struct3.conformedString.array2.inner2.struct3.conformedNum5",
+    "errCol" : "array2.inner2.struct3.conformedString,array2.inner2.struct3.conformedNum5",
     "rawValues" : [ "2", "3" ],
     "mappings" : [ {
       "mappingTableColumn" : "lkey",
