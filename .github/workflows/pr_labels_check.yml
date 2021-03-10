@@ -25,7 +25,7 @@ jobs:
       - uses: danielchabr/pr-labels-checker@master
         id: checkLabel
         with:
-          hasSome: PR:tested,PR:no testing needed,docs
+          hasSome: PR: tested,PR: no testing needed,docs
           githubToken: ${{ secrets.GITHUB_TOKEN }}
   merge_blocked:
     name: Merge not blocked
@@ -34,5 +34,5 @@ jobs:
       - uses: danielchabr/pr-labels-checker@master
         id: checkLabel
         with:
-          hasNone: PR:reviewing
+          hasNone: PR: reviewing
           githubToken: ${{ secrets.GITHUB_TOKEN }}
