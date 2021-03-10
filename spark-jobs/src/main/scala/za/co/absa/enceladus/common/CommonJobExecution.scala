@@ -102,8 +102,9 @@ trait CommonJobExecution extends ProjectMetadata {
     validatePaths(pathCfg)
 
     // Enable Spline
-    import za.co.absa.spline.harvester.SparkLineageInitializer._
-    spark.enableLineageTracking()
+    // todo reenable with Spark3 compatible Spline Agent - Issue #1713
+//    import za.co.absa.spline.harvester.SparkLineageInitializer._
+//    spark.enableLineageTracking()
 
     // Enable non-default persistence storage level if provided in the command line
     cmd.persistStorageLevel.foreach(Atum.setCachingStorageLevel)

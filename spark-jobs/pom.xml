@@ -27,7 +27,7 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>4.0.0</hyperdrive.version>
-        <commons.version>0.0.10</commons.version>
+        <commons.version>0.0.25</commons.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
 
@@ -118,11 +118,13 @@
         </dependency>
 
         <!-- Lineage tracking -->
-        <dependency>
-            <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>spark-${spark.compat.version}-spline-agent-bundle_${scala.compat.version}</artifactId>
-            <version>${spline.version}</version>
-        </dependency>
+        <!-- todo reenable with Spark3 compatible agent - issue #1713 -->
+<!--        <dependency>-->
+<!--            <groupId>za.co.absa.spline.agent.spark</groupId>-->
+<!--            <artifactId>agent-core_${scala.compat.version}</artifactId>-->
+<!--            <version>${spline.version}</version>-->
+<!--        </dependency>-->
+
     </dependencies>
     <build>
         <plugins>
