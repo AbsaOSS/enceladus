@@ -23,6 +23,7 @@ class ConformanceRuleDialog {
     this._mappingTableService = new MappingTableService(this.model, eventBus);
     this._controller = controller;
     this._addJoinConditionDialog = new JoinConditionDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
+    this._addOutputColumnDialog = new OutputColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
     this._addRuleColumnDialog = new RuleColumnDialogFactory(this.controller, sap.ui.core.Fragment.load).getDialog();
     this._ruleFormFragmentFactory = new ConformanceRuleFormFragmentFactory(this);
     this._ruleForms = new ConformanceRuleFormRepository(this);
@@ -50,6 +51,10 @@ class ConformanceRuleDialog {
 
   get addJoinConditionDialog() {
     return this._addJoinConditionDialog;
+  }
+
+  get addOutputColumnDialog() {
+    return this._addOutputColumnDialog;
   }
 
   get addRuleColumnDialog() {
@@ -121,8 +126,12 @@ class ConformanceRuleDialog {
     this.addJoinConditionDialog.onAddPress();
   }
 
+  onAddOutputColumn() {
+    this.addOutputColumnDialog.onAddPress();
+  }
+
   onMappingTableSelect(oEv) {
-    this.resetTargetAttribute();
+    this.resetOutputColumns();
     this.resetJoinConditions();
 
     let mappingTableName = oEv.getParameter("selectedItem").getKey();
@@ -140,8 +149,8 @@ class ConformanceRuleDialog {
   }
 
   onMTVersionSelect(oEv) {
-    this.resetTargetAttribute();
     this.resetJoinConditions();
+    this.resetOutputColumns();
 
     let mappingTableId = this.model.getProperty("/newRule/mappingTable");
     let mappingTableVersion = this.model.getProperty("/newRule/mappingTableVersion");
@@ -153,6 +162,7 @@ class ConformanceRuleDialog {
       const schemaRestDAO = new SchemaRestDAO();
       schemaRestDAO.getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion).then(mappingTableSchema => {
         this.addJoinConditionDialog.setMappingTableSchema(mappingTableSchema);
+        this.addOutputColumnDialog.setMappingTableSchema(mappingTableSchema);
         if (this.model.getProperty("/newRule/_t") === "MappingConformanceRule") {
           const model = new sap.ui.model.json.JSONModel(mappingTableSchema);
           model.setSizeLimit(5000);
@@ -172,6 +182,11 @@ class ConformanceRuleDialog {
   resetJoinConditions() {
     this._addJoinConditionDialog.reset();
     this.model.setProperty("/newRule/newJoinConditions", []);
+  }
+
+  resetOutputColumns() {
+    this._addOutputColumnDialog.reset();
+    this.model.setProperty("/newRule/newOutputColumns", []);
   }
 
   onRuleSelect() {
@@ -200,6 +215,16 @@ class ConformanceRuleDialog {
     this.model.setProperty("/newRule/newJoinConditions", newInputColumns);
   }
 
+  onDeleteOutputColumn(oEv) {
+    let sBindPath = oEv.getParameter("listItem").getBindingContext().getPath();
+    let toks = sBindPath.split("/");
+    let inputColumnIndex = parseInt(toks[toks.length - 1]);
+    let oldInputColumns = this.model.getProperty("/newRule/newOutputColumns");
+
+    let newInputColumns = oldInputColumns.filter((_, index) => index !== inputColumnIndex);
+    this.model.setProperty("/newRule/newOutputColumns", newInputColumns);
+  }
+
   onJoinConditionSelect(oEv) {
     const item = oEv.getSource();
     const datasetField = item.data("datasetField");
@@ -207,6 +232,15 @@ class ConformanceRuleDialog {
     const index = item.getParent().indexOfItem(item);
 
     this.addJoinConditionDialog.onEditPress(index, datasetField, mappingTableField);
+  }
+
+  onOneOutputColumnSelect(oEv) {
+    const item = oEv.getSource();
+    const targetAttribute = item.data("targetAttribute");
+    const outputColumn = item.data("outputColumn");
+    const index = item.getParent().indexOfItem(item);
+
+    this.addOutputColumnDialog.onEditPress(index, targetAttribute, outputColumn);
   }
 
   onRuleWithColumnsSelect(oEv) {
@@ -256,10 +290,13 @@ class ConformanceRuleDialog {
     if (currentRule._t === "MappingConformanceRule") {
       if (!currentRule.isEdit) {
         newRule.newJoinConditions = [];
+        newRule.newOutputColumns = [];
         newRule.mappingTable = this._dialog.getModel("mappingTables").oData[0]._id;
         newRule.mappingTableVersion = this._dialog.getModel("mappingTables").oData[0].latestVersion;
       } else {
         let oAttributeMappings = newRule.attributeMappings;
+        let additionalColumns = newRule.additionalColumns;
+        let aNewOutputColumns = [];
         let aNewJoinConditions = [];
         for (let key in oAttributeMappings) {
           aNewJoinConditions.push({
@@ -267,7 +304,16 @@ class ConformanceRuleDialog {
             datasetField: oAttributeMappings[key]
           });
         }
+        for (let key in additionalColumns) {
+          aNewOutputColumns.push({
+            outputColumn: key,
+            targetAttribute: additionalColumns[key]
+          });
+        }
+
+        aNewOutputColumns.unshift({outputColumn: newRule.outputColumn, targetAttribute: newRule.targetAttribute});
         newRule.newJoinConditions = aNewJoinConditions;
+        newRule.newOutputColumns = aNewOutputColumns;
       }
       this.mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("mappingTableVersionSelect"));
       this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
@@ -286,6 +332,16 @@ class ConformanceRuleDialog {
       newRule.newJoinConditions.map(function (joinCondition) {
         newRule.attributeMappings[joinCondition.mappingTableField] = joinCondition.datasetField
       });
+
+      newRule.targetAttribute = newRule.newOutputColumns[0].targetAttribute;
+      newRule.outputColumn = newRule.newOutputColumns[0].outputColumn;
+      newRule.newOutputColumns.shift();
+      newRule.additionalColumns = {};
+
+      newRule.newOutputColumns.map(function (outputCol) {
+        newRule.additionalColumns[outputCol.outputColumn] = outputCol.targetAttribute;
+      });
+      delete newRule.newOutputColumns;
       delete newRule.joinConditions;
     }
   }

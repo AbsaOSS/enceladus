@@ -226,3 +226,20 @@ class JoinConditionMappingTableSchemaFieldSelector extends StaticSchemaFieldSele
   }
 
 }
+
+class OutputColumnMappingTableSchemaFieldSelector extends StaticSchemaFieldSelector {
+
+
+  constructor(controller, dialog) {
+    super(controller, dialog, "mappingTableSchema");
+  }
+
+  get selectorControl() {
+    return this.controller.byId("targetAttributeSelector");
+  }
+
+  get scrollControl() {
+    return this.controller.byId("targetFieldSelectScroll");
+  }
+
+}

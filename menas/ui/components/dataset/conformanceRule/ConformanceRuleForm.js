@@ -41,8 +41,12 @@ class ConformanceRuleForm {
   }
 
   isValid(rule, schemas, rules) {
-    const hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order])
-      && this.hasValidTransitiveSchema(rule, schemas, rules);
+    let hasValidOutput = true;
+    if (rule._t !== "MappingConformanceRule") {
+      hasValidOutput = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order]);
+    }
+
+    const hasValidOutputColumn = hasValidOutput && this.hasValidTransitiveSchema(rule, schemas, rules);
     return hasValidOutputColumn & this.isCorrectlyConfigured(rule);
   }
 
@@ -373,6 +377,7 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
 
   isCorrectlyConfigured(rule) {
     return this.hasValidInputColumn(rule.targetAttribute)
+      & this.hasValidOutputColumns(rule)
       & this.hasValidJoinConditions(rule.newJoinConditions);
   }
 
@@ -386,9 +391,18 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
     return isValid
   }
 
+  hasValidOutputColumns(rule = []) {
+    let isValid = rule.additionalColumns.length >= 1 || rule.outputColumn !== undefined;
+
+    if (!isValid) {
+      sap.m.MessageToast.show("At least 1 output column is required.");
+    }
+
+    return isValid
+  }
+
   reset() {
-    super.reset();
-    this.resetInputColumn();
+    // super.reset();
   }
 
 }
