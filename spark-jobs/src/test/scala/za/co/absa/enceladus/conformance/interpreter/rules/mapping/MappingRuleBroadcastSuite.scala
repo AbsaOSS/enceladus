@@ -45,7 +45,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     super.afterAll()
   }
 
-  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
@@ -63,7 +64,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
@@ -81,7 +83,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule can output a struct column") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can output a struct column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
 
@@ -99,7 +102,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule can work for fields inside a struct") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work for fields inside a struct") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested2Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested2Results.json")
 
@@ -117,7 +121,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule can work for struct fields at different levels") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work for struct fields at different levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested3Results.json")
 
@@ -135,7 +140,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule can work on arrays") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work on arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
@@ -153,7 +159,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule can work on arrays within arrays") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work on arrays within arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array2Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array2Results.json")
 
@@ -171,7 +178,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule failure if key fields are in different array levels") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule failure if key fields are in different array levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
@@ -189,7 +197,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule when key fields are in different array levels for an array of array") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when key fields are in different array levels for an array of array") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array4Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
@@ -207,7 +216,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
@@ -225,7 +235,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule when 3 key fields are at different array levels") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when 3 key fields are at different array levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array6Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
 
@@ -243,7 +254,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule when there are errors in the error column") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when there are errors in the error column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array7Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array7Results.json")
 
@@ -263,7 +275,8 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertResults(actualResults, expectedResults)
   }
 
-  test("Test broadcasting rule failure if key fields are in different arrays") {
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule failure if key fields are in different arrays") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, wrongMappingRule1)
 
