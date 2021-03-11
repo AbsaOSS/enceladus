@@ -87,7 +87,7 @@ object BroadcastUtils {
 //      Some(mappingTable.value.keyTypes))
 
     // todo fix Issue #1710
-    udf((tmp: String) => tmp) // replace with actual implementation
+    throw new NotImplementedError("This method is not correctly implemented, yet")
   }
 
   /**
@@ -119,7 +119,7 @@ object BroadcastUtils {
 //    errorUdf
 
     // todo fix Issue #1710
-    udf((tmp: String) => tmp) // replace with actual implementation
+    throw new NotImplementedError("This method is not correctly implemented, yet")
   }
 
   private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
