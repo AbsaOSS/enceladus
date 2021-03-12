@@ -57,7 +57,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase w
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assert(actual == expected)
   }
 
   test("Reading data from CSV with custom delimiter, null-values set.") {
@@ -75,6 +75,6 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase w
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assert(actual == expected)
   }
 }

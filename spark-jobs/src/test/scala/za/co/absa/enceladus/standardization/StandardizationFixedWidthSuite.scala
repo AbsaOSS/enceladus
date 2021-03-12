@@ -58,7 +58,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with SparkTestBase with
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assert(actual == expected)
   }
 
   test("Reading data from FixedWidth input trimmed") {
@@ -77,7 +77,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with SparkTestBase with
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assert(actual == expected)
   }
 
   test("Reading data from FixedWidth input treating empty as null") {
@@ -96,6 +96,6 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with SparkTestBase with
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assert(actual == expected)
   }
 }
