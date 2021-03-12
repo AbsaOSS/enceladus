@@ -1,4 +1,3 @@
-// todo fix Issue #1710
 ///*
 // * Copyright 2018 ABSA Group Limited
 // *
@@ -14,6 +13,7 @@
 // * limitations under the License.
 // */
 //
+//// todo fix Issue #1710
 //package za.co.absa.enceladus.utils.broadcast
 //
 //import org.apache.spark.sql.functions._
@@ -198,6 +198,164 @@
 //        assertResults(dfOut1, expectedResultsMatchFound)
 //        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
 //      }
+//
+//      "6 UDF parameters are used without a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf6 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFound)
+//      }
+//
+//      "6 UDF parameters are used with a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf6 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1" ,$"key2")).orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+//      }
+//
+//      "7 UDF parameters are used without a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf7 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFound)
+//      }
+//
+//      "7 UDF parameters are used with a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf7 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+//      }
+//
+//      "8 UDF parameters are used without a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf8 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFound)
+//      }
+//
+//      "8 UDF parameters are used with a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf8 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+//      }
+//
+//      "9 UDF parameters are used without a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFound)
+//      }
+//
+//      "9 UDF parameters are used with a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1",  $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+//      }
+//
+//      "10 UDF parameters are used without a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf10 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf10($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf10($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFound)
+//      }
+//
+//      "10 UDF parameters are used with a default value" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+//        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+//
+//        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+//
+//        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1", $"key1"))
+//          .orderBy("key1")
+//        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+//          $"key1", $"key1", $"key1", $"key1", $"key2"))
+//          .orderBy("key1")
+//
+//        assertResults(dfOut1, expectedResultsMatchFound)
+//        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+//      }
 //    }
 //
 //    "throw an exception" when {
@@ -208,8 +366,9 @@
 //        }
 //      }
 //
-//      "a join with more than 5 fields attempted" in {
-//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+//      "a join with more than 10 fields attempted" in {
+//        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id",
+//          "id", "id", "id", "id", "id"), "val")
 //        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 //
 //        intercept[IllegalArgumentException] {

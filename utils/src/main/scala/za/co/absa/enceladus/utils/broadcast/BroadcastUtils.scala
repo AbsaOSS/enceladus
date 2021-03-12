@@ -79,7 +79,12 @@ object BroadcastUtils {
 //      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
 //      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
 //      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
-//      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 5.")
+//      case 6 => getMappingLambdaParam6(mappingTable, defaultValueOpt)
+//      case 7 => getMappingLambdaParam7(mappingTable, defaultValueOpt)
+//      case 8 => getMappingLambdaParam8(mappingTable, defaultValueOpt)
+//      case 9 => getMappingLambdaParam9(mappingTable, defaultValueOpt)
+//      case 10 => getMappingLambdaParam10(mappingTable, defaultValueOpt)
+//      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
 //    }
 //
 //    UserDefinedFunction(lambda,
@@ -107,7 +112,12 @@ object BroadcastUtils {
 //      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
 //      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
 //      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
-//      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 5.")
+//      case 6 => getErrorLambdaParam6(mappingTable, outputColumn, mappings)
+//      case 7 => getErrorLambdaParam7(mappingTable, outputColumn, mappings)
+//      case 8 => getErrorLambdaParam8(mappingTable, outputColumn, mappings)
+//      case 9 => getErrorLambdaParam9(mappingTable, outputColumn, mappings)
+//      case 10 => getErrorLambdaParam10(mappingTable, outputColumn, mappings)
+//      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
 //    }
 //
 //    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
@@ -197,6 +207,92 @@ object BroadcastUtils {
     }
   }
 
+  private def getMappingLambdaParam6(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+    defaultValueOpt match {
+      case None =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+        param6: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), null)
+        }
+      case Some(defaultValue) =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), defaultValue)
+        }
+    }
+  }
+
+  private def getMappingLambdaParam7(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+    defaultValueOpt match {
+      case None =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), null)
+        }
+      case Some(defaultValue) =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), defaultValue)
+        }
+    }
+  }
+
+
+  private def getMappingLambdaParam8(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+    defaultValueOpt match {
+      case None =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), null)
+        }
+      case Some(defaultValue) =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), defaultValue)
+        }
+    }
+  }
+
+  private def getMappingLambdaParam9(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+    defaultValueOpt match {
+      case None =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any, param9: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), null)
+        }
+      case Some(defaultValue) =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any, param9: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), defaultValue)
+        }
+    }
+  }
+
+  private def getMappingLambdaParam10(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+    defaultValueOpt match {
+      case None =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), null)
+        }
+      case Some(defaultValue) =>
+        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+         param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
+          val mt = mappingTable.value.map
+          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), defaultValue)
+        }
+    }
+  }
+
   private def getErrorLambdaParam1(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
                                    mappings: Seq[Mapping]): AnyRef = {
@@ -260,6 +356,83 @@ object BroadcastUtils {
       } else {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4), safeToString(param5)), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam6(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+     param6: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5, param6))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5), safeToString(param6)), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam7(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+     param6: Any, param7: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7)), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam8(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+     param6: Any, param7: Any, param8: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8)), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam9(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+     param6: Any, param7: Any, param8: Any, param9: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8),
+          safeToString(param9)), mappings)
+      }
+    }
+  }
+
+  private def getErrorLambdaParam10(mappingTable: Broadcast[LocalMappingTable],
+                                   outputColumn: String,
+                                   mappings: Seq[Mapping]): AnyRef = {
+    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+     param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
+      val mt = mappingTable.value.map
+      if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10))) {
+        null
+      } else {
+        ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
+          safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8),
+          safeToString(param9), safeToString(param10)), mappings)
       }
     }
   }
