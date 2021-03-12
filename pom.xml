@@ -525,12 +525,17 @@
                                 <exclude>**/*.MF</exclude>
                                 <exclude>**/*.crc</exclude>
                                 <exclude>**/*.parquet</exclude>
+                                <exclude>**/*.avsc</exclude>
                                 <exclude>**/example*.xml</exclude>
                                 <exclude>**/_SUCCESS</exclude>
                                 <exclude>**/_INFO</exclude>
+                                <exclude>**/CODEOWNERS</exclude>
+                                <exclude>**/user.keytab*</exclude>
                                 <exclude>**/json_output</exclude>
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
+                                <exclude>**/node_modules/**</exclude>
+                                <exclude>scripts/cmd/tee.bat</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
