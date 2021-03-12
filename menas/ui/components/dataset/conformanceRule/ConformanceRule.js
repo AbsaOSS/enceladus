@@ -172,12 +172,12 @@ class MappingConformanceRule extends ConformanceRule {
         for(let output of this.rule.outputColumns) {
           const outputColWithPath = this.getOutputColumnWithPath(output.outputColumn);
           const newField = new SchemaField(output.outputColumn, outputColWithPath.path, "string", false, [], true);
-          const targetCol = super.getCol(fields, output.targetAttribute);
+          const targetCol = super.getCol(schema.fields, output.targetAttribute);
           newField.type = targetCol.type;
           newField.children = targetCol.children;
 
           this.addNewOutputField(fields, newField);
-        };
+        }
 
         return fields;
       });
