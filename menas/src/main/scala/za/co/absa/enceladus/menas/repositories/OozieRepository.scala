@@ -153,12 +153,9 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       val hdfsSparkJobsPath = new Path(s"$enceladusJarLocation$sparkJobsJarPath")
       val mavenSparkJobsPath = s"$mavenRepoLocation$sparkJobsJarPath"
       val resFuture = downloadFile(mavenSparkJobsPath, hdfsSparkJobsPath)
-      resFuture.onSuccess {
-        case _ => logger.info(s"SparkJobs jar loaded to $hdfsSparkJobsPath")
-      }
-      resFuture.onFailure {
-        case _: Throwable =>
-          hadoopFS.delete(hdfsSparkJobsPath, true)
+      resFuture.onComplete{
+        case Success(_) => logger.info(s"SparkJobs jar loaded to $hdfsSparkJobsPath")
+        case Failure(_) => hadoopFS.delete(hdfsSparkJobsPath, true)
       }
     }
   }
@@ -316,8 +313,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
          |  </property>
          |</parameters>
       """.stripMargin
-    import scala.collection.JavaConversions._
-    val extraSparkConfString = sparkExtraConfigs.map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"}).mkString("\n")
+    import scala.collection.JavaConverters._
+    val extraSparkConfString = sparkExtraConfigs.asScala
+      .map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"})
+      .mkString("\n")
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
     workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")

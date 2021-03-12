@@ -21,7 +21,7 @@ import org.apache.spark.SparkConf
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import java.io.File
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import com.typesafe.config.Config
@@ -93,7 +93,7 @@ object SparkTestBase {
    * @param hadoopConf Hadoop Configuration object to be converted into Spark configs
    */
   def hadoopConfToSparkMap(hadoopConf: Configuration): Map[String, String] = {
-    hadoopConf.iterator().map(entry => (s"spark.hadoop.${entry.getKey}", entry.getValue)).toMap
+    hadoopConf.iterator().asScala.map(entry => (s"spark.hadoop.${entry.getKey}", entry.getValue)).toMap
   }
 
   /**
@@ -109,7 +109,7 @@ object SparkTestBase {
   def loadSparkDefaults(sparkHome: String): Map[String, String] = {
     val sparkConfigIn = ConfigFactory.empty().atPath(s"$sparkHome/conf/spark-defaults.conf")
     sparkConfigIn
-      .entrySet()
+      .entrySet().asScala
       .filter(_.getKey != "spark.yarn.jars")
       .map(entry => (entry.getKey, entry.getValue.unwrapped().toString))
       .toMap

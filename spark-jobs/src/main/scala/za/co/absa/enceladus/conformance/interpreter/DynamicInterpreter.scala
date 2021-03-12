@@ -39,7 +39,7 @@ import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-case class DynamicInterpreter(implicit inputFs: FileSystem) {
+case class DynamicInterpreter()(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
