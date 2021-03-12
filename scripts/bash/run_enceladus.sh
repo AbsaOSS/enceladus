@@ -493,7 +493,7 @@ if [[ -z "$DRY_RUN" ]]; then
       if [[ -n "$PR" ]]; then
         # Initialize a ticket
         kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
-        klist 2>&1 | tee -a "$TMP_PATH_NAME"
+        klist -e 2>&1 | tee -a "$TMP_PATH_NAME"
       else
         echoerr "WARNING!"
         echoerr "Unable to determine principle from the keytab file $MENAS_AUTH_KEYTAB."
