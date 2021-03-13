@@ -15,10 +15,22 @@
 
 package za.co.absa.enceladus.menas.auth
 
-object AuthConstants {
+import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.security.core.{Authentication, GrantedAuthority}
+import org.springframework.stereotype.Component
 
+@Component("authConstants")
+class AuthConstants @Autowired()() {
+  @Value("${menas.auth.admin.role}")
+  private val AdminRole: String = ""
+
+  def hasAdminRole(auth: Authentication): Boolean = {
+    auth.getAuthorities.toArray(Array[GrantedAuthority]()).map(auth => auth.getAuthority).contains(AdminRole)
+  }
+}
+
+object AuthConstants {
   val JwtCookieKey: String = "JWT"
   val CsrfTokenKey: String = "X-CSRF-TOKEN"
-  val GroupsKey: String = "groups"
-
+  val RolesKey: String = "Roles"
 }

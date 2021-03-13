@@ -552,14 +552,11 @@ CALL :temp_log_file TMP_PATH_NAME
 
 :: Initializing Kerberos ticket
 IF DEFINED MENAS_AUTH_KEYTAB (
-    CALL :echoerr "Menas keytab authentication is not yet supported in Windows helper scripts."
-    :: Get principle stored in the keyfile (Thanks @Zejnilovic)
-    :: PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1`
-    :: Alternative way, might be less reliable
-    :: PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
+    :: Get principle stored in the keyfile`
+    FOR /F "tokens=1-3" %%A IN ('ktab -l -k %MENAS_AUTH_KEYTAB%') DO IF "%%A"=="0" SET PR=%%B
     IF DEFINED PR (
         kinit -k -t "%MENAS_AUTH_KEYTAB%" "%PR%"
-        klist 2>&1 | tee -a %TMP_PATH_NAME%
+        klist -e 2>&1 | tee -a %TMP_PATH_NAME%
     ) ELSE (
         CALL :echoerr "WARNING!"
         CALL :echoerr "Unable to determine principle from the keytab file %MENAS_AUTH_KEYTAB%."
