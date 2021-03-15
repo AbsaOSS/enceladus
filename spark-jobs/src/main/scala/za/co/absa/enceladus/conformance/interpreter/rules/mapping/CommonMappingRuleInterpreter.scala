@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.spark.sql.functions.{col, lit, struct}
-import org.apache.spark.sql.types.{ArrayType, StructField, StructType}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.types.{StructField, StructType}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
 import za.co.absa.enceladus.conformance.config.FilterFromConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -156,6 +156,15 @@ trait CommonMappingRuleInterpreter {
         log.warn("Mapping table schema loading failed")
       }
     defaultValuesForTargets
+  }
+
+  protected def joinDatasetAndMappingTable(mapTable: DataFrame, dfIn: Dataset[Row]) = {
+    dfIn.as(CommonMappingRuleInterpreter.inputDfAlias).
+      join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType).
+      select(
+        col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
+        col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
+      )
   }
 
   def validateOutputColumns(): Unit = {
