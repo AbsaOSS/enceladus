@@ -231,7 +231,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   private def getMappingRuleInterpreter(rule: MappingConformanceRule)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (canMappingRuleBroadcast(rule) && rule.attributeMappings.size <= 5) {
+    if (canMappingRuleBroadcast(rule) && rule.attributeMappings.size <= 10) {
       log.info("Broadcast strategy for mapping rules is used")
       MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
