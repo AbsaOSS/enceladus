@@ -1,14 +1,14 @@
 ---
-  - name: menas.schemaRegistry.baseUrl
+  - name: javax.net.ssl.keyStore
     options:
-      - name: string with URL
-        description: 'Base Url to (secure) schema registry. E.g.:
-        <code>https://localhost:8081</code>'
-  - name: menas.schemaRegistry.warnUnsecured
+      - name: string path to JKS file
+        description: 'KeyStore file containing records of private keys to connect to a secure schema registry.
+          E.g.: <code>/path/to/keystore.jks</code>'
+  - name: javax.net.ssl.keyStorePassword
     options:
-      - name: boolean
-        description: 'If set, in case the <code>javax.net.ssl.*</code> settings are missing or incorrect, application
-        will issue a warning. Default: <code>True</code>'
+      - name: string
+        description: 'Password for the file referenced in <code><a href="javax.net.ssl.keyStore">javax.net.ssl.keyStore</a></code>. E.g.:
+          <code>password1234</code>'
   - name: javax.net.ssl.trustStore
     options:
       - name: string path to JKS file
@@ -17,15 +17,24 @@
   - name: javax.net.ssl.trustStorePassword
     options:
       - name: string
-        description: 'Password for the file referenced in <code>javax.net.ssl.trustStore</code>. E.g.:
+        description: 'Password for the file referenced in <code><a href="javax.net.ssl.trustStore">javax.net.ssl.trustStore</a></code>. E.g.:
         <code>password123</code>'
-  - name: javax.net.ssl.keyStore
-    options:
-      - name: string path to JKS file
-        description: 'KeyStore file containing records of private keys to connect to a secure schema registry.
-        E.g.: <code>/path/to/keystore.jks</code>'
-  - name: javax.net.ssl.keyStorePassword
+  - name: menas.auth.admin.role
     options:
       - name: string
-        description: 'Password for the file referenced in <code>javax.net.ssl.keyStore</code>. E.g.:
-        <code>password1234</code>'
+        description: 'Specifies the admin role to operate property definition create and update operations.'
+  - name: menas.auth.roles.regex
+    options:
+      - name: string - regular expression
+        description: 'Regular expression specifying which user roles to include in JWT. E.g.:
+        <code>^menas_</code>. If the expression filters out the admin role (<code><a href="#menas.auth.admin.role">menas.auth.admin.role</a></code>), account won''t be recognized as admin.'
+  - name: menas.schemaRegistry.baseUrl
+    options:
+      - name: string with URL
+        description: 'Base Url to (secure) schema registry. E.g.:
+        <code>https://localhost:8081</code>'
+  - name: menas.schemaRegistry.warnUnsecured
+    options:
+      - name: boolean
+        description: 'If set, in case the <code>javax.net.ssl.*</code> settings are missing or incorrect, the application
+        will issue a warning. Default: <code>True</code>'
