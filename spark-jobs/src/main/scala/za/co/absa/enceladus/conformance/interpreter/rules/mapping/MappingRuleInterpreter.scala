@@ -51,12 +51,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     var errorsDf = df
 
     val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
-      val joined = dfIn.as(CommonMappingRuleInterpreter.inputDfAlias).
-        join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType).
-        select(
-          col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
-          col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
-        )
+      val joined = joinDatasetAndMappingTable(mapTable, dfIn)
       val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
       val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),

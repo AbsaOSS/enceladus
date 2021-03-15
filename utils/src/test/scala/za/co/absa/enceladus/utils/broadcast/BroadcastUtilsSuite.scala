@@ -155,7 +155,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf2 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf2 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf2($"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf2($"key1", $"key2")).orderBy("key1")
@@ -194,7 +194,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf3 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf3 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf3($"key1", $"key1", $"key2")).orderBy("key1")
@@ -233,7 +233,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf4 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf4 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf4($"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -272,7 +272,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf5 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf5 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf5($"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
@@ -311,7 +311,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf6 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf6 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
         val dfOut2 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1" ,$"key2")).orderBy("key1")
@@ -352,7 +352,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf7 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf7 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key1"))
           .orderBy("key1")
@@ -399,7 +399,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf8 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf8 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
           $"key1", $"key1", $"key1"))
@@ -448,7 +448,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf9 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf9 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
           $"key1", $"key1", $"key1", $"key1"))
@@ -482,7 +482,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
-        val mappingUdf9 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map(""->defaultValExpr))
+        val mappingUdf9 = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, Map("val"->defaultValExpr))
 
         val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
           $"key1", $"key1", $"key1", $"key1", $"key1"))

@@ -21,8 +21,6 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 
-import scala.collection.mutable.ListBuffer
-
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
@@ -72,19 +70,9 @@ object LocalMappingTable {
     val numberOfValues = targetAttributes.size
 
     val mappingTable = projectedDf.collect().map(row => {
-      var i = 0
-      val values = new ListBuffer[Any]
-      while (i < numberOfValues) {
-        values += row(i)
-        i += 1
-      }
-
-      val keys = new ListBuffer[Any]
-      while (i < numberOfKeys + numberOfValues) {
-        keys += row(i)
-        i += 1
-      }
-      (keys.toSeq, if (values.size == 1) values.head else new GenericRowWithSchema(values.toArray, rowSchema))
+      val values = (0 until numberOfValues).toArray map (row(_))
+      val keys: Seq[Any] = (numberOfValues until numberOfValues + numberOfKeys) map(row(_))
+      (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
     }).toMap
 
     LocalMappingTable(mappingTable, keyFields, outputColumns, keyTypes, valueTypes)
