@@ -36,5 +36,5 @@
   - name: menas.schemaRegistry.warnUnsecured
     options:
       - name: boolean
-        description: 'If set, in case the <code>javax.net.ssl.*</code> settings are missing or incorrect, application
+        description: 'If set, in case the <code>javax.net.ssl.*</code> settings are missing or incorrect, the application
         will issue a warning. Default: <code>True</code>'
