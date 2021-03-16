@@ -66,7 +66,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
       import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
       spark.disableControlMeasuresTracking()
 
-      eventually(timeout(scaled(5.seconds)), interval(scaled(500.millis))) {
+      eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
         val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
         val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
