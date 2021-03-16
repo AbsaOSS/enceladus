@@ -201,6 +201,7 @@
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
         <dockerfile.tag>${project.version}</dockerfile.tag>
+        <span.scale.factor>1</span.scale.factor>
         <!-- Name of property file that will be used by the Docker image. -->
         <dockerfile.property.file>docker</dockerfile.property.file>
         <skip.integration.tests>true</skip.integration.tests>
@@ -400,6 +401,7 @@
                         becomes more efficient
                     -->
                     <argLine>-Xmx4000m -Dfile.encoding=UTF-8</argLine>
+                    <spanScaleFactor>${span.scale.factor}</spanScaleFactor>
                 </configuration>
                 <executions>
                     <execution>
