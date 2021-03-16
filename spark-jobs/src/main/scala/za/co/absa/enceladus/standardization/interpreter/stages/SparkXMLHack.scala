@@ -35,7 +35,8 @@ object SparkXMLHack {
 
     field.dataType match {
       case a @ ArrayType(elType, nullable) =>
-        when((size(arrCol(currentAttrPath)) === 1) and arrCol(currentAttrPath)(0).isNull, lit(null)).otherwise(arrCol(currentAttrPath)) as field.name // scalastyle:ignore null
+        when((size(arrCol(currentAttrPath)) === 1) and arrCol(currentAttrPath)(0).isNull, lit(null)) // scalastyle:ignore null
+          .otherwise(arrCol(currentAttrPath)) as field.name
       case t: StructType =>
         struct(t.fields.toSeq.map(x => hack(x, currentAttrPath, df)): _*) as field.name
       case _ =>

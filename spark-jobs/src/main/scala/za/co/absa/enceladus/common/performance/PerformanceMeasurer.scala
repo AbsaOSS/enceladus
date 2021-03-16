@@ -46,7 +46,8 @@ class PerformanceMeasurer(val jobName: String) {
   def getPerformanceMetricsText: String = {
     val elapsedTime = (startDateTime, finishDateTime) match {
       case (Some(start), Some(finish)) => Duration.between(start, finish)
-      case _ => throw new IllegalStateException(s"Performance metrics: either start or finish time is not set ($startDateTime .. $finishDateTime).")
+      case _ => throw
+        new IllegalStateException(s"Performance metrics: either start or finish time is not set ($startDateTime .. $finishDateTime).")
     }
     val perfMetricsBuilder = new PerfMetricsBuilder()
       .addVariable("perf_job_name", jobName)

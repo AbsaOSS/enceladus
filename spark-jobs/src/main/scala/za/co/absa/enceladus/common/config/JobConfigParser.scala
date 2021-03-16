@@ -17,7 +17,9 @@ package za.co.absa.enceladus.common.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{
+  InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory
+}
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 import scala.util.matching.Regex

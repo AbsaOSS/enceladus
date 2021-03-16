@@ -29,7 +29,8 @@ object RuleValidators {
   def validateInputField(datasetName: String, ruleName: String, schema: StructType, fieldPath: String): Unit = {
     val existenceIssues = SchemaPathValidator.validateSchemaPath(schema, fieldPath)
     val primitivityIssues = SchemaPathValidator.validateSchemaPathPrimitive(schema, fieldPath)
-    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input field is incorrect.", existenceIssues ++ primitivityIssues)
+    checkAndThrowValidationErrors(datasetName, s"$ruleName validation error: input field is incorrect.",
+      existenceIssues ++ primitivityIssues)
   }
 
   @throws[ValidationException]
