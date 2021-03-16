@@ -125,6 +125,16 @@
 <!--            <version>${spline.version}</version>-->
 <!--        </dependency>-->
 
+        <!-- to reuse util's customized NativeIO for hadoop on Windows -->
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
