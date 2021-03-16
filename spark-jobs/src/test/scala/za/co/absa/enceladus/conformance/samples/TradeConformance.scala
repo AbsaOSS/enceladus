@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.samples
 
 import java.io.File
+import java.nio.charset.Charset
 
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.sql.{SaveMode, SparkSession}
@@ -115,7 +116,7 @@ object TradeConformance {
       .write
       .mode(SaveMode.Overwrite)
       .parquet(getTradeDataPath(tradeDS.hdfsPath))
-    FileUtils.writeStringToFile(new File(s"${getTradeDataPath(tradeDS.hdfsPath)}/_INFO"), tradeInfoFile)
+    FileUtils.writeStringToFile(new File(s"${getTradeDataPath(tradeDS.hdfsPath)}/_INFO"), tradeInfoFile, Charset.defaultCharset)
   }
 
   def createCountryMT()(implicit spark: SparkSession): Unit = {

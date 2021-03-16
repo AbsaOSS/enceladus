@@ -16,12 +16,15 @@
 
 package za.co.absa.enceladus.utils.fs
 
+import java.io.FileNotFoundException
 import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.location.S3Location.StringS3LocationExt
+
+import scala.util.{Failure, Success, Try}
 
 object FileSystemUtils {
 
@@ -46,6 +49,23 @@ object FileSystemUtils {
     }
   }
 
+  implicit class FileSystemExt(fs: FileSystem) {
+    /**
+     * Checks if path is a directory, returns `default` on FileNotFoundException. Basically, behaves the same way as the late
+     * [[org.apache.hadoop.fs.FileSystem#isDirectory(org.apache.hadoop.fs.Path)]]
+     * @param path path to test if isDirectory
+     * @param default default to be returned on error
+     */
+    def isDirectoryWithDefault(path: Path, default: Boolean): Boolean = {
+      Try {
+        fs.getFileStatus(path).isDirectory
+      } match {
+        case Success(value) => value
+        case Failure(_: FileNotFoundException) => default
+        case Failure(otherException) => throw otherException
+      }
+    }
+  }
 
 }
 
