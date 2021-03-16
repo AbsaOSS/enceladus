@@ -537,6 +537,7 @@
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>**/node_modules/**</exclude>
+                                <exclude>**/_site/**</exclude>
                                 <exclude>scripts/cmd/tee.bat</exclude>
                             </excludes>
                         </configuration>
