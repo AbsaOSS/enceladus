@@ -93,7 +93,10 @@ case class Dataset(name: String,
       case m: MappingConformanceRule =>
         m.copy(attributeMappings = m.attributeMappings.map(key => {
           (key._1.replace(from, to), key._2)
-        }))
+        }), additionalColumns = m.additionalColumns.map(
+            _.map(key =>
+              (key._1.replace(from, to), key._2))
+          ))
       case c: ConformanceRule => c
     }
 

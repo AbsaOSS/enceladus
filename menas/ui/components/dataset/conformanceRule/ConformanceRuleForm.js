@@ -123,8 +123,12 @@ class ConformanceRuleForm {
     const validation = SchemaManager.validateNameClashes(rule, schemas, rules);
 
     if (!validation.isValid) {
-      this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
-      this.outputColumnControl.setValueStateText(validation.error);
+      if (this.outputColumnControl){
+        this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
+        this.outputColumnControl.setValueStateText(validation.error);
+      } else {
+        sap.m.MessageToast.show(validation.error);
+      }
     }
 
     return validation.isValid;

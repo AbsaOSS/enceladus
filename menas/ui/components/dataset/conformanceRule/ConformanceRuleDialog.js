@@ -76,7 +76,6 @@ class ConformanceRuleDialog {
   onBeforeOpen() {
     this._dialog = this.controller.byId("upsertConformanceRuleDialog");
     this._datasetSchemaFieldSelector = new ConformanceRuleSchemaFieldSelector(this, this._dialog);
-    this._targetAttributeSelector = new TargetAttributeFieldSelector(this, this._dialog);
     this._ruleForm = this.controller.byId("ruleForm");
     this.mappingTableService.getList(this._dialog);
     if (this.model.getProperty("/newRule/isEdit")) {
@@ -256,7 +255,6 @@ class ConformanceRuleDialog {
 
     switch (ruleType) {
       case "MappingConformanceRule":
-        this._targetAttributeSelector.onSchemaFieldSelect(oEv, "/newRule/targetAttribute");
         break;
       case "DropConformanceRule":
         this._datasetSchemaFieldSelector.onSchemaFieldSelect(oEv, "/newRule/outputColumn");
@@ -269,7 +267,6 @@ class ConformanceRuleDialog {
   preselectSchemaFieldSelector(ruleType) {
     switch (ruleType) {
       case "MappingConformanceRule":
-        this._targetAttributeSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/targetAttribute"));
         break;
       case "DropConformanceRule":
         this._datasetSchemaFieldSelector.preselectSchemaFieldSelector(this.model.getProperty("/newRule/outputColumn"), ruleType);
@@ -353,6 +350,7 @@ class ConformanceRuleDialog {
   }
 
   updateRule(currentDataset, newRule) {
+    delete newRule.outputColumns;
     currentDataset.conformance[newRule.order] = newRule;
     sap.ui.getCore().getEventBus().publish("conformance", "updated", currentDataset.conformance);
     this.datasetService.update(currentDataset);

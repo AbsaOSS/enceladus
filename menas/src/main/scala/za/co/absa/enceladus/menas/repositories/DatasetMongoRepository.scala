@@ -83,10 +83,13 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   private def handleMappingRule(dataset: Dataset, replace: String => String): Dataset = {
     val conformance = dataset.conformance.map {
       case mr: MappingConformanceRule =>
-        val map = mr.attributeMappings.map {
+        val attributesMap = mr.attributeMappings.map {
           case (key, value) => (replace(key), value)
         }
-        mr.copy(attributeMappings = map)
+        val additionalColumnsMap = mr.additionalColumns.map { _.map{
+          case (key, value) => (replace(key), value)
+        }}
+        mr.copy(attributeMappings = attributesMap, additionalColumns = additionalColumnsMap)
       case any => any
     }
     dataset.setConformance(conformance)

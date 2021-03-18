@@ -198,9 +198,11 @@ class MappingConformanceRule extends ConformanceRule {
   }
 
   validate(fields) {
-    this.rule.joinConditions.forEach(join => {
-      this.getCol(fields, join.datasetField);
-    });
+    if (this.rule.joinConditions !== undefined) {
+      this.rule.joinConditions.forEach(join => {
+        this.getCol(fields, join.datasetField);
+      });
+    }
     return this.apply(fields)
   }
 

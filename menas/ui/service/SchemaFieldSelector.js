@@ -179,22 +179,6 @@ class SimpleSchemaFieldSelector extends StaticSchemaFieldSelector {
 
 }
 
-class TargetAttributeFieldSelector extends StaticSchemaFieldSelector {
-
-  constructor(controller, dialog) {
-    super(controller, dialog, "mappingTableSchema");
-  }
-
-  get selectorControl() {
-    return sap.ui.getCore().byId("MappingConformanceRule--schemaFieldSelector");
-  }
-
-  get scrollControl() {
-    return sap.ui.getCore().byId("MappingConformanceRule--fieldSelectScroll");
-  }
-
-}
-
 class JoinConditionDatasetSchemaFieldSelector extends StaticSchemaFieldSelector {
 
   constructor(controller, dialog) {
