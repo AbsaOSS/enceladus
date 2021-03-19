@@ -24,14 +24,6 @@
         <version>3.0.0-SNAPSHOT</version>
     </parent>
 
-    <dependencies>
-        <!--<dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>client-ui</artifactId>
-            <version>${spline.version}</version>
-        </dependency>-->
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -44,7 +36,9 @@
                 </configuration>
             </plugin>
                 <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
+                <version>3.1.0</version>
                 <configuration>
                     <filesets>
                         <fileset>

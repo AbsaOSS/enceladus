@@ -50,7 +50,6 @@
         $.getJSON('package.json', function(json) {
             window.apiUrl = json.config.apiUrl + "/api";
             window.lineageReadApiUrl = json.config.lineageReadApiUrl;
-            //TODO name modules appropriately
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
                 {k: "rel", v: "stylesheet"}
