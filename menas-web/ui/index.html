@@ -49,7 +49,9 @@
 
         $.getJSON('package.json', function(json) {
             window.apiUrl = json.config.apiUrl + "/api";
-            window.lineageReadApiUrl = json.config.lineageReadApiUrl;
+            window.splineConsumerApiUrl = json.config.splineConsumerApiUrl;
+            window.splineUiCdn = json.config.splineUiCdn;
+
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
                 {k: "rel", v: "stylesheet"}

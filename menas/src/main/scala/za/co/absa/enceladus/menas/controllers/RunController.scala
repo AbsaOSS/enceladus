@@ -100,20 +100,6 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
     runService.getLatestRun(datasetName, datasetVersion).map(SerializationUtils.asJson)
   }
 
-  @GetMapping(path = Array("/splineUrl/{datasetName}/{datasetVersion}/{runId}"), produces = Array("text/plain"))
-  @ResponseStatus(HttpStatus.OK)
-  def getSplineUrl(@PathVariable datasetName: String,
-                   @PathVariable datasetVersion: Int,
-                   @PathVariable runId: Int): CompletableFuture[String] = {
-    runService.getSplineUrl(datasetName, datasetVersion, runId)
-  }
-
-  @GetMapping(path = Array("/splineUrlTemplate"), produces = Array("text/plain"))
-  @ResponseStatus(HttpStatus.OK)
-  def getSplineUrlTemplate(): CompletableFuture[String] = {
-    runService.getSplineUrlTemplate()
-  }
-
   @PostMapping()
   @ResponseStatus(HttpStatus.CREATED)
   def create(@RequestBody run: Run,

@@ -25,7 +25,6 @@ import java.util.Date
 import java.util.{Map => JavaMap}
 import java.util.Properties
 import java.util.concurrent.Callable
-
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
@@ -96,8 +95,11 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${menas.oozie.menasApiURL:}")
   val menasApiURL: String = ""
 
-  @Value("${menas.oozie.splineMongoURL:}")
-  val splineMongoURL: String = ""
+  @Value("${menas.oozie.lineageWriteApiUrl:}")
+  val lineageWriteApiUrl: String = ""
+
+  @Value("${menas.oozie.spline.mode:}")
+  val splineMode: String = ""
 
   @Value("${menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
@@ -134,7 +136,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       (sparkJobsJarPath, "menas.oozie.mavenSparkJobsJarLocation"),
       (mavenRepoLocation, "menas.oozie.mavenRepoLocation"),
       (menasApiURL, "menas.oozie.menasApiURL"),
-      (splineMongoURL, "menas.oozie.splineMongoURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
+      (lineageWriteApiUrl, "menas.oozie.lineageWriteApiUrl")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
@@ -203,8 +205,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   /**
    * This is a helper function for impersonating oozie calls using the proper proxy user if configured
    *
-   * @param user User to impersonate
-   * @fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
+   * @param  user User to impersonate
+   * @param  fn Oozie action to perform - Important to note that this should be Oozie action only (only wrap the call to oozieclient)
+   * @tparam T  The action result type
+   * @return result of the provided action
    */
   private def impersonateWrapper[T](user: String)(fn: () => T) = {
     if (oozieProxyUser.isEmpty || oozieProxyUserKeytab.isEmpty) {
@@ -307,7 +311,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
    */
   private def getWorkflowFromTemplate(ds: Dataset): Array[Byte] = {
     //Here libpath takes precedence over sharelib
-    val shareLibConfig = if(oozieLibPath.nonEmpty) "" else
+    val shareLibConfig = if (oozieLibPath.isEmpty) {
       s"""
          |<parameters>
          |  <property>
@@ -316,23 +320,26 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
          |  </property>
          |</parameters>
       """.stripMargin
+    } else {""}
     import scala.collection.JavaConversions._
     val extraSparkConfString = sparkExtraConfigs.map({case (k, v) => s"--conf $sparkConfQuotes$k=$v$sparkConfQuotes"}).mkString("\n")
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
+    val mappingTablePattern = schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}")
+    val splineModeConf = Option(splineMode).collect{case s if s.trim.nonEmpty => s"-Dspline.mode=$s"}.getOrElse("")
     workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
       .replaceAllLiterally("$confAppName", s"Menas Schedule Conformance ${ds.name} (${ds.version})")
       .replaceAllLiterally("$sparkJobsJarPath", s"$enceladusJarLocation$sparkJobsJarPath")
       .replaceAllLiterally("$datasetVersion", schedule.datasetVersion.toString)
       .replaceAllLiterally("$datasetName", ds.name)
-      .replaceAllLiterally("$mappingTablePattern", schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}").trim)
+      .replaceAllLiterally("$mappingTablePattern", mappingTablePattern)
       .replaceAllLiterally("$dataFormat", schedule.rawFormat.name)
       .replaceAllLiterally("$otherDFArguments", schedule.rawFormat.getArguments.map(arg => s"<arg>$arg</arg>").mkString("\n"))
       .replaceAllLiterally("$jobTracker", resourceManager)
       .replaceAllLiterally("$sharelibForSpark", shareLibConfig)
       .replaceAllLiterally("$nameNode", namenode)
       .replaceAllLiterally("$menasRestURI", menasApiURL)
-      .replaceAllLiterally("$splineMongoURL", splineMongoURL)
+      .replaceAllLiterally("$lineageWriteApiUrl", lineageWriteApiUrl)
       .replaceAllLiterally("$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
       .replaceAllLiterally("$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
       .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
@@ -341,6 +348,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$menasKeytabFile", s"${getCredsOrKeytabArgument(runtimeParams.menasKeytabFile, namenode)}")
       .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
       .replaceAllLiterally("$extraSparkConfString", extraSparkConfString)
+      .replaceAllLiterally("$splineModeConf", splineModeConf)
       .getBytes("UTF-8")
   }
 

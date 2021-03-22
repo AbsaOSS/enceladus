@@ -102,7 +102,7 @@ trait CommonJobExecution extends ProjectMetadata {
     validatePaths(pathCfg)
 
     // Enable Spline
-    import za.co.absa.spline.core.SparkLineageInitializer._
+    import za.co.absa.spline.harvester.SparkLineageInitializer._
     spark.enableLineageTracking()
 
     // Enable non-default persistence storage level if provided in the command line
