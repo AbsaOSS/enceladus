@@ -16,19 +16,19 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.functions.{col, explode, lit, size, struct}
+import org.apache.spark.sql.functions.{col, explode, lit, size, struct, typedLit}
 import org.apache.spark.sql.types.DataTypes
-import org.apache.spark.sql.{DataFrame, Encoders}
+import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import KafkaErrorSenderPluginImpl._
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams.ErrorSourceId
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
+import za.co.absa.enceladus.utils.modules._
 
 import scala.util.{Failure, Success, Try}
 
@@ -87,10 +87,16 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
    * @return DF with exploded errors and corresponding to the given error source
    */
   def getIndividualErrors(dataFrame: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
-    implicit val singleErrorStardardizedEncoder = Encoders.product[SingleErrorStardardized]
-    implicit val dceErrorEncoder = Encoders.product[DceError]
+    implicit val singleErrorStardardizedEncoder: Encoder[SingleErrorStardardized] = Encoders.product[SingleErrorStardardized]
+    implicit val dceErrorEncoder: Encoder[DceError] = Encoders.product[DceError]
 
     val allowedErrorCodes = KafkaErrorSenderPluginImpl.errorCodesForSource(params.sourceId)
+
+    val reportDateCol: Column = if (dataFrame.columns.contains(ColumnNames.reportDate)) {
+      col(ColumnNames.reportDate)
+    } else {
+      typedLit[Option[java.sql.Date]](None).as(ColumnNames.reportDate)
+    }
 
     val stdErrors = dataFrame
       // only keep rows with non-empty errCol:
@@ -98,7 +104,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       // and only keep columns that are needed for the actual error publishing:
       .select(
         col(ColumnNames.enceladusRecordId).cast(DataTypes.StringType).as("recordId"),
-        col(ColumnNames.reportDate),
+        reportDateCol,
         explode(col(ColumnNames.errCol)).as("singleError")
       )
       .as[SingleErrorStardardized]
@@ -139,6 +145,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       .option("kafka.bootstrap.servers", connectionParams.bootstrapServers)
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
+      .withOptionalKafkaSecurityParams(connectionParams.security)
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
   }
@@ -146,7 +153,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
 
 object KafkaErrorSenderPluginImpl {
 
-  // columns from the original datafram (post Stdardardization/Conformance) to be addressed
+  // columns from the original dataframe (post Standardization/Conformance) to be addressed
   object ColumnNames {
     val enceladusRecordId = "enceladus_record_id"
     val reportDate = "reportDate"
@@ -165,10 +172,10 @@ object KafkaErrorSenderPluginImpl {
         dataset = Some(additionalParams.datasetName),
         ingestionNumber = None,
         processingTimestamp = additionalParams.processingTimestamp.toEpochMilli,
-        informationDate = Some(reportDate.toLocalDate.toEpochDay.toInt),
+        informationDate = Option(reportDate).map(_.toLocalDate.toEpochDay.toInt),
         outputFileName = Some(additionalParams.outputPath),
         recordId = recordId,
-        errorSourceId = additionalParams.sourceId.toString,
+        errorSourceId = additionalParams.sourceId.value,
         errorType = singleError.errType,
         errorCode = singleError.errCode,
         errorDescription = singleError.errMsg,
@@ -184,9 +191,18 @@ object KafkaErrorSenderPluginImpl {
     }
   }
 
-  def errorCodesForSource(sourceId: ErrorSourceId.Value): Seq[String] = sourceId match {
-    case ErrorSourceId.Standardization => ErrorCodes.standardizationErrorCodes
-    case ErrorSourceId.Conformance => ErrorCodes.conformanceErrorCodes
+  def errorCodesForSource(sourceId: SourcePhase): Seq[String] = sourceId match {
+    case SourcePhase.Standardization => ErrorCodes.standardizationErrorCodes
+    case SourcePhase.Conformance => ErrorCodes.conformanceErrorCodes
+  }
+
+  implicit class DataFrameWriterOptionExt[T](dataFrameWriter: DataFrameWriter[T]) {
+    def withOptionalKafkaSecurityParams(optSecParams: Option[KafkaSecurityParams]): DataFrameWriter[T] = {
+      optSecParams match {
+        case None => dataFrameWriter
+        case Some(secParams) => dataFrameWriter.options(secParams.toMap)
+      }
+    }
   }
 
 }

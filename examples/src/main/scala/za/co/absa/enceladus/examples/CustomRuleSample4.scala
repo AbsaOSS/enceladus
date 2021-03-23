@@ -19,7 +19,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
 import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
@@ -28,7 +28,7 @@ import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConform
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
-object CustomRuleSample4 {
+object CustomRuleSample4 extends CustomRuleSampleFs {
   TimeZoneNormalizer.normalizeJVMTimeZone() //normalize JVM time zone as soon as possible
 
   /**
@@ -135,14 +135,15 @@ object CustomRuleSample4 {
     result
   }
 
+  implicit val spark: SparkSession = buildSparkSession()
+
   def main(args: Array[String]): Unit = {
     val cmd: CmdConfigLocal = getCmdLineArguments(args)
-    implicit val spark: SparkSession = buildSparkSession()
 
     val conf = ConfigFactory.load()
     val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig() // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
 
     val dfReader: DataFrameReader = {
@@ -186,7 +187,7 @@ object CustomRuleSample4 {
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
 
-    val outputData: DataFrame = DynamicInterpreter.interpret(conformanceDef, inputData)
+    val outputData: DataFrame = DynamicInterpreter().interpret(conformanceDef, inputData)
     outputData.show()
     saveToCsv(outputData, cmd.outPath)
   }

@@ -15,12 +15,12 @@
 
 package za.co.absa.enceladus.dao.rest.auth
 
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.LocalFsUtils
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class MenasPlainCredentialsSuite extends WordSpec with SparkTestBase {
+class MenasPlainCredentialsSuite extends AnyWordSpec with SparkTestBase {
 
   "MenasPlainCredentials" should {
     "be read from *.conf" in {
@@ -42,9 +42,7 @@ class MenasPlainCredentialsSuite extends WordSpec with SparkTestBase {
       val homeDir = System.getProperty("user.home")
       val expected = s"$homeDir/dir/file"
 
-      val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-
-      val actual = fsUtils.replaceHome("~/dir/file")
+      val actual = LocalFsUtils.replaceHome("~/dir/file")
       assert(actual == expected)
     }
   }

@@ -17,13 +17,13 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
-import org.scalatest.WordSpec
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 
 import scala.collection.mutable
 
-class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBase {
+class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTestBase {
 
   import spark.implicits._
 
@@ -197,6 +197,164 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         assertResults(dfOut1, expectedResultsMatchFound)
         assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
       }
+
+      "6 UDF parameters are used without a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf6 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+
+        val dfOut1 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key2")).orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFound)
+      }
+
+      "6 UDF parameters are used with a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf6 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+
+        val dfOut1 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1", $"key1")).orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf6($"key1", $"key1", $"key1", $"key1", $"key1" ,$"key2")).orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+      }
+
+      "7 UDF parameters are used without a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf7 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+
+        val dfOut1 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFound)
+      }
+
+      "7 UDF parameters are used with a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf7 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+
+        val dfOut1 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf7($"key1", $"key1", $"key1", $"key1", $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+      }
+
+      "8 UDF parameters are used without a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf8 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+
+        val dfOut1 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFound)
+      }
+
+      "8 UDF parameters are used with a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf8 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+
+        val dfOut1 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf8($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+      }
+
+      "9 UDF parameters are used without a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+
+        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFound)
+      }
+
+      "9 UDF parameters are used with a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+
+        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1",  $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+      }
+
+      "10 UDF parameters are used without a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf10 = BroadcastUtils.getMappingUdf(broadcastedMt, None)
+
+        val dfOut1 = df.withColumn("out", mappingUdf10($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf10($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFound)
+      }
+
+      "10 UDF parameters are used with a default value" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id", "id", "id", "id", "id"), "val")
+        val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
+
+        val mappingUdf9 = BroadcastUtils.getMappingUdf(broadcastedMt, Some(defaultValExpr))
+
+        val dfOut1 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1", $"key1"))
+          .orderBy("key1")
+        val dfOut2 = df.withColumn("out", mappingUdf9($"key1", $"key1", $"key1", $"key1", $"key1",
+          $"key1", $"key1", $"key1", $"key1", $"key2"))
+          .orderBy("key1")
+
+        assertResults(dfOut1, expectedResultsMatchFound)
+        assertResults(dfOut2, expectedResultsMatchNotFoundDefault)
+      }
     }
 
     "throw an exception" when {
@@ -207,8 +365,9 @@ class BroadcastUtilsSuite extends WordSpec with SparkTestBase with LoggerTestBas
         }
       }
 
-      "a join with more than 5 fields attempted" in {
-        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id"), "val")
+      "a join with more than 10 fields attempted" in {
+        val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id",
+          "id", "id", "id", "id", "id"), "val")
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
 
         intercept[IllegalArgumentException] {

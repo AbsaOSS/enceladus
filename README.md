@@ -1,3 +1,16 @@
+                    Copyright 2018 ABSA Group Limited
+                  
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+                You may obtain a copy of the License at
+               http://www.apache.org/licenses/LICENSE-2.0
+            
+     Unless required by applicable law or agreed to in writing, software
+       distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+                      limitations under the License.
+
 # Enceladus
 
 ### <a name="build_status"/>Build Status
@@ -38,6 +51,9 @@ This is a Spark job which reads an input dataset in any of the supported formats
 
 ### Conformance
 This is a Spark job which **applies the Menas-specified conformance rules to the standardized dataset**.
+
+### Standardization and Conformance
+This is a Spark job which executes both Standardization and Conformance together in the same job
 
 ## How to build
 #### Build requirements:
@@ -137,17 +153,41 @@ password=changeme
 --report-date <date> \
 --report-version <data_run_version>
 ```
+
+#### Running Standardization and Conformance together
+```
+<spark home>/spark-submit \
+--num-executors <num> \
+--executor-memory <num>G \
+--master yarn \
+--deploy-mode <client/cluster> \
+--driver-cores <num> \
+--driver-memory <num>G \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
+<spark-jobs_<build_version>.jar> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
 * In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
-#### Helper scripts for running Standardization and Conformance
+#### Helper scripts for running Standardization, Conformance or both together
 
 The Scripts in `scripts` folder can be used to simplify command lines for running Standardization and Conformance jobs.
 
-Steps to configure the scripts are as follows:
-* Copy all the scripts in `scripts` directory to a location in your environment.
+Steps to configure the scripts are as follows (_Linux_):
+* Copy all the scripts in `scripts/bash` directory to a location in your environment.
 * Copy `enceladus_env.template.sh` to `enceladus_env.sh`.
 * Change `enceladus_env.sh` according to your environment settings.
 * Use `run_standardization.sh` and `run_conformance.sh` scripts instead of directly invoking `spark-submit` to run your jobs.
+
+Similar scripts exist for _Windows_ in directory `scripts/cmd`.
 
 The syntax for running Standardization and Conformance is similar to running them using `spark-submit`. The only difference is that
 you don't have to provide environment-specific settings. Several resource options, like driver memory and driver cores also have
@@ -179,6 +219,37 @@ The basic command to run Conformance becomes:
 --report-version <data_run_version>
 ```
 
+The basic command to run Standardization and Conformance combined becomes:
+```
+<path to scripts>/run_standardization_conformance.sh \
+--num-executors <num> \
+--deploy-mode <client/cluster> \
+--menas-auth-keytab <path_to_keytab_file> \
+--dataset-name <dataset_name> \
+--dataset-version <dataset_version> \
+--report-date <date> \
+--report-version <data_run_version> \
+--raw-format <data_format> \
+--row-tag <tag>
+```
+
+
+Similarly for Windows:
+```
+<path to scripts>/run_standardization.cmd ^
+--num-executors <num> ^
+--deploy-mode <client/cluster> ^
+--menas-auth-keytab <path_to_keytab_file> ^
+--dataset-name <dataset_name> ^
+--dataset-version <dataset_version> ^
+--report-date <date> ^
+--report-version <data_run_version> ^
+--raw-format <data_format> ^
+--row-tag <tag>
+```
+Etc...
+
+
 The list of options for configuring Spark deployment mode in Yarn and resource specification:
 
 |            Option                            |                           Description                                                                       |
@@ -197,7 +268,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 For more information on these options see the official documentation on running Spark on Yarn: 
 [https://spark.apache.org/docs/latest/running-on-yarn.html](https://spark.apache.org/docs/latest/running-on-yarn.html)
 
-The list of all options for running both Standardization and Conformance:
+The list of all options for running Standardization, Conformance and the combined Standardization And Conformance jobs:
 
 |            Option                     |                           Description                                                                                                                                                       |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -211,22 +282,28 @@ The list of all options for running both Standardization and Conformance:
 
 The list of additional options available for running Standardization:
 
-|            Option                    |                           Description                                                                                                              |
-|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| --raw-format **format**              | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
-| --charset **charset**                | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
-| --row-tag **tag**                    | A row tag if the input format is `xml`.                                                                                                            |
-| --header **true/false**              | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
-| --delimiter **character**            | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
-| --csv-quote **character**            | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
-| --csv-escape **character**           | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
-| --trimValues **true/false**          | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
-| --is-xcom **true/false**             | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
-| --cobol-encoding **encoding**        | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
-| --cobol-trimming-policy **policy**   | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
-| --folder-prefix **prefix**           | Adds a folder prefix before the date tokens.                                                                                                       |
-| --debug-set-raw-path **path**        | Override the path of the raw data (used for testing purposes).                                                                                     |
-| --strict-schema-check **true/false** | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ | 
+|            Option                      |                           Description                                                                                                              |
+|----------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| --raw-format **format**                | A format for input data. Can be one of `parquet`, `json`, `csv`, `xml`, `cobol`, `fixed-width`.                                                    |
+| --charset **charset**                  | Specifies a charset to use for `csv`, `json` or `xml`. Default is `UTF-8`.                                                                         |
+| --cobol-encoding **encoding**          | Specifies the encoding of a mainframe file (`ascii` or `ebcdic`). Code page can be specified using `--charset` option.                             |
+| --cobol-is-text **true/false**         | Specifies if the mainframe file is ASCII text file                                                                                                 |
+| --cobol-trimming-policy **policy**     | Specifies the way leading and trailing spaces should be handled. Can be `none` (do not trim spaces), `left`, `right`, `both`(default).             |
+| --copybook **string**                  | Path to a copybook for COBOL data format                                                                                                           |
+| --csv-escape **character**             | Specifies a character to be used for escaping other characters. By default '&#92;' (backslash) is used.   <sup>*</sup>                             |
+| --csv-quote **character**              | Specifies a character to be used as a quote for creating fields that might contain delimiter character. By default `"` is used. <sup>*</sup>       |
+| --debug-set-raw-path **path**          | Override the path of the raw data (used for testing purposes).                                                                                     |
+| --delimiter **character**              | Specifies a delimiter character to use for CSV format. By default `,` is used. <sup>*</sup>                                                        |
+| --empty-values-as-nulls **true/false** | If `true` treats empty values as `null`s                                                                                                           |
+| --folder-prefix **prefix**             | Adds a folder prefix before the date tokens.                                                                                                       |
+| --header **true/false**                | Indicates if in the input CSV data has headers as the first row of each file.                                                                      |
+| --is-xcom **true/false**               | If `true` a mainframe input file is expected to have XCOM RDW headers.                                                                             |
+| --null-value **string**                | Defines how null values are represented in a  `csv` and `fixed-width` file formats                                                                 |
+| --row-tag **tag**                      | A row tag if the input format is `xml`.                                                                                                            |
+| --strict-schema-check **true/false**   | If `true` processing ends the moment a row not adhering to the schema is encountered, `false` (default) proceeds over it with an entry in _errCol_ |
+| --trimValues **true/false**            | Indicates if string fields of fixed with text data should be trimmed.                                                                              |
+
+Most of these options are format specific. For details see [the documentation](https://absaoss.github.io/enceladus/docs/usage/standardization-formats). 
 
 <sup>*</sup> Can also be specified as a unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
 
@@ -239,6 +316,8 @@ The list of additional options available for running Conformance:
 | --catalyst-workaround **true/false**       | Turns on (`true`) or off (`false`) workaround for Catalyst optimizer issue. It is `true` by default. Turn this off only is you encounter timing freeze issues when running Conformance. | 
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
+All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
+
 ## Plugins
 
 Standardization and Conformance support plugins that allow executing additional actions at certain times of the computation.
@@ -246,9 +325,14 @@ To learn how plugins work, when and how their logic is executed, please
 refer to the [documentation](https://absaoss.github.io/enceladus/docs/plugins).
 
 ### Built-in Plugins
+
 The purpose of this module is to provide some plugins of additional but relatively elementary functionality. And also to
 serve as an example how plugins are written: 
 [detailed description](https://absaoss.github.io/enceladus/docs/plugins-built-in)  
+
+## Examples
+
+A module containing [examples](examples/README.md) of the project usage.
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).

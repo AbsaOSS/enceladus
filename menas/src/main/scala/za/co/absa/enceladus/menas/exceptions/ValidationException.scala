@@ -15,6 +15,6 @@
 
 package za.co.absa.enceladus.menas.exceptions
 
-import za.co.absa.enceladus.menas.models.Validation
+import za.co.absa.enceladus.model.Validation
 
 case class ValidationException(validation: Validation) extends Exception(validation.toString)

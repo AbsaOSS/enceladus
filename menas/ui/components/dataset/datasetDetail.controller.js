@@ -76,8 +76,9 @@ sap.ui.define([
 
       this._datasetService = new DatasetService(this._model, this._oEventBus);
       this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
-      this._schemaService = new SchemaService(this._model, this._oEventBus)
-      this._schemaTable = new SchemaTable(this)
+      this._schemaService = new SchemaService(this._model, this._oEventBus);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
+      this._conformedSchemaTable = new SchemaTable(this, "conformedSchemaFragment");
 
       this._validator = new Validator();
 
@@ -354,7 +355,9 @@ sap.ui.define([
           this._model.setProperty("/currentDataset/schema", schema);
           this._schemaTable.model = schema;
           transitiveSchemas.push(schema);
-          SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance)
+          SchemaManager.getTransitiveSchemas(transitiveSchemas, currentDataset.conformance);
+
+          this._conformedSchemaTable.model = transitiveSchemas[transitiveSchemas.length-1] // last schema has all conf rules applied
         });
 
         this._datasetRestDAO = new DatasetRestDAO();
@@ -364,6 +367,21 @@ sap.ui.define([
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);
       }
+
+      //transform properties into a bindable format
+      const aPropTemplates = this._model.getProperty(`/properties`) || [];
+      if(currentDataset && currentDataset.properties) {
+        currentDataset.propertiesDisplay = [];
+        for(let sName in currentDataset.properties) {
+          const oPropTemplMatch = aPropTemplates.find((oTempl) => { return oTempl.name === sName });
+          const iOrder = oPropTemplMatch ? oPropTemplMatch.order : Infinity;
+          currentDataset.propertiesDisplay.push({
+            name: sName,
+            value: currentDataset.properties[sName],
+            order: iOrder
+          });
+        }
+      } 
     },
 
     conformanceRuleFactory: function (sId, oContext) {

@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.migrations.framework.continuous.integration
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.continuous.migrate01.ContinuousMigrator
 import za.co.absa.enceladus.migrations.framework.continuous.integration.fixture.ExampleDatabaseFixture
 
-class ContinuousMigrationIntegrationSuite extends FunSuite with ExampleDatabaseFixture {
+class ContinuousMigrationIntegrationSuite extends AnyFunSuite with ExampleDatabaseFixture {
 
   test("Test schema migrates properly and conflicts are resolved") {
     val mig = new ContinuousMigrator(db, db)

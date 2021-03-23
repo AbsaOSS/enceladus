@@ -16,31 +16,34 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 
 case class MappingTable(name: String,
-    version: Int = 1,
-    description: Option[String] = None,
+                        version: Int = 1,
+                        description: Option[String] = None,
 
-    hdfsPath: String,
+                        hdfsPath: String,
 
-    schemaName: String,
-    schemaVersion: Int,
+                        schemaName: String,
+                        schemaVersion: Int,
 
-    defaultMappingValue: List[DefaultValue] = List(),
+                        defaultMappingValue: List[DefaultValue] = List(),
 
-    dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null,
+                        dateCreated: ZonedDateTime = ZonedDateTime.now(),
+                        userCreated: String = null,
 
-    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null,
+                        lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+                        userUpdated: String = null,
 
-    disabled: Boolean = false,
-    dateDisabled: Option[ZonedDateTime] = None,
-    userDisabled: Option[String] = None,
-    parent: Option[MenasReference] = None) extends VersionedModel with Auditable[MappingTable] {
+                        disabled: Boolean = false,
+                        dateDisabled: Option[ZonedDateTime] = None,
+                        userDisabled: Option[String] = None,
+                        parent: Option[MenasReference] = None,
+                        filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -56,6 +59,7 @@ case class MappingTable(name: String,
   def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
   def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
   override def setParent(newParent: Option[MenasReference]): MappingTable = this.copy(parent = newParent)
+  def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
   def getDefaultMappingValues: Map[String, String] = {
     defaultMappingValue.map(_.toTuple).toMap
@@ -75,5 +79,20 @@ case class MappingTable(name: String,
           AuditFieldName("schemaName", "Schema Name"),
           AuditFieldName("schemaVersion", "Schema Version"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("defaultMappingValue", "Default Mapping Value")))
+  }
+
+  override def exportItem(): String = {
+    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValue.toArray)
+
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.put("hdfsPath", hdfsPath)
+    objectItemMapper.put("schemaName", schemaName)
+    objectItemMapper.put("schemaVersion", schemaVersion)
+    objectItemMapper.putArray("defaultMappingValue").addAll(defaultMappingValueJsonList)
+
+    objectMapperRoot.toString
   }
 }

@@ -15,20 +15,22 @@
 
 package za.co.absa.enceladus.menas.controllers
 
-import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import za.co.absa.enceladus.model.UsedIn
-import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.{RestError, Validation}
-import org.springframework.http.HttpStatus
-import org.slf4j.LoggerFactory
-import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{RequestTimeoutExpiredError, RemoteSchemaRetrievalError, SchemaFormatError, SchemaParsingError}
-import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
+import com.fasterxml.jackson.databind.JsonMappingException
 import org.apache.oozie.client.OozieClientException
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.http.converter.HttpMessageConversionException
+import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import za.co.absa.enceladus.menas.exceptions._
+import za.co.absa.enceladus.menas.models.RestError
+import za.co.absa.enceladus.menas.models.rest.RestResponse
+import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
+import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
@@ -52,6 +54,11 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[NotFoundException]))
   def handleNotFoundException(exception: NotFoundException): ResponseEntity[Any] = {
     ResponseEntity.notFound().build[Any]()
+  }
+
+  @ExceptionHandler(value = Array(classOf[EndpointDisabled]))
+  def handleEndpointDisabled(exception: EndpointDisabled): ResponseEntity[Any] = {
+    ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build[Any]() // Could change for LOCKED but I like this more
   }
 
   @ExceptionHandler(value = Array(classOf[SchemaParsingException]))
@@ -78,6 +85,23 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[ValidationException]))
   def handleValidationException(exception: ValidationException): ResponseEntity[Validation] = {
     ResponseEntity.badRequest().body(exception.validation)
+  }
+
+  // when json <-> object mapping fails, respond with 400 instead of 500
+  @ExceptionHandler(value = Array(classOf[HttpMessageConversionException]))
+  def handleHttpMessageConversionException(exception: HttpMessageConversionException): ResponseEntity[Any] = {
+
+    // logic: the cause may be our custom PropertyTypeValidationException or another general exception
+    val specificMessage = exception.getCause match {
+      case jme:JsonMappingException => jme.getCause match {
+        case ptve:PropertyTypeValidationException => ptve.getMessage
+        case _ => jme.getMessage
+      }
+      case _ => exception.getMessage
+    }
+
+    logger.error(s"HttpMessageConversionException: $specificMessage", exception)
+    ResponseEntity.badRequest().body(specificMessage)
   }
 
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))

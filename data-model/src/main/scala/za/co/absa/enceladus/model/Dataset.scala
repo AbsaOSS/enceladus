@@ -17,35 +17,38 @@ package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
 
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
 
-case class Dataset(
-  name:    String,
-  version: Int = 1,
-  description: Option[String] = None,
+case class Dataset(name: String,
+                   version: Int = 1,
+                   description: Option[String] = None,
 
-  hdfsPath:        String,
-  hdfsPublishPath: String,
+                   hdfsPath: String,
+                   hdfsPublishPath: String,
 
-  schemaName:    String,
-  schemaVersion: Int,
+                   schemaName: String,
+                   schemaVersion: Int,
 
-  dateCreated: ZonedDateTime = ZonedDateTime.now(),
-  userCreated: String        = null,
+                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
+                   userCreated: String = null,
 
-  lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-  userUpdated: String        = null,
+                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+                   userUpdated: String = null,
 
-  disabled:     Boolean               = false,
-  dateDisabled: Option[ZonedDateTime] = None,
-  userDisabled: Option[String]        = None,
-  conformance:  List[ConformanceRule],
-  parent:       Option[MenasReference] = None,
-  schedule:     Option[OozieSchedule] = None) extends VersionedModel with Auditable[Dataset] {
+                   disabled: Boolean = false,
+                   dateDisabled: Option[ZonedDateTime] = None,
+                   userDisabled: Option[String] = None,
+                   conformance: List[ConformanceRule],
+                   parent: Option[MenasReference] = None,
+                   schedule: Option[OozieSchedule] = None,
+                   properties: Option[Map[String, String]] = Some(Map.empty),
+                   propertiesValidation: Option[Validation] = None
+                  ) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -62,31 +65,35 @@ case class Dataset(
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
+  def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
   override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
+
+  def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
    */
-  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, '.', MappingConformanceRule.DOT_REPLACEMENT_SYMBOL)
+  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, '.', MappingConformanceRule.DotReplacementSymbol)
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL> are dots
    */
-  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DOT_REPLACEMENT_SYMBOL, '.')
+  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DotReplacementSymbol, '.')
 
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage: AuditTrailEntry = AuditTrailEntry(
+    menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
-    AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset ${name} created.")))
+      AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
+  )
 
   private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
     val conformanceRules = dataset.conformance.map {
-      case m: MappingConformanceRule => {
+      case m: MappingConformanceRule =>
         m.copy(attributeMappings = m.attributeMappings.map(key => {
           (key._1.replace(from, to), key._2)
         }))
-      }
       case c: ConformanceRule => c
     }
 
@@ -105,5 +112,23 @@ case class Dataset(
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))) ++
         super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
+  }
+
+  override def exportItem(): String = {
+    val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
+    val propertiesJsonList: ObjectNode = objectMapperBase.valueToTree(propertiesAsMap)
+
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.put("hdfsPath", hdfsPath)
+    objectItemMapper.put("hdfsPublishPath", hdfsPublishPath)
+    objectItemMapper.put("schemaName", schemaName)
+    objectItemMapper.put("schemaVersion", schemaVersion)
+    objectItemMapper.putArray("conformance").addAll(conformanceJsonList)
+    objectItemMapper.putObject("properties").setAll(propertiesJsonList)
+
+    objectMapperRoot.toString
   }
 }

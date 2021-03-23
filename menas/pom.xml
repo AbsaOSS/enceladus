@@ -21,7 +21,7 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.7.0-SNAPSHOT</version>
+        <version>2.22.0-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -270,6 +270,11 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>atum-model_${scala.compat.version}</artifactId>
+            <version>${atum.version}</version>
+        </dependency>
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -294,6 +299,19 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile.maven.version}</version>
+                <configuration>
+                    <repository>${dockerfile.repository}</repository>
+                    <tag>${dockerfile.tag}</tag>
+                    <buildArgs>
+                        <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
+                        <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
             </plugin>
@@ -317,6 +335,14 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <args>
+                        <arg>-Xfatal-warnings</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -358,6 +384,9 @@
                             <target>
                                 <copy file="${project.basedir}/src/main/resources/application.properties.template"
                                       tofile="${project.basedir}/src/main/resources/application.properties"
+                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/docker.properties.template"
+                                      tofile="${project.basedir}/src/main/resources/docker.properties"
                                       overwrite="false"/>
                             </target>
                         </configuration>
@@ -429,6 +458,18 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven.jar.plugin.version}</version>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                </manifest>
+                            </archive>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>

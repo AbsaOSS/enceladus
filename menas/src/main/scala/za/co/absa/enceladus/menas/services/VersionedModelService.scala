@@ -19,27 +19,28 @@ import org.mongodb.scala.result.UpdateResult
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.menas.exceptions._
-import za.co.absa.enceladus.menas.models.Validation
 import za.co.absa.enceladus.menas.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
 
 import scala.concurrent.Future
-
 import com.mongodb.MongoWriteException
 
-abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C])
-  extends ModelService(versionedMongoRepository) {
+abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def getLatestVersions(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersions(searchQuery)
+  def getLatestVersionsSummary(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
+    versionedMongoRepository.getLatestVersionsSummary(searchQuery)
+  }
+
+  def getLatestVersions(): Future[Seq[C]] = {
+    versionedMongoRepository.getLatestVersions()
   }
 
   def getSearchSuggestions(): Future[Seq[String]] = {
@@ -70,6 +71,70 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
+  }
+
+  def exportSingleItem(name: String, version: Int): Future[String] = {
+    getVersion(name, version).flatMap({
+      case Some(item) => Future(item.exportItem())
+      case _ => throw NotFoundException()
+    })
+  }
+
+  def exportLatestItem(name: String): Future[String] = {
+    getLatestVersion(name).flatMap({
+      case Some(item) => Future(item.exportItem())
+      case _ => throw NotFoundException()
+    })
+  }
+
+  def importSingleItem(item: C, username: String, metadata: Map[String, String]): Future[Option[C]] = {
+    for {
+      validation <- validateSingleImport(item, metadata)
+      result <- {
+        if (validation.isValid()) {
+          importItem(item, username)
+        } else {
+          throw ValidationException(validation)
+        }
+      }
+    } yield result
+  }
+
+  private[services] def validateSingleImport(item: C, metadata: Map[String, String]): Future[Validation] = {
+    val validation = Validation()
+      .withErrorIf(!hasValidNameChars(item.name), "item.name", s"name '${item.name}' contains unsupported characters")
+      .withErrorIf(item.parent.isDefined, "item.parent", "parent should not be defined on import")
+    val withMetadataValidation = validation.merge(validateMetadata(metadata))
+    Future(withMetadataValidation)
+  }
+
+  private[services] def validateMetadata(metadata: Map[String, String]): Validation = {
+    def exportVersionErrorMessage(version: String) = {
+      s"""Export/Import API version mismatch. Acceptable version is $ModelVersion. Version passed is $version"""
+    }
+
+    Validation()
+      .withErrorIf(
+        !hasValidApiVersion(metadata.get("exportVersion")),
+        "metadata.exportApiVersion",
+        exportVersionErrorMessage(metadata.getOrElse("exportVersion", "null"))
+      )
+  }
+
+  private[services] def importItem(item: C, username: String): Future[Option[C]]
+
+  private[services] def validateSchema(schemaName: String,
+                                       schemaVersion: Int,
+                                       maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+    val validation = Validation()
+
+    for {
+      schema <- maybeSchema
+    } yield validation.withErrorIf(
+      schema.isEmpty,
+      "item.schema",
+      s"schema $schemaName v$schemaVersion defined for the dataset could not be found"
+    )
   }
 
   private[services] def getParents(name: String, fromVersion: Option[Int] = None): Future[Seq[C]] = {
@@ -222,6 +287,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     }
   }
 
-  private def hasWhitespace(name: String): Boolean = !name.matches("""\w+""")
+  private[services] def hasWhitespace(name: String): Boolean =
+    Option(name).exists(definedName => !definedName.matches("""\w+"""))
+  private[services] def hasValidNameChars(name: String): Boolean =
+    Option(name).exists(definedName => definedName.matches("""[a-zA-Z0-9._-]+"""))
+  private[services] def hasValidApiVersion(version: Option[String]): Boolean = version.contains(ModelVersion.toString)
 
 }

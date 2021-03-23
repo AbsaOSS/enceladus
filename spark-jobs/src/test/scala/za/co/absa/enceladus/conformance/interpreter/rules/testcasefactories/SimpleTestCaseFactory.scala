@@ -19,13 +19,14 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 
 
 object SimpleTestCaseFactory {
@@ -118,14 +119,12 @@ object SimpleTestCaseFactory {
   *
   * Users of this factory can specify which conformance rules to include to the dataset definition to be created.
   */
-class SimpleTestCaseFactory(implicit spark: SparkSession) {
+class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTestBase {
 
   import SimpleTestCaseFactory._
   import spark.implicits._
 
-  private val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  private val fsUtils = new FileSystemVersionUtils(spark.sparkContext.hadoopConfiguration)
-  private val tempDir = fsUtils.getLocalTemporaryDirectory("test_case_factory")
+  private val tempDir = LocalFsUtils.getLocalTemporaryDirectory("test_case_factory")
 
   /**
     * This method returns all objects necessary to run a dynamic conformance job.
@@ -138,10 +137,10 @@ class SimpleTestCaseFactory(implicit spark: SparkSession) {
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConfCmdConfig, FeatureSwitches) = {
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfig, FeatureSwitches) = {
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
-    val cmdConfig = ConfCmdConfig(reportDate = reportDate)
+    val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
     mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset

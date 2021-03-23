@@ -1,0 +1,27 @@
+{
+	"metadata": {
+		"sourceApplication": "<SourceApplication>",
+		"country": "<Country>",
+		"historyType": "Snapshot",
+		"dataFilename": "<Filename>",
+		"sourceType": "<SourceType>",
+		"version": "<Version>",
+		"informationDate": "<Date>"
+	},
+	"checkpoints": [
+    {
+      "name": "Source",
+      "processStartTime": "01-01-1970 00:00:00 +0000",
+      "processEndTime": "01-01-1970 00:00:00 +0000",
+      "workflowName": "Source",
+      "order": 1
+    },
+    {
+      "name": "Raw",
+      "processStartTime": "01-01-1970 00:00:00 +0000",
+      "processEndTime": "01-01-1970 00:00:00 +0000",
+      "workflowName": "Raw",
+      "order": 2
+    }
+	]
+}

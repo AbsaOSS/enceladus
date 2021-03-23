@@ -17,10 +17,10 @@ package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{MappingTable, UsedIn}
+import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
+
 import scala.concurrent.Future
-import za.co.absa.enceladus.model.DefaultValue
 
 @Service
 class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository,
@@ -30,7 +30,8 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
 
   override def getUsedIn(mappingTableName: String, mappingTableVersion: Option[Int]): Future[UsedIn] = {
     val used = mappingTableVersion match {
-      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName), ("mappingTableVersion", version))
+      case Some(version) => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName),
+        ("mappingTableVersion", version))
       case None          => datasetMongoRepository.containsMappingRuleRefEqual(("mappingTable", mappingTableName))
     }
 
@@ -68,4 +69,34 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     }
   }
 
+  override def importItem(item: MappingTable, username: String): Future[Option[MappingTable]] = {
+    getLatestVersionValue(item.name).flatMap {
+      case Some(version) => update(username, item.copy(version = version))
+      case None => super.create(item.copy(version = 1), username)
+    }
+  }
+
+  override def validateSingleImport(item: MappingTable, metadata: Map[String, String]): Future[Validation] = {
+    val maybeSchema = datasetMongoRepository.getConnectedSchema(item.schemaName, item.schemaVersion)
+
+    val validationBase = super.validateSingleImport(item, metadata)
+    val validationSchema = validateSchema(item.schemaName, item.schemaVersion, maybeSchema)
+    val validationDefaultValues = validateDefaultValues(item, maybeSchema)
+    for {
+      base <- validationBase
+      schema <- validationSchema
+      defaultValues <- validationDefaultValues
+    } yield base.merge(schema).merge(defaultValues)
+  }
+
+  private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]]): Future[Validation] = {
+    maybeSchema.map(schema => {
+      item.defaultMappingValue.foldLeft(Validation()) { (accValidations, defaultValue) =>
+        accValidations.withErrorIf(
+          schema.exists(s => !s.fields.exists(_.getAbsolutePath == defaultValue.columnName)),
+          "item.defaultMappingValue",
+          s"Cannot fiend field ${defaultValue.columnName} in schema")
+      }
+    })
+  }
 }

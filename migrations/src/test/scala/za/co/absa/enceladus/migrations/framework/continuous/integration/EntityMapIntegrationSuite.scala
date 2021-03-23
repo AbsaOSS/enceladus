@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.migrations.framework.continuous.integration
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.continuous.{EntityVersionMap, EntityVersionMapMongo}
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
 
-class EntityMapIntegrationSuite extends FunSuite with MongoDbFixture {
+class EntityMapIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
   test("Test entity version map returns correct mapping when it is available") {
     val enp: EntityVersionMap = new EntityVersionMapMongo(dbRaw)

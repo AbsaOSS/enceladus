@@ -15,13 +15,13 @@
 
 package za.co.absa.enceladus.utils.types.parsers
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.numeric.{DecimalSymbols, NumericPattern}
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 
 import scala.util.Success
 
-class DecimalParserSuite extends FunSuite {
+class DecimalParserSuite extends AnyFunSuite {
   test("No pattern, no limitations") {
     val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols
     val pattern = NumericPattern(decimalSymbols)
@@ -30,6 +30,19 @@ class DecimalParserSuite extends FunSuite {
     assert(parser.parse("1.") == Success(BigDecimal.valueOf(1)))
     assert(parser.parse("-7") == Success(BigDecimal.valueOf(-7)))
     assert(parser.parse(".271E1") == Success(BigDecimal("2.71")))
+    assert(parser.parse("271E-2") == Success(BigDecimal("2.71")))
+  }
+
+  test("No pattern, strict parsing") {
+    val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols
+    val pattern = NumericPattern(decimalSymbols)
+    val parser = DecimalParser(pattern,maxScale = Some(2))
+    assert(parser.parse("3.14") == Success(BigDecimal("3.14")))
+    assert(parser.parse("1.") == Success(BigDecimal.valueOf(1)))
+    assert(parser.parse("-7") == Success(BigDecimal.valueOf(-7)))
+    assert(parser.parse("12.123455").isFailure)
+    assert(parser.parse(".271E1") == Success(BigDecimal("2.71")))
+
     assert(parser.parse("271E-2") == Success(BigDecimal("2.71")))
   }
 
@@ -114,7 +127,5 @@ class DecimalParserSuite extends FunSuite {
     assert(parser.parse("113.8%") == Success(BigDecimal("1.138")))
     assert(parser.parse("-5,000.1%") == Success(BigDecimal("-50.001")))
     assert(parser.parse("113.8").isFailure)
-
-    println(s"=${decimalSymbols.permillSign}=")
   }
 }

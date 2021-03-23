@@ -17,9 +17,11 @@ package za.co.absa.enceladus.model.conformanceRule
 
 import com.fasterxml.jackson.databind.{ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.scalatest.{Matchers, WordSpec}
+import za.co.absa.enceladus.model.dataFrameFilter.IsNullFilter
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class ConformanceRuleTest extends WordSpec with Matchers {
+class ConformanceRuleTest extends AnyWordSpec with Matchers {
 
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
@@ -53,12 +55,22 @@ class ConformanceRuleTest extends WordSpec with Matchers {
   }
 
   "MappingConformanceRule" should {
+    val filter = IsNullFilter("country")
     val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
       mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
-      targetAttribute = "country_name")
-    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false}"""
+      targetAttribute = "country_name", mappingTableFilter = Option(filter), overrideMappingTableOwnFilter = Option(true))
+    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false,"mappingTableFilter":{"_t":"IsNullFilter","columnName":"country"},"overrideMappingTableOwnFilter":true}"""
     assertSerDe(rule, json)
   }
+
+  "MappingConformanceRule without filter (old MappingConformanceRule)" should {
+    val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
+      mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
+      targetAttribute = "country_name", overrideMappingTableOwnFilter = None)
+    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false}"""
+    assertDeserialization(rule, json)
+  }
+
 
   "NegationConformanceRule" should {
     val rule = NegationConformanceRule(order = 6, controlCheckpoint = true, outputColumn = "conformed_col", inputColumn = "asd")
@@ -85,16 +97,34 @@ class ConformanceRuleTest extends WordSpec with Matchers {
     assertSerDe(rule, json)
   }
 
-  private def assertSerDe(rule: ConformanceRule, json: String) = {
+  "FillNullsConformanceRule" should {
+    val rule = FillNullsConformanceRule(order = 10, controlCheckpoint = true, outputColumn = "conformed_nulls", inputColumn = "input_col", value = "lit")
+    val json = """{"_t":"FillNullsConformanceRule","order":10,"outputColumn":"conformed_nulls","controlCheckpoint":true,"inputColumn":"input_col","value":"lit"}"""
+    assertSerDe(rule, json)
+  }
+
+  "CoalesceConformanceRule" should {
+    val rule = CoalesceConformanceRule(order = 11, controlCheckpoint = true, outputColumn = "coalesced_col", inputColumns = List("a.b.c", "drop", "lit"))
+    val json = """{"_t":"CoalesceConformanceRule","order":11,"outputColumn":"coalesced_col","controlCheckpoint":true,"inputColumns":["a.b.c","drop","lit"]}"""
+    assertSerDe(rule, json)
+  }
+
+  private def assertSerDe(rule: ConformanceRule, json: String): Unit = {
+    assertSerialization(rule, json)
+    assertDeserialization(rule, json)
+  }
+
+  private def assertSerialization(rule: ConformanceRule, json: String): Unit = {
     "serialize to a typed JSON" in {
       val serializedRule = objectMapper.writeValueAsString(rule)
       serializedRule shouldBe json
     }
+  }
 
+  private def assertDeserialization(rule: ConformanceRule, json: String): Unit = {
     "deserialize polymorphically from a typed JSON" in {
       val deserializedRule = objectMapper.readValue(json, classOf[ConformanceRule])
       deserializedRule shouldBe rule
     }
   }
-
 }

@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.plugins.buildin.kafka
 
 import org.apache.commons.io.IOUtils
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
 import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer
 
-class ControlInfoSerSuite extends FunSuite {
+class ControlInfoSerSuite extends AnyFunSuite {
   test ("Control info key serialize to Avro") {
     val dceControlInfo = DceControlInfoFactory.getDummyDceControlInfo()
     val avroControlInfoKey = ControlInfoAvroSerializer.convertInfoKey(dceControlInfo)

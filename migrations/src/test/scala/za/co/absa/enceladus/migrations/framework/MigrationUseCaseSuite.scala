@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.migrations.framework
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.framework.fixture.UseCaseTestData
 
-class MigrationUseCaseSuite extends FunSuite {
+class MigrationUseCaseSuite extends AnyFunSuite {
 
   test("Test a database initialization") {
     val testData = new UseCaseTestData

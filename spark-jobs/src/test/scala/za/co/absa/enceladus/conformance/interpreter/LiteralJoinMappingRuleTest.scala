@@ -16,15 +16,15 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with LoggerTestBase {
+class LiteralJoinMappingRuleTest extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def testMappingRuleWithLiteral(useExperimentalMappingRule: Boolean): Unit = {
 
@@ -33,7 +33,7 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
     val inputDf = spark.read.option("header", "true").csv("src/test/resources/interpreter/literalJoin/data")
     val mappingDf = spark.read.option("header", "true").csv("src/test/resources/interpreter/literalJoin/mapping")
 
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(reportDate = "2018-03-23")
+    implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2018-03-23")
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
@@ -41,7 +41,7 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
     mockWhen(dao.getMappingTable("countryMT", 0)) thenReturn MappingTable(name = "countryMT", version = 0,
         hdfsPath = "countryMT", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
-    DataSource.setData("countryMT", mappingDf)
+    DataSource.setData("countryMT/reportDate=2018-03-23", mappingDf)
 
     val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow",
@@ -55,9 +55,9 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       conformance = List(
         LiteralConformanceRule(order = 1, outputColumn = "country", controlCheckpoint = true, value = "CZ"),
         MappingConformanceRule(order = 2, controlCheckpoint = true, mappingTable = "countryMT", mappingTableVersion = 0,
-                                    attributeMappings = Map("countryCode" -> "country"),  targetAttribute = "countryName",
+                                    attributeMappings = Map("countryCode" -> "country"), targetAttribute = "countryName",
                                     outputColumn = "conformedCountry", isNullSafe = true),
-        DropConformanceRule(order = 3,   controlCheckpoint = false, outputColumn = "country")
+        DropConformanceRule(order = 3, controlCheckpoint = false, outputColumn = "country")
       )
     )
 
@@ -67,7 +67,7 @@ class LiteralJoinMappingRuleTest extends FunSuite with SparkTestBase with Logger
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 
     confd.write.mode("overwrite").parquet("_testOutput")
     val readAgain = spark.read.parquet("_testOutput")

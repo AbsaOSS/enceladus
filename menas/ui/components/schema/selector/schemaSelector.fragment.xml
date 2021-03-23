@@ -19,12 +19,11 @@
     <Button id="schemaSelectButton" text="{= ${entity>/schemaName} ? ${entity>/schemaName} : 'Click to select a schema'}" icon="sap-icon://value-help"
         press="components.schema.selector.SchemaSelectorUtils.onOpenSelectDialog" type="{= ${entity>/schemaName} ? 'Default' : 'Reject'}" tooltip="Click to select schema" />
     <Label text="Schema Version"/>
-    <FlexBox justifyContent="SpaceBetween" class="menasAddMappingFlex">
-        <Select id="schemaVersionSelect" class="menasAddMappingSelect"
-                items="{/currentSchemaVersions}"
-                showSecondaryValues="true" width="auto" selectedKey="{entity>/schemaVersion}">
-            <core:ListItem key="{version}" text="{version}"
-                           additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
-        </Select>
-    </FlexBox>
+    <Select id="schemaVersionSelect" class="menasAddMappingSelect"
+      items="{path: '/currentSchemaVersions', sorter: {path: 'version', descending: true}}"
+      showSecondaryValues="true" width="auto"
+      selectedKey="{entity>/schemaVersion}">
+      <core:ListItem key="{version}" text="{version}"
+        additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
+    </Select>
 </core:FragmentDefinition>

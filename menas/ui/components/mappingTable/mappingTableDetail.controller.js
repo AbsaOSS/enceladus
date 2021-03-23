@@ -72,7 +72,7 @@ sap.ui.define([
 
       this._mappingTableService = new MappingTableService(this._model, this._oEventBus);
       this._schemaService = new SchemaService(this._model, this._oEventBus);
-      this._schemaTable = new SchemaTable(this);
+      this._schemaTable = new SchemaTable(this, "schemaFragment");
       this._schemaFieldSelector = new SimpleSchemaFieldSelector(this, this._addDefaultDialog)
 
       const auditTable = this.byId("auditTrailTable");
@@ -166,9 +166,9 @@ sap.ui.define([
     },
 
     defaultSubmit: function () {
-      let newDef = this._model.getProperty("/newDefaultValue")
+      let newDef = this._model.getProperty("/newDefaultValue");
 
-      let currentMT = this._model.getProperty("/currentMappingTable")
+      let currentMT = this._model.getProperty("/currentMappingTable");
 
       if (this.validateNewDefaultValue()) {
         // send and update UI
@@ -190,7 +190,7 @@ sap.ui.define([
     },
 
     onDefaultValueMenuAction: function (oEv) {
-      let sAction = oEv.getParameter("item").data("action")
+      let sAction = oEv.getParameter("item").data("action");
       let sBindPath = oEv.getParameter("item").getBindingContext().getPath();
 
       if (sAction === "edit") {

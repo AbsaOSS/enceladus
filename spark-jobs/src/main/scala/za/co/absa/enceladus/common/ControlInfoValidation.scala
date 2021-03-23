@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.common
 
-import za.co.absa.atum.core.Atum
+import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.atum.model.Checkpoint
 import za.co.absa.enceladus.utils.implicits.OptionImplicits._
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -57,7 +57,7 @@ object ControlInfoValidation {
       case (Failure(er1), Failure(er2)) =>
         Failure(new ValidationException(s"$errorMessage ${er1.getMessage}, ${er2.getMessage}",
           Seq(er1.getMessage, er2.getMessage)))
-      case (_, _) => Success()
+      case (_, _) => Success(Unit)
     }
   }
 
@@ -69,14 +69,14 @@ object ControlInfoValidation {
       checkpoint <- checkpoints
         .find(c => c.name.equalsIgnoreCase(checkpointName) || c.workflowName.equalsIgnoreCase(checkpointName))
         .toTry(new Exception(s"Missing $checkpointName checkpoint"))
-      measurement <- checkpoint.controls.find(m => m.controlType.equalsIgnoreCase(controlTypeRecordCount))
-        .toTry(new Exception(s"$checkpointName checkpoint does not have a $controlTypeRecordCount control"))
+      measurement <- checkpoint.controls.find(m => ControlType.isControlMeasureTypeEqual(m.controlType, ControlType.Count.value))
+        .toTry(new Exception(s"$checkpointName checkpoint does not have a ${ControlType.Count.value} control"))
       res <- Try {
         val rowCount = measurement.controlValue.toString.toLong
         if (rowCount >= 0) rowCount else throw new Exception(s"Negative value")
       }.recoverWith {
         case t: Throwable =>
-          Failure(new Exception(s"Wrong $checkpointName $controlTypeRecordCount value: ${t.getMessage}"))
+          Failure(new Exception(s"Wrong $checkpointName ${ControlType.Count.value} value: ${t.getMessage}"))
       }
     } yield res
 

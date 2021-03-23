@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.UnauthorizedException
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 
-class RestDaoFactorySuite extends WordSpec with Matchers {
+class RestDaoFactorySuite extends AnyWordSpec with Matchers {
 
   private val menasApiBaseUrls = List("http://localhost:8080/menas/api")
 
