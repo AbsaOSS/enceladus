@@ -16,15 +16,17 @@
 package za.co.absa.enceladus.dao.rest.auth
 
 import org.mockito.stubbing.OngoingStubbing
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.scalatest.matchers.should.Matchers
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.BeforeAndAfter
 import org.springframework.http.{HttpHeaders, ResponseEntity}
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.UnauthorizedException
 import za.co.absa.enceladus.dao.rest.{ApiCaller, ApiCallerStub, AuthClient}
 
-abstract class AuthClientSuite() extends WordSpec
+abstract class AuthClientSuite() extends AnyWordSpec
   with Matchers
   with MockitoSugar
   with BeforeAndAfter {

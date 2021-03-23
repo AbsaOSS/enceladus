@@ -18,13 +18,14 @@ package za.co.absa.enceladus.common
 import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
-import org.scalatest.{FlatSpec, Matchers}
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import RecordIdGeneration._
 import IdType._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class RecordIdGenerationSuite extends FlatSpec with Matchers with SparkTestBase {
+class RecordIdGenerationSuite extends AnyFlatSpec with Matchers with SparkTestBase {
   import spark.implicits._
 
   val data1 = Seq(

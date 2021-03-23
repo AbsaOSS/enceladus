@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
+
+import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.menas.MenasReference
@@ -61,4 +63,15 @@ case class Schema(name: String,
         super.getSeqFieldsAudit(newRecord, AuditFieldName("fields", "Schema field")))
   }
 
+  override def exportItem(): String = {
+    val fieldsJsonList: ArrayNode = objectMapperBase.valueToTree(fields.toArray)
+
+    val objectItemMapper = objectMapperRoot.`with`("item")
+
+    objectItemMapper.put("name", name)
+    description.map(d => objectItemMapper.put("description", d))
+    objectItemMapper.putArray("fields").addAll(fieldsJsonList)
+
+    objectMapperRoot.toString
+  }
 }

@@ -34,6 +34,22 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
+  // This is for cases when HDFS browser is disabled: entering an S3 path, etc.
+  this.hasValidSimplePath = function (sHDFSPath, sEntityType, oInput) {
+    let rHDFSPathRegex = /^[^\?\*]+$/;
+    let isOk = rHDFSPathRegex.test(sHDFSPath);
+
+    if (!isOk) {
+      let notOkReason = "must not contain unwanted path chars like ? and *";
+      if (sHDFSPath === "") { notOkReason = "cannot be empty" }
+
+      oInput.setValueState(sap.ui.core.ValueState.Error);
+      oInput.setValueStateText(`${sEntityType} ${notOkReason}`);
+    }
+
+    return isOk;
+  };
+
   this.hasValidName = function (oEntity, sEntityType, oInput) {
     let isOk = true;
 
@@ -68,6 +84,32 @@ var EntityValidationService = new function () {
       isOk = false;
     }
 
+    return isOk;
+  };
+
+  this.hasValidProperties = function(aProperties) {
+    let isOk = true;
+
+    aProperties.map((oProp) => {
+      const sDesc = oProp.description ? ` (${oProp.description})` : "";
+      //check essentiality - if Mandatory property has no or empty value, we fail
+      if(oProp.essentiality._t === "Mandatory" && !oProp.value) {
+        isOk = false;
+        oProp.validation = "Error";
+        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
+      } else if(oProp.essentiality._t === "Recommended" && !oProp.value) {
+        oProp.validation = "Warning";
+        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
+      }
+      //for enum type properties, check that the value is allowed
+      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
+        if(oProp.propertyType.allowedValues.filter((oVal) => { return oVal.value === oProp.value }).length === 0) {
+          isOk = false;
+          oProp.validation = "Error";
+          oProp.validationText = `Choose one of valid options for ${oProp.name}${sDesc}`;
+        }
+      }
+    })
     return isOk;
   };
 

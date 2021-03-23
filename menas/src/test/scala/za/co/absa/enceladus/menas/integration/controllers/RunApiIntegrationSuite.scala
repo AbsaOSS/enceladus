@@ -21,11 +21,11 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.menas.integration.fixtures.{FixtureService, RunFixtureService}
-import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, Validation}
+import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.model.test.factories.RunFactory
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference}
 class RunApiIntegrationSuite extends BaseRestApiTest {
 
   import za.co.absa.enceladus.menas.integration.RunImplicits.RunExtensions
-  import za.co.absa.enceladus.menas.models.Validation._
+  import za.co.absa.enceladus.model.Validation._
 
   @Autowired
   private val runFixture: RunFixtureService = null
@@ -59,7 +59,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
+          assert(body == SerializationUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
         }
         "order the results by dataset name (ASC)" in {
           val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
@@ -75,7 +75,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
+          assert(body == SerializationUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
         }
         "serialize the Runs correctly" in {
           val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1)
@@ -145,7 +145,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
+          assert(body == SerializationUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
         }
         "order the results by dataset name (ASC)" in {
           val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "29-01-2019 13:01:12 +0200")
@@ -163,7 +163,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
+          assert(body == SerializationUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1)))
         }
         "serialize the Runs correctly" in {
           val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1, startDateTime = s"$startDate 13:01:12 +0200")
@@ -564,7 +564,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(dataset1run2))
+          assert(body == SerializationUtils.asJson(dataset1run2))
         }
         "serialize the Run correctly" in {
           val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
@@ -643,7 +643,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           assertOk(response)
 
           val body = response.getBody
-          assert(body == ControlUtils.asJson(dataset1run2))
+          assert(body == SerializationUtils.asJson(dataset1run2))
         }
         "serialize the Run correctly" in {
           val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
@@ -969,15 +969,15 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           // get run1 by std app_id
           val response1 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
           val body1 = response1.getBody
-          assert(body1 == ControlUtils.asJson(Seq(run1)))
+          assert(body1 == SerializationUtils.asJson(Seq(run1)))
           // get run2 by std app_id
           val response2 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId2")
           val body2 = response2.getBody
-          assert(body2 == ControlUtils.asJson(Seq(run2)))
+          assert(body2 == SerializationUtils.asJson(Seq(run2)))
           // get run2 by conform app_id
           val response3 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId3")
           val body3 = response3.getBody
-          assert(body3 == ControlUtils.asJson(Seq(run2)))
+          assert(body3 == SerializationUtils.asJson(Seq(run2)))
         }
 
         "return [run1, run2] when there are 2 runs with the same app_ids" in {
@@ -987,7 +987,7 @@ class RunApiIntegrationSuite extends BaseRestApiTest {
           // get run1 by std app_id
           val response = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
           val actual = response.getBody
-          val expected = ControlUtils.asJson(Seq(run1, run2))
+          val expected = SerializationUtils.asJson(Seq(run1, run2))
           assert(actual == expected)
         }
       }

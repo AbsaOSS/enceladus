@@ -12,7 +12,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-jobs</artifactId>
     <packaging>jar</packaging>
@@ -20,12 +21,12 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.7.0-SNAPSHOT</version>
+        <version>2.22.0-SNAPSHOT</version>
     </parent>
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>3.0.0</hyperdrive.version>
+        <hyperdrive.version>4.0.0</hyperdrive.version>
         <commons.version>0.0.10</commons.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
@@ -48,6 +49,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Atum -->
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
+            <version>${atum.version}</version>
+        </dependency>
+
         <!-- Data formats support -->
         <dependency>
             <groupId>com.databricks</groupId>
@@ -56,8 +64,8 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>enceladus-fixedWidth</artifactId>
-            <version>1.7.0</version>
+            <artifactId>fixed-width_${scala.compat.version}</artifactId>
+            <version>0.1.0</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
@@ -187,6 +195,14 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <args>
+                        <arg>-Xfatal-warnings</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -198,7 +214,6 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.conf.template" tofile="${project.basedir}/src/main/resources/application.conf" overwrite="false" />
                                 <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
                             </target>
                         </configuration>
@@ -207,6 +222,18 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>

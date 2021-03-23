@@ -16,8 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
-import za.co.absa.enceladus.conformance.ConfCmdConfig
-import za.co.absa.enceladus.conformance.interpreter.ExplosionState
+import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -31,7 +30,8 @@ class ArrayCollapseInterpreter extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = None
 
   override def conform(df: Dataset[Row])
-                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: ConfCmdConfig): Dataset[Row] = {
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+                       progArgs: InterpreterContextArgs): Dataset[Row] = {
     val dfOut = ExplodeTools.revertAllExplosions(df, explosionState.explodeContext, Some(ErrorMessage.errorColumnName))
     explosionState.explodeContext = ExplosionContext()
     dfOut

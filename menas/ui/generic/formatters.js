@@ -58,12 +58,12 @@ var Formatters = new function() {
       cronExpr = `${minuteSep} ${hourSep} ${dayOfMonthSep} ${monthSep} ${dayOfWeekSep}`;
     }
     return Formatters.cronExpressionFormatter(cronExpr);
-  }
+  };
 
   this.nonNullArrFormatter = function(aArr) {
     if(!aArr) return [];
     return aArr;
-  }
+  };
 
   this.stringDateShortFormatter = function(sDate) {
     if (!sDate)
@@ -78,6 +78,10 @@ var Formatters = new function() {
 
   this.nonEmptyObject = function(oObj) {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && (Object.keys(oObj).length !== 0)
+  };
+
+  this.isDefinedAndTrue = function(oObj) {
+    return (oObj !== null) && (typeof (oObj) !== "undefined") && oObj == true
   };
 
   this.objToKVArray = function(oObj) {

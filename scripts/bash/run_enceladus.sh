@@ -15,6 +15,8 @@
 
 # Command line for the script itself
 
+set -e
+
 # Show spark-submit command line without actually running it (--dry-run)
 DRY_RUN=""
 
@@ -37,6 +39,7 @@ DRA_ALLOCATION_RATIO="$DEFAULT_DRA_ALLOCATION_RATIO"
 ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
 
 # Command like default for the job
+JAR=${SPARK_JOBS_JAR_OVERRIDE:-$SPARK_JOBS_JAR}
 DATASET_NAME=""
 DATASET_VERSION=""
 REPORT_DATE=""
@@ -49,7 +52,13 @@ HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
 TRIM_VALUES=""
+EMPTY_VALUES_AS_NULLS=""
+NULL_VALUE=""
+COBOL_IS_TEXT=""
+COBOL_ENCODING=""
 IS_XCOM=""
+COPYBOOK=""
+COBOL_TRIMMING_POLICY=""
 MAPPING_TABLE_PATTERN=""
 FOLDER_PREFIX=""
 DEBUG_SET_RAW_PATH=""
@@ -57,6 +66,8 @@ EXPERIMENTAL_MAPPING_RULE=""
 CATALYST_WORKAROUND=""
 AUTOCLEAN_STD_FOLDER=""
 PERSIST_STORAGE_LEVEL=""
+HELP_CALL="0"
+ASYNCHRONOUSMODE="0"
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -67,98 +78,97 @@ MENAS_CREDENTIALS_FILE=""
 MENAS_AUTH_KEYTAB=""
 
 # Parse command line (based on https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
-POSITIONAL=()
+OTHER_PARAMETERS=()
 while [[ $# -gt 0 ]]
 do
 key="$1"
 
 case $key in
-    --dry-run)
+  --dry-run)
     DRY_RUN="1"
     shift # past argument
     ;;
-    --num-executors)
+  --num-executors)
     NUM_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --executor-cores)
+  --executor-cores)
     EXECUTOR_CORES="$2"
     shift 2 # past argument and value
     ;;
-    --executor-memory)
+  --executor-memory)
     EXECUTOR_MEMORY="$2"
     shift 2 # past argument and value
     ;;
-    --master)
+  --master)
     MASTER="$2"
     shift 2 # past argument and value
     ;;
-    --deploy-mode)
+  --deploy-mode)
     DEPLOY_MODE="$2"
     shift 2 # past argument and value
     ;;
-    --driver-cores)
+  --driver-cores)
     DRIVER_CORES="$2"
     shift 2 # past argument and value
     ;;
-    --driver-memory)
+  --driver-memory)
     DRIVER_MEMORY="$2"
     shift 2 # past argument and value
     ;;
-    --files)
+  --files)
     FILES="$ENCELADUS_FILES,$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-executor-memoryOverhead)
+  --conf-spark-executor-memoryOverhead)
     CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-memory-fraction)
+  --conf-spark-memory-fraction)
     CONF_SPARK_MEMORY_FRACTION="$2"
     shift 2 # past argument and value
     ;;
-    --jar)
+  --jar)
     JAR="$2"
     shift 2 # past argument and value
     ;;
-    --class)
-    JAR="$2"
+  --class)
+    CLASS="$2"
     shift 2 # past argument and value
     ;;
-    -D|--dataset-name)
+  -D|--dataset-name)
     DATASET_NAME="$2"
     shift 2 # past argument and value
     ;;
-    -d|--dataset-version)
+  -d|--dataset-version)
     DATASET_VERSION="$2"
     shift 2 # past argument and value
     ;;
-    -R|--report-date)
+  -R|--report-date)
     REPORT_DATE="$2"
     shift 2 # past argument and value
     ;;
-    -r|--report-version)
+  -r|--report-version)
     REPORT_VERSION="$2"
     shift 2 # past argument and value
     ;;
-    --folder-prefix)
+  --folder-prefix)
     FOLDER_PREFIX="$2"
     shift 2 # past argument and value
     ;;
-
-    -f|--raw-format)
+  -f|--raw-format)
     RAW_FORMAT="$2"
     shift 2 # past argument and value
     ;;
-    --charset)
+  --charset)
     CHARSET="$2"
     shift 2 # past argument and value
     ;;
-    --row-tag)
+  --row-tag)
     ROW_TAG="$2"
     shift 2 # past argument and value
     ;;
-    --delimiter)
+  --delimiter)
     if [[ "$2" == " " ]]; then
       DELIMITER="' '"
     else
@@ -166,96 +176,143 @@ case $key in
     fi
     shift 2 # past argument and value
     ;;
-    --header)
+  --header)
     HEADER="$2"
     shift 2 # past argument and value
     ;;
-    --csv-quote)
+  --csv-quote)
     CSV_QUOTE="$2"
     shift 2 # past argument and value
     ;;
-    --csv-escape)
+  --csv-escape)
     CSV_ESCAPE="$2"
     shift 2 # past argument and value
     ;;
-    --trimValues)
+  --trimValues)
     TRIM_VALUES="$2"
     shift 2 # past argument and value
     ;;
-    --is-xcom)
+  --empty-values-as-nulls)
+    EMPTY_VALUES_AS_NULLS="$2"
+    shift 2 # past argument and value
+    ;;
+  --null-value)
+    if [[ -z "${2// }" ]]; then
+      NULL_VALUE="'$2'"
+    else
+      NULL_VALUE="$2"
+    fi
+    shift 2 # past argument and value
+    ;;
+  --cobol-encoding)
+    COBOL_ENCODING="$2"
+    shift 2 # past argument and value
+    ;;
+  --cobol-is-text)
+    COBOL_IS_TEXT="$2"
+    shift 2 # past argument and value
+    ;;
+  --cobol-trimming-policy)
+    COBOL_TRIMMING_POLICY="$2"
+    shift 2 # past argument and value
+    ;;
+  --is-xcom)
     IS_XCOM="$2"
     shift 2 # past argument and value
     ;;
-    --mapping-table-pattern)
+  --copybook)
+    COPYBOOK="$2"
+    shift 2 # past argument and value
+    ;;
+  --mapping-table-pattern)
     MAPPING_TABLE_PATTERN="$2"
     shift 2 # past argument and value
     ;;
-    --std-hdfs-path)
+  --std-hdfs-path)
     STD_HDFS_PATH="$2"
     shift 2 # past argument and value
     ;;
-    --debug-set-raw-path)
+  --debug-set-raw-path)
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
-
-    --menas-credentials-file)
+  --menas-credentials-file)
     MENAS_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
     ;;
-    --menas-auth-keytab)
+  --menas-auth-keytab)
     MENAS_AUTH_KEYTAB="$2"
     shift 2 # past argument and value
     ;;
-    --experimental-mapping-rule)
+  --experimental-mapping-rule)
     EXPERIMENTAL_MAPPING_RULE="$2"
     shift 2 # past argument and value
     ;;
-    --catalyst-workaround)
+  --catalyst-workaround)
     CATALYST_WORKAROUND="$2"
     shift 2 # past argument and value
     ;;
-    --autoclean-std-folder)
+  --autoclean-std-folder)
     AUTOCLEAN_STD_FOLDER="$2"
     shift 2 # past argument and value
     ;;
-    --persist-storage-level)
+  --persist-storage-level)
     PERSIST_STORAGE_LEVEL="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-minExecutors)
+  --conf-spark-dynamicAllocation-minExecutors)
     DRA_MIN_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-maxExecutors)
+  --conf-spark-dynamicAllocation-maxExecutors)
     DRA_MAX_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-dynamicAllocation-executorAllocationRatio)
+  --conf-spark-dynamicAllocation-executorAllocationRatio)
     DRA_ALLOCATION_RATIO="$2"
     shift 2 # past argument and value
     ;;
-    --conf-spark-sql-adaptive-shuffle-targetPostShuffleInputSize)
+  --conf-spark-sql-adaptive-shuffle-targetPostShuffleInputSize)
     ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$2"
     shift 2 # past argument and value
     ;;
-    --set-dra)
+  --set-dra)
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
-    *)    # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
+  --help)
+    HELP_CALL="1"
+    shift # past argument
+    ;;
+  --asynchronous)
+    ASYNCHRONOUSMODE="1"
+    shift
+    ;;
+  *)    # unknown option
+    OTHER_PARAMETERS+=("$1") # save it in an array for later
     shift # past argument
     ;;
 esac
 done
-set -- "${POSITIONAL[@]}" # restore positional parameters
+
+too_many_options_print() {
+  echo "$1: Found unrecognized options passed to the script. Parameters are:"
+  echo "    $2"
+  echo ""
+}
+
+if [[ -n "${OTHER_PARAMETERS[*]}" ]]; then
+  if [[ "$EXIT_ON_UNRECOGNIZED_OPTIONS" == "true" ]]; then
+    too_many_options_print "ERROR" "${OTHER_PARAMETERS[*]}"
+    exit 127
+  else
+    too_many_options_print "WARNING" "${OTHER_PARAMETERS[*]}"
+  fi
+fi
 
 # Display values of all declared variables
 #declare -p
 
-# Validation
-VALID="1"
 validate() {
     if [[ -z "$2" ]]; then
         echo "Missing mandatory option $1"
@@ -270,32 +327,37 @@ validate_either() {
     fi
 }
 
-validate "--dataset-name" "$DATASET_NAME"
-validate "--dataset-version" "$DATASET_VERSION"
-validate "--report-date" "$REPORT_DATE"
+if [ "$HELP_CALL" == "0" ]; then
+    # Validation (only if not help called)
+    VALID="1"
 
-validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
+    validate "--dataset-name" "$DATASET_NAME"
+    validate "--dataset-version" "$DATASET_VERSION"
+    validate "--report-date" "$REPORT_DATE"
 
-if [[ "$MASTER" != "yarn" ]]; then
-  echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
-  VALID="0"
-fi
+    validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
 
-# Validation failure check
-if [ "$VALID" == "0" ]; then
-    exit 1
+    if [[ "$MASTER" != "yarn" ]]; then
+      echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
+      VALID="0"
+    fi
+
+    # Validation failure check
+    if [ "$VALID" == "0" ]; then
+        exit 1
+    fi
 fi
 
 # Construct command line
 add_to_cmd_line() {
-    if [[ ! -z "$2" ]]; then
+    if [[ -n "$2" ]]; then
         CMD_LINE="$CMD_LINE $1 $2"
     fi
 }
 
 # Puts Spark configuration properties to the command line
 add_spark_conf_cmd() {
-    if [[ ! -z "$2" ]]; then
+    if [[ -n "$2" ]]; then
         SPARK_CONF="$SPARK_CONF --conf $1=$2"
     fi
 }
@@ -305,8 +367,8 @@ echoerr() {
 }
 
 get_temp_log_file() {
-    DATE=`date +%Y_%m_%d-%H_%M_%S`
-    NAME=`sed -e 's#.*\.##' <<< $CLASS`
+    DATE=$(date +%Y_%m_%d-%H_%M_%S)
+    NAME="${CLASS##*.}"
     TEMPLATE="enceladus_${NAME}_${DATE}_XXXXXX.log"
 
     mktemp -p "$LOG_DIR" -t "$TEMPLATE"
@@ -316,7 +378,7 @@ get_temp_log_file() {
 # Configuration passed to JVM
 
 MT_PATTERN=""
-if [ ! -z "$MAPPING_TABLE_PATTERN" ]; then
+if [ -n "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
@@ -325,7 +387,7 @@ SPARK_CONF="--conf spark.logConf=true"
 # Dynamic Resource Allocation
 # check DRA safe prerequisites
 if [ "$DRA_ENABLED" = true ] ; then
-    if [ ! -z "$NUM_EXECUTORS" ]; then
+    if [ -n "$NUM_EXECUTORS" ]; then
         echo "WARNING: num-executors should NOT be set when using Dynamic Resource Allocation. DRA is disabled.";
         DRA_ENABLED=false
     fi
@@ -338,18 +400,18 @@ fi
 # configure DRA and adaptive execution if enabled
 if [ "$DRA_ENABLED" = true ] ; then
     echo "Dynamic Resource Allocation enabled"
-    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.shuffle.service.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.enabled=true"
-    SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.maxExecutors=$DRA_MAX_EXECUTORS"
-    if [ ! -z "$DRA_MIN_EXECUTORS" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.minExecutors=$DRA_MIN_EXECUTORS"
+    add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
+    add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
+    add_spark_conf_cmd "spark.sql.adaptive.enabled" "true"
+    add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" "${DRA_MAX_EXECUTORS}"
+    if [ -n "$DRA_MIN_EXECUTORS" ]; then
+        add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" "${DRA_MIN_EXECUTORS}"
     fi
-    if [ ! -z "$DRA_ALLOCATION_RATIO" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.dynamicAllocation.executorAllocationRatio=$DRA_ALLOCATION_RATIO"
+    if [ -n "$DRA_ALLOCATION_RATIO" ]; then
+        add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" "${DRA_ALLOCATION_RATIO}"
     fi
-    if [ ! -z "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
-        SPARK_CONF="${SPARK_CONF} --conf spark.sql.adaptive.shuffle.targetPostShuffleInputSize=$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
+    if [ -n "$ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE" ]; then
+        add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" "${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}"
     fi
 fi
 
@@ -357,69 +419,81 @@ JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH 
 -Dspline.producer.url=$SPLINE_PRODUCER_URL -Dhdp.version=$HDP_VERSION \
 $MT_PATTERN"
 
+if [ "$HELP_CALL" == "1" ]; then
+  source ${SRC_DIR}/_print_help.sh
+  exit "$?"
+fi
+
 CMD_LINE="$SPARK_SUBMIT"
 
 # Adding command line parameters that go BEFORE the jar file
-add_to_cmd_line "--master" ${MASTER}
-add_to_cmd_line "--deploy-mode" ${DEPLOY_MODE}
-add_to_cmd_line "--num-executors" ${NUM_EXECUTORS}
-add_to_cmd_line "--executor-memory" ${EXECUTOR_MEMORY}
-add_to_cmd_line "--executor-cores" ${EXECUTOR_CORES}
-add_to_cmd_line "--driver-cores" ${DRIVER_CORES}
-add_to_cmd_line "--driver-memory" ${DRIVER_MEMORY}
-add_to_cmd_line "--files" ${FILES}
+add_to_cmd_line "--master" "${MASTER}"
+add_to_cmd_line "--deploy-mode" "${DEPLOY_MODE}"
+add_to_cmd_line "--num-executors" "${NUM_EXECUTORS}"
+add_to_cmd_line "--executor-memory" "${EXECUTOR_MEMORY}"
+add_to_cmd_line "--executor-cores" "${EXECUTOR_CORES}"
+add_to_cmd_line "--driver-cores" "${DRIVER_CORES}"
+add_to_cmd_line "--driver-memory" "${DRIVER_MEMORY}"
+add_to_cmd_line "--files" "${FILES}"
 
 # Adding Spark config options
-add_spark_conf_cmd "spark.executor.memoryOverhead" ${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}
-add_spark_conf_cmd "spark.memory.fraction" ${CONF_SPARK_MEMORY_FRACTION}
+add_spark_conf_cmd "spark.executor.memoryOverhead" "${CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD}"
+add_spark_conf_cmd "spark.memory.fraction" "${CONF_SPARK_MEMORY_FRACTION}"
 
 # Adding JVM configuration, entry point class name and the jar file
 if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+  add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
-add_to_cmd_line "--menas-auth-keytab" ${MENAS_AUTH_KEYTAB}
-add_to_cmd_line "--menas-credentials-file" ${MENAS_CREDENTIALS_FILE}
-add_to_cmd_line "--dataset-name" ${DATASET_NAME}
-add_to_cmd_line "--dataset-version" ${DATASET_VERSION}
-add_to_cmd_line "--report-date" ${REPORT_DATE}
-add_to_cmd_line "--report-version" ${REPORT_VERSION}
-add_to_cmd_line "--raw-format" ${RAW_FORMAT}
-add_to_cmd_line "--charset" ${CHARSET}
-add_to_cmd_line "--row-tag" ${ROW_TAG}
+add_to_cmd_line "--menas-auth-keytab" "${MENAS_AUTH_KEYTAB}"
+add_to_cmd_line "--menas-credentials-file" "${MENAS_CREDENTIALS_FILE}"
+add_to_cmd_line "--dataset-name" "${DATASET_NAME}"
+add_to_cmd_line "--dataset-version" "${DATASET_VERSION}"
+add_to_cmd_line "--report-date" "${REPORT_DATE}"
+add_to_cmd_line "--report-version" "${REPORT_VERSION}"
+add_to_cmd_line "--raw-format" "${RAW_FORMAT}"
+add_to_cmd_line "--charset" "${CHARSET}"
+add_to_cmd_line "--row-tag" "${ROW_TAG}"
 add_to_cmd_line "--delimiter" "${DELIMITER}"
-add_to_cmd_line "--header" ${HEADER}
-add_to_cmd_line "--csv-quote" ${CSV_QUOTE}
-add_to_cmd_line "--csv-escape" ${CSV_ESCAPE}
-add_to_cmd_line "--trimValues" ${TRIM_VALUES}
-add_to_cmd_line "--is-xcom" ${IS_XCOM}
-add_to_cmd_line "--folder-prefix" ${FOLDER_PREFIX}
-add_to_cmd_line "--debug-set-raw-path" ${DEBUG_SET_RAW_PATH}
-add_to_cmd_line "--experimental-mapping-rule" ${EXPERIMENTAL_MAPPING_RULE}
-add_to_cmd_line "--catalyst-workaround" ${CATALYST_WORKAROUND}
-add_to_cmd_line "--autoclean-std-folder" ${AUTOCLEAN_STD_FOLDER}
-add_to_cmd_line "--persist-storage-level" ${PERSIST_STORAGE_LEVEL}
+add_to_cmd_line "--header" "${HEADER}"
+add_to_cmd_line "--csv-quote" "${CSV_QUOTE}"
+add_to_cmd_line "--csv-escape" "${CSV_ESCAPE}"
+add_to_cmd_line "--trimValues" "${TRIM_VALUES}"
+add_to_cmd_line "--empty-values-as-nulls" "${EMPTY_VALUES_AS_NULLS}"
+add_to_cmd_line "--null-value" "${NULL_VALUE}"
+add_to_cmd_line "--cobol-is-text" "${COBOL_IS_TEXT}"
+add_to_cmd_line "--cobol-encoding" "${COBOL_ENCODING}"
+add_to_cmd_line "--cobol-trimming-policy" "${COBOL_TRIMMING_POLICY}"
+add_to_cmd_line "--is-xcom" "${IS_XCOM}"
+add_to_cmd_line "--copybook" "${COPYBOOK}"
+add_to_cmd_line "--folder-prefix" "${FOLDER_PREFIX}"
+add_to_cmd_line "--debug-set-raw-path" "${DEBUG_SET_RAW_PATH}"
+add_to_cmd_line "--experimental-mapping-rule" "${EXPERIMENTAL_MAPPING_RULE}"
+add_to_cmd_line "--catalyst-workaround" "${CATALYST_WORKAROUND}"
+add_to_cmd_line "--autoclean-std-folder" "${AUTOCLEAN_STD_FOLDER}"
+add_to_cmd_line "--persist-storage-level" "${PERSIST_STORAGE_LEVEL}"
 
 echo "Command line:"
 echo "$CMD_LINE"
 
 if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
-    TMP_PATH_NAME=`get_temp_log_file`
+    TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
-    if [[ ! -z "$MENAS_AUTH_KEYTAB" ]]; then
+    if [[ -n "$MENAS_AUTH_KEYTAB" ]]; then
       # Get principle stored in the keyfile (Thanks @Zejnilovic)
-      PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1`
+      PR=$(printf "read_kt %s\nlist" "$MENAS_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
-      # PR=`printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1`
-      if [[ ! -z "$PR" ]]; then
+      # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
+      if [[ -n "$PR" ]]; then
         # Initialize a ticket
         kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
-        klist 2>&1 | tee -a "$TMP_PATH_NAME"
+        klist -e 2>&1 | tee -a "$TMP_PATH_NAME"
       else
         echoerr "WARNING!"
         echoerr "Unable to determine principle from the keytab file $MENAS_AUTH_KEYTAB."
@@ -431,20 +505,65 @@ if [[ -z "$DRY_RUN" ]]; then
     echo "$CMD_LINE" >> "$TMP_PATH_NAME"
     echo "The log will be saved to $TMP_PATH_NAME"
     # Run the job and return exit status of the last failed command in the subshell pipeline (Issue #893)
+    set +e
     bash -c "set -o pipefail; $CMD_LINE 2>&1 | tee -a $TMP_PATH_NAME"
-	# Save the exit status of spark submit subshell run
-	EXIT_STATUS="$?"
-	# Test if the command executed successfully
-	if [ $EXIT_STATUS -eq 0 ]; then
+    # Save the exit status of spark submit subshell run
+    EXIT_STATUS="$?"
+    # Test if the command executed successfully
+    if [ $EXIT_STATUS -eq 0 ]; then
       RESULT="passed"
-	else
-	  RESULT="failed"
-	fi
-	# Report the result and log location
-	echo ""
-	echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
-	exit $EXIT_STATUS
+    else
+      RESULT="failed"
+    fi
+    # Report the result and log location
+    echo ""
+    echo "Job $RESULT with exit status $EXIT_STATUS. Refer to logs at $TMP_PATH_NAME" | tee -a "$TMP_PATH_NAME"
+    exit $EXIT_STATUS
   else
-    bash -c "$CMD_LINE"
+    # Kills the yarn application. Invoked by the trap on EXIT
+    function kill_yarn_app {
+      yarn application -kill "$APPLICATIONID"
+    }
+
+    APPLICATIONID=$(bash -c "$CMD_LINE" 2>&1 | grep -oP "(?<=Submitted application ).*" )
+
+    if [ -z "$APPLICATIONID" ]; then
+      echo "Failed to capture the Application ID. Exiting."
+      exit 1
+    else
+      echo "Application Id : $APPLICATIONID"
+    fi
+
+    if [ "$ASYNCHRONOUSMODE" == "1" ]; then
+      echo "Running in asynchronous mode. Script exiting. Application ID can be found above"
+      exit 0
+    fi
+
+    # If EXIT is invoked while the script is running, this will invoke kill_yarn_app function
+    trap kill_yarn_app EXIT
+
+    STATE='NOT FINISHED'
+
+    echo "State: Application Started"
+    while [[ "$STATE" != "FINISHED" && "$STATE" != "FAILED" && "$STATE" != "KILLED" ]];  do
+      sleep 30
+      STATE=$(yarn application -status "$APPLICATIONID" | grep -oP "(?<=\sState : ).*" )
+      echo State: "$STATE"
+    done
+
+    FINALSTATE=$(yarn application -status "$APPLICATIONID" | grep -oP "(?<=\sFinal-State : ).*" )
+
+    echo "$FINALSTATE"
+    case "$FINALSTATE" in
+      "SUCCEEDED" )
+        exit 0
+        ;;
+      "KILLED" )
+        exit 130
+        ;;
+      * )
+        exit 1
+        ;;
+    esac
   fi
 fi

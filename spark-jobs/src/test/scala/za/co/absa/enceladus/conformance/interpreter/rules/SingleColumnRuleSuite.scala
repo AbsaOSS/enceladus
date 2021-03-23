@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.DataFrame
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.SingleColumnConformanceRule
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class SingleColumnRuleSuite extends FunSuite with SparkTestBase with TestRuleBehaviors {
+class SingleColumnRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
   private val singleColumnRule = SingleColumnConformanceRule(order = 1, controlCheckpoint = false, "conformedId", "id", "id2")

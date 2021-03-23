@@ -19,8 +19,9 @@ import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.MappingTable
+import za.co.absa.enceladus.model.{MappingTable, Schema}
 
+import scala.concurrent.Future
 import scala.reflect.ClassTag
 
 object MappingTableMongoRepository {
@@ -33,5 +34,12 @@ class MappingTableMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends VersionedMongoRepository[MappingTable](mongoDb)(ClassTag(classOf[MappingTable])) {
 
   override private[menas] def collectionBaseName = MappingTableMongoRepository.collectionBaseName
+
+  private val schemaCollectionName = SchemaMongoRepository.collectionBaseName + model.CollectionSuffix
+  private val schemaCollection = mongoDb.getCollection[Schema](schemaCollectionName)
+
+  def getConnectedSchema(name: String, version: Int): Future[Option[Schema]] = {
+    schemaCollection.find(getNameVersionFilter(name, Some(version))).headOption()
+  }
 
 }

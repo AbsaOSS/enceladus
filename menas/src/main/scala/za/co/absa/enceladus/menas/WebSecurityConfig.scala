@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.{EnableWebSecurity, WebSecurityConfigurerAdapter}
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -29,15 +30,15 @@ import org.springframework.security.web.authentication._
 import za.co.absa.enceladus.menas.auth._
 import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
+import za.co.absa.enceladus.utils.general.ProjectMetadata
+
 
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")
-                                     authMechanism: String,
-                                     @Value("${menas.version}")
-                                     menasVersion: String) {
-
+                                     authMechanism: String) extends ProjectMetadata {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Configuration
@@ -61,7 +62,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
             "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/oozie/isEnabled", "/api/user/version", s"/$menasVersion/**", "/api/configuration/**")
+            "/api/oozie/isEnabled", "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
           .permitAll()
         .anyRequest()
           .authenticated()

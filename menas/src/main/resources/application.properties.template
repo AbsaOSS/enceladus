@@ -38,6 +38,9 @@ menas.auth.jwt.lifespan.hours=8
 
 # How will users authenticate to menas. Available options: inmemory, kerberos
 menas.auth.mechanism=inmemory
+# Must be defined and non empty
+menas.auth.admin.role=ROLE_ADMIN
+#menas.auth.roles.regex=^[A-z]+_ADMIN$
 
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
@@ -50,6 +53,8 @@ menas.auth.mechanism=inmemory
 
 menas.auth.inmemory.user=user
 menas.auth.inmemory.password=changeme
+menas.auth.inmemory.admin.user=menas_admin
+menas.auth.inmemory.admin.password=admin123
 
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
@@ -69,7 +74,6 @@ menas.mongo.connection.database=menas
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 
-menas.version=@project.version@
 menas.environment=Dev
 
 menas.spark.master=local[1]
@@ -147,3 +151,17 @@ menas.oozie.lineageWriteApiUrl=http://localhost:8080/spline-gw/producer
 #Provide optional spark config options to be passed onto standardization and conformance jobs
 #menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
 #"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
+
+#----------- Schema Registry
+# URL of schema registry [optional]:
+# when unset, the ability to load schema by subject name from the schema repository will not be present
+#menas.schemaRegistry.baseUrl=https://localhost:8081
+
+# When schema registry is used and unsecured, there will be log warnings unless switched to false: (default=true)
+#menas.schemaRegistry.warnUnsecured=true
+
+# When using secure schema registry, following paths and passwords must be specified
+#javax.net.ssl.trustStore=/path/to/truststore.jks
+#javax.net.ssl.trustStorePassword=somePassword
+#javax.net.ssl.keyStore=/path/to/keystore.jks
+#javax.net.ssl.keyStorePassword=somePassword

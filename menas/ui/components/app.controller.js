@@ -49,6 +49,7 @@ sap.ui.define([
 
       GenericService.getUserInfo();
       GenericService.getOozieInfo();
+      PropertiesService.getProperties();
 
       this._router.getRoute("root").attachMatched((oEvent) => {
         let userInfo = sap.ui.getCore().getModel().getProperty("/userInfo");

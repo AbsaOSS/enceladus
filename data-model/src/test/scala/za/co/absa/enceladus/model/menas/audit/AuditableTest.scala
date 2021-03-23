@@ -15,12 +15,12 @@
 
 package za.co.absa.enceladus.model.menas.audit
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule}
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 
-class AuditableTest extends FunSuite {
+class AuditableTest extends AnyFunSuite {
   val obj1 = Dataset(name = "Test DS",
     version = 0,
     hdfsPath = "oldPath",

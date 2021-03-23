@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.menas
 
-import za.co.absa.enceladus.utils.general.ConfigReader
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 object LineageConfig {
-  final val apiUrl: Option[String] = ConfigReader.readStringConfigIfExist("menas.lineage.readApiUrl").filter(_.trim.nonEmpty)
+  final val apiUrl: Option[String] = new ConfigReader().readStringConfigIfExist("menas.lineage.readApiUrl").filter(_.trim.nonEmpty)
   final val jarName =  "spline"
   final val subSpace = "lineage"
 

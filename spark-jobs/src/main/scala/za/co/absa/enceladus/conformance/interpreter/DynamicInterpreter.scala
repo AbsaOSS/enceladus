@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import com.typesafe.config.{Config, ConfigFactory}
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -23,23 +23,25 @@ import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.storage.StorageLevel
 import org.slf4j.LoggerFactory
 import za.co.absa.atum.AtumImplicits._
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{
+  MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode
+}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
-import za.co.absa.enceladus.utils.fs.FileSystemVersionUtils
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-object DynamicInterpreter {
+case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
-  private val config: Config = ConfigFactory.load()
 
   /**
     * Interpret conformance rules defined in a dataset.
@@ -50,11 +52,14 @@ object DynamicInterpreter {
     * @return The conformed DataFrame.
     *
     */
-  def interpret(conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
-               (implicit spark: SparkSession, dao: MenasDAO, progArgs: ConfCmdConfig, featureSwitches: FeatureSwitches): DataFrame = {
+  def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
+               (implicit spark: SparkSession,
+                dao: MenasDAO,
+                progArgs: ConformanceConfigParser[T],
+                featureSwitches: FeatureSwitches): DataFrame = {
 
     implicit val interpreterContext: InterpreterContext = InterpreterContext(inputDf.schema, conformance,
-      featureSwitches, jobShortName, spark, dao, progArgs)
+      featureSwitches, jobShortName, spark, dao, InterpreterContextArgs.fromConformanceConfig(progArgs))
 
     applyCheckpoint(inputDf, "Start")
 
@@ -64,6 +69,11 @@ object DynamicInterpreter {
     logExecutionPlan(conformedDf)
 
     conformedDf
+  }
+
+  private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
+                                                   schema: StructType): Seq[ConformanceRule] = {
+    steps.filter(rule => SchemaUtils.fieldExists(rule.outputColumn, schema))
   }
 
   /**
@@ -76,11 +86,14 @@ object DynamicInterpreter {
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: MenasDAO = ictx.dao
-    implicit val progArgs: ConfCmdConfig = ictx.progArgs
+    implicit val progArgs: InterpreterContextArgs = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
+
+    checkMutabilityNotViolated(inputDf.schema, steps)
+
     val interpreters = getInterpreters(steps, inputDf.schema)
     val optimizerTimeTracker = new OptimizerTimeTracker(inputDf, ictx.featureSwitches.catalystWorkaroundEnabled)
     val dfInputWithIdForWorkaround = optimizerTimeTracker.getWorkaroundDataframe
@@ -109,6 +122,27 @@ object DynamicInterpreter {
         }
     })
     optimizerTimeTracker.cleanupWorkaroundDf(conformedDf)
+  }
+
+  private def checkMutabilityNotViolated(schema: StructType, steps: List[ConformanceRule])
+                                        (implicit ictx: InterpreterContext): Unit = {
+    val rulesInViolation = findOriginalColumnsModificationRules(steps, schema)
+
+    if (rulesInViolation.nonEmpty) {
+      val violationsString = rulesInViolation.map(rule =>
+        s"Rule number ${rule.order} - ${rule.getClass.getSimpleName}"
+      ).mkString("\n")
+      if (ictx.featureSwitches.allowOriginalColumnsMutability) {
+        log.warn(
+          s"""Mutability of original Data Allowed and there are some rules in violation of immutability pattern.
+             |These are:
+             |$violationsString""".stripMargin)
+      } else {
+        throw new IllegalStateException(
+          s"""There are some rules in violation of immutability pattern. These are:
+             |$violationsString""".stripMargin)
+      }
+    }
   }
 
   /**
@@ -182,6 +216,8 @@ object DynamicInterpreter {
       case r: CastingConformanceRule          => CastingRuleInterpreter(r)
       case r: NegationConformanceRule         => NegationRuleInterpreter(r)
       case r: MappingConformanceRule          => getMappingRuleInterpreter(r)
+      case r: FillNullsConformanceRule        => FillNullsRuleInterpreter(r)
+      case r: CoalesceConformanceRule         => CoalesceRuleInterpreter(r)
       case r: CustomConformanceRule           => r.getInterpreter()
       case r                                  => throw new IllegalStateException(s"Unrecognized rule class: ${r.getClass.getName}")
     }
@@ -263,11 +299,11 @@ object DynamicInterpreter {
     */
   private def getMappingTableSizeMb(rule: MappingConformanceRule)
                                    (implicit ictx: InterpreterContext): Int = {
-    val fsUtils = new FileSystemVersionUtils(ictx.spark.sparkContext.hadoopConfiguration)
 
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
-    val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath, ictx.progArgs.reportDate)
-    val mappingTableSize = fsUtils.getDirectorySizeNoHidden(mappingTablePath)
+    val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,
+      ictx.progArgs.reportDate)
+    val mappingTableSize = HadoopFsUtils.getOrCreate(inputFs).getDirectorySizeNoHidden(mappingTablePath)
     (mappingTableSize / (1024 * 1024)).toInt
   }
 

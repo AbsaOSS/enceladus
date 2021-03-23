@@ -35,39 +35,85 @@
                         <core:Fragment type="XML" fragmentName="components.schema.schemaInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="schemaFields" icon="sap-icon://tree" key="schemaFields" text="Fields">
-                        <core:Fragment type="XML" fragmentName="components.schemaTable"/>
+                        <core:Fragment type="XML" fragmentName="components.schemaTable"  id="schemaFragment"/>
                     </IconTabFilter>
                     <IconTabFilter id="UploadNew" icon="sap-icon://upload" text="Upload new">
-                        <Label text="Upload schema from file:" labelFor="schemaFormatSelect"/>
-                        <HBox width="35em">
-                            <Select id="schemaFormatSelect" forceSelection="true"
-                                    selectedKey="{/currentSchema/schemaFormat}">
-                                <core:Item key="struct" text="Spark StructType JSON"/>
-                                <core:Item key="copybook" text="COBOL Copybook"/>
-                                <core:Item key="avro" text="Avro Schema (avsc)"/>
-                            </Select>
-                            <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
-                                            tooltip="Upload new version of the schema"
-                                            uploadComplete="handleUploadComplete"
-                                            sendXHR="true"
-                                            uploadProgress="handleUploadProgress" sameFilenameAllowed="true" >
-                                <u:parameters>
-                                    <u:FileUploaderParameter name="name" value="{/currentSchema/name}"/>
-                                    <u:FileUploaderParameter name="version" value="{/currentSchema/version}"/>
-                                    <u:FileUploaderParameter name="format" value="{/currentSchema/schemaFormat}"/>
-                                </u:parameters>
-                            </u:FileUploader>
-                            <Button text="Upload File" press="handleUploadPress"/>
-                        </HBox>
-                        <Label text="Load avro schema from URL:" labelFor="remoteUrl"/>
-                        <HBox width="35em">
-                            <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
-                                <layoutData>
-                                    <FlexItemData growFactor="1"/>
-                                </layoutData>
-                            </Input>
-                            <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
-                        </HBox>
+                    <VBox width="38em">
+
+                        <Panel headerText="Upload schema from a local file" expandable="true" expanded="false">
+                            <FormattedText htmlText="
+                                &lt;p>
+                                    Schema can be updated by directly uploading a file from your local filesystem.&lt;br/>
+                                    Please make sure that the content of the file and the selected schema type conform.
+                                &lt;/p>
+                            "/>
+                            <Label text="Select local file:" labelFor="schemaFormatSelect"/>
+                            <HBox width="35em">
+                                <Select id="schemaFormatSelect" forceSelection="true"
+                                        selectedKey="{/currentSchema/schemaFormat}">
+                                    <core:Item key="struct" text="Spark StructType JSON"/>
+                                    <core:Item key="copybook" text="COBOL Copybook"/>
+                                    <core:Item key="avro" text="Avro Schema (avsc)"/>
+                                </Select>
+                                <u:FileUploader id="fileUploader" name="file" uploadUrl="api/schema/upload"
+                                                tooltip="Upload new version of the schema"
+                                                uploadComplete="handleUploadComplete"
+                                                sendXHR="true"
+                                                uploadProgress="handleUploadProgress" sameFilenameAllowed="true" >
+                                    <u:parameters>
+                                        <u:FileUploaderParameter name="name" value="{/currentSchema/name}"/>
+                                        <u:FileUploaderParameter name="version" value="{/currentSchema/version}"/>
+                                        <u:FileUploaderParameter name="format" value="{/currentSchema/schemaFormat}"/>
+                                    </u:parameters>
+                                </u:FileUploader>
+                                <Button text="Upload File" press="handleUploadPress"/>
+                            </HBox>
+                        </Panel>
+                        <Panel headerText="Load schema from URL" expandable="true" expanded="false">
+                            <FormattedText htmlText="
+                                &lt;p>
+                                    This section allows us to update the schema by specifying a remote HTTP(s) location
+                                    that the file will be loaded from. URL from an existing schema registry is expected, therefore
+                                    AVRO-schema type is expected.
+                                &lt;/p>
+                                &lt;p>
+                                    Example: &lt;code>https://mydomain1.com/subjects/myTopic1/versions/latest/schema&lt;/code>
+                                &lt;/p>
+                                "/>
+                            <Label text="Specify URL of the schema:" labelFor="remoteUrl"/>
+                            <HBox width="35em">
+                                <Input id="remoteUrl" type="Text" placeholder="Enter URL of the new schema">
+                                    <layoutData>
+                                        <FlexItemData growFactor="1"/>
+                                    </layoutData>
+                                </Input>
+                                <Button text="Submit URL" press="handleRemoteUrlSubmit"/>
+                            </HBox>
+                        </Panel>
+                        <Panel headerText="Load schema from schema registry" expanded="false" expandable="true"
+                               visible="{/registryEnabled}">
+                            <FormattedText htmlText='&lt;p>
+                                A new schema can be loaded from an internally-defined schema registry by specifying
+                                a subject name that exists in the schema repository.&lt;/p>
+
+                                &lt;p>Should the loading of the schema fail, a fallback of
+                                &lt;em>subject_name&lt;/em>&lt;code>-value&lt;/code> will be attempted, too.&lt;/p>
+
+                            '/>
+                            <Label text="Specify the subject name:" labelFor="subjectName"/>
+                            <VBox width="35em">
+                                <Input id="subjectName" type="Text" placeholder="Enter subject name e.g. myName123-value"
+                                       value="{/subjectName}" valueLiveUpdate="true">
+                                    <layoutData>
+                                        <FlexItemData growFactor="1"/>
+                                    </layoutData>
+                                </Input>
+                                <Label text="Subject to be loaded from: {/subjectName}; fallback: {/subjectName}-value."
+                                       visible="{= ${/subjectName}.length > 0 }"/>
+                                <Button text="Submit {/subjectName} " press="handleSubjectSubmit" enabled="{= ${/subjectName}.length > 0 }"/>
+                            </VBox>
+                        </Panel>
+                    </VBox>
                     </IconTabFilter>
                     <IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
                         <Panel headerText="Datasets" height="50%">

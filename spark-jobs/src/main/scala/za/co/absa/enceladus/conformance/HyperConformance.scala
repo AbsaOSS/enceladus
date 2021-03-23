@@ -19,20 +19,24 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 import org.apache.commons.configuration2.Configuration
+import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConfCmdConfig,
+class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
@@ -40,29 +44,36 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 
   @throws[IllegalArgumentException]
   def transform(rawDf: DataFrame): DataFrame = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-
     implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
     dao.authenticate()
 
-    val reportVersion = getReportVersion
-
     logPreConformanceInfo(rawDf)
+
+    val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    val conformedDf = applyConformanceTransformations(rawDf, conformance)
+    log.info(s"Raw schema: ${rawDf.schema.treeString}")
+    log.info(s"Publish schema: ${conformedDf.schema.treeString}")
+    conformedDf
+  }
+
+  def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
+                                     (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+    val reportVersion = getReportVersion
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
 
-    val conformance = dao.getDataset(cmd.datasetName, cmd.datasetVersion)
+    // using HDFS implementation until HyperConformance is S3-ready
+    implicit val hdfs = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
+    implicit val hdfsUtils = HadoopFsUtils.getOrCreate(hdfs)
 
-    val conformedDf = DynamicInterpreter.interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, infoDateColumn)
-      .withColumnIfDoesNotExist(InfoDateColumnString, date_format(infoDateColumn,"yyyy-MM-dd"))
+    val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
+      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
+      .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
       .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
-
-    log.info(s"Raw schema: ${rawDf.schema.treeString}")
-    log.info(s"Publish schema: ${conformedDf.schema.treeString}")
     conformedDf
   }
 
@@ -72,7 +83,7 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
   }
 
   @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConfCmdConfig): Int = {
+  private def getReportVersion(implicit cmd: ConformanceConfig): Int = {
     cmd.reportVersion match {
       case Some(version) => version
       case None => throw new IllegalArgumentException("Report version is not provided.")
@@ -83,20 +94,21 @@ class HyperConformance (implicit cmd: ConfCmdConfig,
 /**
  * This is the definition of Dynamic Conformance as a component of Hyperdrive.
  *
- * In order to use it in hyperdrive the component needs to be configured in 'ingestion.properties' as follows:
+ * See https://github.com/AbsaOSS/hyperdrive#configuration for instructions how the component needs to be configured in Hyperdrive.
+ * Example values are given below:
  * {{{
- * transformer.hyperconformance.menas.rest.uri=http://localhost:8080
- * transformer.hyperconformance.dataset.name=example
- * transformer.hyperconformance.dataset.version=1
- * transformer.hyperconformance.report.date=2020-01-29
- * transformer.hyperconformance.report.version=1
- * transformer.hyperconformance.event.timestamp.column=EV_TIME
+ * menas.rest.uri=http://localhost:8080
+ * dataset.name=example
+ * dataset.version=1
+ * report.date=2020-01-29
+ * report.version=1
+ * event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
- * transformer.hyperconformance.menas.credentials.file=/path/menas.credentials
+ * menas.credentials.file=/path/menas.credentials
  *
  * # Or a keytab
- * transformer.hyperconformance.menas.auth.keytab=/path/to/keytab
+ * menas.auth.keytab=/path/to/keytab
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
@@ -116,19 +128,18 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
 
-    implicit val cmd: ConfCmdConfig = ConfCmdConfig(
-      datasetName = conf.getString(datasetNameKey),
-      datasetVersion = conf.getInt(datasetVersionKey),
-      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()), // Still need a report date for mapping table patterns
-      reportVersion = Option(getReportVersion(conf)),
-      menasCredentialsFactory = menasCredentialsFactory,
-      performanceMetricsFile = None,
-      publishPathOverride = None,
-      folderPrefix = None,
+    implicit val confConfig: ConformanceConfig = ConformanceConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
       isCatalystWorkaroundEnabled = Some(true),
       autocleanStandardizedFolder = Some(false),
-      persistStorageLevel = None
+      datasetName = conf.getString(datasetNameKey),
+      datasetVersion = conf.getInt(datasetVersionKey),
+      reportDate = new SimpleDateFormat(ReportDateFormat).format(new Date()),  // Still need a report date for mapping table patterns
+      reportVersion = Option(getReportVersion(conf)),
+      performanceMetricsFile = None,
+      folderPrefix = None,
+      persistStorageLevel = None,
+      menasCredentialsFactory = menasCredentialsFactory
     )
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
@@ -142,6 +153,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
+  }
+
+  private def getReportVersion(conf: Configuration): Int = {
+    if (conf.containsKey(reportVersionKey)) {
+      conf.getInt(reportVersionKey)
+    } else {
+      defaultReportVersion
+    }
   }
 
   @throws[IllegalArgumentException]
@@ -167,13 +186,4 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }
-
-  private def getReportVersion(conf: Configuration): Int = {
-    if (conf.containsKey(reportVersionKey)) {
-      conf.getInt(reportVersionKey)
-    } else {
-      defaultReportVersion
-    }
-  }
 }
-

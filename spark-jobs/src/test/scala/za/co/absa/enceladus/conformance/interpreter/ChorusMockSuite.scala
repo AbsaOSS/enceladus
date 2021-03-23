@@ -16,20 +16,20 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.mockito.Mockito.{mock, when => mockWhen}
-import org.scalatest.FunSuite
-import za.co.absa.enceladus.conformance.ConfCmdConfig
+import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
 case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
+class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
@@ -43,14 +43,14 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
     val inputDf = spark.createDataFrame(d)
     val mappingDf = spark.createDataFrame(mapping)
 
-    implicit val progArgs: ConfCmdConfig = ConfCmdConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
 
     mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
-    DataSource.setData("myMappingTable", mappingDf)
+    DataSource.setData("myMappingTable/reportDate=2018-03-23", mappingDf)
 
     val conformanceDef = ConfDataset(
       name = "My dummy conformance workflow", // whatever here
@@ -71,7 +71,7 @@ class ChorusMockSuite extends FunSuite with SparkTestBase with LoggerTestBase {
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val confd = DynamicInterpreter.interpret(conformanceDef, inputDf).repartition(2)
+    val confd = DynamicInterpreter().interpret(conformanceDef, inputDf).repartition(2)
 
     logDataFrameContent(confd)
 

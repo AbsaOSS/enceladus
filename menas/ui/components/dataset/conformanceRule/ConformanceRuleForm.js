@@ -165,7 +165,8 @@ class CastingConformanceRuleForm extends ConformanceRuleForm {
       {type: "decimal(38,18)"},
       {type: "string"},
       {type: "date"},
-      {type: "timestamp"}
+      {type: "timestamp"},
+      {type: "binary"}
     ]
   }
 
@@ -301,6 +302,65 @@ class LiteralConformanceRuleForm extends ConformanceRuleForm {
   reset() {
     super.reset();
     this.resetValueState(this.literalValueControl);
+  }
+
+}
+
+class FillNullsConformanceRuleForm extends ConformanceRuleForm {
+
+  constructor() {
+    super("FillNullsConformanceRule", true)
+  }
+
+  get fillNullsValueControl() {
+    return sap.ui.getCore().byId(`${this.ruleType}--fillNullsValue`);
+  }
+
+  isCorrectlyConfigured(rule) {
+    return this.nonEmptyField(rule.value, "Fill Nulls with Value", this.fillNullsValueControl);
+  }
+
+  reset() {
+    super.reset();
+    this.resetValueState(this.fillNullsValueControl);
+  }
+
+}
+
+class CoalesceConformanceRuleForm extends ConformanceRuleForm {
+
+  constructor() {
+    super("CoalesceConformanceRule", false)
+  }
+
+  get inputColumnsControl() {
+    return sap.ui.getCore().byId(`${this.ruleType}--inputColumns`);
+  }
+
+  isCorrectlyConfigured(rule) {
+    return this.hasValidInputColumns(rule.inputColumns);
+  }
+
+  hasValidInputColumns(fieldValue = []) {
+    let isValid = fieldValue.length >= 2;
+
+    if (!isValid) {
+      this.inputColumnsControl.getItems().forEach(item => item.setHighlight(sap.ui.core.ValueState.Error));
+      sap.m.MessageToast.show("At least 2 columns are required for coalesce.");
+    }
+
+    return isValid
+  }
+
+  reset() {
+    super.reset();
+    this.resetInputColumns();
+  }
+
+  resetInputColumns() {
+    this.inputColumnsControl
+      .getItems()
+      .forEach(item => item.setHighlight(sap.ui.core.ValueState.None));
   }
 
 }

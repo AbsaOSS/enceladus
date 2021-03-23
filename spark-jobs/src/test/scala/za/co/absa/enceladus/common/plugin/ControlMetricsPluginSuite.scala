@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.common.plugin
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.common.plugin.dummy.{DummyControlMetricsPlugin1, DummyControlMetricsPlugin2}
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
 import scala.collection.JavaConverters._
 
-class ControlMetricsPluginSuite extends FunSuite {
+class ControlMetricsPluginSuite extends AnyFunSuite {
 
   test("Test the control plugin loader loads nothing if no class is specified") {
     val conf = ConfigFactory.parseMap(Map[String, String]().asJava)

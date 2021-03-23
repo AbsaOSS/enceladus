@@ -18,14 +18,14 @@ package za.co.absa.enceladus.utils.types
 import java.text.ParseException
 
 import org.apache.spark.sql.types._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField._
-import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue}
+import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
 
 import scala.util.{Failure, Success, Try}
 
-class TypedStructFieldSuite extends FunSuite {
+class TypedStructFieldSuite extends AnyFunSuite {
   private implicit val defaults: Defaults = GlobalDefaults
   private val fieldName = "test_field"
   private def createField(dataType: DataType,
@@ -81,6 +81,7 @@ class TypedStructFieldSuite extends FunSuite {
       case FloatType      => (field.isInstanceOf[FloatTypeStructField], "FloatTypeStructField")
       case DoubleType     => (field.isInstanceOf[DoubleTypeStructField], "DoubleTypeStructField")
       case StringType     => (field.isInstanceOf[StringTypeStructField], "StringTypeStructField")
+      case BinaryType     => (field.isInstanceOf[BinaryTypeStructField], "BinaryTypeStructField")
       case BooleanType    => (field.isInstanceOf[BooleanTypeStructField], "BooleanTypeStructField")
       case DateType       => (field.isInstanceOf[DateTypeStructField], "DateTypeStructField")
       case TimestampType  => (field.isInstanceOf[TimestampTypeStructField], "TimestampTypeStructField")
@@ -146,6 +147,17 @@ class TypedStructFieldSuite extends FunSuite {
     checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
   }
 
+  test("Binary type not nullable, with default defined as null") {
+    val fieldType = BinaryType
+    val nullable = false
+    val field = createField(fieldType, nullable, Some(null)) // scalastyle:ignore null
+    val typed = TypedStructField(field)
+    val errMsg = s"null is not a valid value for field '$fieldName'"
+    val warnMsg ="Default value of 'null' found, but no encoding is specified. Assuming 'none'."
+    val fail = Failure(new IllegalArgumentException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg), ValidationWarning(warnMsg)))
+  }
+
   test("Byte type not nullable, with default defined as not not-numeric string") {
     val fieldType = ByteType
     val nullable = false
@@ -205,6 +217,49 @@ class TypedStructFieldSuite extends FunSuite {
       ValidationError(errMsg),
       ValidationError(s"${MetadataKeys.AllowInfinity} metadata value of field 'test_field' is not Boolean in String format")
     ))
+  }
+
+  test("Decimal type with strictParsing enabled, incorrect value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.89899"), Map( MetadataKeys.StrictParsing -> "true" ))
+    val typed = TypedStructField(field)
+    val errMsg = "'1000.89899' cannot be cast to decimal(10,2)"
+    val fail = Failure(new IllegalArgumentException(errMsg))
+    checkField(typed, fieldType, fail, fail, nullable, Seq(ValidationError(errMsg)))
+  }
+  test("Decimal type with strictParsing enabled, correct value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.9"), Map( MetadataKeys.StrictParsing -> "true" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.9))), Success(Some(1000.9)), nullable, Seq())
+  }
+
+  test("Decimal type with incorrect strictParsing value") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.889"), Map( MetadataKeys.StrictParsing -> "t" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.889))), Success(Some(1000.889)), nullable, Seq(
+      ValidationError(s"${MetadataKeys.StrictParsing} metadata value of field 'test_field' is not Boolean in String format"))
+    )
+  }
+
+  test("Decimal type with false strictParsing") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.8889"), Map( MetadataKeys.StrictParsing -> "false" ))
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.8889))), Success(Some(1000.8889)), nullable, Seq())
+  }
+
+  test("Decimal type with no set strictParsing") {
+    val fieldType = DecimalType(10, 2)
+    val nullable = false
+    val field = createField(fieldType, nullable, Some("1000.8889"), Map())
+    val typed = TypedStructField(field)
+    checkField(typed, fieldType, Success(Some(Some(1000.8889))), Success(Some(1000.8889)), nullable, Seq())
   }
 
   test("Array type with long element data type and correct associated metadata") {

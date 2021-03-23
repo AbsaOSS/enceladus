@@ -19,11 +19,14 @@ import java.util.UUID
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
-import org.scalatest.mockito.MockitoSugar
-import org.scalatest.{Outcome, fixture}
+import org.scalatest.funsuite.FixtureAnyFunSuite
+import org.mockito.scalatest.MockitoSugar
+import org.scalatest.Outcome
+import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
@@ -31,13 +34,14 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
+class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
 
 
   import spark.implicits._
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
+  private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
@@ -62,9 +66,9 @@ class StandardizationParquetSuite extends fixture.FunSuite with SparkTestBase wi
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String,
-                               args: Array[String]): (StdCmdConfig, DataFrame) = {
-    val cmd: StdCmdConfig = StdCmdConfig.getCmdLineArguments(args)
-    val csvReader = StandardizationJob.getFormatSpecificReader(cmd, dataSet)
+                               args: Array[String]): (StandardizationConfig, DataFrame) = {
+    val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
+    val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
     (cmd, csvReader.load(tmpFileName).orderBy("id"))
   }
 
