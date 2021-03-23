@@ -84,7 +84,7 @@ The coverage reports are written in each module's `target` directory and aggrega
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
 The _Spline service_ can be omitted; in such case the **Standardization** and **Conformance** `spline.producer.url` setting
-as well as **Menas** `menas.lineage.readApiUrl` and `menas.oozie.lineageWriteApiUrl` settings should be all set to empty string. 
+as well as **Menas** `menas.oozie.lineageWriteApiUrl` settings should be set to empty string. 
 
 #### Deploying Menas
 Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
