@@ -48,7 +48,7 @@ html, body {
 
 .menasAddMappingFlex div {
     width: calc(100% - 38px);
-  }
+}
 
 .monitoringBlockLayoutCell {
   min-width: 20rem !important;
@@ -127,4 +127,9 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 
 .formWithSmallContainerMargins > div > div > div > div {
   padding-bottom: 0.9rem !important;
+}
+
+.lineageErrorLabel {
+  font-size: 200%;
+  padding-top: 2rem;
 }

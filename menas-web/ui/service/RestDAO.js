@@ -232,4 +232,9 @@ class ConfigRestClient {
   static getEnvironmentName() {
     return RestClient.get(`/configuration/environment`)
   }
+
+  static getLineageExecutionIdApiTemplate() {
+    return RestClient.get(`api/configuration/lineageExecutionIdApiTemplate`)
+  }
+
 }
