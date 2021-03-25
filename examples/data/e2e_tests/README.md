@@ -20,7 +20,8 @@ There are 3 folders
 
 - `data` - data for hdfs and jsons ready to be imported into Menas
 - `setup_scripts` - should help you with importing data into Menas and copying onto HDFS
-- `test_jsons` - jsons ready to be executed using [Hermes](https://github.com/AbsaOSS/hermes)
+- `test_jsons` - jsons ready to be executed using [Hermes](https://github.com/AbsaOSS/hermes). 
+For executing these tests, it should be changed `recordId.generation.strategy` to `stableHashId`. 
 
 ## Setup Scripts
 
@@ -39,7 +40,7 @@ Ths will start the script and ask you for a username, password and Menas URL.
 
 To run without the prompts use:
 ```shell
-./setup_scripts/import_all.sh with user changeme http://localhost:8080/menas
+./setup_scripts/import_all.sh with <username> <password> <menas url>
 ```
 or 
 ```shell
@@ -47,7 +48,7 @@ or
 ```
 
 The parameters are user name, password and Menas URL.
-Defaults are the same as in the second example. 
+Defaults are username: `user` and password: `changeme`. 
 
 ### Copy to HDFS
 
@@ -61,16 +62,18 @@ To run this script with user prompts, run:
 ```
 
 This will start the script and ask you for the root folder of to use. 
-This is a folder into which it will copy the 3 folders.
+This is a folder into which it will copy the folders from `/data/hdfs`.
 
 If the folder does not exist, you will be asked if you want to create it.
 
 To run without user prompts use
 
 ```shell
-./setup_scripts/copy_to_hdfs.sh with /path/on/hdfs n
+./setup_scripts/copy_to_hdfs.sh with /path/on/hdfs [y/n]
 ```
-First parameter is the root folder and second if to create or not. Second parameter is optional.
+First parameter is the custom set root folder in HDFS. 
+The second parameter answers if to create this folder (`y`) in case it doesn't exist or not (`n`). 
+Second parameter is optional.
 
 If you run it with defaults, then it will copy everything into the root of the hdfs (`/`) 
 ```shell
