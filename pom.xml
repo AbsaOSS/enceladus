@@ -161,6 +161,7 @@
         <jackson.spark.version>2.10.4</jackson.spark.version>
         <jackson.version>2.9.8</jackson.version>
         <jjwt.version>0.10.7</jjwt.version>
+        <json4s.version>3.5.3</json4s.version>
         <junit.version>4.11</junit.version>
         <kafka.spark.version>0-10</kafka.spark.version>
         <lodash.version>4.17.10</lodash.version>
