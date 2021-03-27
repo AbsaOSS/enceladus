@@ -21,7 +21,7 @@ object Validation {
 
   val NotSpecified = "not specified"
 
-  val empty = Validation()
+  val empty: Validation = Validation()
 
   def merge(a: Validation, b: Validation) : Validation = a.merge(b)
 
@@ -30,7 +30,7 @@ object Validation {
 case class Validation (errors: Map[String, List[String]] = Map()) {
 
   @JsonIgnore
-  def isValid(): Boolean = errors.isEmpty
+  def isValid: Boolean = errors.isEmpty
 
   def withError(key: String, error: String): Validation = {
     this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))

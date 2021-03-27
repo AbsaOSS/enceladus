@@ -23,9 +23,14 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+
 import scala.language.reflectiveCalls
 import DatasetService.RuleValidationsAndFields
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind.ValidationKind
 import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
+import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 
 import scala.util.{Failure, Success}
 
@@ -141,19 +146,24 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   private def validateRequiredPropertiesExistence(existingProperties: Set[String],
-                                                  propDefs: Seq[PropertyDefinition]): Validation = {
+                                                  propDefs: Seq[PropertyDefinition],
+                                                  forRun: Boolean): Validation = {
     propDefs
-      .filter(!_.disabled)
-      .collect {
-        case propDef if propDef.isRequired && !existingProperties.contains(propDef.name) =>
-          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
-
-        case propDef if propDef.isRecommended && !existingProperties.contains(propDef.name) =>
-          log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
-          Validation.empty
-
-
-      }.foldLeft(Validation.empty)(Validation.merge)
+      .filterNot(propDef => propDef.disabled || existingProperties.contains(propDef.name) )
+      .foldLeft(Validation.empty){(acc, propDef)=>
+        propDef.essentiality match {
+          case Mandatory(true) if forRun =>
+            log.warn(s"Property '${propDef.name}' is required to be present, but was not found! (Run enabled)")
+            acc
+          case Mandatory(_) =>
+            acc.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
+          case Recommended =>
+            log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
+            acc
+          case _ =>
+            acc
+        }
+      }
   }
 
   /**
@@ -161,32 +171,39 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     * it behaves as [[VersionedModelService#getVersion()]]
    * @param datasetName dataset name to retrieve
    * @param datasetVersion dataset version to retrieve
-   * @param addPropertiesValidation true if populate dataset's `propertiesValidation` field
+   * @param addPropertiesValidation specifies if and how to populate dataset's `propertiesValidation` field
    * @return None if dataset found, Some(dataset) otherwise.
    */
-  def getVersionValidated(datasetName: String, datasetVersion: Int, addPropertiesValidation: Boolean): Future[Option[Dataset]] = {
-    val datasetResponse: Future[Option[Dataset]] = getVersion(datasetName, datasetVersion)
-    if (!addPropertiesValidation) {
-      datasetResponse // as-is
-    } else {
-      datasetResponse.flatMap {
-        case None => Future.successful(None) // None signifies the dataset not found => passing along
+  def getVersionValidated(datasetName: String,
+                          datasetVersion: Int,
+                          addPropertiesValidation: ValidationKind): Future[Option[Dataset]] = {
+
+    def doPropertiesValidation(dr: Future[Option[Dataset]], forRun: Boolean): Future[Option[Dataset]] = {
+      dr.flatMap {
+        case None => dr // None signifies the dataset not found => passing along
         case definedDataset@Some(dataset) =>
           // actually adding validation
-        val validationResult: Future[Validation] = validateProperties(dataset.propertiesAsMap)
+          val validationResult: Future[Validation] = validateProperties(dataset.propertiesAsMap, forRun)
           validationResult.map { props => definedDataset.map(_.copy(propertiesValidation = Some(props))) }
       }
     }
+
+    val datasetResponse: Future[Option[Dataset]] = getVersion(datasetName, datasetVersion)
+    addPropertiesValidation match {
+      case ValidationKind.NoValidation => datasetResponse
+      case ValidationKind.ForRun       => doPropertiesValidation(datasetResponse, forRun = true)
+      case ValidationKind.Strictest    => doPropertiesValidation(datasetResponse, forRun = false)
+    }
   }
 
-  def validateProperties(properties: Map[String, String]): Future[Validation] = {
+  def validateProperties(properties: Map[String, String], forRun: Boolean): Future[Validation] = {
 
     datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
       val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
 
       val existingPropsValidation = properties.toSeq.map { case (key, value) => validateExistingProperty(key, value, propDefsMap) }
         .foldLeft(Validation.empty)(Validation.merge)
-      val requiredPropDefsValidations = validateRequiredPropertiesExistence(properties.keySet, propDefs)
+      val requiredPropDefsValidations = validateRequiredPropertiesExistence(properties.keySet, propDefs, forRun)
 
       existingPropsValidation merge requiredPropDefsValidations
     }

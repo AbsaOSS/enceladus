@@ -27,7 +27,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import za.co.absa.enceladus.menas.exceptions._
 import za.co.absa.enceladus.menas.models.RestError
 import za.co.absa.enceladus.menas.models.rest.RestResponse
-import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.menas.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError,
+  SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.menas.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
 import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
 import za.co.absa.enceladus.model.{UsedIn, Validation}
@@ -42,6 +43,11 @@ class RestExceptionHandler {
   val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)
+
+  @ExceptionHandler(value = Array(classOf[NoSuchElementException]))
+  def handleNoSuchElementException(exception: Exception): ResponseEntity[Any] = {
+    ResponseEntity.badRequest().build[Any]()
+  }
 
   @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
   def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
@@ -111,7 +117,12 @@ class RestExceptionHandler {
 
   @ExceptionHandler(value = Array(classOf[MethodArgumentTypeMismatchException]))
   def handleTypeMismatchException(exception: MethodArgumentTypeMismatchException): ResponseEntity[Any] = {
-    ResponseEntity.notFound().build[Any]()
+    val queryStringParamNames = Set("validateProperties", "forRun")
+    if (queryStringParamNames.contains(exception.getName)) {
+      ResponseEntity.badRequest().body(s"Unrecognized value '${exception.getValue}' for parameter `${exception.getName}`")
+    }else {
+      ResponseEntity.notFound().build[Any]()
+    }
   }
 
   @ExceptionHandler(Array(classOf[OozieActionException]))
@@ -123,9 +134,11 @@ class RestExceptionHandler {
 
   @ExceptionHandler(Array(classOf[OozieClientException]))
   def handleOozieClientException(ex: OozieClientException): ResponseEntity[RestError] = {
+    import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
     val err = if (ex.getMessage.toLowerCase.contains("unauthorized proxyuser")) {
-      val message = if (oozieImpersonationExceptionMessage.nonEmpty) oozieImpersonationExceptionMessage else
-        s"Please add the system user into ${oozieProxyGroup} group to use this feature."
+      val message = oozieImpersonationExceptionMessage.getOrElse(
+        s"Please add the system user into $oozieProxyGroup group to use this feature."
+      )
       RestError(message)
     } else {
       RestError(ex.getMessage)

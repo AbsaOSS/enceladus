@@ -21,9 +21,10 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Optional, Recommended}
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 
@@ -90,19 +91,20 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val fields = Future(Set("a"))
     val validation = DatasetService.RuleValidationsAndFields(validations, fields)
 
-    assert(await(validation.mergeValidations()).isValid())
+    assert(await(validation.mergeValidations()).isValid)
   }
 
   { // common scope for properties validation checks
     val mockedPropertyDefinitions = Seq(
-      PropertyDefinition(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended()),
-      PropertyDefinition(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional()),
-      PropertyDefinition(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory()),
-      PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory()),
-      PropertyDefinition(name = "mandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(), disabled = true),
+      PropertyDefinition(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended),
+      PropertyDefinition(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional),
+      PropertyDefinition(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false)),
+      PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false)),
+      PropertyDefinition(name = "mandatoryString3", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = true)),
+      PropertyDefinition(name = "mandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false), disabled = true),
 
-      PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional()),
-      PropertyDefinition(name = "optionalEnumCd", propertyType = EnumPropertyType("optionC", "optionD"), essentiality = Optional())
+      PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional),
+      PropertyDefinition(name = "optionalEnumCd", propertyType = EnumPropertyType("optionC", "optionD"), essentiality = Optional)
     )
 
     Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))
@@ -115,29 +117,39 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       "undefinedKey1" -> "valueX" // extra unwanted key
     )
 
-    val expectedValidationResult = Validation(Map(
+    val expectedValidationResultForRun = Validation(Map(
       "optionalEnumAb" -> List("Value 'optionX' is not one of the allowed values (optionA, optionB)."),
       "undefinedKey1" -> List("There is no property definition for key 'undefinedKey1'."),
       "mandatoryString2" -> List("Dataset property 'mandatoryString2' is mandatory, but does not exist!"))
     )
 
-    test("validateProperties") {
-      val validationResult = await(service.validateProperties(datasetProperties))
-      validationResult shouldBe expectedValidationResult
+    val expectedValidationResultForSetup = expectedValidationResultForRun.withError(
+      "mandatoryString3", "Dataset property 'mandatoryString3' is mandatory, but does not exist!"
+    )
+
+    test("Validate properties for run") {
+      val validationResult = await(service.validateProperties(datasetProperties, forRun = true))
+      validationResult shouldBe expectedValidationResultForRun
+    }
+
+    test("Validate properties for setup") {
+      val validationResult = await(service.validateProperties(datasetProperties, forRun = false))
+      validationResult shouldBe expectedValidationResultForSetup
     }
 
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1, properties = Some(datasetProperties))
     Seq(
-      ("validation enabled", true, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResult)))),
-      ("validation disabled", false, Some(dataset), Some(dataset.copy(propertiesValidation = None))),
-      ("non-existend dataset", true, None, None)
-    ).foreach { case (testVariant, validationEnabled, persistedDataset, expectedResult) =>
+      ("validation for run", ValidationKind.ForRun, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForRun)))),
+      ("validation strictest", ValidationKind.Strictest, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForSetup)))),
+      ("validation disabled", ValidationKind.NoValidation, Some(dataset), Some(dataset.copy(propertiesValidation = None))),
+      ("non-existing dataset", ValidationKind.Strictest, None, None)
+    ).foreach { case (testVariant, validationKind, persistedDataset, expectedResult) =>
       test(s"Dataset with properties validation ($testVariant)") {
 
         Mockito.when(modelRepository.getVersion("dataset", 1)).thenReturn(Future.successful(persistedDataset))
         Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
 
-        val datasetResult = await(service.getVersionValidated("dataset", 1, validationEnabled))
+        val datasetResult: Option[Dataset] = await(service.getVersionValidated("dataset", 1, validationKind))
         datasetResult shouldBe expectedResult
       }
     }
@@ -152,14 +164,14 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
   ).foreach { testCase =>
     test(s"filtering properties (${testCase.testCaseName})") {
       val mockedPropertyDefinitions = Seq(
-        PropertyDefinition(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended()),
-        PropertyDefinition(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional()),
-        PropertyDefinition(name = "infoMandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(), putIntoInfoFile = true),
-        PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory()),
-        PropertyDefinition(name = "infoMandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(),
+        PropertyDefinition(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended),
+        PropertyDefinition(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional),
+        PropertyDefinition(name = "infoMandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false), putIntoInfoFile = true),
+        PropertyDefinition(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false)),
+        PropertyDefinition(name = "infoMandatoryDisabledString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
           disabled = true, putIntoInfoFile = true),
 
-        PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional())
+        PropertyDefinition(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional)
       )
 
       Mockito.when(datasetPropDefService.getLatestVersions()).thenReturn(Future.successful(mockedPropertyDefinitions))

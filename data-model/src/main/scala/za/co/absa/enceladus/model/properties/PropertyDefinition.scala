@@ -16,12 +16,11 @@
 package za.co.absa.enceladus.model.properties
 
 import java.time.ZonedDateTime
-
 import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.fasterxml.jackson.databind.node.ObjectNode
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
-import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
@@ -31,15 +30,15 @@ case class PropertyDefinition(name: String,
 
                               propertyType: PropertyType,
                               putIntoInfoFile: Boolean = false,
-                              essentiality: Essentiality = Optional(),
+                              essentiality: Essentiality = Essentiality.Optional,
                               disabled: Boolean = false,
 
                               // VersionModel induced fields:
                               dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                              userCreated: String = null,
+                              userCreated: String = null, //scalastyle:ignore null
 
                               lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                              userUpdated: String = null,
+                              userUpdated: String = null, //scalastyle:ignore null
 
                               dateDisabled: Option[ZonedDateTime] = None,
                               userDisabled: Option[String] = None,
@@ -47,11 +46,11 @@ case class PropertyDefinition(name: String,
                              ) extends VersionedModel with Auditable[PropertyDefinition] {
 
   @JsonIgnore
-  val isRequired: Boolean = essentiality == Mandatory()
+  def isRequired(allowRun: Boolean): Boolean = essentiality == Essentiality.Mandatory(allowRun)
   @JsonIgnore
-  val isRecommended: Boolean = essentiality == Recommended()
+  def isRecommended: Boolean = essentiality == Essentiality.Recommended
   @JsonIgnore
-  val isOptional: Boolean = essentiality == Optional()
+  def isOptional: Boolean = essentiality == Essentiality.Optional
 
   // VersionModel induced methods:
   override def setVersion(value: Int): PropertyDefinition = this.copy(version = value)
@@ -70,7 +69,7 @@ case class PropertyDefinition(name: String,
   def setPutIntoInfoFile(newPutIntoInfoFile: Boolean): PropertyDefinition = this.copy(putIntoInfoFile = newPutIntoInfoFile)
 
   // Auditable induced methods:
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage: AuditTrailEntry = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
       AuditTrailChange(field = "", oldValue = None, newValue = None, s"PropertyDefinition $name created.")))
 

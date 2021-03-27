@@ -24,8 +24,9 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Mandatory, Optional, Recommended}
-import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, EnumPropertyType, StringPropertyType}
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
+import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
 @RunWith(classOf[SpringRunner])
@@ -159,9 +160,9 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             def createPropDef(name: String, putIntoInfoFile: Boolean, disabled: Boolean): PropertyDefinition =
               PropertyDefinitionFactory.getDummyPropertyDefinition(name, putIntoInfoFile = putIntoInfoFile, disabled = disabled)
 
-            val propDef1 = createPropDef("field1", false, false)
-            val propDef2 = createPropDef(name = "infoField1", true, false)
-            val propDef2a = createPropDef(name = "infoField2", true, false)
+            val propDef1 = createPropDef("field1", putIntoInfoFile = false, disabled = false)
+            val propDef2 = createPropDef(name = "infoField1", putIntoInfoFile = true, disabled = false)
+            val propDef2a = createPropDef(name = "infoField2", putIntoInfoFile = true, disabled = false)
             propertyDefinitionFixture.add(propDef1, propDef2, propDef2a)
 
             val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
@@ -225,10 +226,11 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
 
     val propDefs = Seq(
-      createPropDef("mandatoryField1", Mandatory(), StringPropertyType("default1")),
-      createPropDef("mandatoryField2", Mandatory(), StringPropertyType("default1")),
-      createPropDef("enumField1", Optional(), EnumPropertyType("optionA", "optionB")),
-      createPropDef("enumField2", Recommended(), EnumPropertyType("optionC", "optionD"))
+      createPropDef("mandatoryField1", Mandatory(false), StringPropertyType("default1")),
+      createPropDef("mandatoryField2", Mandatory(false), StringPropertyType("default1")),
+      createPropDef("mandatoryField3", Mandatory(true), StringPropertyType("default1")),
+      createPropDef("enumField1", Optional, EnumPropertyType("optionA", "optionB")),
+      createPropDef("enumField2", Recommended, EnumPropertyType("optionC", "optionD"))
     )
 
     val properties = Map(
@@ -237,11 +239,14 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       "nonAccountedField" -> "randomVal"
     )
 
-    val expectedValidation = Validation(Map(
+    val expectedValidationForRun = Validation(Map(
       "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
       "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
       "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
     ))
+
+    val expectedValidationStrictest = expectedValidationForRun
+      .withError("mandatoryField3", "Dataset property 'mandatoryField3' is mandatory, but does not exist!")
 
     s"GET $apiUrl/{name}/{version}/properties/valid" should {
       "return 404" when {
@@ -260,28 +265,44 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
       }
 
-      "return 200" when {
-        "there is a correct Dataset name+version" should {
-          s"return validated properties" in {
-            propertyDefinitionFixture.add(propDefs: _*)
-            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
-            // showing that the version # is respected, even for the non-latest
-            val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
-            datasetFixture.add(datasetAv2, datasetAv3)
+      Seq(
+        ("",expectedValidationStrictest),
+        ("?forRun=False", expectedValidationStrictest),
+        ("?forRun=TRUE", expectedValidationForRun)
+      ).foreach { case(queryString, expectedValidation) =>
+        "return 200" when {
+          s"there is a correct Dataset name+version with query params: $queryString" should {
+            s"return validated properties" in {
+              propertyDefinitionFixture.add(propDefs: _*)
+              val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
+              // showing that the version # is respected, even for the non-latest
+              val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+              datasetFixture.add(datasetAv2, datasetAv3)
 
-            val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid")
-            assertOk(response)
+              val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid$queryString")
+              assertOk(response)
 
-            val body = response.getBody
-            assert(body == expectedValidation)
+              val body = response.getBody
+              assert(body == expectedValidation)
+            }
           }
+        }
+      }
+
+      "return 400" when {
+        "when using wrong query string" in {
+          val response = sendGet[String](s"$apiUrl/datasetX/1/properties/valid?forRun=what")
+          assertBadRequest(response)
+          val actual = response.getBody
+          assertResult(actual)(s"Unrecognized value 'what' for parameter `forRun`")
         }
       }
     }
 
     Seq(
-      (s"$apiUrl/datasetA/2?validateProperties=true", Some(expectedValidation)),
-      (s"$apiUrl/datasetA/2?validateProperties=false", None),
+      (s"$apiUrl/datasetA/2?validateProperties=Strictest", Some(expectedValidationStrictest)),
+      (s"$apiUrl/datasetA/2?validateProperties=ForRun", Some(expectedValidationForRun)),
+      (s"$apiUrl/datasetA/2?validateProperties=NoValidation", None),
       (s"$apiUrl/datasetA/2", None)
     ).foreach { case (url, expectedPropertiesValidation) =>
 
@@ -306,8 +327,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             s"return dataset with validated properties" in {
               propertyDefinitionFixture.add(propDefs: _*)
 
-              val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
-                properties = Some(properties))
+              val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
               // showing that the version # is respected, even for the non-latest
               val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
               datasetFixture.add(datasetAv2, datasetAv3)
@@ -320,6 +340,19 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
               assert(actual == expected)
             }
           }
+        }
+      }
+    }
+
+    val wrongValidateProperties = "foo"
+    val urlWithWrongQueryParams = s"$apiUrl/datasetX/1?validateProperties=$wrongValidateProperties"
+    s"GET $urlWithWrongQueryParams" should {
+      "return 400" when {
+        "when the query parameter has an unrecognized value" in {
+          val response = sendGet[String](urlWithWrongQueryParams)
+          assertBadRequest(response)
+          val actual = response.getBody
+          assertResult(actual)(s"Unrecognized value '$wrongValidateProperties' for parameter `validateProperties`")
         }
       }
     }
