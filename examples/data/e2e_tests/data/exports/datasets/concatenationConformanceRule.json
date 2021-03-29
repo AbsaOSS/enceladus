@@ -1,0 +1,136 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "concatenationConformanceRule",
+    "description": "",
+    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPublishPath": "/publish/concatenationConformanceRule",
+    "schemaName": "conformanceRulesData",
+    "schemaVersion": 1,
+    "conformance": [
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 0,
+        "outputColumn": "string_string",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "string"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 1,
+        "outputColumn": "number_number",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "integer",
+          "integer"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 2,
+        "outputColumn": "date_date",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "date",
+          "date"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 3,
+        "outputColumn": "boolena_boolean",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "boolean",
+          "boolean"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 4,
+        "outputColumn": "string_boolean",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "boolean"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 5,
+        "outputColumn": "string_number",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "integer"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 6,
+        "outputColumn": "string_date",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "date"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 7,
+        "outputColumn": "boolean_number",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "boolean",
+          "integer"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 8,
+        "outputColumn": "date_number",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "date",
+          "integer"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 9,
+        "outputColumn": "binary_binary",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "binary",
+          "binary"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 10,
+        "outputColumn": "binary_string",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "binary",
+          "string"
+        ]
+      },
+      {
+        "_t": "ConcatenationConformanceRule",
+        "order": 11,
+        "outputColumn": "binary_integer",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "binary",
+          "integer"
+        ]
+      }
+    ],
+    "properties": {}
+  }
+}
