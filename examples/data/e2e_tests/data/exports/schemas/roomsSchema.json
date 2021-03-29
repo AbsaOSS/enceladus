@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "roomsSchema",
+    "description": "",
+    "fields": [
+      {
+        "name": "place",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "place"
+      },
+      {
+        "name": "opening_hours",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "opening_hours"
+      }
+    ]
+  }
+}

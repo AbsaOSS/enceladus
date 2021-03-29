@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "sourceApplication": "Veronika's PC",
+    "country": "CZ",
+    "historyType": "Snapshot",
+    "dataFilename": "data.json",
+    "sourceType": "Golden",
+    "version": 1,
+    "informationDate": "23-3-2020",
+    "additionalInfo": {}
+  },
+  "checkpoints": [{
+    "name": "Source",
+    "processStartTime": "23-3-2020 08:00:00",
+    "processEndTime": "23-3-2020 08:05:00",
+    "workflowName": "Source",
+    "order": 1,
+    "controls": [{
+      "controlName": "recordCount",
+      "controlType": "controlType.Count",
+      "controlCol": "id",
+      "controlValue": "3"
+    }]
+  }, {
+    "name": "Raw",
+    "processStartTime": "23-3-2019 08:05:00",
+    "processEndTime": "23-3-2019 08:10:00",
+    "workflowName": "Raw",
+    "order": 2,
+    "controls": [{
+      "controlName": "recordCount",
+      "controlType": "controlType.Count",
+      "controlCol": "*",
+      "controlValue": "3"
+    }]
+  }]
+}

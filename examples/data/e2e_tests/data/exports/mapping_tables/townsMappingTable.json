@@ -1,0 +1,13 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "townsMappingTable",
+    "description": "",
+    "hdfsPath": "/std/map/towns",
+    "schemaName": "townsSchema",
+    "schemaVersion": 1,
+    "defaultMappingValue": []
+  }
+}
