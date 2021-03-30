@@ -167,7 +167,6 @@ object BroadcastUtils {
   }
 
   private def mapMultipleOutputs(mappingTable: Broadcast[LocalMappingTable], row: Option[Any], defaults: Map[String, Any]): Row = {
-    //TODO default values need extra validation
     row match {
       case Some(row: Row) => {
         val rowValues: Map[String, Any] = row.getValuesMap[Any](mappingTable.value.outputColumns.keys.toSeq)

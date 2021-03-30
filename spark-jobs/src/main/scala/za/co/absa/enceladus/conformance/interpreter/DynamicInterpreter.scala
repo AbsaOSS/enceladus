@@ -231,10 +231,11 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   private def getMappingRuleInterpreter(rule: MappingConformanceRule)
                                        (implicit ictx: InterpreterContext): RuleInterpreter = {
-    if (canMappingRuleBroadcast(rule) && rule.attributeMappings.size <= 10) {
+    if (canMappingRuleBroadcast(rule)) {
       log.info("Broadcast strategy for mapping rules is used")
       MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
+      //Only MappingRuleInterpreterBroadcast or MappingRuleInterpreterGroupExplode support multiple outputs
       if (ictx.featureSwitches.experimentalMappingRuleEnabled || rule.additionalColumns.nonEmpty) {
         log.info("Group explode strategy for mapping rules used")
         MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
@@ -270,10 +271,15 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   private def canMappingRuleBroadcast(rule: MappingConformanceRule)
                                      (implicit ictx: InterpreterContext): Boolean = {
-    ictx.featureSwitches.broadcastStrategyMode match {
-      case Always => true
-      case Never => false
-      case Auto => isMappingTableSmallEnough(rule)
+    // Broadcasting approach assumes there are at most 10 join conditions
+    if(rule.attributeMappings.size <= 10) {
+      ictx.featureSwitches.broadcastStrategyMode match {
+        case Always => true
+        case Never => false
+        case Auto => isMappingTableSmallEnough(rule)
+      }
+    } else {
+      false
     }
   }
 
