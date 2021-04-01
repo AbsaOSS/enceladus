@@ -59,7 +59,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
       withMappedFieldsDf
     } else {
-      //TODO Try multiple applications for udf -> PR
       val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt, defaultValues)
 
       val outputsStructColumnName = getOutputsStructColumnName(df)

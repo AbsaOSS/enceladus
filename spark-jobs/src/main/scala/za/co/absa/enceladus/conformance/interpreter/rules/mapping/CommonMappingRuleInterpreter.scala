@@ -166,8 +166,7 @@ trait CommonMappingRuleInterpreter {
     val outputColParent = SchemaUtils.getParentPath(rule.outputColumn)
     val allOutputsOnTheSamePath = rule.allOutputColumns().keys.map(SchemaUtils.getParentPath).forall(_ == outputColParent)
     if (! allOutputsOnTheSamePath) {
-      throw new ValidationException(
-        s"The output columns of a Mapping Conformance rule have to be on the same level\n")
+      throw new ValidationException(s"The output columns of a Mapping Conformance rule have to be on the same level")
     }
   }
 }
