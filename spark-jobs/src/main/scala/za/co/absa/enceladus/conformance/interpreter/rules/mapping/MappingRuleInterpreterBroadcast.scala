@@ -23,6 +23,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations.GetFieldFunction
 
@@ -37,17 +38,17 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
                        dao: MenasDAO,
                        progArgs: InterpreterContextArgs): DataFrame = {
     log.info(s"Processing mapping rule to conform ${outputColumnNames()} (broadcast strategy)...")
-    val (mapTable, defaultValuesMap) = conformPreparation(df, enableCrossJoin = false)
+    val (mapTable, defaultValues) = conformPreparation(df, enableCrossJoin = false)
     val mappingTableFields = rule.attributeMappings.keys.toSeq
     val inputDfFields = rule.attributeMappings.values.toSeq
 
-    val parentPath = getParentPath(rule.outputColumn)
+    val parentPath = SchemaUtils.getParentPath(rule.outputColumn)
     val mt = LocalMappingTable(mapTable, mappingTableFields, rule.allOutputColumns())
     val broadcastedMt = spark.sparkContext.broadcast(mt)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.allOutputColumns().keys.toSeq, mappings)
 
     if (rule.additionalColumns.isEmpty) {
-      val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValuesMap)
+      val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValues)
 
       val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
         df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
@@ -58,8 +59,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
       withMappedFieldsDf
     } else {
-      //TODO Try multiple applications for udf -> PR
-      val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt, defaultValuesMap)
+      val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt, defaultValues)
 
       val outputsStructColumnName = getOutputsStructColumnName(df)
       val outputsStructColumn = if (parentPath == "") outputsStructColumnName else parentPath + "." + outputsStructColumnName

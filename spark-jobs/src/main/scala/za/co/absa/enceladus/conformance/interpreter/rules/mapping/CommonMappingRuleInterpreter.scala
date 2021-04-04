@@ -30,9 +30,8 @@ import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
-import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import scala.util.control.NonFatal
 
 trait CommonMappingRuleInterpreter {
@@ -54,20 +53,6 @@ trait CommonMappingRuleInterpreter {
               explosionState: ExplosionState,
               dao: MenasDAO,
               progArgs: InterpreterContextArgs): DataFrame
-
-  /**
-   * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
-   *
-   * @param columnName A fully qualified column name
-   * @return The parent column name or an empty string if the input column is a root level column
-   */
-  protected def getParentPath(columnName: String): String = {
-    if (columnName.contains (".")) {
-      columnName.split('.').dropRight(1).mkString(".")
-    } else {
-      ""
-    }
-  }
 
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
@@ -113,10 +98,28 @@ trait CommonMappingRuleInterpreter {
     // validate join fields existence
     validateMappingFieldsExist(joinConditionStr, df.schema, mapTable.schema, rule)
 
-    validateOutputColumns()
+    validateOutputColumns(rule)
 
     (mapTable, defaultValues)
   }
+
+  protected def joinDatasetAndMappingTable(mapTable: DataFrame, dfIn: Dataset[Row]): DataFrame = {
+    dfIn.as(CommonMappingRuleInterpreter.inputDfAlias).
+      join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType).
+      select(
+        col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
+        col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
+      )
+  }
+
+  protected def validateMappingFieldsExist(joinConditionStr: String,
+                                           datasetSchema: StructType,
+                                           mappingTableSchema: StructType,
+                                           rule: MappingConformanceRule): Unit = {
+    // nothing to do here in general
+  }
+
+  protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
 
   /**
    * Returns a map of the default values of the output columns, if specified, for a particular mapping rule.
@@ -129,60 +132,43 @@ trait CommonMappingRuleInterpreter {
    * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
    *
    * @param mappingTableDef A mapping rule definition
-   * @return A map of defaults wit the values as a String Spark expression.
+   * @return A map of defaults as strings of Spark expressions, where the requested fields are the map's keys
    */
   private def getDefaultValues(mappingTableDef: MappingTable)
                               (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
-    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")
-    val defaultValuesForTargets = rule.allOutputColumns().flatMap{case (_, targetAttribute) => {
-      val maybeString = defaultMappingValueMap.get(targetAttribute)
-      maybeString match {
+    val defaultValuesForTargets = rule.allOutputColumns().flatMap {case (_, targetAttribute) =>
+      val fieldDefault = defaultMappingValueMap.get(targetAttribute)
+      fieldDefault match {
         case None => genericDefaultValueOpt.map(genDefault => targetAttribute -> genDefault)
         case Some(x) => Some(targetAttribute -> x)
       }
-    }}
+    }
 
+    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
     mappingTableSchemaOpt match {
-      case Some(schema) => {
-        defaultValuesForTargets.foreach { case (targetAttribute, defaultValue: String) =>
-          CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            targetAttribute, defaultValue)
+      case Some(schema) =>
+        if(defaultValuesForTargets.nonEmpty){
+          defaultValuesForTargets.foreach { case (targetAttribute, defaultValue: String) =>
+            CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+              targetAttribute, defaultValue)
+          }
         }
-      }
       case None =>
         log.warn("Mapping table schema loading failed")
-      }
+    }
     defaultValuesForTargets
   }
 
-  protected def joinDatasetAndMappingTable(mapTable: DataFrame, dfIn: Dataset[Row]) = {
-    dfIn.as(CommonMappingRuleInterpreter.inputDfAlias).
-      join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType).
-      select(
-        col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
-        col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
-      )
+  private def validateOutputColumns(rule: MappingConformanceRule): Unit = {
+    val outputColParent = SchemaUtils.getParentPath(rule.outputColumn)
+    val allOutputsOnTheSamePath = rule.allOutputColumns().keys.map(SchemaUtils.getParentPath).forall(_ == outputColParent)
+    if (! allOutputsOnTheSamePath) {
+      throw new ValidationException(s"The output columns of a Mapping Conformance rule have to be on the same level")
+    }
   }
-
-  def validateOutputColumns(): Unit = {
-    val outputColParent = getParentPath(rule.outputColumn)
-    val allOutputsOnTheSamePath = rule.allOutputColumns().keys.map(getParentPath).forall(_ == outputColParent)
-    if (! allOutputsOnTheSamePath)
-      throw new ValidationException(
-        s"The output columns of a Mapping Conformance rule have to be on the same level\n")
-  }
-
-  protected def validateMappingFieldsExist(joinConditionStr: String,
-                                           datasetSchema: StructType,
-                                           mappingTableSchema: StructType,
-                                           rule: MappingConformanceRule): Unit = {
-    // nothing to do here in general
-  }
-
-  protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
 }
 
 object CommonMappingRuleInterpreter {

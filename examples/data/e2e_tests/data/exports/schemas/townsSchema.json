@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "townsSchema",
+    "description": "",
+    "fields": [
+      {
+        "name": "town",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "town"
+      },
+      {
+        "name": "shortcut",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "shortcut"
+      },
+      {
+        "name": "zip_code",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "zip_code"
+      }
+    ]
+  }
+}
+

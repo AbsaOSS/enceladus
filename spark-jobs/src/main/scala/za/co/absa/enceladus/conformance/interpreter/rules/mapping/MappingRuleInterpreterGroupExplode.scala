@@ -25,6 +25,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
@@ -42,7 +43,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                progArgs: InterpreterContextArgs): DataFrame = {
     log.info(s"Processing mapping rule to conform ${outputColumnNames()} (group explode strategy)...")
 
-    val (mapTable, defaultValuesMap) = conformPreparation(df, enableCrossJoin = true)
+    val (mapTable, defaultValues) = conformPreparation(df, enableCrossJoin = true)
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
@@ -56,9 +57,9 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
       val arrayErrorCondition = col(rule.outputColumn).isNull.and(expCtx.getArrayErrorCondition(rule.outputColumn))
       log.debug(s"Array Error Condition = $arrayErrorCondition")
-      addErrorsAndDefaults(placedDf, rule.outputColumn, defaultValuesMap.get(rule.targetAttribute), mappingErrUdfCall, arrayErrorCondition)
+      addErrorsAndDefaults(placedDf, rule.outputColumn, defaultValues.get(rule.targetAttribute), mappingErrUdfCall, arrayErrorCondition)
     } else {
-      val parentPath = getParentPath(rule.outputColumn)
+      val parentPath = SchemaUtils.getParentPath(rule.outputColumn)
       val outputsStructColumnName = if (rule.outputColumn.contains(".")) {
         parentPath + "." + getOutputsStructColumnName(df)
       } else {
@@ -68,11 +69,11 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       val placedDf = performJoinsToOutputsColumn(outputsStructColumnName, explodedDf, mapTable)
       val arrayErrorCondition = getMultipleErrorCondition(expCtx, outputsStructColumnName)
       if (parentPath == "") {
-        flattenOutputsAndAddErrorsAndDefaultsInFlat(outputsStructColumnName, placedDf, defaultValuesMap,
+        flattenOutputsAndAddErrorsAndDefaultsInFlat(outputsStructColumnName, placedDf, defaultValues,
           mappingErrUdfCall, arrayErrorCondition)
       } else {
         flattenOutputsAndAddErrorsAndDefaultsInNested(placedDf, parentPath,
-          outputsStructColumnName, defaultValuesMap, mappingErrUdfCall, arrayErrorCondition)
+          outputsStructColumnName, defaultValues, mappingErrUdfCall, arrayErrorCondition)
       }
     }
 

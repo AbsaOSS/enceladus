@@ -1,0 +1,13 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "locationMappingTable",
+    "description": "",
+    "hdfsPath": "/std/map/location",
+    "schemaName": "locationSchema",
+    "schemaVersion": 1,
+    "defaultMappingValue": []
+  }
+}

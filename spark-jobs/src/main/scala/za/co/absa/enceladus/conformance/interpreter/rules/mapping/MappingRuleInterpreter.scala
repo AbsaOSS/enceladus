@@ -44,7 +44,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
     //A fix for cases, where the join condition only uses columns previously created by a literal rule
     //see https://github.com/AbsaOSS/enceladus/issues/892
-    val (mapTable, defaultValuesMap) = conformPreparation(df, enableCrossJoin = true)
+    val (mapTable, defaultValues) = conformPreparation(df, enableCrossJoin = true)
     val datasetSchema = dao.getSchema(conformance.schemaName, conformance.schemaVersion)
     val idField = rule.outputColumn.replace(".", "_") + "_arrayConformanceId"
     val withUniqueId = df.withColumn(idField, monotonically_increasing_id())
@@ -62,7 +62,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
         when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).
           otherwise(col(ErrorMessage.errorColumnName)))
 
-      val defaultValue = defaultValuesMap.get(rule.targetAttribute)
+      val defaultValue = defaultValues.get(rule.targetAttribute)
       // see if we need to apply default value
       defaultValue match {
         case Some(defaultValue) =>

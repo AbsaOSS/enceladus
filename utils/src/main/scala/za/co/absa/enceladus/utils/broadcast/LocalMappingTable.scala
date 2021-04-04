@@ -24,13 +24,23 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
-final case class LocalMappingTable(
-                                    map: Map[Seq[Any], Any],
-                                    keyFields: Seq[String],
+final case class LocalMappingTable private(
+                                    private val data: Map[Seq[Any], Any],
                                     outputColumns: Map[String, String],
                                     keyTypes: Seq[DataType],
                                     valueTypes: Seq[DataType]
-                                  )
+                                  ) {
+
+  def getRowWithDefault(key: Seq[Any], default: Any): Any = {
+    data.getOrElse(key, default)
+  }
+
+  def contains(key: Seq[Any]): Boolean = {
+    data.contains(key)
+  }
+
+  def rowCount: Int = data.size
+}
 
 object LocalMappingTable {
 
@@ -75,7 +85,7 @@ object LocalMappingTable {
       (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
     }).toMap
 
-    LocalMappingTable(mappingTable, keyFields, outputColumns, keyTypes, valueTypes)
+    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueTypes)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
