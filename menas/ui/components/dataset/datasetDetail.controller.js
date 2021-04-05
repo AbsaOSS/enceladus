@@ -409,7 +409,10 @@ sap.ui.define([
         }
 
         let additionalColumns = oContext.getProperty("additionalColumns");
-        let aOutputColumns = [];
+        let aOutputColumns = [{outputColumn: oContext.getProperty("outputColumn"),
+          targetAttribute: oContext.getProperty("targetAttribute"),
+          mappingTableName: oContext.getProperty("mappingTable")
+        }];
         for (let key in additionalColumns) {
           aOutputColumns.push({
             outputColumn: key,
@@ -417,10 +420,6 @@ sap.ui.define([
             mappingTableName: oContext.getProperty("mappingTable")
           });
         }
-        aOutputColumns.unshift({outputColumn: oContext.getProperty("outputColumn"),
-          targetAttribute: oContext.getProperty("targetAttribute"),
-          mappingTableName: oContext.getProperty("mappingTable")
-        });
 
         oContext.getObject().outputColumns = aOutputColumns;
         oContext.getObject().joinConditions = aJoinConditions;

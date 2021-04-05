@@ -18,7 +18,7 @@ package za.co.absa.enceladus.menas.repositories
 import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
-import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema, conformanceRule}
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 
 import scala.reflect.ClassTag
@@ -65,7 +65,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   override def create(item: Dataset, username: String): Future[Completed] = {
-    super.create(handleMappingRuleWrite(item), username)
+    super.create(item.encode, username)
   }
 
   override def update(username: String, updated: Dataset): Future[Dataset] = {
@@ -73,34 +73,26 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   private def handleMappingRuleWrite(dataset: Dataset): Dataset = {
-    handleMappingRule(dataset, replaceForWrite)
+    handleMappingRule(dataset, dataset.replaceInMapKeys(ORIGINAL_DELIMETER, REPLACEMENT_DELIMETER))
   }
 
   private def handleMappingRuleRead(dataset: Dataset): Dataset = {
-    handleMappingRule(dataset, replaceForRead)
+    handleMappingRule(dataset, dataset.replaceInMapKeys(REPLACEMENT_DELIMETER, ORIGINAL_DELIMETER))
   }
 
-  private def handleMappingRule(dataset: Dataset, replace: String => String): Dataset = {
+  private def handleMappingRule(dataset: Dataset, replaceInKeys: Map[String,String] => Map[String, String]): Dataset = {
     val conformance = dataset.conformance.map {
       case mr: MappingConformanceRule =>
-        val attributesMap = mr.attributeMappings.map {
-          case (key, value) => (replace(key), value)
-        }
-        val additionalColumnsMap = mr.additionalColumns.map { _.map{
-          case (key, value) => (replace(key), value)
-        }}
+        val attributesMap = replaceInKeys(mr.attributeMappings)
+        val additionalColumnsMap = mr.additionalColumns.map(replaceInKeys)
         mr.copy(attributeMappings = attributesMap, additionalColumns = additionalColumnsMap)
-      case any => any
+      case any: conformanceRule.ConformanceRule => any
     }
     dataset.setConformance(conformance)
   }
 
   private val ORIGINAL_DELIMETER = '.'
   private val REPLACEMENT_DELIMETER = MappingConformanceRule.DotReplacementSymbol
-
-  private def replaceForWrite(key: String): String = key.replace(ORIGINAL_DELIMETER, REPLACEMENT_DELIMETER)
-
-  private def replaceForRead(key: String): String = key.replace(REPLACEMENT_DELIMETER, ORIGINAL_DELIMETER)
 
   /** This functions allows for searching Datasets, which have certain mapping rules.
    *

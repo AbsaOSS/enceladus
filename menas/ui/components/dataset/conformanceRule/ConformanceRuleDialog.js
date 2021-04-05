@@ -217,11 +217,11 @@ class ConformanceRuleDialog {
   onDeleteOutputColumn(oEv) {
     let sBindPath = oEv.getParameter("listItem").getBindingContext().getPath();
     let toks = sBindPath.split("/");
-    let inputColumnIndex = parseInt(toks[toks.length - 1]);
-    let oldInputColumns = this.model.getProperty("/newRule/newOutputColumns");
+    let outputColumnIndex = parseInt(toks[toks.length - 1]);
+    let oldOutputColumns = this.model.getProperty("/newRule/newOutputColumns");
 
-    let newInputColumns = oldInputColumns.filter((_, index) => index !== inputColumnIndex);
-    this.model.setProperty("/newRule/newOutputColumns", newInputColumns);
+    let newOutputColumns = oldOutputColumns.filter((_, index) => index !== outputColumnIndex);
+    this.model.setProperty("/newRule/newOutputColumns", newOutputColumns);
   }
 
   onJoinConditionSelect(oEv) {
@@ -293,7 +293,7 @@ class ConformanceRuleDialog {
       } else {
         let oAttributeMappings = newRule.attributeMappings;
         let additionalColumns = newRule.additionalColumns;
-        let aNewOutputColumns = [];
+        let aNewOutputColumns = [{outputColumn: newRule.outputColumn, targetAttribute: newRule.targetAttribute}];
         let aNewJoinConditions = [];
         for (let key in oAttributeMappings) {
           aNewJoinConditions.push({
@@ -308,7 +308,6 @@ class ConformanceRuleDialog {
           });
         }
 
-        aNewOutputColumns.unshift({outputColumn: newRule.outputColumn, targetAttribute: newRule.targetAttribute});
         newRule.newJoinConditions = aNewJoinConditions;
         newRule.newOutputColumns = aNewOutputColumns;
       }

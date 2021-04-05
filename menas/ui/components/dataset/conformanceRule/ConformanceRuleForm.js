@@ -41,13 +41,13 @@ class ConformanceRuleForm {
   }
 
   isValid(rule, schemas, rules) {
-    let hasValidOutput = true;
+    let hasValidOutputColumn = true;
     if (rule._t !== "MappingConformanceRule") {
-      hasValidOutput = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order]);
+      hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order]);
     }
 
-    const hasValidOutputColumn = hasValidOutput && this.hasValidTransitiveSchema(rule, schemas, rules);
-    return hasValidOutputColumn & this.isCorrectlyConfigured(rule);
+    const hasValidOutputColumnAndSchema = hasValidOutputColumn && this.hasValidTransitiveSchema(rule, schemas, rules);
+    return hasValidOutputColumnAndSchema & this.isCorrectlyConfigured(rule);
   }
 
   hasValidOutputColumn(fieldValue, schema) {
@@ -406,7 +406,6 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
   }
 
   reset() {
-    // super.reset();
   }
 
 }

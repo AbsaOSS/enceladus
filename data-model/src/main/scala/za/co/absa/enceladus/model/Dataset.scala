@@ -74,13 +74,13 @@ case class Dataset(name: String,
    * @return a dataset with it's mapping conformance rule attributeMappings where the dots are
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL>
    */
-  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, '.', MappingConformanceRule.DotReplacementSymbol)
+  def encode: Dataset = substituteMappingConformanceRuleCharacter(this, replaceInMapKeys('.', MappingConformanceRule.DotReplacementSymbol))
 
   /**
    * @return a dataset with it's mapping conformance rule attributeMappings where the
    *         <MappingConformanceRule.DOT_REPLACEMENT_SYMBOL> are dots
    */
-  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, MappingConformanceRule.DotReplacementSymbol, '.')
+  def decode: Dataset = substituteMappingConformanceRuleCharacter(this, replaceInMapKeys(MappingConformanceRule.DotReplacementSymbol, '.'))
 
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
     menasRef = MenasReference(collection = None, name = name, version = version),
@@ -88,15 +88,16 @@ case class Dataset(name: String,
       AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
   )
 
-  private def substituteMappingConformanceRuleCharacter(dataset: Dataset, from: Char, to: Char): Dataset = {
+  def replaceInMapKeys(from: Char, to: Char)(map: Map[String, String]): Map[String, String] = map.map(key => {
+    (key._1.replace(from, to), key._2)
+  })
+
+  private def substituteMappingConformanceRuleCharacter(dataset: Dataset,
+                                                        replaceInMapKeys: Map[String, String] => Map[String, String]): Dataset = {
     val conformanceRules = dataset.conformance.map {
       case m: MappingConformanceRule =>
-        m.copy(attributeMappings = m.attributeMappings.map(key => {
-          (key._1.replace(from, to), key._2)
-        }), additionalColumns = m.additionalColumns.map(
-            _.map(key =>
-              (key._1.replace(from, to), key._2))
-          ))
+        m.copy(attributeMappings = replaceInMapKeys(m.attributeMappings),
+          additionalColumns = m.additionalColumns.map(replaceInMapKeys))
       case c: ConformanceRule => c
     }
 
