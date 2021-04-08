@@ -100,19 +100,6 @@ var RunService = new function () {
     this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
   };
 
-  // todo needed?
-  this._getLineageExecutionIdApiTemplate = function() {
-    return sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
-  };
-
-  // todo needed?
-  if (this._getLineageExecutionIdApiTemplate() === undefined) {
-    ConfigRestClient.getLineageExecutionIdApiTemplate()
-      .then( sApiTemplate => {
-        sap.ui.getCore().getModel().setProperty("/lineageExecutionIdApiTemplate", sApiTemplate);
-      })
-      .fail( () => console.log("Failed to get Lineage API address"));
-  }
 
   this._bindRunSummaries = function (oRunSummaries, oControl) {
     oRunSummaries.forEach(run => {
