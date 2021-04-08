@@ -30,15 +30,13 @@ import org.springframework.security.web.authentication._
 import za.co.absa.enceladus.menas.auth._
 import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
-import za.co.absa.enceladus.utils.general.ProjectMetadata
-
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
                                      @Value("${menas.auth.mechanism:}")
-                                     authMechanism: String) extends ProjectMetadata {
+                                     authMechanism: String) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Configuration
@@ -51,6 +49,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .spnegoAuthenticationProcessingFilter(authenticationManager, authenticationSuccessHandler)
 
       http
+        .cors().and()
         .csrf()
           .disable()
         .sessionManagement()
@@ -60,10 +59,10 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
-            "/api/oozie/isEnabled", "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
-          .permitAll()
+          .antMatchers("/admin/health", "/api/oozie/isEnabled",
+            "/api/user/version", "/api/configuration/**", "/swagger-ui.html", "/webjars/**", "/v2/api-docs",
+            "/swagger-resources","/swagger-resources/configuration/ui","/swagger-resources/configuration/security")
+        .permitAll()
         .anyRequest()
           .authenticated()
         .and()

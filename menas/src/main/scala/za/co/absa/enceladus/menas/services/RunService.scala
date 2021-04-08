@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.menas.services
 
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat

@@ -28,7 +28,7 @@ import org.springframework.context.annotation.{Bean, Configuration}
 class HDFSConfig @Autowired() (spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${menas.hadoop.auth.method}")
+  @Value("${menas.hadoop.auth.method:}")
   val authMethod: String = ""
   @Value("${menas.hadoop.auth.user:}")
   val authUser: String = ""

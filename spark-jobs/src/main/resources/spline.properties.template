@@ -21,4 +21,4 @@
 spline.mode=BEST_EFFORT
 #
 #
-spline.producer.url=http://localhost:8080/spline/producer
+spline.producer.url=http://localhost:8085/producer

@@ -38,7 +38,7 @@ class AuthenticationIntegrationSuite extends BaseRestApiTest {
   @Autowired
   val jwtFactory: JwtFactory = null
 
-  private val jwtRegex = "JWT=([^;]+);?.*".r
+  private val jwtRegex = "([^;]+);?.*".r
 
   "Username and password authentication" should {
     "handle multiple users login in concurrently" in {
@@ -50,7 +50,7 @@ class AuthenticationIntegrationSuite extends BaseRestApiTest {
 
       val results = Await.result(futures, awaitDuration)
       val usernames = results.map { headers =>
-        headers.get("cookie").get(0) match {
+        headers.get("jwt").get(0) match {
           case jwtRegex(jwt) =>
             jwtFactory.jwtParser()
               .parseClaimsJws(jwt)

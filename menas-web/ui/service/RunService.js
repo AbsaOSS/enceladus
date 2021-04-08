@@ -100,10 +100,12 @@ var RunService = new function () {
     this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
   };
 
+  // todo needed?
   this._getLineageExecutionIdApiTemplate = function() {
     return sap.ui.getCore().getModel().getProperty("/lineageExecutionIdApiTemplate");
   };
 
+  // todo needed?
   if (this._getLineageExecutionIdApiTemplate() === undefined) {
     ConfigRestClient.getLineageExecutionIdApiTemplate()
       .then( sApiTemplate => {
@@ -142,16 +144,18 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-
   this._buildLineageUrl = function(outputPath, applicationId) {
-    const urlTemplate = "lineage/app/lineage-overview?executionEventId=%s";
-    const lineageExecutionIdApiTemplate = this._getLineageExecutionIdApiTemplate();
-    if (lineageExecutionIdApiTemplate) {
+    const urlTemplate = "%s/index.html?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
+    if (window.splineConsumerApiUrl) {
+      let lineageExecutionIdApiTemplate = window.splineConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
       const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
 
       if (lineageIdInfo.totalCount === 1) {
         return {
-          lineageUrl: urlTemplate.replace("%s", lineageIdInfo.executionEventId),
+          lineageUrl: urlTemplate
+            .replace("%s", window.splineUiCdn)
+            .replace("%s", window.splineConsumerApiUrl)
+            .replace("%s", lineageIdInfo.executionEventId),
           lineageError: ""
         };
       } else {
