@@ -13,16 +13,14 @@
  * limitations under the License.
  */
 
-//todo reenable with Hyperdrive API for Scala 2.12 #1712
+package za.co.absa.enceladus.conformance
 
-//package za.co.absa.enceladus.conformance
-//
-//import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformerFactory, StreamTransformerFactoryProvider}
-//
-//
-///**
-// * This is the Conformance service provider for Hyperdrive.
-// */
-//class HyperConformanceProvider extends StreamTransformerFactoryProvider {
-//  override def getComponentFactory: StreamTransformerFactory = HyperConformance
-//}
+import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformerFactory, StreamTransformerFactoryProvider}
+
+
+/**
+ * This is the Conformance service provider for Hyperdrive.
+ */
+class HyperConformanceProvider extends StreamTransformerFactoryProvider {
+  override def getComponentFactory: StreamTransformerFactory = HyperConformance
+}
