@@ -17,13 +17,12 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.catalyst.ScalaReflection
+import org.apache.spark.sql.api.java.{UDF1, UDF10, UDF2, UDF3, UDF4, UDF5, UDF6, UDF7, UDF8, UDF9}
 import org.apache.spark.sql.expressions.UserDefinedFunction
-import org.apache.spark.sql.functions.expr
+import org.apache.spark.sql.functions.{expr, udf}
+import org.apache.spark.sql.types.DataType
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
-import org.apache.spark.sql.functions.udf
 
-// todo fix Issue #1710
 object BroadcastUtils {
   // scalastyle:off null
   // scalastyle:off magic.number
@@ -73,26 +72,19 @@ object BroadcastUtils {
 
     val defaultValueOpt = defaultValueExpr.map(getValueOfSparkExpression)
 
-//    val lambda = numberOfArguments match {
-//      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
-//      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)
-//      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
-//      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
-//      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
-//      case 6 => getMappingLambdaParam6(mappingTable, defaultValueOpt)
-//      case 7 => getMappingLambdaParam7(mappingTable, defaultValueOpt)
-//      case 8 => getMappingLambdaParam8(mappingTable, defaultValueOpt)
-//      case 9 => getMappingLambdaParam9(mappingTable, defaultValueOpt)
-//      case 10 => getMappingLambdaParam10(mappingTable, defaultValueOpt)
-//      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
-//    }
-//
-//    UserDefinedFunction(lambda,
-//      mappingTable.value.valueType,
-//      Some(mappingTable.value.keyTypes))
-
-    // todo fix Issue #1710
-    throw new NotImplementedError("This method is not correctly implemented, yet")
+    numberOfArguments match {
+      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
+      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)
+      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
+      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
+      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
+      case 6 => getMappingLambdaParam6(mappingTable, defaultValueOpt)
+      case 7 => getMappingLambdaParam7(mappingTable, defaultValueOpt)
+      case 8 => getMappingLambdaParam8(mappingTable, defaultValueOpt)
+      case 9 => getMappingLambdaParam9(mappingTable, defaultValueOpt)
+      case 10 => getMappingLambdaParam10(mappingTable, defaultValueOpt)
+      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
+    }
   }
 
   /**
@@ -106,236 +98,273 @@ object BroadcastUtils {
                   mappings: Seq[Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-//    val lambda = numberOfArguments match {
-//      case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
-//      case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
-//      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
-//      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
-//      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
-//      case 6 => getErrorLambdaParam6(mappingTable, outputColumn, mappings)
-//      case 7 => getErrorLambdaParam7(mappingTable, outputColumn, mappings)
-//      case 8 => getErrorLambdaParam8(mappingTable, outputColumn, mappings)
-//      case 9 => getErrorLambdaParam9(mappingTable, outputColumn, mappings)
-//      case 10 => getErrorLambdaParam10(mappingTable, outputColumn, mappings)
-//      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
-//    }
-//
-//    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
-//
-//    val errorUdf = UserDefinedFunction(lambda,
-//      errorMessageSchema.dataType,
-//      Some(mappingTable.value.keyTypes))
-//
-//    errorUdf
-
-    // todo fix Issue #1710
-    throw new NotImplementedError("This method is not correctly implemented, yet")
-  }
-
-  private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
-    defaultValueOpt match {
-      case None =>
-        param1: Any => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1), null)
-        }
-      case Some(defaultValue) =>
-        param1: Any => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1), defaultValue)
-        }
+    numberOfArguments match {
+      case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
+      case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
+      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
+      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
+      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
+      case 6 => getErrorLambdaParam6(mappingTable, outputColumn, mappings)
+      case 7 => getErrorLambdaParam7(mappingTable, outputColumn, mappings)
+      case 8 => getErrorLambdaParam8(mappingTable, outputColumn, mappings)
+      case 9 => getErrorLambdaParam9(mappingTable, outputColumn, mappings)
+      case 10 => getErrorLambdaParam10(mappingTable, outputColumn, mappings)
+      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
     }
   }
 
-  private def getMappingLambdaParam2(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2), null)
-        }
+        udf(new UDF1[Any, Any] {
+          override def call(param1: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2), defaultValue)
-        }
+        udf(new UDF1[Any, Any] {
+          override def call(param1: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam3(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam2(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3), null)
-        }
+        udf(new UDF2[Any, Any, Any] {
+          override def call(param1: Any, param2: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3), defaultValue)
-        }
+        udf(new UDF2[Any, Any, Any] {
+          override def call(param1: Any, param2: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam4(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam3(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4), null)
-        }
+        udf(new UDF3[Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
-        }
+        udf(new UDF3[Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam5(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam4(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
-        }
+        udf(new UDF4[Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
-        }
+        udf(new UDF4[Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam6(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam5(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-        param6: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), null)
-        }
+        udf(new UDF5[Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), defaultValue)
-        }
+        udf(new UDF5[Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam7(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam6(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), null)
-        }
+        udf(new UDF6[Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any, param6: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), defaultValue)
-        }
+        udf(new UDF6[Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any, param6: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6), defaultValue)
+          }
+        }, valueType)
+    }
+  }
+
+  private def getMappingLambdaParam7(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
+    defaultValueOpt match {
+      case None =>
+        udf(new UDF7[Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), null)
+          }
+        }, valueType)
+      case Some(defaultValue) =>
+        udf(new UDF7[Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7), defaultValue)
+          }
+        }, valueType)
     }
   }
 
 
-  private def getMappingLambdaParam8(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam8(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), null)
-        }
+        udf(new UDF8[Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), defaultValue)
-        }
+        udf(new UDF8[Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam9(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam9(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any, param9: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), null)
-        }
+        udf(new UDF9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any, param9: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any, param9: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), defaultValue)
-        }
+        udf(new UDF9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any, param9: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9), defaultValue)
+          }
+        }, valueType)
     }
   }
 
-  private def getMappingLambdaParam10(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {
+  private def getMappingLambdaParam10(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): UserDefinedFunction = {
+    val valueType: DataType = mappingTable.value.valueType
     defaultValueOpt match {
       case None =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), null)
-        }
+        udf(new UDF10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any, param9: Any, param10: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), null)
+          }
+        }, valueType)
       case Some(defaultValue) =>
-        (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
-         param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
-          val mt = mappingTable.value.map
-          mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), defaultValue)
-        }
+        udf(new UDF10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+          override def call(param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                            param6: Any, param7: Any, param8: Any, param9: Any, param10: Any): Any = {
+            val mt = mappingTable.value.map
+            mt.getOrElse(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10), defaultValue)
+          }
+        }, valueType)
     }
   }
 
   private def getErrorLambdaParam1(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    param1: Any => {
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1))) {
         null
       } else {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam2(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any) => {
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2))) {
         null
       } else {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam3(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any) => {
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3))) {
         null
       } else {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam4(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any) => {
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4))) {
         null
@@ -343,13 +372,13 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam5(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5))) {
         null
@@ -357,13 +386,13 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4), safeToString(param5)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam6(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
      param6: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5, param6))) {
@@ -372,13 +401,13 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4), safeToString(param5), safeToString(param6)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam7(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
      param6: Any, param7: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7))) {
@@ -387,13 +416,13 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam8(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
      param6: Any, param7: Any, param8: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8))) {
@@ -402,13 +431,13 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumn, Seq(safeToString(param1), safeToString(param2), safeToString(param3),
           safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam9(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
      param6: Any, param7: Any, param8: Any, param9: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9))) {
@@ -418,13 +447,13 @@ object BroadcastUtils {
           safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8),
           safeToString(param9)), mappings)
       }
-    }
+    })
   }
 
   private def getErrorLambdaParam10(mappingTable: Broadcast[LocalMappingTable],
                                    outputColumn: String,
-                                   mappings: Seq[Mapping]): AnyRef = {
-    (param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
+                                   mappings: Seq[Mapping]): UserDefinedFunction = {
+    udf((param1: Any, param2: Any, param3: Any, param4: Any, param5: Any,
      param6: Any, param7: Any, param8: Any, param9: Any, param10: Any) => {
       val mt = mappingTable.value.map
       if (mt.contains(Seq(param1, param2, param3, param4, param5, param6, param7, param8, param9, param10))) {
@@ -434,7 +463,7 @@ object BroadcastUtils {
           safeToString(param4), safeToString(param5), safeToString(param6), safeToString(param7), safeToString(param8),
           safeToString(param9), safeToString(param10)), mappings)
       }
-    }
+    })
   }
 
   private final def safeToString(a: Any): String = {

@@ -46,7 +46,6 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val mt = LocalMappingTable(mapTable, mappingTableFields, rule.targetAttribute)
     val broadcastedMt = spark.sparkContext.broadcast(mt)
 
-    // todo fix Issue #1710
     val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
 
@@ -54,9 +53,9 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
       df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
-        mappingUDF(inputDfFields.map(a => getField(a)): _ *)
+        mappingUDF.apply(inputDfFields.map(a => getField(a)): _ *)
       }, (_, getField) => {
-        errorUDF(inputDfFields.map(a => getField(a)): _ *)
+        errorUDF.apply(inputDfFields.map(a => getField(a)): _ *)
       })
 
     withMappedFieldsDf
