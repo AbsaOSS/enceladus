@@ -28,7 +28,7 @@ class StringToValidationKindConverterSuite extends AnyWordSpec {
     ("ForRun", ForRun),
     ("Strictest", Strictest)
   ).foreach { case (input, expected) =>
-    s"'$input' should produce `$expected``" in {
+    s"'$input' should produce '$expected'" in {
         val result = converter.convert(input)
         result shouldBe expected
     }
