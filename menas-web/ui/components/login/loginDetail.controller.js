@@ -22,6 +22,12 @@ sap.ui.define([
   const usernameField = "username";
   const passwordField = "password";
 
+  function setCookie(name, value, days) {
+    let d = new Date;
+    d.setTime(d.getTime() + 24*60*60*1000*days);
+    document.cookie = name + "=" + value + ";path=/;expires=" + d.toGMTString();
+  }
+
   return Controller.extend("components.login.loginDetail", {
     loginForm: {},
 
@@ -124,8 +130,11 @@ sap.ui.define([
       let fnSuccess = (result, status, xhr) => {
         this.byId("password").setValue("");
         let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
+        let jwt = xhr.getResponseHeader("JWT");
         localStorage.setItem("csrfToken", csrfToken);
-        Functions.ajax("api/user/info", "GET", {}, (oInfo) => {
+        localStorage.setItem("jwtToken", jwt);
+        setCookie("JWT", jwt, 1);
+        Functions.ajax("/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           model.setProperty("/menasVersion", oInfo.menasVersion);
           sap.ui.getCore().byId(this._appId).backToTopMaster();
@@ -140,7 +149,7 @@ sap.ui.define([
         this.byId(usernameField).setValueState(sap.ui.core.ValueState.Error);
         this.byId(passwordField).setValueState(sap.ui.core.ValueState.Error);
       };
-      $.ajax("api/login", {
+      $.ajax(window.apiUrl + "/login", {
         complete: function () {
           if (oControl) oControl.setBusy(false)
         },

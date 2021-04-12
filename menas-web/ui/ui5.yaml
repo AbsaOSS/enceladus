@@ -1,0 +1,107 @@
+# Copyright 2018 ABSA Group Limited
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+specVersion: '2.2'
+metadata:
+  name: menas-web
+type: application
+framework:
+  name: OpenUI5
+  version: 1.67.1
+  libraries:
+    - name: sap.ui.core
+    - name: sap.m
+    - name: sap.tnt
+    - name: sap.ui.core
+    - name: sap.ui.layout
+    - name: sap.ui.table
+    - name: sap.ui.unified
+    - name: themelib_sap_belize
+resources:
+  configuration:
+    paths:
+      webapp: /
+builder:
+  resources:
+    excludes:
+      - "node_modules/**"
+      - "dist/**"
+  bundles:
+    - bundleDefinition:
+        name: sap/ui/table/library-preload.js
+        defaultFileTypes:
+          - ".js"
+          - ".fragment.xml"
+          - ".view.xml"
+          - ".properties"
+          - ".json"
+        sections:
+          - mode: preload
+            filters:
+              - "sap/ui/table/"
+              - "!sap/ui/table/.library"
+              - "!sap/ui/table/messagebundle*"
+            resolve: false
+            resolveConditional: false
+            renderer: true
+    - bundleDefinition:
+        name: sap/m/library-preload.js
+        defaultFileTypes:
+          - ".js"
+          - ".fragment.xml"
+          - ".view.xml"
+          - ".properties"
+          - ".json"
+        sections:
+          - mode: preload
+            filters:
+              - "sap/m/"
+              - "!sap/m/.library"
+              - "!sap/m/messagebundle*"
+            resolve: false
+            resolveConditional: false
+            renderer: true
+    - bundleDefinition:
+        name: sap/ui/layout/library-preload.js
+        defaultFileTypes:
+          - ".js"
+          - ".fragment.xml"
+          - ".view.xml"
+          - ".properties"
+          - ".json"
+        sections:
+          - mode: preload
+            filters:
+              - "sap/ui/layout"
+              - "!sap/ui/layout/.library"
+              - "!sap/ui/layout/messagebundle*"
+            resolve: false
+            resolveConditional: false
+            renderer: true
+    - bundleDefinition:
+        name: sap/tnt/library-preload.js
+        defaultFileTypes:
+          - ".js"
+          - ".fragment.xml"
+          - ".view.xml"
+          - ".properties"
+          - ".json"
+        sections:
+          - mode: preload
+            filters:
+              - "sap/tnt/"
+              - "!sap/tnt/.library"
+              - "!sap/tnt/messagebundle*"
+            resolve: false
+            resolveConditional: false
+            renderer: true

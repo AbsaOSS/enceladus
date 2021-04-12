@@ -47,6 +47,8 @@ sap.ui.define([
 
       this._model.setProperty("/subjectName", "");
 
+      this._model.setProperty("/schemaUploadUrl", window.apiUrl + "/schema/upload");
+
       // initially, registry integration is disabled in UI - get enabled by querying SchemaApiFeatures
       this._model.setProperty("/registryEnabled", false);
       this.checkRegistryIntegration()
@@ -166,6 +168,10 @@ sap.ui.define([
           name: "X-CSRF-TOKEN",
           value: localStorage.getItem("csrfToken")
         }));
+        oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
+          name: "JWT",
+          value: localStorage.getItem("jwtToken")
+        }));
         oFileUpload.upload();
       }
     },
@@ -184,12 +190,13 @@ sap.ui.define([
         };
 
         jQuery.ajax({
-          url: "api/schema/registry",
+          url: window.apiUrl + "/schema/registry",
           type: 'POST',
           data: $.param(data),
           contentType: 'application/x-www-form-urlencoded',
           context: this, // becomes the result of "this" in handleRemoteLoad*Complete
           headers: {
+            "JWT": localStorage.getItem("jwtToken"),
             'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
           },
           complete: this.handleRemoteLoadFromSubjectNameComplete
@@ -216,7 +223,7 @@ sap.ui.define([
       };
 
       jQuery.ajax({
-        url: "api/schema/remote",
+        url: window.apiUrl + "/schema/remote",
         type: 'POST',
         data: $.param(data),
         contentType: 'application/x-www-form-urlencoded',
@@ -388,8 +395,12 @@ sap.ui.define([
 
     checkRegistryIntegration: function () {
       jQuery.ajax({
-        url: "api/schema/features",
+        url: window.apiUrl + "/schema/features",
         type: 'GET',
+        headers: {
+          "JWT": localStorage.getItem("jwtToken"),
+          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+        },
         context: this,
         complete: this.handleRegistryIntegrationResponse
       });

@@ -16,12 +16,20 @@
 package za.co.absa.enceladus.menas
 
 import org.springframework.context.annotation.Configuration
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.web.servlet.config.annotation.{CorsRegistry, ViewControllerRegistry, WebMvcConfigurer}
+import za.co.absa.enceladus.menas.auth.AuthConstants.{CsrfTokenKey, JwtKey}
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
   override def addViewControllers(registry: ViewControllerRegistry) {
     registry.addViewController("/login").setViewName("login")
+  }
+
+  override def addCorsMappings(registry: CorsRegistry): Unit = {
+    registry.addMapping("/**")
+      .exposedHeaders(JwtKey, CsrfTokenKey)
+      .allowedMethods("PUT", "GET", "DELETE", "OPTIONS", "PATCH", "POST")
+      .allowedHeaders("*")
+      .allowedOrigins("*")
   }
 }

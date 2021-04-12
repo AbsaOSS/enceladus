@@ -125,6 +125,7 @@
         <module>plugins-builtin</module>
         <module>spark-jobs</module>
         <module>utils</module>
+        <module>menas-web</module>
     </modules>
 
     <properties>
@@ -197,7 +198,8 @@
         <!--other properties-->
         <quiet.scalastyle.check>true</quiet.scalastyle.check>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
+        <dockerfile.menas.repository>docker.io/absaoss/menas</dockerfile.menas.repository>
+        <dockerfile.menas-ui.repository>docker.io/absaoss/menas-ui</dockerfile.menas-ui.repository>
         <dockerfile.tag>${project.version}</dockerfile.tag>
         <!-- Name of property file that will be used by the Docker image. -->
         <dockerfile.property.file>docker</dockerfile.property.file>
@@ -535,6 +537,8 @@
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>**/node_modules/**</exclude>
+                                <exclude>**/_site/**</exclude>
+                                <exclude>**/ui/dist/**</exclude>
                                 <exclude>scripts/cmd/tee.bat</exclude>
                             </excludes>
                         </configuration>
