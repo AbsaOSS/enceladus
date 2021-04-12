@@ -5,7 +5,7 @@
   "item": {
     "name": "mappingConformanceRule",
     "description": "",
-    "hdfsPath": "/std/mappingConcormanceRuleData",
+    "hdfsPath": "/std/mappingConformanceRuleData",
     "hdfsPublishPath": "/publish/mappingConformanceRule",
     "schemaName": "mappingConformanceRuleData",
     "schemaVersion": 1,
