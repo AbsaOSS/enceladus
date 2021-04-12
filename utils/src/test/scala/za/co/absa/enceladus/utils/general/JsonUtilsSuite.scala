@@ -36,7 +36,7 @@ class JsonUtilsSuite extends AnyFunSuite with SparkTestBase {
 
     val actual = JsonUtils.prettyJSON(inputJson)
 
-    assert(expected == actual)
+    assert(actual == expected)
   }
 
   test("Test JSON pretty formatting from a Spark JSON string") {
@@ -45,7 +45,7 @@ class JsonUtilsSuite extends AnyFunSuite with SparkTestBase {
 
     val actual = JsonUtils.prettySparkJSON(inputJsons)
 
-    assert(expected == actual)
+    assert(actual == expected)
   }
 
   test("Test a dataframe created from a JSON") {

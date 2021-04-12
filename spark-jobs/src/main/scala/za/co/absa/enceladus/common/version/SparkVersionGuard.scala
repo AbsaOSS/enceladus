@@ -34,7 +34,8 @@ object SparkVersionGuard {
  * Setup Spark version guard with allowed min & max sem-ver version.
  *
  * @param minVersionInclusive lowest acceptable spark version (may be non-final)
- * @param maxVersionExclusive version supremum - first discouraged spark version (this and higher version usage issues a warning) if not None
+ * @param maxVersionExclusive version supremum - first discouraged spark version (this and higher version usage issues
+ *                            a warning) if not None
  */
 case class SparkVersionGuard(minVersionInclusive: SemanticVersion, maxVersionExclusive: Option[SemanticVersion])
                             (implicit log:Logger = LoggerFactory.getLogger(SparkVersionGuard.getClass)) {

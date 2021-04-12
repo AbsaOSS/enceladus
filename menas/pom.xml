@@ -26,7 +26,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <scala.xml.version>1.0.4</scala.xml.version>
+        <scala.xml.version>1.3.0</scala.xml.version>
         <webui.basedir>${project.basedir}/ui</webui.basedir>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <embedded.mongo.version>2.2.0</embedded.mongo.version>

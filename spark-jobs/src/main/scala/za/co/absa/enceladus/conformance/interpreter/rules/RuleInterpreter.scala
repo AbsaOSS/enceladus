@@ -53,7 +53,8 @@ trait RuleInterpreter {
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
-   * inferStrictestType Function which takes a string value, tries to infer the strictest applicable SQL type and returns a column literal object
+   * inferStrictestType Function which takes a string value, tries to infer the strictest applicable SQL type and
+   * returns a column literal object
    *
    * @param input The string representing the literal value
    */
@@ -116,12 +117,15 @@ trait RuleInterpreter {
   }
 
   /**
-   * Helper function to handle arrays. If there's an array within the path of targetColumn, this helper will apply arrayTransform. When flat, it will apply the specified fn.
+   * Helper function to handle arrays. If there's an array within the path of targetColumn, this helper will apply
+   * arrayTransform. When flat, it will apply the specified fn.
    *
    *  @param targetColumn The column which is to be conformed and needs to be transformed
    *  @param df The original (intermediate) dataset
    *  @param fn The transformer taking flattened dataset and returning a transformed dataset
    *  @return Dataset, which has been transformed, supporting nested arrays and preserving the original array elements order
    */
-  def handleArrays(targetColumn: String, df: Dataset[Row])(fn: Dataset[Row] => Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = ArrayTransformations.handleArrays(targetColumn, df)(fn)
+  def handleArrays(targetColumn: String, df: Dataset[Row])
+                  (fn: Dataset[Row] => Dataset[Row])
+                  (implicit spark: SparkSession): Dataset[Row] = ArrayTransformations.handleArrays(targetColumn, df)(fn)
 }

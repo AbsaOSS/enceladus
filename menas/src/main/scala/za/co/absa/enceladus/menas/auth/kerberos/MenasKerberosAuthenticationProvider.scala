@@ -99,7 +99,7 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
   }
 
   private def getLoginConfig: Configuration = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     new Configuration {
       override def getAppConfigurationEntry(name: String): Array[AppConfigurationEntry] = {
@@ -109,7 +109,7 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
           "isInitiator" -> "true",
           "debug" -> "true")
         Array(new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
-          AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, opts))
+          AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, opts.asJava))
       }
     }
   }

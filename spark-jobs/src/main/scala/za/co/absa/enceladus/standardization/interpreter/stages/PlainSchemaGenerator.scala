@@ -19,9 +19,9 @@ import org.apache.spark.sql.types._
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 
 /**
- * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data however, we do not want spark to apply casts
- * automatically. Instead we want to read all primitive types as strings. This component takes the target (desired) schema and generates a plain one which is used for
- * reading source data in the job.
+ * This component is used in the standardization job. We've got a strongly typed (target) schema. When reading the data
+ * however, we do not want spark to apply casts automatically. Instead we want to read all primitive types as strings.
+ * This component takes the target (desired) schema and generates a plain one which is used for reading source data in the job.
  */
 object PlainSchemaGenerator {
 

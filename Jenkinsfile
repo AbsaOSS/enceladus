@@ -39,7 +39,7 @@ pipeline {
         stage ('Build') {
             steps {
                 configFileProvider([configFile(fileId: "${mavenSettingsId}", variable: 'MAVEN_SETTINGS_XML')]) {
-                    sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettingsBuild} clean package -PgenerateComponentPreload"
+                    sh "mvn -s $MAVEN_SETTINGS_XML ${mavenAdditionalSettingsBuild} clean package -PgenerateComponentPreload -Dspan.scale.factor=6"
                 }
             }
         }

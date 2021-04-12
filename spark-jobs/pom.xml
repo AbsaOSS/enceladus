@@ -27,8 +27,8 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>4.0.0</hyperdrive.version>
-        <commons.version>0.0.10</commons.version>
-        <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
+        <commons.version>0.0.25</commons.version>
+        <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
     </properties>
 
     <dependencies>
@@ -65,7 +65,7 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>fixed-width_${scala.compat.version}</artifactId>
-            <version>0.1.0</version>
+            <version>${fixed.width.version}</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
@@ -74,10 +74,18 @@
         </dependency>
 
         <!-- Hyperdrive -->
+        <!-- todo reenable with Hyperdrive API for Scala 2.12 #1712 -->
+<!--        <dependency>-->
+<!--            <groupId>za.co.absa.hyperdrive</groupId>-->
+<!--            <artifactId>api_${scala.compat.version}</artifactId>-->
+<!--            <version>${hyperdrive.version}</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+
         <dependency>
-            <groupId>za.co.absa.hyperdrive</groupId>
-            <artifactId>api</artifactId>
-            <version>${hyperdrive.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>${apache.commons.configuration2.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -110,54 +118,23 @@
         </dependency>
 
         <!-- Lineage tracking -->
+        <!-- todo reenable with Spark3 compatible agent - issue #1713 -->
+<!--        <dependency>-->
+<!--            <groupId>za.co.absa.spline.agent.spark</groupId>-->
+<!--            <artifactId>agent-core_${scala.compat.version}</artifactId>-->
+<!--            <version>${spline.version}</version>-->
+<!--        </dependency>-->
+
+        <!-- to reuse util's customized NativeIO for hadoop on Windows -->
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-mongo</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-hdfs</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-common</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
     </dependencies>
     <build>
         <plugins>

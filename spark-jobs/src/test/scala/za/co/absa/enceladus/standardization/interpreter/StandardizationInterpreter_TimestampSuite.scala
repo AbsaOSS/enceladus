@@ -268,7 +268,8 @@ class StandardizationInterpreter_TimestampSuite extends AnyFunSuite with SparkTe
 
   }
 
-  test("pattern up to nanoseconds precision, no time zone") {
+  // todo issue #1720
+  ignore("pattern up to nanoseconds precision, no time zone") {
     val seq  = Seq(
       "(000000) 01/01/1970 AM+00:00:00~000",
       "(002003) 02/01/1970 am+00:00:00~001",
@@ -299,7 +300,8 @@ class StandardizationInterpreter_TimestampSuite extends AnyFunSuite with SparkTe
 
   }
 
-  test("pattern up to nanoseconds precision and named time zone") {
+  // todo issue #1720
+  ignore("pattern up to nanoseconds precision and named time zone") {
     val seq  = Seq(
       "(000000) 01/01/1970 01:00:00.000 CET",
       "(001002) 02/01/1970 08:45:00.003 ACWST",

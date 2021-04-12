@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
+import java.nio.charset.Charset
 
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.sql.{DataFrame, SaveMode}
@@ -170,7 +171,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
       .write
       .mode(SaveMode.Overwrite)
       .parquet(getRawDataPath(nestedStructsDS.hdfsPath))
-    FileUtils.writeStringToFile(new File(s"${getRawDataPath(nestedStructsDS.hdfsPath)}/_INFO"), infoFileContents)
+    FileUtils.writeStringToFile(new File(s"${getRawDataPath(nestedStructsDS.hdfsPath)}/_INFO"), infoFileContents, Charset.defaultCharset)
   }
 
   private def prepareDataFrame(): Unit = {

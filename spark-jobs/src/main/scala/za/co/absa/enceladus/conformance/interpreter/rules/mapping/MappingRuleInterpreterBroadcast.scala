@@ -45,8 +45,9 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
 
     val mt = LocalMappingTable(mapTable, mappingTableFields, rule.targetAttribute)
     val broadcastedMt = spark.sparkContext.broadcast(mt)
-    val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
 
+    // todo fix Issue #1710
+    val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
 
     val parentPath = getParentPath(rule.outputColumn)

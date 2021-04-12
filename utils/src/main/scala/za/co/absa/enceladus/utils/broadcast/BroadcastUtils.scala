@@ -21,7 +21,9 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.expr
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import org.apache.spark.sql.functions.udf
 
+// todo fix Issue #1710
 object BroadcastUtils {
   // scalastyle:off null
   // scalastyle:off magic.number
@@ -31,16 +33,16 @@ object BroadcastUtils {
   }
 
   /**
-    * Converts a Spark expression to an actual value that can be used inside a UDF.
-    *
-    * This is used to convert a default value provided by a user as a part of mapping rule definition,
-    * to a value that can be used inside a mapping UDF.
-    *
-    * The returned value is one of primitives, or a Row for structs, or an array of Row(s) for an array of struct.
-    *
-    * @param expression A Spark expression.
-    * @return A UDF that maps joins keys to a target attribute value.
-    */
+   * Converts a Spark expression to an actual value that can be used inside a UDF.
+   *
+   * This is used to convert a default value provided by a user as a part of mapping rule definition,
+   * to a value that can be used inside a mapping UDF.
+   *
+   * The returned value is one of primitives, or a Row for structs, or an array of Row(s) for an array of struct.
+   *
+   * @param expression A Spark expression.
+   * @return A UDF that maps joins keys to a target attribute value.
+   */
   def getValueOfSparkExpression(expression: String)(implicit spark: SparkSession): Any = {
     import spark.implicits._
 
@@ -59,69 +61,75 @@ object BroadcastUtils {
   }
 
   /**
-    * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
-    * if there is no mapping for the specified keys.
-    *
-    * @param mappingTable A mapping table broadcasted to executors.
-    * @return A UDF that maps joins keys to a target attribute value.
-    */
+   * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
+   * if there is no mapping for the specified keys.
+   *
+   * @param mappingTable A mapping table broadcasted to executors.
+   * @return A UDF that maps joins keys to a target attribute value.
+   */
   def getMappingUdf(mappingTable: Broadcast[LocalMappingTable],
                     defaultValueExpr: Option[String])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
     val defaultValueOpt = defaultValueExpr.map(getValueOfSparkExpression)
 
-    val lambda = numberOfArguments match {
-      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
-      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)
-      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
-      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
-      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
-      case 6 => getMappingLambdaParam6(mappingTable, defaultValueOpt)
-      case 7 => getMappingLambdaParam7(mappingTable, defaultValueOpt)
-      case 8 => getMappingLambdaParam8(mappingTable, defaultValueOpt)
-      case 9 => getMappingLambdaParam9(mappingTable, defaultValueOpt)
-      case 10 => getMappingLambdaParam10(mappingTable, defaultValueOpt)
-      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
-    }
+//    val lambda = numberOfArguments match {
+//      case 1 => getMappingLambdaParam1(mappingTable, defaultValueOpt)
+//      case 2 => getMappingLambdaParam2(mappingTable, defaultValueOpt)
+//      case 3 => getMappingLambdaParam3(mappingTable, defaultValueOpt)
+//      case 4 => getMappingLambdaParam4(mappingTable, defaultValueOpt)
+//      case 5 => getMappingLambdaParam5(mappingTable, defaultValueOpt)
+//      case 6 => getMappingLambdaParam6(mappingTable, defaultValueOpt)
+//      case 7 => getMappingLambdaParam7(mappingTable, defaultValueOpt)
+//      case 8 => getMappingLambdaParam8(mappingTable, defaultValueOpt)
+//      case 9 => getMappingLambdaParam9(mappingTable, defaultValueOpt)
+//      case 10 => getMappingLambdaParam10(mappingTable, defaultValueOpt)
+//      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
+//    }
+//
+//    UserDefinedFunction(lambda,
+//      mappingTable.value.valueType,
+//      Some(mappingTable.value.keyTypes))
 
-    UserDefinedFunction(lambda,
-      mappingTable.value.valueType,
-      Some(mappingTable.value.keyTypes))
+    // todo fix Issue #1710
+    throw new NotImplementedError("This method is not correctly implemented, yet")
   }
 
   /**
-    * Returns a UDF that takes values of join keys and returns a join error or null if the join is successful.
-    *
-    * @param mappingTable A mapping table broadcasted to executors.
-    * @return A UDF that returns an error column if join keys are not found in the mapping.
-    */
+   * Returns a UDF that takes values of join keys and returns a join error or null if the join is successful.
+   *
+   * @param mappingTable A mapping table broadcasted to executors.
+   * @return A UDF that returns an error column if join keys are not found in the mapping.
+   */
   def getErrorUdf(mappingTable: Broadcast[LocalMappingTable],
                   outputColumn: String,
                   mappings: Seq[Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-    val lambda = numberOfArguments match {
-      case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
-      case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
-      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
-      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
-      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
-      case 6 => getErrorLambdaParam6(mappingTable, outputColumn, mappings)
-      case 7 => getErrorLambdaParam7(mappingTable, outputColumn, mappings)
-      case 8 => getErrorLambdaParam8(mappingTable, outputColumn, mappings)
-      case 9 => getErrorLambdaParam9(mappingTable, outputColumn, mappings)
-      case 10 => getErrorLambdaParam10(mappingTable, outputColumn, mappings)
-      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
-    }
+//    val lambda = numberOfArguments match {
+//      case 1 => getErrorLambdaParam1(mappingTable, outputColumn, mappings)
+//      case 2 => getErrorLambdaParam2(mappingTable, outputColumn, mappings)
+//      case 3 => getErrorLambdaParam3(mappingTable, outputColumn, mappings)
+//      case 4 => getErrorLambdaParam4(mappingTable, outputColumn, mappings)
+//      case 5 => getErrorLambdaParam5(mappingTable, outputColumn, mappings)
+//      case 6 => getErrorLambdaParam6(mappingTable, outputColumn, mappings)
+//      case 7 => getErrorLambdaParam7(mappingTable, outputColumn, mappings)
+//      case 8 => getErrorLambdaParam8(mappingTable, outputColumn, mappings)
+//      case 9 => getErrorLambdaParam9(mappingTable, outputColumn, mappings)
+//      case 10 => getErrorLambdaParam10(mappingTable, outputColumn, mappings)
+//      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
+//    }
+//
+//    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
+//
+//    val errorUdf = UserDefinedFunction(lambda,
+//      errorMessageSchema.dataType,
+//      Some(mappingTable.value.keyTypes))
+//
+//    errorUdf
 
-    val errorMessageSchema = ScalaReflection.schemaFor[ErrorMessage]
-
-    val errorUdf = UserDefinedFunction(lambda,
-      errorMessageSchema.dataType,
-      Some(mappingTable.value.keyTypes))
-
-    errorUdf
+    // todo fix Issue #1710
+    throw new NotImplementedError("This method is not correctly implemented, yet")
   }
 
   private def getMappingLambdaParam1(mappingTable: Broadcast[LocalMappingTable], defaultValueOpt: Option[Any]): AnyRef = {

@@ -139,7 +139,7 @@ class FractionalParserSuite extends AnyFunSuite {
   test("pattern with altered decimal symbols") {
     val decimalSymbols: DecimalSymbols = GlobalDefaults.getDecimalSymbols.copy(
       decimalSeparator = ',',
-      groupingSeparator = ''',
+      groupingSeparator = '\'',
       minusSign = '@'
     )
     val pattern = NumericPattern("#,##0",decimalSymbols) //NB! that the standard grouping separator is used

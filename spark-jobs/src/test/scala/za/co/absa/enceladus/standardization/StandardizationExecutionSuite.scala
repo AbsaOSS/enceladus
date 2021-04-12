@@ -19,18 +19,20 @@ import java.io.File
 import java.nio.file.Files
 
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.mockito.{ArgumentMatchers, Mockito}
 import org.scalatest.Assertion
+import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
@@ -42,9 +44,10 @@ import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
 
+import scala.concurrent.duration.DurationInt
 import scala.util.control.NonFatal
 
-class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar {
+class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar with Eventually{
 
   private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
@@ -63,11 +66,13 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
       import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
       spark.disableControlMeasuresTracking()
 
-      val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+      eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
+        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
-      // key with prefix from test's application.conf
-      infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+        // key with prefix from test's application.conf
+        infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
+      }
     }
   }
 
@@ -88,14 +93,15 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     ).toDF("id", "data").as("DatasetA")
 
     // rawPath must exist, _INFO file creation assures so
-    ControlUtils.createInfoFile(someDataset,
-      "test app",
-      rawPath,
-      "2020-02-20",
-      1,
-      "CZ",
-      aggregateColumns = List("id", "data"),
-      writeToHDFS = true)
+    val controlMeasure = ControlMeasureBuilder.forDF(someDataset)
+        .withSourceApplication("test app")
+        .withInputPath(rawPath)
+        .withReportDate("2020-02-20")
+        .withReportVersion(1)
+        .withCountry("CZ")
+        .withAggregateColumns(List("id", "data"))
+      .build
+    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(controlMeasure, new Path(rawPath))
 
     Mockito.when(dao.storeNewRunObject(ArgumentMatchers.any[Run])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
     Mockito.when(dao.updateRunStatus(ArgumentMatchers.any[String], ArgumentMatchers.any[RunStatus])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))

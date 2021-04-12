@@ -19,6 +19,7 @@ import org.json4s._
 import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.Eventually
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
@@ -29,7 +30,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
+import scala.concurrent.duration.DurationInt
+
+class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase with Eventually {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -44,7 +47,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
   def testEndToEndDynamicConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    spark.enableControlMeasuresTracking("src/test/testData/employee/2017/11/01/_INFO", "src/test/testData/_testOutput/_INFO")
+    spark.enableControlMeasuresTracking(Some("src/test/testData/employee/2017/11/01/_INFO"), Some("src/test/testData/_testOutput/_INFO"))
 
     //configure conf value
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
@@ -81,28 +84,31 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
-    implicit val formats: DefaultFormats.type = DefaultFormats
+    eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+      val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
-    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
+      implicit val formats: DefaultFormats.type = DefaultFormats
 
-    assertResult(expected)(data)
-    // test drop
-    assert(!conformed.columns.contains("ToBeDropped"))
+      val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
-    // check that all the expected checkpoints are there
-    assert(checkpoints.lengthCompare(9) == 0)
+      assertResult(expected)(data)
+      // test drop
+      assert(!conformed.columns.contains("ToBeDropped"))
 
-    checkpoints.foreach({ cp =>
-      assert(cp.controls(0).controlValue === "8")
-      assert(cp.controls(1).controlValue === "6")
-    })
+      // check that all the expected checkpoints are there
+      assert(checkpoints.lengthCompare(9) == 0)
+
+      checkpoints.foreach({ cp =>
+        assert(cp.controls(0).controlValue === "8")
+        assert(cp.controls(1).controlValue === "6")
+      })
+    }
   }
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
-    spark.enableControlMeasuresTracking("src/test/testData/_tradeData/2017/11/01/_INFO", "src/test/testData/_tradeOutput/_INFO")
+    spark.enableControlMeasuresTracking(Some("src/test/testData/_tradeData/2017/11/01/_INFO"), Some("src/test/testData/_tradeOutput/_INFO"))
 
     implicit val dao: MenasDAO = mock(classOf[MenasDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(
@@ -144,28 +150,30 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     spark.disableControlMeasuresTracking()
 
-    val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
+    eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+      val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
-    implicit val formats: DefaultFormats.type = DefaultFormats
+      implicit val formats: DefaultFormats.type = DefaultFormats
 
-    val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
+      val checkpoints = parseJson(infoFile).extract[ControlMeasure].checkpoints
 
-    if (data != expected) {
-      logger.error("EXPECTED:")
-      logger.error(expected)
-      logger.error("ACTUAL:")
-      logger.error(data)
-      assert(data == expected)
+      if (data != expected) {
+        logger.error("EXPECTED:")
+        logger.error(expected)
+        logger.error("ACTUAL:")
+        logger.error(data)
+        assert(data == expected)
+      }
+
+      // check that all the expected checkpoints are there
+      assert(checkpoints.lengthCompare(12) == 0)
+
+      checkpoints.foreach({ cp =>
+        assert(cp.controls(0).controlValue === "7")
+        assert(cp.controls(1).controlValue === "7")
+        assert(cp.controls(2).controlValue === "28")
+      })
     }
-
-    // check that all the expected checkpoints are there
-    assert(checkpoints.lengthCompare(12) == 0)
-
-    checkpoints.foreach({ cp =>
-      assert(cp.controls(0).controlValue === "7")
-      assert(cp.controls(1).controlValue === "7")
-      assert(cp.controls(2).controlValue === "28")
-    })
   }
 
   test("End to end dynamic conformance test") {

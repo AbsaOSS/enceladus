@@ -20,7 +20,7 @@ import org.apache.log4j.LogManager
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils
 import za.co.absa.enceladus.common.plugin.PluginLoader
 import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
@@ -75,7 +75,7 @@ class EventListenerMenas(config: Config,
         datasetName,
         datasetVersion,
         splineRef,
-        ControlUtils.getTimestampAsString,
+        ControlMeasureUtils.getTimestampAsString,
         runStatus,
         controlMeasure)
       val storedRun = dao.storeNewRunObject(run)

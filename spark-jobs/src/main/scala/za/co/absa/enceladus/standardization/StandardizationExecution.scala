@@ -59,7 +59,7 @@ trait StandardizationExecution extends CommonJobExecution {
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
-    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
+    spark.enableControlMeasuresTracking(Some(s"${preparationResult.pathCfg.raw.path}/_INFO"), None)
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
