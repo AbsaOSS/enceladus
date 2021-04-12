@@ -266,10 +266,10 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       }
 
       Seq(
-        ("",expectedValidationStrictest),
+        ("", expectedValidationStrictest),
         ("?forRun=False", expectedValidationStrictest),
         ("?forRun=TRUE", expectedValidationForRun)
-      ).foreach { case(queryString, expectedValidation) =>
+      ).foreach { case (queryString, expectedValidation) =>
         "return 200" when {
           s"there is a correct Dataset name+version with query params: $queryString" should {
             s"return validated properties" in {
