@@ -192,7 +192,7 @@ object StringImplicits {
       joinWithSingleSeparator(another, "/")
     }
 
-    def getOrElse(default: => String): String = {
+    def nonEmpyOrElse(default: => String): String = {
       if (string.isEmpty) {
         default
       } else {

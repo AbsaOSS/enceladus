@@ -304,5 +304,6 @@ class StringImplicitsSuite extends AnyFunSuite with Matchers {
     "".coalesce("A", "") shouldBe "A"
     "".coalesce("", "", "B", "", "C") shouldBe "B"
     "X".coalesce("Y", "Z") shouldBe "X"
+    "X".coalesce("") shouldBe "X"
   }
 }
