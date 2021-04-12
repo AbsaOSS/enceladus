@@ -65,7 +65,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
   }
 
   override def create(item: Dataset, username: String): Future[Completed] = {
-    super.create(item.encode, username)
+    super.create(handleMappingRuleWrite(item), username)//
   }
 
   override def update(username: String, updated: Dataset): Future[Dataset] = {
