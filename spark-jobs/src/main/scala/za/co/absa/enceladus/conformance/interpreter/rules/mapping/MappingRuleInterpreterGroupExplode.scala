@@ -51,7 +51,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 
-    val withErrorsDf = if (rule.additionalColumns.isEmpty) {
+    val withErrorsDf = if (rule.additionalColumns.getOrElse(Map()).isEmpty) {
       val joined = joinDatasetAndMappingTable(mapTable, explodedDf)
       val placedDf = ExplodeTools.nestedRenameReplace(joined, rule.outputColumn, rule.outputColumn)
 
