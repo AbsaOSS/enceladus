@@ -61,12 +61,10 @@ object LocalMappingTable {
     val targetAttributes = outputColumns.values.toSeq
     validateTargetAttributes(mappingTableDf, targetAttributes)
 
-    val keyTypes = keyFields.map(fieldName =>
-      SchemaUtils.getFieldType(fieldName, mappingTableDf.schema).get
-    )
+    val keyTypes = keyFields.flatMap(fieldName => SchemaUtils.getFieldType(fieldName, mappingTableDf.schema))
 
-    val valueTypes = targetAttributes.map(targetAttribute => {
-      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema).get
+    val valueTypes = targetAttributes.flatMap(targetAttribute => {
+      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema)
     })
     val structFields: Seq[StructField] = outputColumns.keys.toSeq.zip(valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
