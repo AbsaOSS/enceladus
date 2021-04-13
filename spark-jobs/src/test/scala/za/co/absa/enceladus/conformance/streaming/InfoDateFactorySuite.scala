@@ -13,60 +13,62 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance.streaming
+//todo reenable with Hyperdrive API for Scala 2.12 #1712
 
-import org.apache.commons.configuration2.Configuration
-import org.scalatest.matchers.should.Matchers
-import org.mockito.scalatest.MockitoSugar
-import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
-
-class InfoDateFactorySuite extends AnyWordSpec with Matchers with MockitoSugar {
-  private val configStub: Configuration = mock[Configuration]
-
-  "InfoDateFactory" should {
-    "return an explicit info date factory from config" when {
-      "an explicit report date is specified in config" in {
-        when(configStub.containsKey(reportDateKey)).thenReturn(true)
-        when(configStub.getString(reportDateKey)).thenReturn("2019-01-01")
-
-        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
-
-        assert(infoDateFactory.isInstanceOf[InfoDateLiteralFactory])
-      }
-
-      "several configuration options are specified so the explicit report date takes precedence" in {
-        when(configStub.containsKey(reportDateKey)).thenReturn(true)
-        when(configStub.getString(reportDateKey)).thenReturn("2019-01-01")
-        when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(true)
-        when(configStub.getString(eventTimestampColumnKey)).thenReturn("EV_TIME")
-
-        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
-
-        assert(infoDateFactory.isInstanceOf[InfoDateLiteralFactory])
-      }
-    }
-
-    "return an event time strategy when an event timestamp column is specified in config config" when {
-      "an explicit report date is specified in config" in {
-        when(configStub.containsKey(reportDateKey)).thenReturn(false)
-        when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(true)
-        when(configStub.getString(eventTimestampColumnKey)).thenReturn("EV_TIME")
-
-        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
-
-        assert(infoDateFactory.isInstanceOf[InfoDateFromColumnFactory])
-      }
-    }
-
-    "return an processing time strategy by default" in {
-      when(configStub.containsKey(reportDateKey)).thenReturn(false)
-      when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
-
-      val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
-
-      assert(infoDateFactory.isInstanceOf[InfoDateFromProcessingTimeFactory])
-    }
-  }
-
-}
+//package za.co.absa.enceladus.conformance.streaming
+//
+//import org.apache.commons.configuration2.Configuration
+//import org.scalatest.matchers.should.Matchers
+//import org.mockito.scalatest.MockitoSugar
+//import org.scalatest.wordspec.AnyWordSpec
+//import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
+//
+//class InfoDateFactorySuite extends AnyWordSpec with Matchers with MockitoSugar {
+//  private val configStub: Configuration = mock[Configuration]
+//
+//  "InfoDateFactory" should {
+//    "return an explicit info date factory from config" when {
+//      "an explicit report date is specified in config" in {
+//        when(configStub.containsKey(reportDateKey)).thenReturn(true)
+//        when(configStub.getString(reportDateKey)).thenReturn("2019-01-01")
+//
+//        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
+//
+//        assert(infoDateFactory.isInstanceOf[InfoDateLiteralFactory])
+//      }
+//
+//      "several configuration options are specified so the explicit report date takes precedence" in {
+//        when(configStub.containsKey(reportDateKey)).thenReturn(true)
+//        when(configStub.getString(reportDateKey)).thenReturn("2019-01-01")
+//        when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(true)
+//        when(configStub.getString(eventTimestampColumnKey)).thenReturn("EV_TIME")
+//
+//        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
+//
+//        assert(infoDateFactory.isInstanceOf[InfoDateLiteralFactory])
+//      }
+//    }
+//
+//    "return an event time strategy when an event timestamp column is specified in config config" when {
+//      "an explicit report date is specified in config" in {
+//        when(configStub.containsKey(reportDateKey)).thenReturn(false)
+//        when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(true)
+//        when(configStub.getString(eventTimestampColumnKey)).thenReturn("EV_TIME")
+//
+//        val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
+//
+//        assert(infoDateFactory.isInstanceOf[InfoDateFromColumnFactory])
+//      }
+//    }
+//
+//    "return an processing time strategy by default" in {
+//      when(configStub.containsKey(reportDateKey)).thenReturn(false)
+//      when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
+//
+//      val infoDateFactory = InfoDateFactory.getFactoryFromConfig(configStub)
+//
+//      assert(infoDateFactory.isInstanceOf[InfoDateFromProcessingTimeFactory])
+//    }
+//  }
+//
+//}
