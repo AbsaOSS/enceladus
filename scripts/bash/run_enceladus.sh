@@ -30,6 +30,7 @@ EXECUTOR_MEMORY="$DEFAULT_EXECUTOR_MEMORY"
 DRA_EXECUTOR_CORES="$DEFAULT_DRA_EXECUTOR_CORES"
 DRA_EXECUTOR_MEMORY="$DEFAULT_DRA_EXECUTOR_MEMORY"
 NUM_EXECUTORS="$DEFAULT_NUM_EXECUTORS"
+DRA_NUM_EXECUTORS=""
 FILES="$ENCELADUS_FILES"
 
 # DRA related defaults
@@ -92,6 +93,10 @@ case $key in
     ;;
   --num-executors)
     NUM_EXECUTORS="$2"
+    shift 2 # past argument and value
+    ;;
+  --dra-num-executors)
+    DRA_NUM_EXECUTORS="$2"
     shift 2 # past argument and value
     ;;
   --executor-cores)
@@ -403,29 +408,30 @@ fi
 
 # configure DRA and adaptive execution if enabled
 if [ "$DRA_ENABLED" = true ] ; then
-    echo "Dynamic Resource Allocation enabled"
+  echo "Dynamic Resource Allocation enabled"
 
-    if [ -n "$NUM_EXECUTORS" ]; then
-        echo "WARNING: num-executors should NOT be set when using Dynamic Resource Allocation and will be ignored."
-        echo "Set dra-num-executors if you know what you are doing or disable dra"
-    fi
+  if [ -n "$NUM_EXECUTORS" ]; then
+      echo "WARNING: num-executors should NOT be set when using Dynamic Resource Allocation and will be ignored."
+      echo "Set dra-num-executors if you know what you are doing or disable dra"
+  fi
 
-    echo "Using values from --dra-executor-memory and --dra-executor-cores. --executor-memory and --executor-cores ignored"
+  echo "Using values from --dra-executor-memory and --dra-executor-cores. --executor-memory and --executor-cores ignored"
 
-    add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
-    add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
-    add_spark_conf_cmd "spark.sql.adaptive.enabled" "true"
-    add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" "${DRA_MAX_EXECUTORS}"
-    add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" "${DRA_MIN_EXECUTORS}"
-    add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" "${DRA_ALLOCATION_RATIO}"
-    add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" "${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}"
+  add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
+  add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
+  add_spark_conf_cmd "spark.sql.adaptive.enabled" "true"
+  add_spark_conf_cmd "spark.dynamicAllocation.maxExecutors" "${DRA_MAX_EXECUTORS}"
+  add_spark_conf_cmd "spark.dynamicAllocation.minExecutors" "${DRA_MIN_EXECUTORS}"
+  add_spark_conf_cmd "spark.dynamicAllocation.executorAllocationRatio" "${DRA_ALLOCATION_RATIO}"
+  add_spark_conf_cmd "spark.sql.adaptive.shuffle.targetPostShuffleInputSize" "${ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE}"
 
-    add_to_cmd_line "--executor-memory" "${DRA_EXECUTOR_MEMORY}"
-    add_to_cmd_line "--executor-cores" "${DRA_EXECUTOR_CORES}"
+  add_to_cmd_line "--executor-memory" "${DRA_EXECUTOR_MEMORY}"
+  add_to_cmd_line "--executor-cores" "${DRA_EXECUTOR_CORES}"
+  add_to_cmd_line "--num-executors" "${DRA_NUM_EXECUTORS}"
 else
   add_to_cmd_line "--executor-memory" "${EXECUTOR_MEMORY}"
-  add_to_cmd_line "--executor-cores" "${EXECUTOR_CORES}"
   add_to_cmd_line "--num-executors" "${NUM_EXECUTORS}"
+  add_to_cmd_line "--executor-cores" "${EXECUTOR_CORES}"
 fi
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
