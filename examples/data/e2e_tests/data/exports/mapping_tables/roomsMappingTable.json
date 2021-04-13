@@ -1,0 +1,13 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "roomsMappingTable",
+    "description": "",
+    "hdfsPath": "/std/map/rooms",
+    "schemaName": "roomsSchema",
+    "schemaVersion": 1,
+    "defaultMappingValue": []
+  }
+}

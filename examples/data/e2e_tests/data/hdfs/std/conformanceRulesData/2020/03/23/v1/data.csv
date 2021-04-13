@@ -1,0 +1,4 @@
+name,string,boolean,integer,date,binary
+first_object,mouse,FALSE,150,15/7/2019,grain
+second_object,horse,TRUE,5432,2/3/1999,grass
+third_object,dog,TRUE,1318,28/12/1960,meet
