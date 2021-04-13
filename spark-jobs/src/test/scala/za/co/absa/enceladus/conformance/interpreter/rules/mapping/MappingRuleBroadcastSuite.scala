@@ -15,11 +15,9 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
-import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.JsonUtils

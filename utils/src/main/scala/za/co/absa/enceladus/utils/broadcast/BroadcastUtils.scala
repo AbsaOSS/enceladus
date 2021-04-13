@@ -17,9 +17,10 @@ package za.co.absa.enceladus.utils.broadcast
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.sql.api.java._
+import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{expr, udf}
-import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.{DataType, StructField, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
@@ -73,7 +74,7 @@ object BroadcastUtils {
 
     val defaultValueMap = defaultValueExprMap.mapValues(getValueOfSparkExpression)
 
-    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, true)
+    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, isSingleOutput = true)
 
     lambda
   }
@@ -84,7 +85,7 @@ object BroadcastUtils {
 
     val defaultValueMap = defaultValueExprMap.mapValues(getValueOfSparkExpression)
 
-    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, false)
+    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, isSingleOutput = false)
 
     lambda
   }
@@ -115,7 +116,13 @@ object BroadcastUtils {
     } else {
       Row.fromSeq(mappingTable.value.outputColumns.values.toSeq.map(field => defaultValues.getOrElse(field, null)))
     }
-    val valueType: DataType = mappingTable.value.valueTypes.head
+    val valueType: DataType = if(isSingleOutput) mappingTable.value.valueTypes.head else {
+      val structFields: Seq[StructField] = mappingTable.value.outputColumns.keys
+        .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
+        .zip(mappingTable.value.valueTypes)
+        .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
+      StructType(structFields)
+    }
     numberOfArguments match {
       case 1 => udf(new UDF1[Any, Any] {
         override def call(p1: Any): Any = mappingTable.value.getRowWithDefault(Seq(p1), defaultValue)
@@ -167,22 +174,42 @@ object BroadcastUtils {
         ErrorMessage.confMappingErr(outputColumns.mkString(","), strings, mappings)
       }
     }
+    val errorMessageType = ScalaReflection.schemaFor[ErrorMessage].dataType
 
     numberOfParams match {
-      case 1 => udf((p1: Any) => applyError(Seq(p1)))
-      case 2 => udf((p1: Any, p2: Any) => applyError(Seq(p1, p2)))
-      case 3 => udf((p1: Any, p2: Any, p3: Any) => applyError(Seq(p1, p2, p3)))
-      case 4 => udf((p1: Any, p2: Any, p3: Any, p4: Any) => applyError(Seq(p1, p2, p3, p4)))
-      case 5 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any) => applyError(Seq(p1, p2, p3, p4, p5)))
-      case 6 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any) => applyError(Seq(p1, p2, p3, p4, p5, p6)))
-      case 7 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any) =>
-        applyError(Seq(p1, p2, p3, p4, p5, p6, p7)))
-      case 8 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any) =>
-        applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8)))
-      case 9 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any) =>
-        applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9)))
-      case 10 => udf((p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any, p10: Any) =>
-        applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10)))
+      case 1 => udf(new UDF1[Any, Any] {
+        override def call(p1: Any): Any = applyError(Seq(p1))
+      }, errorMessageType)
+      case 2 => udf(new UDF2[Any, Any, Any] {
+          override def call(p1: Any, p2: Any): Any = applyError(Seq(p1, p2))
+        }, errorMessageType)
+      case 3 => udf(new UDF3[Any, Any, Any, Any] {
+          override def call(p1: Any, p2: Any, p3: Any): Any = applyError(Seq(p1, p2, p3))
+        }, errorMessageType)
+      case 4 => udf(new UDF4[Any, Any, Any, Any, Any] {
+          override def call(p1: Any, p2: Any, p3: Any, p4: Any): Any = applyError(Seq(p1, p2, p3, p4))
+        }, errorMessageType)
+      case 5 => udf(new UDF5[Any, Any, Any, Any, Any, Any] {
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any): Any = applyError(Seq(p1, p2, p3, p4, p5))
+      }, errorMessageType)
+      case 6 => udf(new UDF6[Any, Any, Any, Any, Any, Any, Any] {
+          override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any): Any = applyError(Seq(p1, p2, p3, p4, p5, p6))
+        }, errorMessageType)
+      case 7 => udf(new UDF7[Any, Any, Any, Any, Any, Any, Any, Any] {
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any): Any = applyError(Seq(p1, p2, p3, p4, p5, p6, p7))
+      }, errorMessageType)
+      case 8 => udf(new UDF8[Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any): Any =
+          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8))
+      }, errorMessageType)
+      case 9 => udf(new UDF9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any): Any =
+          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9))
+      }, errorMessageType)
+      case 10 => udf(new UDF10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any, p10: Any): Any =
+          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10))
+      }, errorMessageType)
       case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
     }
   }
