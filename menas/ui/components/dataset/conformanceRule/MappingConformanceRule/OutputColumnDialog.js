@@ -71,7 +71,7 @@ class OutputColumnDialog {
   }
 
   prefillOutputColumn(outputColumn) {
-    this.model.setProperty("/newRule/outputColumn", outputColumn);
+    this.model.setProperty("/outputColumn", outputColumn);
   }
 
   onNewColumnSubmit() {
