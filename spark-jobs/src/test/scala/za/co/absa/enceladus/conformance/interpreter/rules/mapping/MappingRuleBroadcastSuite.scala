@@ -15,9 +15,11 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
+import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.JsonUtils
@@ -25,8 +27,6 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
   import spark.implicits._
 
-  private val simpleTestCaseFactory = new SimpleTestCaseFactory()
-  private val nestedTestCaseFactory = new NestedTestCaseFactory()
 
   test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
@@ -419,48 +419,4 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
       DynamicInterpreter().interpret(dataset, inputDf)
     }
   }*/
-
-  private def cleanupContainsNullProperty(inputSchemaTree: String): String = {
-    // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
-    // the new version of the struct always has the flag containsNull = false.
-    inputSchemaTree
-      .replaceAll("\\ \\(containsNull = true\\)", "")
-      .replaceAll("\\ \\(containsNull = false\\)", "")
-      .trim
-  }
-
-  private def getResourceString(name: String): String =
-    IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
-
-  private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
-      logger.error("EXPECTED:")
-      logger.error(expectedSchema)
-      logger.error("ACTUAL:")
-      logger.error(actualSchema)
-      fail("Actual conformed schema does not match the expected schema (see above).")
-    }
-  }
-
-  private def assertResults(actualResults: String, expectedResults: String): Unit = {
-    if (!fixLineEnding(expectedResults).startsWith(fixLineEnding(actualResults))) {
-      logger.error("EXPECTED:")
-      logger.error(expectedResults)
-      logger.error("ACTUAL:")
-      logger.error(actualResults)
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
-    }
-  }
-
-  /**
-   * When the project is git cloned on Windows all text files might end up having CR LF line ending.
-   * (This depends on git settings)
-   * In order to make the tests line ending agnostic we need to replace CR LF with Unix line endings (LF).
-   *
-   * @param s A multiline string.
-   * @return The string with line endings fixed.
-   * */
-  private def fixLineEnding(s: String): String = s.replace("\r\n", "\n")
-
-  }
 }
