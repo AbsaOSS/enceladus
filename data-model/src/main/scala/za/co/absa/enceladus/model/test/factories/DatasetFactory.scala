@@ -85,10 +85,11 @@ object DatasetFactory extends EntityFactory[Dataset] {
                           attributeMappings: Map[String, String] = Map("dummyKey" -> "dummyValue"),
                           targetAttribute: String = "dummyTargetAttribute",
                           outputColumn: String = "dummyOutputCol",
+                          additionalOutputs: Option[Map[String, String]] = None,
                           isNullSafe: Boolean = false): MappingConformanceRule = {
 
     MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion,
-      attributeMappings, targetAttribute, outputColumn, isNullSafe)
+      attributeMappings, targetAttribute, outputColumn, additionalOutputs ,isNullSafe)
   }
 
   def getDummyNegationRule(order: Int = 1,
