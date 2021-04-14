@@ -19,10 +19,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers.be
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
-class ValidationKindSuite extends AnyFunSuite {
+class ValidationLevelSuite extends AnyFunSuite {
 
   test("Verify enumeration names") {
     // this ensures that the defined constant stays correct - as the `toString` function cannot be used in annotations, even indirectly
-    ValidationKind.NoValidationName should be (ValidationKind.NoValidation.toString)
+    ValidationLevel.NoValidationName should be (ValidationLevel.NoValidation.toString)
   }
 }

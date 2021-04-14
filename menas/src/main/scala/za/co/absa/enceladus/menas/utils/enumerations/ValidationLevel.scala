@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.menas.utils.enumerations
 
-object ValidationKind extends Enumeration{
-  final type ValidationKind = Value
+object ValidationLevel extends Enumeration{
+  final type ValidationLevel = Value
 
   final val NoValidation, ForRun, Strictest = Value
 
-  final val NoValidationName = "NoValidation" // This is used in annotation - for that the type MUST NOT be specified
+  final val NoValidationName = "NoValidation" // This is used in an annotation - for that the type MUST NOT be specified
 }

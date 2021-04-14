@@ -26,7 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.DatasetService
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind.{NoValidationName, ValidationKind}
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.{NoValidationName, ValidationLevel}
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{Dataset, Validation}
@@ -112,12 +112,18 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/properties/valid"))
   @ResponseStatus(HttpStatus.OK)
-  def getPropertiesValidation(@PathVariable datasetName: String,
-                              @PathVariable datasetVersion: Int,
-                              @RequestParam(value = "forRun", required = false, defaultValue = "false") forRun: Boolean
-                             ): CompletableFuture[Validation] = {
+  def getPropertiesValidation(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
-      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun)
+      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = false)
+      case None => throw notFound()
+    }
+  }
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/properties/validForRun"))
+  @ResponseStatus(HttpStatus.OK)
+  def getPropertiesValidationForRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
+    datasetService.getVersion(datasetName, datasetVersion).flatMap {
+      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = true)
       case None => throw notFound()
     }
   }
@@ -128,7 +134,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
                                          @PathVariable("datasetVersion") datasetVersion: Int,
                                          @RequestParam(value = "validateProperties",
                                                        required = false,
-                                                       defaultValue = NoValidationName) validate: ValidationKind
+                                                       defaultValue = NoValidationName) validate: ValidationLevel
                                         ): CompletableFuture[Dataset] = {
     datasetService.getVersionValidated(datasetName, datasetVersion, validate).map {
       case Some(ds) => ds

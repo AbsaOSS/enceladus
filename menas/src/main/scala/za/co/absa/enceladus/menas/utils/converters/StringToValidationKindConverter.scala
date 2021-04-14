@@ -16,11 +16,11 @@
 package za.co.absa.enceladus.menas.utils.converters
 
 import org.springframework.core.convert.converter.Converter
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind.ValidationKind
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.ValidationLevel
 
-class StringToValidationKindConverter extends Converter[String, ValidationKind] {
-  override def convert(s: String): ValidationKind = {
-    ValidationKind.withName(s)
+class StringToValidationKindConverter extends Converter[String, ValidationLevel] {
+  override def convert(s: String): ValidationLevel = {
+    ValidationLevel.withName(s)
   }
 }

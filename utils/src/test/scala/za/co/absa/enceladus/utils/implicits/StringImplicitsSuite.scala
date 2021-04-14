@@ -294,9 +294,9 @@ class StringImplicitsSuite extends AnyFunSuite with Matchers {
   }
 
   test("getOrElse") {
-    "a".getOrElse("b") shouldBe "a"
-    "".getOrElse("b") shouldBe "b"
-    "a".getOrElse("") shouldBe "a"
+    "a".nonEmpyOrElse("b") shouldBe "a"
+    "".nonEmpyOrElse("b") shouldBe "b"
+    "a".nonEmpyOrElse("") shouldBe "a"
   }
 
   test("coalesce") {

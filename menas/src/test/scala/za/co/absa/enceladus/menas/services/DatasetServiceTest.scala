@@ -21,7 +21,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
@@ -139,10 +139,10 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1, properties = Some(datasetProperties))
     Seq(
-      ("validation for run", ValidationKind.ForRun, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForRun)))),
-      ("validation strictest", ValidationKind.Strictest, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForSetup)))),
-      ("validation disabled", ValidationKind.NoValidation, Some(dataset), Some(dataset.copy(propertiesValidation = None))),
-      ("non-existing dataset", ValidationKind.Strictest, None, None)
+      ("validation for run", ValidationLevel.ForRun, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForRun)))),
+      ("validation strictest", ValidationLevel.Strictest, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForSetup)))),
+      ("validation disabled", ValidationLevel.NoValidation, Some(dataset), Some(dataset.copy(propertiesValidation = None))),
+      ("non-existing dataset", ValidationLevel.Strictest, None, None)
     ).foreach { case (testVariant, validationKind, persistedDataset, expectedResult) =>
       test(s"Dataset with properties validation ($testVariant)") {
 

@@ -35,11 +35,11 @@ package object essentiality {
   case class Mandatory(allowRun: Boolean = false) extends Essentiality
 
   object Essentiality {
-    final val Optional: Optional = new Optional()
+    final val Optional: Optional = new Optional() //the new have to be used despite calling case class, because of ambiguity
     final val Recommended: Recommended = new Recommended()
     //scalastyle:off method.name - to be able to use the case class as case object
     final def Mandatory(allowRun: Boolean): Mandatory = new Mandatory(allowRun)
-    final def Mandatory: Mandatory = new Mandatory() //scalastyle:ignore method.name to
     //scalastyle:on method.name
+    final val Mandatory: Mandatory = new Mandatory()
   }
 }

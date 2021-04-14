@@ -26,8 +26,8 @@ import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
 import scala.language.reflectiveCalls
 import DatasetService.RuleValidationsAndFields
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationKind.ValidationKind
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
+import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
@@ -176,7 +176,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
    */
   def getVersionValidated(datasetName: String,
                           datasetVersion: Int,
-                          addPropertiesValidation: ValidationKind): Future[Option[Dataset]] = {
+                          addPropertiesValidation: ValidationLevel): Future[Option[Dataset]] = {
 
     def doPropertiesValidation(dr: Future[Option[Dataset]], forRun: Boolean): Future[Option[Dataset]] = {
       dr.flatMap {
@@ -190,9 +190,9 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
     val datasetResponse: Future[Option[Dataset]] = getVersion(datasetName, datasetVersion)
     addPropertiesValidation match {
-      case ValidationKind.NoValidation => datasetResponse
-      case ValidationKind.ForRun       => doPropertiesValidation(datasetResponse, forRun = true)
-      case ValidationKind.Strictest    => doPropertiesValidation(datasetResponse, forRun = false)
+      case ValidationLevel.NoValidation => datasetResponse
+      case ValidationLevel.ForRun       => doPropertiesValidation(datasetResponse, forRun = true)
+      case ValidationLevel.Strictest    => doPropertiesValidation(datasetResponse, forRun = false)
     }
   }
 

@@ -201,7 +201,7 @@ object StringImplicits {
     }
 
     def coalesce(alternatives: String*): String = {
-      alternatives.foldLeft(string)(_.getOrElse(_))
+      alternatives.foldLeft(string)(_.nonEmpyOrElse(_))
     }
   }
 }

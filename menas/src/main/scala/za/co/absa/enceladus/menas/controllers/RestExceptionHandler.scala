@@ -44,11 +44,6 @@ class RestExceptionHandler {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @ExceptionHandler(value = Array(classOf[NoSuchElementException]))
-  def handleNoSuchElementException(exception: Exception): ResponseEntity[Any] = {
-    ResponseEntity.badRequest().build[Any]()
-  }
-
   @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
   def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
     val message = Option(exception.getMessage).getOrElse("Request timeout expired.")
@@ -136,7 +131,7 @@ class RestExceptionHandler {
   def handleOozieClientException(ex: OozieClientException): ResponseEntity[RestError] = {
     import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
     val err = if (ex.getMessage.toLowerCase.contains("unauthorized proxyuser")) {
-      val message = oozieImpersonationExceptionMessage.getOrElse(
+      val message = oozieImpersonationExceptionMessage.nonEmpyOrElse(
         s"Please add the system user into $oozieProxyGroup group to use this feature."
       )
       RestError(message)

@@ -265,36 +265,34 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
       }
 
-      Seq(
-        ("", expectedValidationStrictest),
-        ("?forRun=False", expectedValidationStrictest),
-        ("?forRun=TRUE", expectedValidationForRun)
-      ).foreach { case (queryString, expectedValidation) =>
-        "return 200" when {
-          s"there is a correct Dataset name+version with query params: $queryString" should {
-            s"return validated properties" in {
-              propertyDefinitionFixture.add(propDefs: _*)
-              val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
-              // showing that the version # is respected, even for the non-latest
-              val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
-              datasetFixture.add(datasetAv2, datasetAv3)
+      "return 200" when {
+        "there is a correct Dataset name+version" should {
+          "return validated properties" in {
+            propertyDefinitionFixture.add(propDefs: _*)
+            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
+            // showing that the version # is respected, even for the non-latest
+            val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+            datasetFixture.add(datasetAv2, datasetAv3)
 
-              val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid$queryString")
-              assertOk(response)
+            val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/valid")
+            assertOk(response)
 
-              val body = response.getBody
-              assert(body == expectedValidation)
-            }
+            val body = response.getBody
+            assert(body == expectedValidationStrictest)
           }
-        }
-      }
+          "return validated properties for run" in {
+            propertyDefinitionFixture.add(propDefs: _*)
+            val datasetAv2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(properties))
+            // showing that the version # is respected, even for the non-latest
+            val datasetAv3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+            datasetFixture.add(datasetAv2, datasetAv3)
 
-      "return 400" when {
-        "when using wrong query string" in {
-          val response = sendGet[String](s"$apiUrl/datasetX/1/properties/valid?forRun=what")
-          assertBadRequest(response)
-          val actual = response.getBody
-          assertResult(actual)(s"Unrecognized value 'what' for parameter `forRun`")
+            val response = sendGet[Validation](s"$apiUrl/datasetA/2/properties/validForRun")
+            assertOk(response)
+
+            val body = response.getBody
+            assert(body == expectedValidationForRun)
+          }
         }
       }
     }
