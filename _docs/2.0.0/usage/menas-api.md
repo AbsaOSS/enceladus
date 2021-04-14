@@ -25,6 +25,7 @@ This endpoint exports a single entity from Menas. All exports are versionless, e
 - version is the version of the entity as seen in Menas. Version is optional and in that case the latest version will be used
 
 **Resposes:**
+
 | Code | Description |
 |------|-------------|
 | 200  | Successful export with exported entity in the response payload |
@@ -118,6 +119,7 @@ Versions of connected entities need to be specified properly. Export of a Datase
 - expects a JSON payload
 
 **Resposes:**
+
 | Code | Description |
 |------|-------------|
 | 201  | Successful imported with created/updated entity in the response payload |
