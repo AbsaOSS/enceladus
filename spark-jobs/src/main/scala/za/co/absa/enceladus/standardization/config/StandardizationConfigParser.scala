@@ -212,8 +212,8 @@ object StandardizationConfigParser {
         config.csvEscape.map(_ => unsupportedOptionError("--escape", csvFormatName)),
         config.csvHeader.map(_ => unsupportedOptionError("--header", csvFormatName)),
         config.csvQuote.map(_ => unsupportedOptionError("--quote", csvFormatName)),
-        config.csvIgnoreLeadingWhiteSpace.map(_ => unsupportedOptionError("--csv-trim-leading-white-space", csvFormatName)),
-        config.csvIgnoreTrailingWhiteSpace.map(_ => unsupportedOptionError("--csv-trim-trailing-white-space", csvFormatName))
+        config.csvIgnoreLeadingWhiteSpace.map(_ => unsupportedOptionError("--csv-ignore-leading-white-space", csvFormatName)),
+        config.csvIgnoreTrailingWhiteSpace.map(_ => unsupportedOptionError("--csv-ignore-trailing-white-space", csvFormatName))
       ).flatten
     }
   }
