@@ -48,7 +48,7 @@ class WhiteSpaceStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase 
 
   import spark.implicits._
 
-  test("Reading data from CSV with custom delimiter, no trimming set.") {
+  test("Reading data from CSV with custom delimiter, no ignoring set.") {
     val cmd = StandardizationConfig.getFromArguments(argsBase)
     val cvsReader = new StandardizationPropertiesProvider().getFormatSpecificReader(cmd, dataSet)
     val reader = cvsReader.schema(inputSchema)
@@ -83,7 +83,7 @@ class WhiteSpaceStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase 
     assert(expected sameElements actual)
   }
 
-  test("Reading data from CSV with custom delimiter, null-values set.") {
+  test("Reading data from CSV with custom delimiter, ignore trailing white spaces.") {
     val cmd = StandardizationConfig.getFromArguments(argsBase ++ Array("--csv-ignore-trailing-white-space", "true"))
     val cvsReader = new StandardizationPropertiesProvider().getFormatSpecificReader(cmd, dataSet)
     val reader = cvsReader.schema(inputSchema)
