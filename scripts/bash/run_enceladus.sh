@@ -415,7 +415,9 @@ if [ "$DRA_ENABLED" = true ] ; then
       echo "Set dra-num-executors if you know what you are doing or disable dra"
   fi
 
-  echo "Using values from --dra-executor-memory and --dra-executor-cores. --executor-memory and --executor-cores ignored"
+  if [ -n "$EXECUTOR_MEMORY" ] || [ -n "$EXECUTOR_CORES" ]; then
+    echo "Using values from --dra-executor-memory and --dra-executor-cores. --executor-memory and --executor-cores ignored"
+  fi
 
   add_spark_conf_cmd "spark.dynamicAllocation.enabled" "true"
   add_spark_conf_cmd "spark.shuffle.service.enabled" "true"
