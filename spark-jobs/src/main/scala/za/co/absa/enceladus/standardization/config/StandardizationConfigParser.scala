@@ -28,6 +28,8 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def withCsvHeader(value: Option[Boolean] = Some(false)): R
   def withCsvQuote(value: Option[String] = None): R
   def withCsvEscape(value: Option[String] = None): R
+  def withCsvIgnoreLeadingWhiteSpace(value: Option[Boolean] = None): R
+  def withCsvIgnoreTrailingWhiteSpace(value: Option[Boolean] = None): R
   def withCobolOptions(value: Option[CobolOptions] = None): R
   def withFixedWidthTrimValues(value: Option[Boolean] = None): R
   def withRawPathOverride(value: Option[String]): R
@@ -42,6 +44,8 @@ trait StandardizationConfigParser[R] extends JobConfigParser[R] {
   def csvHeader: Option[Boolean]
   def csvQuote: Option[String]
   def csvEscape: Option[String]
+  def csvIgnoreLeadingWhiteSpace: Option[Boolean]
+  def csvIgnoreTrailingWhiteSpace: Option[Boolean]
   def cobolOptions: Option[CobolOptions]
   def fixedWidthTrimValues: Option[Boolean]
   def rawPathOverride: Option[String]
@@ -87,6 +91,14 @@ object StandardizationConfigParser {
       opt[String]("csv-escape").optional().action((value, config) =>
         config.withCsvEscape(Some(value)))
         .text("use the specific escape character for CSV fields (default is '\\')"),
+
+      opt[Boolean]("csv-ignore-leading-white-space").optional().action((value, config) =>
+        config.withCsvIgnoreLeadingWhiteSpace(Some(value)))
+        .text("ignore leading whitespaces for each column"),
+
+      opt[Boolean]("csv-ignore-trailing-white-space").optional().action((value, config) =>
+        config.withCsvIgnoreTrailingWhiteSpace(Some(value)))
+        .text("ignore trailing whitespaces for each column"),
 
       // no need for validation for boolean since scopt itself will do
       opt[Boolean]("header").optional().action((value, config) =>
@@ -199,7 +211,9 @@ object StandardizationConfigParser {
         config.csvDelimiter.map(_ => unsupportedOptionError("--delimiter", csvFormatName)),
         config.csvEscape.map(_ => unsupportedOptionError("--escape", csvFormatName)),
         config.csvHeader.map(_ => unsupportedOptionError("--header", csvFormatName)),
-        config.csvQuote.map(_ => unsupportedOptionError("--quote", csvFormatName))
+        config.csvQuote.map(_ => unsupportedOptionError("--quote", csvFormatName)),
+        config.csvIgnoreLeadingWhiteSpace.map(_ => unsupportedOptionError("--csv-trim-leading-white-space", csvFormatName)),
+        config.csvIgnoreTrailingWhiteSpace.map(_ => unsupportedOptionError("--csv-trim-trailing-white-space", csvFormatName))
       ).flatten
     }
   }
