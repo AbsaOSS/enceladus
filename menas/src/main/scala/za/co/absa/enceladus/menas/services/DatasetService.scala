@@ -26,11 +26,11 @@ import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 
 import scala.language.reflectiveCalls
 import DatasetService.RuleValidationsAndFields
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.ValidationLevel
+import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.util.{Failure, Success}
 

@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.menas.utils.converters
 
 import org.springframework.core.convert.converter.Converter
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.ValidationLevel
+import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 class StringToValidationKindConverter extends Converter[String, ValidationLevel] {
   override def convert(s: String): ValidationLevel = {

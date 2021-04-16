@@ -17,7 +17,7 @@ package za.co.absa.enceladus.menas.utils.converters
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel._
+import za.co.absa.enceladus.utils.validation.ValidationLevel._
 
 class StringToValidationLevelConverterSuite extends AnyWordSpec {
 

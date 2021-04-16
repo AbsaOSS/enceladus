@@ -21,12 +21,12 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global

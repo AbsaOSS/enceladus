@@ -13,16 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.utils.enumerations
+package za.co.absa.enceladus.utils.validation
 
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.must.Matchers.be
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+object ValidationLevel extends Enumeration {
+  final type ValidationLevel = Value
 
-class ValidationLevelSuite extends AnyFunSuite {
+  final val NoValidation, ForRun, Strictest = Value
 
-  test("Verify enumeration names") {
-    // this ensures that the defined constant stays correct - as the `toString` function cannot be used in annotations, even indirectly
-    ValidationLevel.NoValidationName should be (ValidationLevel.NoValidation.toString)
-  }
+  final val NoValidationName = "NoValidation" // This is used in an annotation - for that the type MUST NOT be specified
 }

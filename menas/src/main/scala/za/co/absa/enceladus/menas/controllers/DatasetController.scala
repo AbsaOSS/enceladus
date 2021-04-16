@@ -26,7 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.DatasetService
-import za.co.absa.enceladus.menas.utils.enumerations.ValidationLevel.{NoValidationName, ValidationLevel}
+import za.co.absa.enceladus.utils.validation.ValidationLevel.{NoValidationName, ValidationLevel}
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{Dataset, Validation}
