@@ -37,6 +37,8 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  csvHeader: Option[Boolean] = None,
                                  csvQuote: Option[String] = None,
                                  csvEscape: Option[String] = None,
+                                 csvIgnoreLeadingWhiteSpace: Option[Boolean] = None,
+                                 csvIgnoreTrailingWhiteSpace: Option[Boolean] = None,
                                  cobolOptions: Option[CobolOptions] = None,
                                  fixedWidthTrimValues: Option[Boolean] = None,
                                  rawPathOverride: Option[String] = None,
@@ -61,6 +63,8 @@ case class StandardizationConfig(rawFormat: String = "xml",
   override def withCsvHeader(value: Option[Boolean]): StandardizationConfig = copy(csvHeader = value)
   override def withCsvQuote(value: Option[String]): StandardizationConfig = copy(csvQuote = value)
   override def withCsvEscape(value: Option[String]): StandardizationConfig = copy(csvEscape = value)
+  override def withCsvIgnoreLeadingWhiteSpace(value: Option[Boolean]): StandardizationConfig = copy(csvIgnoreLeadingWhiteSpace = value)
+  override def withCsvIgnoreTrailingWhiteSpace(value: Option[Boolean]): StandardizationConfig = copy(csvIgnoreTrailingWhiteSpace = value)
   override def withCobolOptions(value: Option[CobolOptions]): StandardizationConfig = copy(cobolOptions = value)
   override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConfig = copy(fixedWidthTrimValues = value)
   override def withRawPathOverride(value: Option[String]): StandardizationConfig = copy(rawPathOverride = value)

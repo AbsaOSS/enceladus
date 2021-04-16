@@ -54,6 +54,8 @@ DELIMITER=""
 HEADER=""
 CSV_QUOTE=""
 CSV_ESCAPE=""
+CSV_IGNORE_LEADING_WHITESPACE=""
+CSV_IGNORE_TRAILING_WHITESPACE=""
 TRIM_VALUES=""
 EMPTY_VALUES_AS_NULLS=""
 NULL_VALUE=""
@@ -201,6 +203,14 @@ case $key in
     ;;
   --csv-escape)
     CSV_ESCAPE="$2"
+    shift 2 # past argument and value
+    ;;
+  --csv-ignore-leading-white-space)
+    CSV_IGNORE_LEADING_WHITESPACE="$2"
+    shift 2 # past argument and value
+    ;;
+  --csv-ignore-trailing-white-space)
+    CSV_IGNORE_TRAILING_WHITESPACE="$2"
     shift 2 # past argument and value
     ;;
   --trimValues)
@@ -481,6 +491,8 @@ add_to_cmd_line "--delimiter" "${DELIMITER}"
 add_to_cmd_line "--header" "${HEADER}"
 add_to_cmd_line "--csv-quote" "${CSV_QUOTE}"
 add_to_cmd_line "--csv-escape" "${CSV_ESCAPE}"
+add_to_cmd_line "--csv-ignore-leading-white-space" "${CSV_IGNORE_LEADING_WHITESPACE}"
+add_to_cmd_line "--csv-ignore-trailing-white-space" "${CSV_IGNORE_TRAILING_WHITESPACE}"
 add_to_cmd_line "--trimValues" "${TRIM_VALUES}"
 add_to_cmd_line "--empty-values-as-nulls" "${EMPTY_VALUES_AS_NULLS}"
 add_to_cmd_line "--null-value" "${NULL_VALUE}"
