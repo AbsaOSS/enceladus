@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "std_nf_dy",
+    "description": "",
+    "hdfsPath": "/std/std_test",
+    "hdfsPublishPath": "/publish/std_nf_dy",
+    "schemaName": "std_nf_dy",
+    "schemaVersion": 1,
+    "conformance": [],
+    "properties": {}
+  }
+}

@@ -78,6 +78,14 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("lkey" -> "key1"),
     targetAttribute = "val")
 
+  val nestedMappingRule1Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedNum1",
+    additionalOutputs = Some(Map("conformedInt" -> "ikey")),
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "key1"),
+    targetAttribute = "val")
+
   // This rule has a join condition against a nested field inside the dataframe
   val nestedMappingRule2: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "conformedNum2",
@@ -94,9 +102,25 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("ikey" -> "key1", "lkey" -> "struct1.key3"),
     targetAttribute = "val")
 
+  val nestedMappingRule3Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedNum3",
+    additionalOutputs = Some(Map("conformedInt" -> "ikey")),
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("ikey" -> "key1", "lkey" -> "struct1.key3"),
+    targetAttribute = "val")
+
   // This rule has a join condition against a field inside an array
   val arrayMappingRule1: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array1.conformedNum3",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array1.key7"),
+    targetAttribute = "val")
+
+  val arrayMappingRule1Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array1.conformedNum3",
+    additionalOutputs = Some(Map("array1.conformedInt" -> "ikey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array1.key7"),
@@ -110,9 +134,25 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9"),
     targetAttribute = "val")
 
+  val arrayMappingRule2Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.conformedNum4",
+    additionalOutputs = Some(Map("array2.inner2.conformedSval" -> "sval")),
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9"),
+    targetAttribute = "val")
+
   // This rule has a join condition against 2 fields, one of which is inside an array, while the other is not
   val arrayMappingRule3: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array1.conformedNum4",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array1.key7", "ikey" -> "key1"),
+    targetAttribute = "val")
+
+  val arrayMappingRule3Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array1.conformedNum4",
+    additionalOutputs = Some(Map("array1.conformedLong" -> "lkey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array1.key7", "ikey" -> "key1"),
@@ -126,10 +166,27 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "key1"),
     targetAttribute = "val")
 
+  val arrayMappingRule4Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.struct3.conformedNum5",
+    additionalOutputs = Some(Map("array2.inner2.struct3.conformedString" -> "skey")),
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "key1"),
+    targetAttribute = "val")
+
+
   // This rule has a join condition against 2 fields, one of which is inside an array of an array,
   // while the other is at the same level plus it is inside a nested struct
   val arrayMappingRule5: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array2.inner2.conformedNum6",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array2.inner2.struct3.k1"),
+    targetAttribute = "val")
+
+  val arrayMappingRule5Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.conformedNum6",
+    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "ikey")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array2.inner2.struct3.k1"),
@@ -146,10 +203,27 @@ object NestedTestCaseFactory {
     attributeMappings = Map[String, String]("val.id" -> "key2", "ikey" -> "array2.key2", "lkey" -> "array2.inner2.key9"),
     targetAttribute = "val")
 
+  val arrayMappingRule6Multi: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.inner2.conformedNum7",
+    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "val1")),
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("val.id" -> "key2", "ikey" -> "array2.key2", "lkey" -> "array2.inner2.key9"),
+    targetAttribute = "val")
+
   // This rule has a join condition against 2 fields, each field is inside its own array, which makes it invalid.
   // A validation exception should be shown when trying to use this rule.
   val wrongMappingRule1: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
     outputColumn = "array2.inner2.wrongNum1",
+    controlCheckpoint = false,
+    mappingTable = nestedMappingTableName,
+    attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array1.key7"),
+    targetAttribute = "val")
+
+  // This rule has output columns on different level of nesting
+  val wrongMappingRuleMulti: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "array2.wrongNum1",
+    additionalOutputs = Some(Map("array2.inner2.conformedInt" -> "val1")),
     controlCheckpoint = false,
     mappingTable = nestedMappingTableName,
     attributeMappings = Map[String, String]("lkey" -> "array2.inner2.key9", "ikey" -> "array1.key7"),
