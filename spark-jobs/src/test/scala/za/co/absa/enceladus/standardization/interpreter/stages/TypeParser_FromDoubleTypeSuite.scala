@@ -40,8 +40,8 @@ class TypeParser_FromDoubleTypeSuite extends TypeParserSuiteTemplate  {
     (toType, isEpoch, timezone) match {
       case (DateType, true, _)             => s"to_date(CAST((CAST(%s AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}) AS TIMESTAMP))"
       case (TimestampType, true, _)        => s"CAST((CAST(%s AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}) AS TIMESTAMP)"
-      case (DateType, _, Some(tz))         => s"to_date(to_utc_timestamp(to_timestamp(CAST(CAST(%s AS DECIMAL(${datePatternDS.precision},${datePatternDS.scale})) AS STRING), '$pattern'), $tz))"
-      case (TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(CAST(CAST(%s AS DECIMAL(${timestampPatternDS.precision},${timestampPatternDS.scale})) AS STRING), '$pattern'), $tz)"
+      case (DateType, _, Some(tz))         => s"to_date(to_utc_timestamp(to_timestamp(CAST(CAST(%s AS DECIMAL(${datePatternDS.precision},${datePatternDS.scale})) AS STRING), $pattern), $tz))"
+      case (TimestampType, _, Some(tz))    => s"to_utc_timestamp(to_timestamp(CAST(CAST(%s AS DECIMAL(${timestampPatternDS.precision},${timestampPatternDS.scale})) AS STRING), $pattern), $tz)"
       case (DateType, _, _)                => s"to_date(CAST(CAST(%s AS DECIMAL(${datePatternDS.precision},${datePatternDS.scale})) AS STRING), $pattern)"
       case (TimestampType, _, _)           => s"to_timestamp(CAST(CAST(%s AS DECIMAL(${timestampPatternDS.precision},${timestampPatternDS.scale})) AS STRING), $pattern)"
       case _                               => s"CAST(%s AS ${toType.sql})"
