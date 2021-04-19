@@ -17,7 +17,6 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
-
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -42,6 +41,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -86,7 +86,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
 
-    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, validateProperties = true)
+    val dataset = dao.getDataset(cmd.datasetName, cmd.datasetVersion, ValidationLevel.ForRun)
     dataset.propertiesValidation match {
       case Some(validation) if !validation.isValid =>
         throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +

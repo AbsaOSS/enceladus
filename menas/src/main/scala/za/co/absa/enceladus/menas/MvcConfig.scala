@@ -16,12 +16,18 @@
 package za.co.absa.enceladus.menas
 
 import org.springframework.context.annotation.Configuration
+import org.springframework.format.FormatterRegistry
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import za.co.absa.enceladus.menas.utils.converters.StringToValidationKindConverter
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
   override def addViewControllers(registry: ViewControllerRegistry) {
     registry.addViewController("/login").setViewName("login")
+  }
+
+  override def addFormatters(registry: FormatterRegistry): Unit = {
+    registry.addConverter(new StringToValidationKindConverter)
   }
 }
