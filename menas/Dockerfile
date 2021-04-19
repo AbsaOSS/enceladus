@@ -20,7 +20,11 @@
 #           -Dmenas.mongo.connection.database=menas \
 #       -p 8080:8080 \
 #       menas
-FROM tomcat:9-jre8-alpine
+
+ARG DOCKER_BASE_ARTIFACT=tomcat
+ARG DOCKER_BASE_TAG=9-jre8-alpine
+
+FROM ${DOCKER_BASE_ARTIFACT}:${DOCKER_BASE_TAG}
 
 LABEL \
     vendor="AbsaOSS" \
@@ -39,6 +43,23 @@ RUN chmod +x start_menas.sh && \
 
 ADD ./target/${WAR_FILE} webapps/ROOT.war
 ADD src/main/resources/docker/server.xml /tmp/server.xml
+
+ENV MENAS_ENVIRONMENT=Dev
+
+ENV MENAS_MONGO_CONNECTION_STRING="mongodb://localhost:27017"
+ENV MENAS_MONGO_CONNECTION_DATABASE=menas
+
+ENV MENAS_HADOOP_AUTH_METHOD=default
+
+ENV MENAS_AUTH_MECHANISM=inmemory
+ENV MENAS_AUTH_INMEMORY_USER=user
+ENV MENAS_AUTH_INMEMORY_PASSWORD=StrongPassword
+
+ENV MENAS_AUTH_ADMIN_ROLE=ROLE_ADMIN
+ENV MENAS_AUTH_INMEMORY_ADMIN_USER=menas_admin
+ENV MENAS_AUTH_INMEMORY_ADMIN_PASSWORD=admin123
+
+ENV HADOOP_CONF_DIR=/tmp
 
 EXPOSE 8080
 EXPOSE 8443
