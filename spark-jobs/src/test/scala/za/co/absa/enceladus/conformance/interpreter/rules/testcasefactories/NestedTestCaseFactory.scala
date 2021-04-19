@@ -27,6 +27,7 @@ import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFa
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
 import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 
 /**
@@ -311,7 +312,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
-    mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset
+    mockWhen(dao.getDataset(testCaseName, 1, ValidationLevel.NoValidation)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(nestedMappingTableName, 1)) thenReturn fixPathsInMappingTable(nestedMT)
     mockWhen(dao.getSchema(nestedMappingTableName, 1)) thenReturn nestedMappingTableSchema
 

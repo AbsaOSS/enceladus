@@ -292,4 +292,18 @@ class StringImplicitsSuite extends AnyFunSuite with Matchers {
     "ccc/" / "/123" shouldBe "ccc/123"
     "file:///" / "path" shouldBe "file:///path"
   }
+
+  test("getOrElse") {
+    "a".nonEmpyOrElse("b") shouldBe "a"
+    "".nonEmpyOrElse("b") shouldBe "b"
+    "a".nonEmpyOrElse("") shouldBe "a"
+  }
+
+  test("coalesce") {
+    "".coalesce() shouldBe ""
+    "".coalesce("A", "") shouldBe "A"
+    "".coalesce("", "", "B", "", "C") shouldBe "B"
+    "X".coalesce("Y", "Z") shouldBe "X"
+    "X".coalesce("") shouldBe "X"
+  }
 }
