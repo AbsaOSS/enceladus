@@ -76,7 +76,7 @@ When defining a mapping conformance rule, users first need to pick a correct Map
 
 Then the join conditions convey the relationship between the Dataset and Mapping Table. The join condition specifies how the rows from one table will be combined with the rows of the other table. This is based on the equality of the values in the selected columns.
 
-Last are the output columns which specifies which columns from the mapping table will be written into their respective output column. The mapping table column is called target value.
+Last are the output columns that specify which columns from the mapping table will be written into their respective output column. The mapping table column is called the _target value_.
 
 ## Negation Conformance Rule
 
