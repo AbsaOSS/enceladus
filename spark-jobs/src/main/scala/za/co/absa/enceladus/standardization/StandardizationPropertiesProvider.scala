@@ -96,6 +96,8 @@ class StandardizationPropertiesProvider {
         "header" -> cmd.csvHeader.map(BooleanParameter),
         "quote" -> cmd.csvQuote.map(s => StringParameter(s.includingUnicode.includingNone)),
         "escape" -> cmd.csvEscape.map(s => StringParameter(s.includingUnicode.includingNone)),
+        "ignoreLeadingWhiteSpace" -> cmd.csvIgnoreLeadingWhiteSpace.map(BooleanParameter),
+        "ignoreTrailingWhiteSpace" -> cmd.csvIgnoreTrailingWhiteSpace.map(BooleanParameter),
         // increase the default limit on the number of columns if needed
         // default is set at org.apache.spark.sql.execution.datasources.csv.CSVOptions maxColumns
         "maxColumns" -> {
