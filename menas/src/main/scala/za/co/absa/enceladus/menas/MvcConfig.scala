@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.format.FormatterRegistry
 import org.springframework.web.servlet.config.annotation.{CorsRegistry, ViewControllerRegistry, WebMvcConfigurer}
 import za.co.absa.enceladus.menas.auth.AuthConstants.{CsrfTokenKey, JwtKey}
+import za.co.absa.enceladus.menas.utils.converters.StringToValidationKindConverter
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
