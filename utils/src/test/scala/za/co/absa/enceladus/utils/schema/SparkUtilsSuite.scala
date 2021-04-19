@@ -77,7 +77,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         ||1    |[]                                                                                            |
         ||1    |[]                                                                                            |
         ||1    |[]                                                                                            |
-        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, value, [2], []]]|
+        ||1    |[{confLitError, E00005, Conformance Error - Special column value has changed, value, [2], []}]|
         ||1    |[]                                                                                            |
         |+-----+----------------------------------------------------------------------------------------------+
         |
@@ -100,7 +100,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         ||1    |[]                                                                                            |
         ||1    |[]                                                                                            |
         ||1    |[]                                                                                            |
-        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, vAlUe, [2], []]]|
+        ||1    |[{confLitError, E00005, Conformance Error - Special column value has changed, vAlUe, [2], []}]|
         ||1    |[]                                                                                            |
         |+-----+----------------------------------------------------------------------------------------------+
         |

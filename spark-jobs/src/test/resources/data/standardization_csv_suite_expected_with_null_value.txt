@@ -3,9 +3,9 @@
 +-----------+----------+---------+----------------------------------------------------------------------------------------------------------------+
 |a          |Arya      |Stark    |[]                                                                                                              |
 |b          |Jon       |Snow     |[]                                                                                                              |
-|c,Use,Comma|null      |         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, last_name, [null], []]]|
+|c,Use,Comma|null      |         |[{stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, last_name, [null], []}]|
 |d          |null      |Hodor    |[]                                                                                                              |
-|e          |null      |         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, last_name, [null], []]]|
+|e          |null      |         |[{stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, last_name, [null], []}]|
 +-----------+----------+---------+----------------------------------------------------------------------------------------------------------------+
 
 

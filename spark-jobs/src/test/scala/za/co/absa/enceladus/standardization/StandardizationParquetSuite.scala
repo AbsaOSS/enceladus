@@ -86,8 +86,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+---+-------+-------+------+
          ||id |letters|struct |errCol|
          |+---+-------+-------+------+
-         ||1  |[A, B] |[false]|[]    |
-         ||2  |[C]    |[true] |[]    |
+         ||1  |[A, B] |{false}|[]    |
+         ||2  |[C]    |{true} |[]    |
          |+---+-------+-------+------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -146,8 +146,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          ||id |string_field|timestamp_field    |long_field|double_field|decimal_field|errCol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
          |+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||1  |            |1970-01-01 00:00:00|0         |0           |3.14         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []]]|
-         ||2  |            |1970-01-01 00:00:00|0         |0           |3.14         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []]]|
+         ||1  |            |1970-01-01 00:00:00|0         |0           |3.14         |[{stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []}]|
+         ||2  |            |1970-01-01 00:00:00|0         |0           |3.14         |[{stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []}, {stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []}]|
          |+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -180,8 +180,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          ||id  |letters|lettersB|errCol                                                                                                                                                                                                                                                                                                                |
          |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
-         ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
+         ||null|null   |0       |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []}, {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []}, {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []}]|
+         ||null|null   |0       |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []}, {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []}, {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []}]|
          |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -209,8 +209,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """|+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          ||id  |struct|structB|errCol                                                                                                                                                                                                                                                                                                                 |
          |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
+         ||null|null  |-1     |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []}]|
+         ||null|null  |-1     |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []}]|
          |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -240,8 +240,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """|+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          ||id |letters|struct|errCol                                                                                                                                                                                                             |
          |+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||1  |null   |null  |[[stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []]]|
-         ||2  |null   |null  |[[stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []]]|
+         ||1  |null   |null  |[{stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []}]|
+         ||2  |null   |null  |[{stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []}, {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []}]|
          |+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -268,8 +268,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         ||id  |letters|lettersB|errCol                                                                                                                                                                                                                                                                                                                |
         |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
-        ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
+        ||null|null   |0       |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
+        ||null|null   |0       |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], {stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
         |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -298,8 +298,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """|+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          ||id  |struct|structB|errCol                                                                                                                                                                                                                                                                                                                 |
          |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
+         ||null|null  |-1     |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
+         ||null|null  |-1     |[{stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], {stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
          |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
          |
          |""".stripMargin.replace("\r\n", "\n")
@@ -349,8 +349,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+---+-------+-------+------+-------------------+
         ||id |letters|struct |errCol|enceladus_record_id|
         |+---+-------+-------+------+-------------------+
-        ||1  |[A, B] |[false]|[]    |1950798873         |
-        ||2  |[C]    |[true] |[]    |-988631025         |
+        ||1  |[A, B] |{false}|[]    |1950798873         |
+        ||2  |[C]    |{true} |[]    |-988631025         |
         |+---+-------+-------+------+-------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -378,8 +378,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+---+-------+-------+------+
         ||id |letters|struct |errCol|
         |+---+-------+-------+------+
-        ||1  |[A, B] |[false]|[]    |
-        ||2  |[C]    |[true] |[]    |
+        ||1  |[A, B] |{false}|[]    |
+        ||2  |[C]    |{true} |[]    |
         |+---+-------+-------+------+
         |
         |""".stripMargin.replace("\r\n", "\n")
@@ -412,8 +412,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       """+---+-------+-------+-------------------+------+
         ||id |letters|struct |enceladus_record_id|errCol|
         |+---+-------+-------+-------------------+------+
-        ||1  |[A, B] |[false]|id1                |[]    |
-        ||2  |[C]    |[true] |id2                |[]    |
+        ||1  |[A, B] |{false}|id1                |[]    |
+        ||2  |[C]    |{true} |id2                |[]    |
         |+---+-------+-------+-------------------+------+
         |
         |""".stripMargin.replace("\r\n", "\n")
