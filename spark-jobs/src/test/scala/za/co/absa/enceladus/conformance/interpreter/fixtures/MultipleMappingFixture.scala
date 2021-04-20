@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
+import java.nio.charset.Charset
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.types.StringType
@@ -89,7 +90,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
     val value = "../examples/data/e2e_tests/data/hdfs/std/mappingConformanceRuleData/2020/03/23/v1/_INFO"
     val infoFileContents: String = fromFile(value, "UTF-8").mkString
 
-    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents)
+    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents, Charset.defaultCharset())
   }
 
   private def prepareDataFrame(): Unit = {
