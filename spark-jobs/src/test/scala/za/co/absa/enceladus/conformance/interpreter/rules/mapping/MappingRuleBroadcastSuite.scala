@@ -15,35 +15,15 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
-import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.functions._
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
-import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
 
-class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
+class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
   import spark.implicits._
-
-  private val simpleTestCaseFactory = new SimpleTestCaseFactory()
-  private val nestedTestCaseFactory = new NestedTestCaseFactory()
-
-  override def beforeAll(): Unit = {
-    super.beforeAll()
-    simpleTestCaseFactory.createMappingTables()
-    nestedTestCaseFactory.createMappingTables()
-  }
-
-  override def afterAll(): Unit = {
-    simpleTestCaseFactory.deleteMappingTables()
-    nestedTestCaseFactory.deleteMappingTables()
-    super.afterAll()
-  }
 
   //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
@@ -55,6 +35,25 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputs)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
       .cache
 
     val actualSchema = dfOut.schema.treeString
@@ -84,6 +83,25 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
   }
 
   //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs with defaults") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutSchema.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleDefValMultiOutResults.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputsWithDefaults)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting rule can output a struct column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
@@ -93,6 +111,26 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can output a struct column and another output") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/nested1SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested1ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule1Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1",
+        $"array2", $"errCol", $"conformedNum1", $"conformedInt")
       .cache
 
     val actualSchema = dfOut.schema.treeString
@@ -141,12 +179,51 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
   }
 
   //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work for struct fields at different levels and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/nested3SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested3ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule3Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2",
+        $"conformedNum3", $"conformedInt" , $"errCol")
+      .cache
+
+    val actualSchema = dfOut.schema.treeString
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting rule can work on arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work on arrays and multi outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array1SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array1ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
@@ -179,12 +256,50 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
   }
 
   //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule can work on arrays within arrays and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array2SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array2ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting rule failure if key fields are in different array levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule3)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule failure if key fields are in different array levels and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array3SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array3ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule3Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -217,6 +332,25 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
   }
 
   //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when key fields are in different array levels for an array of array and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array4SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array4ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule4Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
@@ -234,6 +368,26 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
     assertSchema(actualSchema, expectedSchema)
     assertResults(actualResults, expectedResults)
   }
+
+  //todo broadcast mapping relies on UDFs - issue #1710
+  ignore("Test broadcasting rule when key fields are in different struct levels in a array of arrays and multiple outputs") {
+    val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array5SchemaMulti.txt")
+    val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array5ResultsMulti.json")
+
+    implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
+      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule5Multi)
+
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
+      .cache
+
+    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+
+    assertSchema(actualSchema, expectedSchema)
+    assertResults(actualResults, expectedResults)
+  }
+
 
   //todo broadcast mapping relies on UDFs - issue #1710
   ignore("Test broadcasting rule when 3 key fields are at different array levels") {
@@ -284,47 +438,4 @@ class MappingRuleBroadcastSuite extends AnyFunSuite with SparkTestBase with Logg
       DynamicInterpreter().interpret(dataset, inputDf)
     }
   }
-
-  private def cleanupContainsNullProperty(inputSchemaTree: String): String = {
-    // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
-    // the new version of the struct always has the flag containsNull = false.
-    inputSchemaTree
-      .replaceAll("\\ \\(containsNull = true\\)", "")
-      .replaceAll("\\ \\(containsNull = false\\)", "")
-      .trim
-  }
-
-  private def getResourceString(name: String): String =
-    IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
-
-  private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
-      logger.error("EXPECTED:")
-      logger.error(expectedSchema)
-      logger.error("ACTUAL:")
-      logger.error(actualSchema)
-      fail("Actual conformed schema does not match the expected schema (see above).")
-    }
-  }
-
-  private def assertResults(actualResults: String, expectedResults: String): Unit = {
-    if (!fixLineEnding(expectedResults).startsWith(fixLineEnding(actualResults))) {
-      logger.error("EXPECTED:")
-      logger.error(expectedResults)
-      logger.error("ACTUAL:")
-      logger.error(actualResults)
-      fail("Actual conformed dataset JSON does not match the expected JSON (see above).")
-    }
-  }
-
-  /**
-   * When the project is git cloned on Windows all text files might end up having CR LF line ending.
-   * (This depends on git settings)
-   * In order to make the tests line ending agnostic we need to replace CR LF with Unix line endings (LF).
-   *
-   * @param s A multiline string.
-   * @return The string with line endings fixed.
-   * */
-  private def fixLineEnding(s: String): String = s.replace("\r\n", "\n")
-
 }

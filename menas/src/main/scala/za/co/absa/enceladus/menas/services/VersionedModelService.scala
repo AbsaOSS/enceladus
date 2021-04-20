@@ -29,7 +29,8 @@ import za.co.absa.enceladus.model.menas.audit._
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
 
-abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]](versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
+abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
+  (versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -91,7 +92,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     for {
       validation <- validateSingleImport(item, metadata)
       result <- {
-        if (validation.isValid()) {
+        if (validation.isValid) {
           importItem(item, username)
         } else {
           throw ValidationException(validation)
@@ -193,7 +194,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   private[menas] def create(item: C, username: String): Future[Option[C]] = {
     for {
       validation <- validate(item)
-      _ <- if (validation.isValid()) {
+      _ <- if (validation.isValid) {
         versionedMongoRepository.create(item, username)
           .recover {
             case e: MongoWriteException =>
