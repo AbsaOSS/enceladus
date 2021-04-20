@@ -15,9 +15,8 @@
 # $> docker build -t menas .
 # Run image using:
 # $> docker run \
-#       -e JAVA_OPTS=' \
-#           -Dmenas.mongo.connection.string=mongodb://host.docker.internal:27017 \
-#           -Dmenas.mongo.connection.database=menas \
+#       -e MENAS_MONGO_CONNECTION_STRING=mongodb://host.docker.internal:27017 \
+#       -e MENAS_MONGO_CONNECTION_DATABASE=menas \
 #       -p 8080:8080 \
 #       menas
 
@@ -51,7 +50,8 @@ ENV MENAS_MONGO_CONNECTION_DATABASE=menas
 
 ENV MENAS_HADOOP_AUTH_METHOD=default
 
-ENV MENAS_SPARK_MASTER=local[1]
+ENV MENAS_SPARK_MASTER="local[1]"
+ENV SPLINE_URLTEMPLATE="//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s"
 
 ENV MENAS_AUTH_MECHANISM=inmemory
 ENV MENAS.AUTH.JWT.SECRET="u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn"
