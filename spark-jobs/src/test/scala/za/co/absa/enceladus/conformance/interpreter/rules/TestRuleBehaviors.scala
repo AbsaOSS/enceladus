@@ -24,6 +24,7 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, Feature
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
@@ -38,8 +39,8 @@ trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestB
     val enableCF: Boolean = false
     val originalColumnsMutability: Boolean = true
 
-    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn inputDataset
-    mockWhen(dao.getDataset("Library Conformance", 1)) thenReturn inputDataset
+    mockWhen(dao.getDataset("Orders Conformance", 1, ValidationLevel.NoValidation)) thenReturn inputDataset
+    mockWhen(dao.getDataset("Library Conformance", 1, ValidationLevel.NoValidation)) thenReturn inputDataset
 
     import spark.implicits._
     implicit val featureSwitches: FeatureSwitches = featureSwitchesOverride.getOrElse(FeatureSwitches()

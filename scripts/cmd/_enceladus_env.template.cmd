@@ -32,12 +32,14 @@ SET STD_DEFAULT_DRIVER_MEMORY=
 SET STD_DEFAULT_DRIVER_CORES=
 SET STD_DEFAULT_EXECUTOR_MEMORY=
 SET STD_DEFAULT_EXECUTOR_CORES=
+SET STD_DEFAULT_DRA_EXECUTOR_MEMORY=
+SET STD_DEFAULT_DRA_EXECUTOR_CORES=
 :: setting num executors disables DRA
 SET STD_DEFAULT_NUM_EXECUTORS=
 
 :: Dynamic Resource Allocation
 :: also enables external shuffle service and adaptive execution for consistent setup
-SET STD_DEFAULT_DRA_ENABLED=false
+SET STD_DEFAULT_DRA_ENABLED=true
 :: max executors limit is a required parameter
 SET STD_DEFAULT_DRA_MAX_EXECUTORS=4
 
@@ -51,13 +53,14 @@ SET CONF_DEFAULT_DRIVER_MEMORY=
 SET CONF_DEFAULT_DRIVER_CORES=
 SET CONF_DEFAULT_EXECUTOR_MEMORY=
 SET CONF_DEFAULT_EXECUTOR_CORES=
-SET CONF_DEFAULT_EXECUTOR_CORES=
+SET CONF_DEFAULT_DRA_EXECUTOR_MEMORY=
+SET CONF_DEFAULT_DRA_EXECUTOR_CORES=
 :: setting num executors disables DRA
 SET CONF_DEFAULT_NUM_EXECUTORS=
 
 :: Dynamic Resource Allocation
 :: also enables external shuffle service and adaptive execution for consistent setup
-SET CONF_DEFAULT_DRA_ENABLED=false
+SET CONF_DEFAULT_DRA_ENABLED=true
 :: max executors limit is a required parameter
 SET CONF_DEFAULT_DRA_MAX_EXECUTORS=4
 

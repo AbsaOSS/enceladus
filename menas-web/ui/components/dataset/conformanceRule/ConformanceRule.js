@@ -21,12 +21,14 @@ class ConformanceRule {
     }
 
     this._rule = rule;
+    this._outputCol = this.getOutputColumnWithPath(rule.outputColumn);
+  }
 
-    const outputCol = rule.outputColumn;
+  getOutputColumnWithPath(outputCol) {
     const index = outputCol.lastIndexOf(".");
     const name = (index === -1) ? outputCol : outputCol.slice(index + 1);
     const path = (index === -1) ? "" : outputCol.slice(0, index);
-    this._outputCol = {name: name, path: path};
+    return {name: name, path: path};
   }
 
   get rule() {
@@ -160,30 +162,47 @@ class CoalesceConformanceRule extends ConformanceRule {
 
 class MappingConformanceRule extends ConformanceRule {
 
-  getTargetCol(fields) {
-    return super.getCol(fields, this.rule.targetAttribute);
-  }
-
   apply(fields) {
-    const newField = new SchemaField(this.outputCol.name, this.outputCol.path, "string", false, [], true);
 
     return new MappingTableRestDAO().getByNameAndVersionSync(this.rule.mappingTable, this.rule.mappingTableVersion)
       .then(mappingTable => {
         return new SchemaRestDAO().getByNameAndVersionSync(mappingTable.schemaName, mappingTable.schemaVersion);
       })
       .then(schema => {
-        const targetCol = this.getTargetCol(schema.fields);
-        newField.type = targetCol.type;
-        newField.children = targetCol.children;
-        this.addNewField(fields, newField);
+        for(let output of this.rule.outputColumns) {
+          const outputColWithPath = this.getOutputColumnWithPath(output.outputColumn);
+          const newField = new SchemaField(output.outputColumn, outputColWithPath.path, "string", false, [], true);
+          const targetCol = super.getCol(schema.fields, output.targetAttribute);
+          newField.type = targetCol.type;
+          newField.children = targetCol.children;
+
+          this.addNewOutputField(fields, newField);
+        }
+
         return fields;
       });
   }
 
+  addNewOutputField(fields, newField) {
+    const splitPath = this.rule.outputColumn.split(".");
+    return splitPath.reduce((acc, path, index) => {
+      let element = (index === splitPath.length - 1) ? newField : new SchemaField(path, splitPath.slice(0, index).join(","), "struct", true, [], true);
+      acc.push(element);
+
+      let ch = element.children;
+      if (!ch) {
+        element.children = [];
+      }
+      return element.children;
+    }, fields);
+  }
+
   validate(fields) {
-    this.rule.joinConditions.forEach(join => {
-      this.getCol(fields, join.datasetField);
-    });
+    if (this.rule.joinConditions !== undefined) {
+      this.rule.joinConditions.forEach(join => {
+        this.getCol(fields, join.datasetField);
+      });
+    }
     return this.apply(fields)
   }
 

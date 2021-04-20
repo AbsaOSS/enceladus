@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "coalesceConformanceRule",
+    "description": "",
+    "hdfsPath": "/std/conformanceRulesData",
+    "hdfsPublishPath": "/publish/coalesceConformanceRule",
+    "schemaName": "conformanceRulesData",
+    "schemaVersion": 1,
+    "conformance": [
+      {
+        "_t": "CastingConformanceRule",
+        "order": 0,
+        "outputColumn": "binary_to_string",
+        "controlCheckpoint": false,
+        "inputColumn": "binary",
+        "outputDataType": "string"
+      },
+      {
+        "_t": "CoalesceConformanceRule",
+        "order": 1,
+        "outputColumn": "will_see",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "binary_to_string"
+        ]
+      },
+      {
+        "_t": "CoalesceConformanceRule",
+        "order": 2,
+        "outputColumn": "two_strings",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "name",
+          "string"
+        ]
+      },
+      {
+        "_t": "CastingConformanceRule",
+        "order": 3,
+        "outputColumn": "string_to_int",
+        "controlCheckpoint": false,
+        "inputColumn": "string",
+        "outputDataType": "integer"
+      },
+      {
+        "_t": "CoalesceConformanceRule",
+        "order": 4,
+        "outputColumn": "int_and_int",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string_to_int",
+          "integer"
+        ]
+      },
+      {
+        "_t": "CoalesceConformanceRule",
+        "order": 5,
+        "outputColumn": "string_string",
+        "controlCheckpoint": false,
+        "inputColumns": [
+          "string",
+          "string"
+        ]
+      }
+    ],
+    "properties": {}
+  }
+}

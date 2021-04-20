@@ -16,8 +16,10 @@
 package za.co.absa.enceladus.menas
 
 import org.springframework.context.annotation.Configuration
+import org.springframework.format.FormatterRegistry
 import org.springframework.web.servlet.config.annotation.{CorsRegistry, ViewControllerRegistry, WebMvcConfigurer}
 import za.co.absa.enceladus.menas.auth.AuthConstants.{CsrfTokenKey, JwtKey}
+import za.co.absa.enceladus.menas.utils.converters.StringToValidationKindConverter
 
 @Configuration
 class MvcConfig extends WebMvcConfigurer {
@@ -31,5 +33,9 @@ class MvcConfig extends WebMvcConfigurer {
       .allowedMethods("PUT", "GET", "DELETE", "OPTIONS", "PATCH", "POST")
       .allowedHeaders("*")
       .allowedOrigins("*")
+  }
+
+  override def addFormatters(registry: FormatterRegistry): Unit = {
+    registry.addConverter(new StringToValidationKindConverter)
   }
 }

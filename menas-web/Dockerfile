@@ -11,7 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM nginx:1-alpine
+ARG DOCKER_BASE_ARTIFACT=nginx
+ARG DOCKER_BASE_TAG=1-alpine
+
+FROM ${DOCKER_BASE_ARTIFACT}:${DOCKER_BASE_TAG}
 
 LABEL \
     vendor="AbsaOSS" \
