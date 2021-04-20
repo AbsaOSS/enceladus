@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
+import java.nio.charset.Charset
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.types.StringType

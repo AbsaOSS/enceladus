@@ -18,19 +18,19 @@ jQuery.sap.require("sap.m.MessageBox");
 
 class OozieDAO {
   static getCoordinatorStatus(sCoordinatorId) {
-    return RestClient.get(`api/oozie/coordinatorStatus/${sCoordinatorId}`);
+    return RestClient.get(`/oozie/coordinatorStatus/${sCoordinatorId}`);
   }
 
   static runNow(oSchedule) {
-    return RestClient.post("api/oozie/runNow", oSchedule);
+    return RestClient.post("/oozie/runNow", oSchedule);
   }
 
   static suspend(sCoordinatorId) {
-    return RestClient.post(`api/oozie/suspend/${sCoordinatorId}`);
+    return RestClient.post(`/oozie/suspend/${sCoordinatorId}`);
   }
 
   static resume(sCoordinatorId) {
-    return RestClient.post(`api/oozie/resume/${sCoordinatorId}`);
+    return RestClient.post(`/oozie/resume/${sCoordinatorId}`);
   }
 }
 

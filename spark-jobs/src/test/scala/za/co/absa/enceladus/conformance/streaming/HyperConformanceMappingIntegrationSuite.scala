@@ -12,7 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-////todo reenable with Hyperdrive API for Scala 2.12 #1712
+
+//todo reenable with Hyperdrive API for Scala 2.12 #1712
+
+
 //package za.co.absa.enceladus.conformance.streaming
 //
 //import org.apache.spark.sql.DataFrame

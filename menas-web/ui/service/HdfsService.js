@@ -24,7 +24,7 @@ var HdfsService = new function () {
    * @returns  jqXHR
    */
   this.getHdfsList = function(sPath, successFn, errorFn, oControl) {
-    return Functions.ajax("api/hdfs/list", "POST", sPath, successFn, errorFn, oControl);
+    return Functions.ajax("/hdfs/list", "POST", sPath, successFn, errorFn, oControl);
   };
 
   /**

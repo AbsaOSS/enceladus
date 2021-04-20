@@ -30,7 +30,8 @@ class AuthConstants @Autowired()() {
 }
 
 object AuthConstants {
-  val JwtCookieKey: String = "JWT"
+
+  val JwtKey: String = "JWT"
   val CsrfTokenKey: String = "X-CSRF-TOKEN"
   val RolesKey: String = "Roles"
 }

@@ -191,5 +191,17 @@ object StringImplicits {
     def /(another: String): String = { // scalastyle:ignore method.name
       joinWithSingleSeparator(another, "/")
     }
+
+    def nonEmpyOrElse(default: => String): String = {
+      if (string.isEmpty) {
+        default
+      } else {
+        string
+      }
+    }
+
+    def coalesce(alternatives: String*): String = {
+      alternatives.foldLeft(string)(_.nonEmpyOrElse(_))
+    }
   }
 }

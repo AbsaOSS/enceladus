@@ -13,24 +13,12 @@
  * limitations under the License.
  */
 
-module.exports = function(grunt) {
-  // Project configuration.
-  grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
-    openui5_preload: {
-      component: {
-        options: {
-          resources: {
-            cwd: '',
-            prefix: '',
-            src: ['components/**/*.js', 'components/**/*.fragment.xml', 'components/**/*.view.xml']
-          },
-          dest: '',
-          compress: true
-        },
-        components: true
-      }
-    }
-  });
-  grunt.loadNpmTasks('grunt-openui5');
+package za.co.absa.enceladus.utils.validation
+
+object ValidationLevel extends Enumeration {
+  final type ValidationLevel = Value
+
+  final val NoValidation, ForRun, Strictest = Value
+
+  final val NoValidationName = "NoValidation" // This is used in an annotation - for that the type MUST NOT be specified
 }
