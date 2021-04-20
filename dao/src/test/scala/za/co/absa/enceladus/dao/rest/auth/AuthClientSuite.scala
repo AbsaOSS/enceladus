@@ -44,17 +44,17 @@ abstract class AuthClientSuite() extends AnyWordSpec
 
   s"Calling authenticate()" should {
     "return authentication headers on 200 OK" in {
-      val sessionCookie = "session-cookie"
+      val jwt = "jwt"
       val csrfToken = "csrf-token"
 
       val responseHeaders = new LinkedMultiValueMap[String, String]
-      responseHeaders.add("set-cookie", sessionCookie)
+      responseHeaders.add("jwt", jwt)
       responseHeaders.add("x-csrf-token", csrfToken)
 
       setUpSuccessfulAuthRequest(responseHeaders)
 
       val expected = new HttpHeaders()
-      expected.add("cookie", sessionCookie)
+      expected.add("jwt", jwt)
       expected.add("x-csrf-token", csrfToken)
 
       val response = authClient.authenticate()

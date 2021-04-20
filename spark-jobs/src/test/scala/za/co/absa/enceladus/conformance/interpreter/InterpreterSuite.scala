@@ -29,6 +29,7 @@ import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.concurrent.duration.DurationInt
 
@@ -63,7 +64,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     val dfs = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
-    mockWhen(dao.getDataset("Employee Conformance", 1)) thenReturn EmployeeConformance.employeeDS
+    mockWhen(dao.getDataset("Employee Conformance", 1, ValidationLevel.NoValidation)) thenReturn EmployeeConformance.employeeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn EmployeeConformance.countryMT
     mockWhen(dao.getMappingTable("department", 0)) thenReturn EmployeeConformance.departmentMT
     mockWhen(dao.getMappingTable("role", 0)) thenReturn EmployeeConformance.roleMT
@@ -122,7 +123,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     val dfs = DataSource.getDataFrame(TradeConformance.tradeDS.hdfsPath, "2017-11-01", mappingTablePattern)
 
-    mockWhen(dao.getDataset("Trade Conformance", 1)) thenReturn TradeConformance.tradeDS
+    mockWhen(dao.getDataset("Trade Conformance", 1, ValidationLevel.NoValidation)) thenReturn TradeConformance.tradeDS
     mockWhen(dao.getMappingTable("country", 0)) thenReturn TradeConformance.countryMT
     mockWhen(dao.getMappingTable("currency", 0)) thenReturn TradeConformance.currencyMT
     mockWhen(dao.getMappingTable("product", 0)) thenReturn TradeConformance.productMT

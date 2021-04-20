@@ -29,6 +29,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.util.control.NonFatal
 
@@ -179,7 +180,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
   }
 
   private def prepareDao(): Unit = {
-    mockWhen(dao.getDataset("Nested Structs Conformance", 1)) thenReturn nestedStructsDS
+    mockWhen(dao.getDataset("Nested Structs Conformance", 1, ValidationLevel.NoValidation)) thenReturn nestedStructsDS
     mockWhen(dao.getSchema("Employee", 0)) thenReturn standardizedDf.schema
   }
 

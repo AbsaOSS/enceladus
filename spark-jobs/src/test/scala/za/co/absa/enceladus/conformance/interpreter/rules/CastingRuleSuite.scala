@@ -25,6 +25,7 @@ import za.co.absa.enceladus.conformance.samples.CastingRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 class CastingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
   private val ruleName = "Casting rule"
@@ -41,7 +42,7 @@ class CastingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBas
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
 
-    mockWhen(dao.getDataset("Orders Conformance", 1)) thenReturn CastingRuleSamples.ordersDS
+    mockWhen(dao.getDataset("Orders Conformance", 1, ValidationLevel.NoValidation)) thenReturn CastingRuleSamples.ordersDS
 
     val mappingTablePattern = "{0}/{1}/{2}"
 

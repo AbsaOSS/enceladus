@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "std_nt_dy",
+    "description": "",
+    "hdfsPath": "/std/std_test",
+    "hdfsPublishPath": "/publish/std_nt_dy",
+    "schemaName": "std_nt_dy",
+    "schemaVersion": 1,
+    "conformance": [],
+    "properties": {}
+  }
+}

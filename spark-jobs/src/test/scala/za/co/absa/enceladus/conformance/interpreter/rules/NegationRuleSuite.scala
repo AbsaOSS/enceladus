@@ -25,6 +25,7 @@ import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
@@ -114,7 +115,7 @@ class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBa
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
     val enableCF: Boolean = false
-    mockWhen(dao.getDataset("Test Name", 1)) thenReturn enceladusDataset
+    mockWhen(dao.getDataset("Test Name", 1, ValidationLevel.NoValidation)) thenReturn enceladusDataset
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)

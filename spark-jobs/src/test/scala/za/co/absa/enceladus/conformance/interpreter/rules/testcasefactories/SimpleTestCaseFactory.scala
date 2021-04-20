@@ -27,6 +27,7 @@ import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFa
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
 import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 
 object SimpleTestCaseFactory {
@@ -36,6 +37,8 @@ object SimpleTestCaseFactory {
   private val nonExistentMappingTableName = "non_existent_mapping_table"
   private val simpleMappingTableName = "simple_mapping_table"
   private val simpleMappingTableWithDefaultName = "simple_mapping_table_def"
+  private val simpleMappingTableNameMultipleOutputs = "simple_mapping_table_multi_outputs"
+  private val simpleMappingTableNameMultipleOutputsWithDefaults = "simple_mapping_table_multi_outputs_defaults"
 
   // These are conformance rules available for this example.
   // Currently, only 4 mapping rules are available.
@@ -72,6 +75,22 @@ object SimpleTestCaseFactory {
     attributeMappings = Map[String, String]("key" -> "int_num"),
     targetAttribute = "val")
 
+  val simpleMappingRuleMultipleOutputs: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedIntNum",
+    additionalOutputs = Some(Map("conformedNum" -> "val1", "conformedBool" -> "val2")),
+    controlCheckpoint = false,
+    mappingTable = simpleMappingTableNameMultipleOutputs,
+    attributeMappings = Map[String, String]("key" -> "int_num"),
+    targetAttribute = "val")
+
+  val simpleMappingRuleMultipleOutputsWithDefaults: MappingConformanceRule = DatasetFactory.getDummyMappingRule(
+    outputColumn = "conformedIntNum",
+    additionalOutputs = Some(Map("conformedNum" -> "val1", "conformedBool" -> "val2")),
+    controlCheckpoint = false,
+    mappingTable = simpleMappingTableNameMultipleOutputsWithDefaults,
+    attributeMappings = Map[String, String]("key" -> "int_num"),
+    targetAttribute = "val")
+
   private val emptyMT = MappingTableFactory.getDummyMappingTable(name = emptyMappingTableName,
     hdfsPath = "src/test/testData/emptyMT")
 
@@ -87,10 +106,23 @@ object SimpleTestCaseFactory {
     hdfsPath = "simpleMT",
     defaultMappingValue = List(DefaultValue("*", "\"z\"")))
 
+  private val simpleMTMultiOutputs = MappingTableFactory.getDummyMappingTable(name = simpleMappingTableNameMultipleOutputs,
+    schemaName = simpleMappingTableName,
+    hdfsPath = "simpleMTMultiOutputs")
+
+  private val simpleMTMultiOutputsWithDefaults = MappingTableFactory.getDummyMappingTable(
+    name = simpleMappingTableNameMultipleOutputsWithDefaults,
+    schemaName = simpleMappingTableName,
+    hdfsPath = "simpleMTMultiOutputs",
+    defaultMappingValue = List(DefaultValue("val", "\"z\""), DefaultValue("val1", "1"))
+  )
+
   private val simpleMappingTableSchema = StructType(
     Array(
       StructField("key", IntegerType),
-      StructField("val", StringType)
+      StructField("val", StringType),
+      StructField("val1", DoubleType),
+      StructField("val2", BooleanType)
     ))
 
   private val testCaseDataset = DatasetFactory.getDummyDataset(name = testCaseName,
@@ -143,11 +175,15 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
     val dao = mock(classOf[MenasDAO])
-    mockWhen(dao.getDataset(testCaseName, 1)) thenReturn testCaseDataset
+    mockWhen(dao.getDataset(testCaseName, 1, ValidationLevel.NoValidation)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(emptyMappingTableName, 1)) thenReturn fixPathsInMappingTable(emptyMT)
     mockWhen(dao.getMappingTable(nonExistentMappingTableName, 1)) thenReturn fixPathsInMappingTable(nonExistentMT)
     mockWhen(dao.getMappingTable(simpleMappingTableName, 1)) thenReturn fixPathsInMappingTable(simpleMT)
     mockWhen(dao.getMappingTable(simpleMappingTableWithDefaultName, 1)) thenReturn fixPathsInMappingTable(simpleDefaultMT)
+    mockWhen(dao.getMappingTable(simpleMappingTableNameMultipleOutputs,
+      1)) thenReturn fixPathsInMappingTable(simpleMTMultiOutputs)
+    mockWhen(dao.getMappingTable(simpleMappingTableNameMultipleOutputsWithDefaults,
+      1)) thenReturn fixPathsInMappingTable(simpleMTMultiOutputsWithDefaults)
     mockWhen(dao.getSchema(simpleMappingTableName, 1)) thenReturn simpleMappingTableSchema
 
     val featureSwitches: FeatureSwitches = FeatureSwitches()
@@ -165,6 +201,7 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
   def createMappingTables(): Unit = {
     createEmptyMappingTable()
     createSimpleMappingTable()
+    createSimpleMultiOutputMappingTable()
   }
 
   /**
@@ -181,6 +218,13 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     val pathName = s"$tempDir/${simpleMT.hdfsPath}/reportDate=$reportDate"
     fs.mkdirs(new Path(pathName))
     val simpleMappingTableDf = List(1 -> "a", 2 -> "b").toDF("key", "val")
+    createTempMappingTable(pathName, simpleMappingTableDf)
+  }
+
+  private def createSimpleMultiOutputMappingTable(): Unit = {
+    val pathName = s"$tempDir/${simpleMTMultiOutputs.hdfsPath}/reportDate=$reportDate"
+    fs.mkdirs(new Path(pathName))
+    val simpleMappingTableDf = List((1, "a", 98, true), (2, "b", 123, false)).toDF("key", "val", "val1", "val2")
     createTempMappingTable(pathName, simpleMappingTableDf)
   }
 

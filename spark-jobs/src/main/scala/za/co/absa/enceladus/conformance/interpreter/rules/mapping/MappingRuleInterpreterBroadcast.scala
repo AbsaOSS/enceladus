@@ -22,8 +22,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
+import za.co.absa.spark.hats.transformations.NestedArrayTransformations.GetFieldFunction
 
 case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conformance: ConfDataset)
   extends RuleInterpreter with CommonMappingRuleInterpreter {
@@ -35,47 +37,41 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
                        explosionState: ExplosionState,
                        dao: MenasDAO,
                        progArgs: InterpreterContextArgs): DataFrame = {
-    log.info(s"Processing mapping rule to conform ${rule.outputColumn} (broadcast strategy)...")
-    val (mapTable, defaultValueOpt) = conformPreparation(df, enableCrossJoin = false)
+    log.info(s"Processing mapping rule to conform ${outputColumnNames()} (broadcast strategy)...")
+    val (mapTable, defaultValues) = conformPreparation(df, enableCrossJoin = false)
     val mappingTableFields = rule.attributeMappings.keys.toSeq
     val inputDfFields = rule.attributeMappings.values.toSeq
-    val mappings = rule.attributeMappings.map {
-      case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
-    }.toSeq
 
-    val mt = LocalMappingTable(mapTable, mappingTableFields, rule.targetAttribute)
+    val parentPath = SchemaUtils.getParentPath(rule.outputColumn)
+    val mt = LocalMappingTable(mapTable, mappingTableFields, rule.allOutputColumns())
     val broadcastedMt = spark.sparkContext.broadcast(mt)
+    val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.allOutputColumns().keys.toSeq, mappings)
 
-    // todo fix Issue #1710
-    val mappingUDF = BroadcastUtils.getMappingUdf(broadcastedMt, defaultValueOpt)
-    val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.outputColumn, mappings)
+    if (rule.additionalColumns.getOrElse(Map()).isEmpty) {
+      val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValues)
 
-    val parentPath = getParentPath(rule.outputColumn)
+      val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
+        df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
+          mappingUDF(inputDfFields.map(a => getField(a)): _ *)
+        }, (_, getField) => {
+          errorUDF(inputDfFields.map(a => getField(a)): _ *)
+        })
 
-    val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
-      df, parentPath, rule.outputColumn, ErrorMessage.errorColumnName, (_, getField) => {
-        mappingUDF(inputDfFields.map(a => getField(a)): _ *)
-      }, (_, getField) => {
-        errorUDF(inputDfFields.map(a => getField(a)): _ *)
-      })
-
-    withMappedFieldsDf
-  }
-
-  /**
-    * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
-    *
-    * @param columnName A fully qualified column name
-    * @return The parent column name or an empty string if the input column is a root level column
-    */
-  private def getParentPath(columnName: String): String = {
-    if (columnName.contains(".")) {
-      columnName.split('.').dropRight(1).mkString(".")
+      withMappedFieldsDf
     } else {
-      ""
+      val mappingUDF = BroadcastUtils.getMappingUdfForMultipleOutputs(broadcastedMt, defaultValues)
+
+      val outputsStructColumnName = getOutputsStructColumnName(df)
+      val outputsStructColumn = if (parentPath == "") outputsStructColumnName else parentPath + "." + outputsStructColumnName
+      val dfWithOutputCol = NestedArrayTransformations.nestedExtendedStructAndErrorMap(
+        df, parentPath, outputsStructColumn, ErrorMessage.errorColumnName, (_, getField: GetFieldFunction) => {
+          mappingUDF(inputDfFields.map(a => getField(a)): _ *)
+        }, (_, getField) => {
+          errorUDF(inputDfFields.map(a => getField(a)): _ *)
+        })
+      NestedArrayTransformations.nestedUnstruct(dfWithOutputCol, outputsStructColumn)
     }
   }
-
 }
 
 
