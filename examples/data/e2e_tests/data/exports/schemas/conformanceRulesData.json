@@ -1,0 +1,79 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "conformanceRulesData",
+    "description": "",
+    "fields": [
+      {
+        "name": "name",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "name"
+      },
+      {
+        "name": "string",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "string"
+      },
+      {
+        "name": "boolean",
+        "type": "boolean",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "boolean"
+      },
+      {
+        "name": "integer",
+        "type": "integer",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "integer"
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {
+          "pattern": "dd/MM/yyyy"
+        },
+        "children": [],
+        "absolutePath": "date"
+      },
+      {
+        "name": "binary",
+        "type": "binary",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": true,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "binary"
+      }
+    ]
+  }
+}

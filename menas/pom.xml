@@ -27,7 +27,6 @@
     <properties>
         <java.version>1.8</java.version>
         <scala.xml.version>1.3.0</scala.xml.version>
-        <webui.basedir>${project.basedir}/ui</webui.basedir>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <embedded.mongo.version>2.2.0</embedded.mongo.version>
     </properties>
@@ -210,32 +209,6 @@
             <artifactId>scala-java8-compat_${scala.compat.version}</artifactId>
             <version>${scala.java8.compat.version}</version>
         </dependency>
-        <!-- WebJars -->
-        <dependency>
-            <groupId>africa.absa</groupId>
-            <artifactId>openui5</artifactId>
-            <version>${openui5.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>africa.absa</groupId>
-            <artifactId>cronstrue-webjar</artifactId>
-            <version>${cronstrue.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>lodash</artifactId>
-            <version>${lodash.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>momentjs</artifactId>
-            <version>${momentjs.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>webjars-locator-core</artifactId>
-            <version>${webjars.locator.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.apache.oozie</groupId>
             <artifactId>oozie-client</artifactId>
@@ -246,12 +219,6 @@
                     <artifactId>oozie-hadoop-auth</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <!-- Plot -->
-        <dependency>
-            <groupId>org.webjars.bower</groupId>
-            <artifactId>chart.js</artifactId>
-            <version>${bower.chart.js.version}</version>
         </dependency>
         <!-- Data formats -->
         <dependency>
@@ -298,11 +265,13 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>${dockerfile.maven.version}</version>
                 <configuration>
-                    <repository>${dockerfile.repository}</repository>
+                    <repository>${dockerfile.menas.repository}</repository>
                     <tag>${dockerfile.tag}</tag>
                     <buildArgs>
                         <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
                         <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
+                        <DOCKER_BASE_ARTIFACT>${dockerfile.base.artifact}</DOCKER_BASE_ARTIFACT>
+                        <DOCKER_BASE_TAG>${dockerfile.base.tag}</DOCKER_BASE_TAG>
                     </buildArgs>
                 </configuration>
             </plugin>
@@ -345,13 +314,6 @@
                 <version>${maven.war.version}</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
-                    <webResources>
-                        <resource>
-                            <directory>ui</directory>
-                            <targetPath>/</targetPath>
-                            <filtering>false</filtering>
-                        </resource>
-                    </webResources>
                     <packagingExcludes>META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA</packagingExcludes>
                     <archive>
                         <manifest>
@@ -393,81 +355,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <profile>
-            <id>generateComponentPreload</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.eirslett</groupId>
-                        <artifactId>frontend-maven-plugin</artifactId>
-                        <version>1.7.6</version>
-                        <executions>
-                            <execution>
-                                <id>install node and npm</id>
-                                <goals>
-                                    <goal>install-node-and-npm</goal>
-                                </goals>
-                                <phase>generate-resources</phase>
-                            </execution>
-                            <execution>
-                                <id>install grunt-openui5</id>
-                                <goals>
-                                    <goal>npm</goal>
-                                </goals>
-                                <configuration>
-                                    <arguments>install grunt grunt-cli grunt-openui5 --save-dev</arguments>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>generate preload</id>
-                                <goals>
-                                    <goal>grunt</goal>
-                                </goals>
-                                <configuration>
-                                    <arguments>openui5_preload</arguments>
-                                </configuration>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <workingDirectory>ui</workingDirectory>
-                            <nodeVersion>v10.16.0</nodeVersion>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>${maven.ant.plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>Clean up after generating component preload</id>
-                                <phase>generate-resources</phase>
-                                <configuration>
-                                    <target>
-                                        <delete dir="${project.basedir}/ui/node_modules"/>
-                                        <delete dir="${project.basedir}/ui/node"/>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven.jar.plugin.version}</version>
-                        <configuration>
-                            <archive>
-                                <manifest>
-                                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                                </manifest>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.menas.services
 
 import java.util.UUID
-import java.util.concurrent.CompletableFuture
 
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
@@ -124,7 +123,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
       validation <- validate(run)
       createdRun <-
-        if (validation.isValid()) {
+        if (validation.isValid) {
           super.create(run)
             .recoverWith {
               case e: MongoWriteException =>

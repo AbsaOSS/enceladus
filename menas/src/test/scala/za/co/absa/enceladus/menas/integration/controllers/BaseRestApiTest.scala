@@ -75,10 +75,10 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
 
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 
-    val cookie = response.getHeaders.get("set-cookie").get(0)
+    val jwtToken = response.getHeaders.get("jwt").get(0)
     val csrfToken = response.getHeaders.get("X-CSRF-TOKEN").get(0)
     val headers = new HttpHeaders()
-    headers.add("cookie", cookie)
+    headers.add("jwt", jwtToken)
     headers.add("X-CSRF-TOKEN", csrfToken)
     headers
   }

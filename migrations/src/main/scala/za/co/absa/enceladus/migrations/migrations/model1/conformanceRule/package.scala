@@ -78,6 +78,7 @@ package object conformanceRule {
                                     mappingTable: String,
                                     mappingTableVersion: Int,
                                     attributeMappings: Map[String, String], // key = mapping table column, value = input df column
+                                    additionalColumns: Option[Map[String, String]] = None,
                                     targetAttribute: String,
                                     outputColumn: String,
                                     isNullSafe: Boolean,
