@@ -1,0 +1,781 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "std_nf_dy",
+    "description": "",
+    "fields": [
+      {
+        "name": "property",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "this is default value"
+        },
+        "children": [],
+        "absolutePath": "property"
+      },
+      {
+        "name": "float_type",
+        "type": "float",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "121.11"
+        },
+        "children": [],
+        "absolutePath": "float_type"
+      },
+      {
+        "name": "string_type",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "this is default value"
+        },
+        "children": [],
+        "absolutePath": "string_type"
+      },
+      {
+        "name": "boolean_type",
+        "type": "boolean",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "TRUE"
+        },
+        "children": [],
+        "absolutePath": "boolean_type"
+      },
+      {
+        "name": "binary_type",
+        "type": "binary",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "default_binary"
+        },
+        "children": [],
+        "absolutePath": "binary_type"
+      },
+      {
+        "name": "byte_type",
+        "type": "byte",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "127"
+        },
+        "children": [],
+        "absolutePath": "byte_type"
+      },
+      {
+        "name": "timestamp_type",
+        "type": "timestamp",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "20/02/2020 20:20:00 UTC",
+          "pattern": "dd/MM/yyyy HH:mm:ss zzz"
+        },
+        "children": [],
+        "absolutePath": "timestamp_type"
+      },
+      {
+        "name": "integer_type",
+        "type": "integer",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "1"
+        },
+        "children": [],
+        "absolutePath": "integer_type"
+      },
+      {
+        "name": "date_type",
+        "type": "date",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "2020-02-20",
+          "pattern": "yyyy-MM-dd"
+        },
+        "children": [],
+        "absolutePath": "date_type"
+      },
+      {
+        "name": "decimal_type",
+        "type": "decimal(10,4)",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "111111.1111"
+        },
+        "children": [],
+        "absolutePath": "decimal_type"
+      },
+      {
+        "name": "long_type",
+        "type": "long",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "9223372036854775807"
+        },
+        "children": [],
+        "absolutePath": "long_type"
+      },
+      {
+        "name": "double_type",
+        "type": "double",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "2.02"
+        },
+        "children": [],
+        "absolutePath": "double_type"
+      },
+      {
+        "name": "short_type",
+        "type": "short",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {
+          "default": "128"
+        },
+        "children": [],
+        "absolutePath": "short_type"
+      },
+      {
+        "name": "struct_type",
+        "type": "struct",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [
+          {
+            "name": "boolean_type",
+            "type": "boolean",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "TRUE"
+            },
+            "children": [],
+            "absolutePath": "struct_type.boolean_type"
+          },
+          {
+            "name": "binary_type",
+            "type": "binary",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "default_binary"
+            },
+            "children": [],
+            "absolutePath": "struct_type.binary_type"
+          },
+          {
+            "name": "float_type",
+            "type": "float",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "20.02"
+            },
+            "children": [],
+            "absolutePath": "struct_type.float_type"
+          },
+          {
+            "name": "string_type",
+            "type": "string",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "this is default value"
+            },
+            "children": [],
+            "absolutePath": "struct_type.string_type"
+          },
+          {
+            "name": "byte_type",
+            "type": "byte",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-127"
+            },
+            "children": [],
+            "absolutePath": "struct_type.byte_type"
+          },
+          {
+            "name": "timestamp_type",
+            "type": "timestamp",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "20/02/2022 22:22:22 UTC",
+              "pattern": "dd/MM/yyyy HH:mm:ss zzz"
+            },
+            "children": [],
+            "absolutePath": "struct_type.timestamp_type"
+          },
+          {
+            "name": "integer_type",
+            "type": "integer",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "2147483647"
+            },
+            "children": [],
+            "absolutePath": "struct_type.integer_type"
+          },
+          {
+            "name": "date_type",
+            "type": "date",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "2020-02-22",
+              "pattern": "yyyy-MM-dd"
+            },
+            "children": [],
+            "absolutePath": "struct_type.date_type"
+          },
+          {
+            "name": "decimal_type",
+            "type": "decimal(10,4)",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "111111.1111"
+            },
+            "children": [],
+            "absolutePath": "struct_type.decimal_type"
+          },
+          {
+            "name": "long_type",
+            "type": "long",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-9223372036854775808"
+            },
+            "children": [],
+            "absolutePath": "struct_type.long_type"
+          },
+          {
+            "name": "double_type",
+            "type": "double",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "22.02"
+            },
+            "children": [],
+            "absolutePath": "struct_type.double_type"
+          },
+          {
+            "name": "short_type",
+            "type": "short",
+            "path": "struct_type",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-127"
+            },
+            "children": [],
+            "absolutePath": "struct_type.short_type"
+          },
+          {
+            "name": "boolean_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "boolean",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.boolean_type_array"
+          },
+          {
+            "name": "binary_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "binary",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.binary_type_array"
+          },
+          {
+            "name": "byte_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "byte",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.byte_type_array"
+          },
+          {
+            "name": "timestamp_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "timestamp",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {
+              "pattern": "dd/MM/yyyy HH:mm:ss zzz"
+            },
+            "children": [],
+            "absolutePath": "struct_type.timestamp_type_array"
+          },
+          {
+            "name": "integer_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "integer",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.integer_type_array"
+          },
+          {
+            "name": "date_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "date",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {
+              "pattern": "yyyy-MM-dd"
+            },
+            "children": [],
+            "absolutePath": "struct_type.date_type_array"
+          },
+          {
+            "name": "decimal_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "decimal(10,4)",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.decimal_type_array"
+          },
+          {
+            "name": "long_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "long",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.long_type_array"
+          },
+          {
+            "name": "double_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "double",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.double_type_array"
+          },
+          {
+            "name": "short_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "short",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.short_type_array"
+          },
+          {
+            "name": "float_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "float",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.float_type_array"
+          },
+          {
+            "name": "string_type_array",
+            "type": "array",
+            "path": "struct_type",
+            "elementType": "string",
+            "containsNull": false,
+            "nullable": false,
+            "metadata": {},
+            "children": [],
+            "absolutePath": "struct_type.string_type_array"
+          }
+        ],
+        "absolutePath": "struct_type"
+      },
+      {
+        "name": "boolean_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "boolean",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "boolean_type_array"
+      },
+      {
+        "name": "binary_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "binary",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "binary_type_array"
+      },
+      {
+        "name": "byte_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "byte",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "byte_type_array"
+      },
+      {
+        "name": "timestamp_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "timestamp",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {
+          "pattern": "dd/MM/yyyy HH:mm:ss zzz"
+        },
+        "children": [],
+        "absolutePath": "timestamp_type_array"
+      },
+      {
+        "name": "integer_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "integer",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "integer_type_array"
+      },
+      {
+        "name": "date_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "date",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {
+          "pattern": "yyyy-MM-dd"
+        },
+        "children": [],
+        "absolutePath": "date_type_array"
+      },
+      {
+        "name": "decimal_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "decimal(10,4)",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "decimal_type_array"
+      },
+      {
+        "name": "long_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "long",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "long_type_array"
+      },
+      {
+        "name": "double_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "double",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "double_type_array"
+      },
+      {
+        "name": "short_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "short",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "short_type_array"
+      },
+      {
+        "name": "float_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "float",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "float_type_array"
+      },
+      {
+        "name": "string_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "string",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "string_type_array"
+      },
+      {
+        "name": "struct_type_array",
+        "type": "array",
+        "path": "",
+        "elementType": "struct",
+        "containsNull": false,
+        "nullable": false,
+        "metadata": {},
+        "children": [
+          {
+            "name": "boolean_type",
+            "type": "boolean",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "TRUE"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.boolean_type"
+          },
+          {
+            "name": "byte_type",
+            "type": "byte",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-127"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.byte_type"
+          },
+          {
+            "name": "timestamp_type",
+            "type": "timestamp",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "20/02/2022 22:22:22 UTC",
+              "pattern": "dd/MM/yyyy HH:mm:ss zzz"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.timestamp_type"
+          },
+          {
+            "name": "integer_type",
+            "type": "integer",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-2147483648"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.integer_type"
+          },
+          {
+            "name": "date_type",
+            "type": "date",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "2020-02-22",
+              "pattern": "yyyy-MM-dd"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.date_type"
+          },
+          {
+            "name": "decimal_type",
+            "type": "decimal(10,4)",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "111111.1111"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.decimal_type"
+          },
+          {
+            "name": "long_type",
+            "type": "long",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "9223372036854775807"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.long_type"
+          },
+          {
+            "name": "double_type",
+            "type": "double",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "22.02"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.double_type"
+          },
+          {
+            "name": "short_type",
+            "type": "short",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "-127"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.short_type"
+          },
+          {
+            "name": "float_type",
+            "type": "float",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "121.11"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.float_type"
+          },
+          {
+            "name": "string_type",
+            "type": "string",
+            "path": "struct_type_array",
+            "elementType": null,
+            "containsNull": null,
+            "nullable": false,
+            "metadata": {
+              "default": "this is default value"
+            },
+            "children": [],
+            "absolutePath": "struct_type_array.string_type"
+          }
+        ],
+        "absolutePath": "struct_type_array"
+      }
+    ]
+  }
+}

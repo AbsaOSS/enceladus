@@ -19,7 +19,6 @@ import java.net.URI
 import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
@@ -27,6 +26,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.menas.services.DatasetService
+import za.co.absa.enceladus.utils.validation.ValidationLevel.{NoValidationName, ValidationLevel}
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{Dataset, Validation}
@@ -84,7 +84,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
                                             datasetVersion: Int,
                                             allFilterParams: util.Map[String, String]): Future[Map[String, String]] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
-      case Some(entity) => {
+      case Some(entity) =>
         val dsProperties = entity.propertiesAsMap
 
         val scalaFilterMap: Map[String, String] = allFilterParams.toScalaMap // in Scala 2.12, we could just do .asScala.toMap
@@ -93,7 +93,6 @@ class DatasetController @Autowired()(datasetService: DatasetService)
         } else {
           datasetService.filterProperties(dsProperties, DatasetController.paramsToPropertyDefinitionFilter(scalaFilterMap))
         }
-      }
       case None => throw notFound()
     }
   }
@@ -103,15 +102,11 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
                         @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
-
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map { dataset =>
-      dataset match {
-        case None => throw notFound()
-        case Some(ds) => {
-          val location: URI = new URI(s"/api/dataset/${ds.name}/${ds.version}")
-          ResponseEntity.created(location).body(dataset)
-        }
-      }
+    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
+      case None => throw notFound()
+      case Some(dataset) =>
+        val location: URI = new URI(s"/api/dataset/${dataset.name}/${dataset.version}")
+        ResponseEntity.created(location).body(Option(dataset))
     }
   }
 
@@ -119,7 +114,16 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @ResponseStatus(HttpStatus.OK)
   def getPropertiesValidation(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
-      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap)
+      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = false)
+      case None => throw notFound()
+    }
+  }
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/properties/validForRun"))
+  @ResponseStatus(HttpStatus.OK)
+  def getPropertiesValidationForRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
+    datasetService.getVersion(datasetName, datasetVersion).flatMap {
+      case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = true)
       case None => throw notFound()
     }
   }
@@ -128,8 +132,9 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @ResponseStatus(HttpStatus.OK)
   def getDatasetWithPropertiesValidation(@PathVariable("datasetName") datasetName: String,
                                          @PathVariable("datasetVersion") datasetVersion: Int,
-                                         @RequestParam(value = "validateProperties", required = false, defaultValue = "false")
-                                         validate: Boolean // todo api test for this
+                                         @RequestParam(value = "validateProperties",
+                                                       required = false,
+                                                       defaultValue = NoValidationName) validate: ValidationLevel
                                         ): CompletableFuture[Dataset] = {
     datasetService.getVersionValidated(datasetName, datasetVersion, validate).map {
       case Some(ds) => ds

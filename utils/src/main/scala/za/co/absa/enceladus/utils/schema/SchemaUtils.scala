@@ -22,6 +22,21 @@ import scala.util.{Random, Try}
 object SchemaUtils {
 
   /**
+   * Returns the parent path of a field. Returns an empty string if a root level field name is provided.
+   *
+   * @param columnName A fully qualified column name
+   * @return The parent column name or an empty string if the input column is a root level column
+   */
+  def getParentPath(columnName: String): String = {
+    val index = columnName.lastIndexOf('.')
+    if (index > 0) {
+      columnName.substring(0, index)
+    } else {
+      ""
+    }
+  }
+
+  /**
     * Get a field from a text path and a given schema
     * @param path   The dot-separated path to the field
     * @param schema The schema which should contain the specified path

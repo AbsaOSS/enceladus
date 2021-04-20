@@ -280,6 +280,8 @@
                     <buildArgs>
                         <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
                         <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
+                        <DOCKER_BASE_ARTIFACT>${dockerfile.base.artifact}</DOCKER_BASE_ARTIFACT>
+                        <DOCKER_BASE_TAG>${dockerfile.base.tag}</DOCKER_BASE_TAG>
                     </buildArgs>
                 </configuration>
             </plugin>

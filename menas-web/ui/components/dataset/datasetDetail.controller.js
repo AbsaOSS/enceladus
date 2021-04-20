@@ -381,7 +381,7 @@ sap.ui.define([
             order: iOrder
           });
         }
-      } 
+      }
     },
 
     conformanceRuleFactory: function (sId, oContext) {
@@ -408,6 +408,20 @@ sap.ui.define([
           });
         }
 
+        let additionalColumns = oContext.getProperty("additionalColumns");
+        let aOutputColumns = [{outputColumn: oContext.getProperty("outputColumn"),
+          targetAttribute: oContext.getProperty("targetAttribute"),
+          mappingTableName: oContext.getProperty("mappingTable")
+        }];
+        for (let key in additionalColumns) {
+          aOutputColumns.push({
+            outputColumn: key,
+            targetAttribute: additionalColumns[key],
+            mappingTableName: oContext.getProperty("mappingTable")
+          });
+        }
+
+        oContext.getObject().outputColumns = aOutputColumns;
         oContext.getObject().joinConditions = aJoinConditions;
       }
 
