@@ -200,7 +200,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -218,7 +218,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -236,7 +236,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -254,7 +254,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -272,7 +272,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -290,7 +290,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -308,7 +308,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -326,7 +326,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -344,7 +344,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -362,7 +362,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -380,7 +380,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)
@@ -400,7 +400,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
       .cache
 
-    val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
+    val actualSchema = normalizeErrColNullability(cleanupContainsNullProperty(dfOut.schema.treeString))
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
 
     assertSchema(actualSchema, expectedSchema)

@@ -38,6 +38,13 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     super.afterAll()
   }
 
+  // todo: connected to #1756 for array-based processing, errCol nullability always comes out false after Spark 3.1 processing
+  protected def normalizeErrColNullability(inputSchemaTree: String): String = {
+    inputSchemaTree
+      .replaceAll("errCol: array \\(nullable = false\\)", "errCol: array (nullable = true)")
+      .trim
+  }
+
   protected def cleanupContainsNullProperty(inputSchemaTree: String): String = {
     // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
     // the new version of the struct always has the flag containsNull = false.
@@ -51,7 +58,7 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
 
   protected def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
+    if ( fixLineEnding(actualSchema.trim) != fixLineEnding(expectedSchema.trim)) {
       logger.error("EXPECTED:")
       logger.error(expectedSchema)
       logger.error("ACTUAL:")
