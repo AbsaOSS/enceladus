@@ -416,8 +416,7 @@ if [ "$DRA_ENABLED" = true ] ; then
 fi
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
--Dspline.producer.url=$SPLINE_PRODUCER_URL -Dhdp.version=$HDP_VERSION \
-$MT_PATTERN"
+ -Dhdp.version=$HDP_VERSION $MT_PATTERN"
 
 if [ "$HELP_CALL" == "1" ]; then
   source ${SRC_DIR}/_print_help.sh

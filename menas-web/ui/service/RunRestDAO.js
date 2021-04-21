@@ -43,4 +43,24 @@ class RunRestDAO {
     return RestClient.get(`/runs/${encodeURI(datasetName)}/latestrun`)
   }
 
+  getLineageId(urlTemplate, outputPath, applicationId) {
+    const url = urlTemplate
+      .replace("%s", applicationId)
+      .replace("%s", outputPath);
+
+    RestClient.getSync(url,false,true).then((response) => {
+      this._totalCount = response.totalCount;
+      if (this._totalCount > 0) {
+        this._executionEventId = response.items[0].executionEventId;
+      } else {
+        this._executionEventId = undefined
+      }
+    });
+
+    return {
+      totalCount: this._totalCount,
+      executionEventId: this._executionEventId
+    }
+  }
+
 }

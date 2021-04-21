@@ -132,15 +132,15 @@ var RunService = new function () {
 
   this._buildLineageUrl = function(outputPath, applicationId) {
     const urlTemplate = "%s/index.html?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
-    if (window.splineConsumerApiUrl) {
-      let lineageExecutionIdApiTemplate = window.splineConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
+    if (window.lineageConsumerApiUrl) {
+      let lineageExecutionIdApiTemplate = window.lineageConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
       const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
 
       if (lineageIdInfo.totalCount === 1) {
         return {
           lineageUrl: urlTemplate
-            .replace("%s", window.splineUiCdn)
-            .replace("%s", window.splineConsumerApiUrl)
+            .replace("%s", window.lineageUiCdn)
+            .replace("%s", window.lineageConsumerApiUrl)
             .replace("%s", lineageIdInfo.executionEventId),
           lineageError: ""
         };

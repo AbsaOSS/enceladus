@@ -232,5 +232,4 @@ class ConfigRestClient {
   static getEnvironmentName() {
     return RestClient.get(`/configuration/environment`)
   }
-
 }
