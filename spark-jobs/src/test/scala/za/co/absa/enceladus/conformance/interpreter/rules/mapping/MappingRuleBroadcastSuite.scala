@@ -408,13 +408,16 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  // It seems like this test fails since Spark 3, meaning that there will be no exception thrown
-  /*test("Test broadcasting rule failure if key fields are in different arrays") {
+  test("Test broadcasting rule failure if key fields are in different arrays") {
+    val expectedResults = getResourceString("/interpreter/mappingCases/arrayWrongJoinResults.json")
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, wrongMappingRule1)
 
-    intercept[Exception] {
-      DynamicInterpreter().interpret(dataset, inputDf)
-    }
-  }*/
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"errCol")
+      .cache
+
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+    assertResults(actualResults, expectedResults)
+  }
 }
