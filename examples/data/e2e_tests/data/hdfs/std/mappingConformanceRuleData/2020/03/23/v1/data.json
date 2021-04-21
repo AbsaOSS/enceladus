@@ -1,0 +1,4 @@
+
+{"property":"user1","name":"Jindrich Sidlo","location":"internet","address":{"street":"Happy Monday","town":"Praha","codes":["110 00","120 00"]},"devices":["mobile phone", "notebook"],"accesses":[{"place":"library","time":"8:00 - 20:00"},{"place":"rest room","time":"12:00 - 14:00"}]}
+{"property":"user2","name":"Martin Veselovsky","location":"internet","address":{"street":"DVTV","town":"Praga","codes":[]},"devices":["phone"],"accesses":[{"place":"library","time":"9:00 - 19:00"},{"place":"rest room","time":"11:00 - 15:00"}]}
+{"property":"user3","name":"Nora Fridrichova","location":"television","address":{"street":"168Hours","town":"Prag","codes":["100 00","160 00"]},"devices":["fax", "notebook"],"accesses":[{"place":"library","time":"7:00 - 15:00"},{"place":"kitchen","time":"6:00 - 14:00"}]}

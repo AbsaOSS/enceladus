@@ -109,7 +109,7 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
       validation <- validate(run)
       createdRun <-
-        if (validation.isValid()) {
+        if (validation.isValid) {
           super.create(run)
             .recoverWith {
               case e: MongoWriteException =>

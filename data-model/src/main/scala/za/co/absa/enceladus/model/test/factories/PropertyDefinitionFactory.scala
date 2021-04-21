@@ -19,7 +19,7 @@ import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.essentiality.{Essentiality, Optional}
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringPropertyType}
 
 object PropertyDefinitionFactory extends EntityFactory[PropertyDefinition] {
@@ -32,7 +32,7 @@ object PropertyDefinitionFactory extends EntityFactory[PropertyDefinition] {
                                  description: Option[String] = None,
                                  propertyType: PropertyType = StringPropertyType(),
                                  putIntoInfoFile: Boolean = false,
-                                 essentiality: Essentiality = Optional(),
+                                 essentiality: Essentiality = Essentiality.Optional,
                                  disabled: Boolean = false,
                                  dateCreated: ZonedDateTime = dummyZonedDateTime,
                                  userCreated: String = "dummyUser",
