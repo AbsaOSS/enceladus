@@ -36,7 +36,7 @@ echo "!!!WARNING - set these only if you know what you are doing. This could for
 echo "  --num-executors NUM                      Number of executors to launch. Effective only if DRA is off."
 echo "  --executor-cores NUM                     Number of cores per executor. Effective only if DRA is off."
 echo "  --executor-memory MEM                    Memory per executor (e.g. 1000M, 2G) (Default: 1G). Effective only if DRA is off."
-echo "  --dra-num-executors NUM                  Same as '--num-executors' but used when DRA is enabled. Use with care!"
+echo "  --dra-num-executors NUM                  Same as '--num-executors' but used when DRA is enabled. Use with care! DRA won't scale below this NUM."
 echo "  --dra-executor-cores NUM                 Same as '--executor-memory' but used when DRA is enabled."
 echo "  --dra-executor-memory MEM                Same as '--executor-cores' but used when DRA is enabled."
 echo "  --master MASTER_URL                      spark://host:port, mesos://host:port, yarn, k8s://https://host:port, or local"
