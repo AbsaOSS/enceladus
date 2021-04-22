@@ -29,7 +29,6 @@ object Constants {
     "javax.net.ssl.trustStorePassword",
     "spark.driver.extraJavaOptions",
     "spark.yarn.dist.files",
-    "spline.mongodb.url",
     "sun.boot.class.path",
     "sun.java.command",
     "s3.kmsKeyId"

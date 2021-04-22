@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model
 
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.properties.essentiality.Mandatory
+import za.co.absa.enceladus.model.properties.essentiality.Essentiality.Mandatory
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyTypeValidationException, StringPropertyType}
 
 class PropertyDefinitionTest extends AnyFunSuite {
@@ -32,7 +32,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
       description = Some("test desc"),
       propertyType = StringPropertyType(suggestedValue = "sort of default"),
       putIntoInfoFile = true,
-      essentiality = Mandatory()
+      essentiality = Mandatory(false)
     )
 
     val expectedPropertyDef =
@@ -41,7 +41,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
          |"description":"test desc",
          |"propertyType":{"_t":"StringPropertyType","suggestedValue":"sort of default"},
          |"putIntoInfoFile":true,
-         |"essentiality":{"_t":"Mandatory"}
+         |"essentiality":{"_t":"Mandatory","allowRun":false}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
     assert(stringPropertyDef.exportItem() == expectedPropertyDef)

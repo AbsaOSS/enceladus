@@ -34,6 +34,9 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 # Disable second security filter chain passes for ASYNC requests
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
+# Generate your own secret, must be be at least 256-bit
+menas.auth.jwt.lifespan.hours=8
+
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 

@@ -15,63 +15,75 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{ArrayType, DataType, StructType}
+import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-
-import scala.collection.mutable.ListBuffer
 
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
-final case class LocalMappingTable(
-                                    map: Map[Seq[Any], Any],
-                                    keyFields: Seq[String],
-                                    targetAttribute: String,
+final case class LocalMappingTable private(
+                                    private val data: Map[Seq[Any], Any],
+                                    outputColumns: Map[String, String],
                                     keyTypes: Seq[DataType],
-                                    valueType: DataType
-                                  )
+                                    valueTypes: Seq[DataType]
+                                  ) {
+
+  def getRowWithDefault(key: Seq[Any], default: Any): Any = {
+    data.getOrElse(key, default)
+  }
+
+  def contains(key: Seq[Any]): Boolean = {
+    data.contains(key)
+  }
+
+  def rowCount: Int = data.size
+}
 
 object LocalMappingTable {
 
   /**
     * Creates a local mapping table from a mapping table dataframe.
     *
-    * @param mappingTableDf  A mapping table dataframe.
-    * @param keyFields       A list of dataframe columns to be used as mapping keys
-    * @param targetAttribute A column to be used as the mapping value
+    * @param mappingTableDf   A mapping table dataframe.
+    * @param keyFields        A list of dataframe columns to be used as mapping keys
+    * @param outputColumns    A map of conformed column names and target attributes to be used as the mapping values
     */
   @throws[IllegalArgumentException]
   def apply(mappingTableDf: DataFrame,
             keyFields: Seq[String],
-            targetAttribute: String): LocalMappingTable = {
+            outputColumns: Map[String, String]
+           ): LocalMappingTable = {
 
     validateKeyFields(mappingTableDf, keyFields)
-    validateTargetAttribute(mappingTableDf, targetAttribute)
+    val targetAttributes = outputColumns.values.toSeq
+    validateTargetAttributes(mappingTableDf, targetAttributes)
 
-    val keyTypes = keyFields.map(fieldName =>
-      SchemaUtils.getFieldType(fieldName, mappingTableDf.schema).get
-    )
+    val keyTypes = keyFields.flatMap(fieldName => SchemaUtils.getFieldType(fieldName, mappingTableDf.schema))
 
-    val valueType = SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema).get
+    val valueTypes = targetAttributes.flatMap(targetAttribute => {
+      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema)
+    })
+    val structFields: Seq[StructField] = outputColumns.keys.toSeq.zip(valueTypes)
+      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
+    val rowSchema = StructType(structFields)
 
-    val mappingColumns = col(targetAttribute) +: keyFields.map(c => col(c))
+    val targetColumns: Seq[Column] = targetAttributes.map(targetAttribute => col(targetAttribute))
+
+    val mappingColumns = targetColumns ++ keyFields.map(c => col(c))
     val projectedDf = mappingTableDf.select(mappingColumns: _*)
     val numberOfKeys = keyFields.size
+    val numberOfValues = targetAttributes.size
 
     val mappingTable = projectedDf.collect().map(row => {
-      val value = row(0)
-      val keys = new ListBuffer[Any]
-      var i = 0
-      while (i < numberOfKeys) {
-        keys += row(i + 1)
-        i += 1
-      }
-      (keys.toSeq, value)
+      val values = (0 until numberOfValues).toArray map (row(_))
+      val keys: Seq[Any] = (numberOfValues until numberOfValues + numberOfKeys) map(row(_))
+      (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
     }).toMap
 
-    LocalMappingTable(mappingTable, keyFields, targetAttribute, keyTypes, valueType)
+    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueTypes)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
@@ -95,16 +107,18 @@ object LocalMappingTable {
     })
   }
 
-  private def validateTargetAttribute(mappingTableDf: DataFrame, targetAttribute: String): Unit = {
-    SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema) match {
-      case Some(_: ArrayType) => throw new IllegalArgumentException(s"Target attribute cannot be an array: $targetAttribute.")
-      case Some(_) =>
-      case None => throw new IllegalArgumentException(s"Target attribute $targetAttribute does not exist in the mapping table.")
-    }
-    val arraySubPath = SchemaUtils.getFirstArrayPath(targetAttribute, mappingTableDf.schema)
-    if (arraySubPath.nonEmpty) {
-      throw new IllegalArgumentException(s"Target attribute $targetAttribute is inside an array $arraySubPath.")
-    }
+  private def validateTargetAttributes(mappingTableDf: DataFrame, targetAttributes: Seq[String]): Unit = {
+    targetAttributes.foreach(targetAttribute => {
+      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema) match {
+        case Some(_: ArrayType) => throw new IllegalArgumentException(s"Target attribute cannot be an array: $targetAttribute.")
+        case Some(_) =>
+        case None => throw new IllegalArgumentException(s"Target attribute $targetAttribute does not exist in the mapping table.")
+      }
+      val arraySubPath = SchemaUtils.getFirstArrayPath(targetAttribute, mappingTableDf.schema)
+      if (arraySubPath.nonEmpty) {
+        throw new IllegalArgumentException(s"Target attribute $targetAttribute is inside an array $arraySubPath.")
+      }
+    })
   }
 
 }

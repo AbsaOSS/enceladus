@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.menas.services
 
 import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
-import org.mockito.ArgumentMatchers.any
 import org.mockito.scalatest.MockitoSugar
 import org.mongodb.scala.Completed
 import org.mongodb.scala.bson.BsonDocument
@@ -44,7 +43,7 @@ class RunServiceTest extends BaseServiceTest with MockitoSugar {
 
     val validation = await(runService.validate(run))
 
-    assert(!validation.isValid())
+    assert(!validation.isValid)
     assert(validation == Validation().withError("uniqueId", s"run with this uniqueId already exists: $uniqueId"))
   }
 
@@ -53,7 +52,7 @@ class RunServiceTest extends BaseServiceTest with MockitoSugar {
 
     val validation = await(runService.validate(run))
 
-    assert(!validation.isValid())
+    assert(!validation.isValid)
     assert(validation == Validation().withError("uniqueId", "not specified"))
   }
 
@@ -63,7 +62,7 @@ class RunServiceTest extends BaseServiceTest with MockitoSugar {
 
     val validation = await(runService.validate(run))
 
-    assert(validation.isValid())
+    assert(validation.isValid)
   }
 
   test("create multiple runs concurrently successfully") {

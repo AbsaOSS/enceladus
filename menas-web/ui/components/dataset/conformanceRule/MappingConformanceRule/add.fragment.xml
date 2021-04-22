@@ -14,9 +14,7 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
-    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.commonRuleFields"/>
     <core:Fragment type="XML" fragmentName="components.mappingTableSelector"/>
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.joinConditions"/>
-    <Label text="Target column"/>
-    <core:Fragment fragmentName="components.dataset.conformanceRule.MappingConformanceRule.targetSchemaFieldSelector" type="XML"/>
+    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.outputColumns"/>
 </core:FragmentDefinition>

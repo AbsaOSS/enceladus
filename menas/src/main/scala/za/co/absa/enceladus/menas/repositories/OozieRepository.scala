@@ -95,12 +95,6 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   @Value("${menas.oozie.menasApiURL:}")
   val menasApiURL: String = ""
 
-  @Value("${menas.oozie.lineageWriteApiUrl:}")
-  val lineageWriteApiUrl: String = ""
-
-  @Value("${menas.oozie.spline.mode:}")
-  val splineMode: String = ""
-
   @Value("${menas.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
 
@@ -135,8 +129,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       (enceladusJarLocation, "menas.oozie.enceladusJarLocation"),
       (sparkJobsJarPath, "menas.oozie.mavenSparkJobsJarLocation"),
       (mavenRepoLocation, "menas.oozie.mavenRepoLocation"),
-      (menasApiURL, "menas.oozie.menasApiURL"),
-      (lineageWriteApiUrl, "menas.oozie.lineageWriteApiUrl")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
+      (menasApiURL, "menas.oozie.menasApiURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
@@ -326,7 +319,6 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
     val schedule = ds.schedule.get
     val runtimeParams = schedule.runtimeParams
     val mappingTablePattern = schedule.mappingTablePattern.map(_.trim).filter(_.nonEmpty).getOrElse("reportDate={0}-{1}-{2}")
-    val splineModeConf = Option(splineMode).collect{case s if s.trim.nonEmpty => s"-Dspline.mode=$s"}.getOrElse("")
     workflowTemplate.replaceAllLiterally("$stdAppName", s"Menas Schedule Standardization ${ds.name} (${ds.version})")
       .replaceAllLiterally("$confAppName", s"Menas Schedule Conformance ${ds.name} (${ds.version})")
       .replaceAllLiterally("$sparkJobsJarPath", s"$enceladusJarLocation$sparkJobsJarPath")
@@ -339,7 +331,6 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$sharelibForSpark", shareLibConfig)
       .replaceAllLiterally("$nameNode", namenode)
       .replaceAllLiterally("$menasRestURI", menasApiURL)
-      .replaceAllLiterally("$lineageWriteApiUrl", lineageWriteApiUrl)
       .replaceAllLiterally("$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
       .replaceAllLiterally("$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
       .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
@@ -348,7 +339,6 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$menasKeytabFile", s"${getCredsOrKeytabArgument(runtimeParams.menasKeytabFile, namenode)}")
       .replaceAllLiterally("$sparkConfQuotes", sparkConfQuotes)
       .replaceAllLiterally("$extraSparkConfString", extraSparkConfString)
-      .replaceAllLiterally("$splineModeConf", splineModeConf)
       .getBytes("UTF-8")
   }
 

@@ -15,9 +15,8 @@
 
 package za.co.absa.enceladus.menas.integration.repositories
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
-
 import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -30,6 +29,7 @@ import za.co.absa.enceladus.menas.models.{RunDatasetNameGroupedSummary, RunDatas
 import za.co.absa.enceladus.menas.repositories.RunMongoRepository
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.model.test.factories.RunFactory
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -46,7 +46,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
   override def fixtures: List[FixtureService[_]] = List(runFixture)
 
-  private val today = LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+  private val today = LocalDate.now(ZoneId.of(TimeZoneNormalizer.timeZone)).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
 
   "RunMongoRepository::getAllLatest" should {
     "return only the latest Run for each Dataset's latest version asynchronously" when {
@@ -868,7 +868,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
 
       "there are runs with different spark app_id" in{
-        val run = setUpRunWithAppIds(sampleAppId1)
+        setUpRunWithAppIds(sampleAppId1)
         val actual = await(runMongoRepository.getRunBySparkAppId(sampleAppId2))
         assert(actual.isEmpty)
       }

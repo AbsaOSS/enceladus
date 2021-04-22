@@ -49,8 +49,8 @@
 
         $.getJSON('package.json', function(json) {
             window.apiUrl = json.config.apiUrl + "/api";
-            window.splineConsumerApiUrl = json.config.splineConsumerApiUrl;
-            window.splineUiCdn = json.config.splineUiCdn;
+            window.lineageConsumerApiUrl = json.config.lineageConsumerApiUrl;
+            window.lineageUiCdn = json.config.lineageUiCdn;
 
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
@@ -67,6 +67,8 @@
                 _menasLoadElem("script", "components/dataset/conformanceRule/SchemaManager.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialog.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/JoinConditionDialogFactory.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/OutputColumnDialog.js", []);
+                _menasLoadElem("script", "components/dataset/conformanceRule/MappingConformanceRule/OutputColumnDialogFactory.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/RuleColumnDialog.js", []);
                 _menasLoadElem("script", "components/dataset/conformanceRule/RuleColumnDialogFactory.js", []);
                 _menasLoadElem("script", "components/SchemaTable.js", []);

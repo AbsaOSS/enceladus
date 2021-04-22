@@ -41,9 +41,13 @@ class ConformanceRuleForm {
   }
 
   isValid(rule, schemas, rules) {
-    const hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order])
-      && this.hasValidTransitiveSchema(rule, schemas, rules);
-    return hasValidOutputColumn & this.isCorrectlyConfigured(rule);
+    let hasValidOutputColumn = true;
+    if (rule._t !== "MappingConformanceRule") {
+      hasValidOutputColumn = this.hasValidOutputColumn(rule.outputColumn, schemas[rule.order]);
+    }
+
+    const hasValidOutputColumnAndSchema = hasValidOutputColumn && this.hasValidTransitiveSchema(rule, schemas, rules);
+    return hasValidOutputColumnAndSchema & this.isCorrectlyConfigured(rule);
   }
 
   hasValidOutputColumn(fieldValue, schema) {
@@ -119,8 +123,12 @@ class ConformanceRuleForm {
     const validation = SchemaManager.validateNameClashes(rule, schemas, rules);
 
     if (!validation.isValid) {
-      this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
-      this.outputColumnControl.setValueStateText(validation.error);
+      if (this.outputColumnControl){
+        this.outputColumnControl.setValueState(sap.ui.core.ValueState.Error);
+        this.outputColumnControl.setValueStateText(validation.error);
+      } else {
+        sap.m.MessageToast.show(validation.error);
+      }
     }
 
     return validation.isValid;
@@ -373,6 +381,7 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
 
   isCorrectlyConfigured(rule) {
     return this.hasValidInputColumn(rule.targetAttribute)
+      & this.hasValidOutputColumns(rule)
       & this.hasValidJoinConditions(rule.newJoinConditions);
   }
 
@@ -386,9 +395,17 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
     return isValid
   }
 
+  hasValidOutputColumns(rule = []) {
+    let isValid = rule.additionalColumns.length >= 1 || rule.outputColumn !== undefined;
+
+    if (!isValid) {
+      sap.m.MessageToast.show("At least 1 output column is required.");
+    }
+
+    return isValid
+  }
+
   reset() {
-    super.reset();
-    this.resetInputColumn();
   }
 
 }

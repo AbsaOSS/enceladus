@@ -26,7 +26,11 @@ SET EXECUTOR_MEMORY=%DEFAULT_EXECUTOR_MEMORY%
 SET DRIVER_CORES=%DEFAULT_DRIVER_CORES%
 SET DRIVER_MEMORY=%DEFAULT_DRIVER_MEMORY%
 SET EXECUTOR_CORES=%DEFAULT_EXECUTOR_CORES%
+SET EXECUTOR_MEMORY=%EFAULT_EXECUTOR_MEMORY%
+SET DRA_EXECUTOR_CORES=%DEFAULT_DRA_EXECUTOR_CORES%
+SET DRA_EXECUTOR_MEMORY=%DEFAULT_DRA_EXECUTOR_MEMORY%
 SET NUM_EXECUTORS=%DEFAULT_NUM_EXECUTORS%
+SET DRA_NUM_EXECUTORS=
 SET FILES=%ENCELADUS_FILES%
 
 :: DRA related defaults
@@ -54,6 +58,8 @@ SET DELIMITER=
 SET HEADER=
 SET CSV_QUOTE=
 SET CSV_ESCAPE=
+SET CSV_IGNORE_LEADING_WHITESPACE=
+SET CSV_IGNORE_TRAILING_WHITESPACE=
 SET TRIM_VALUES=
 SET COBOL_IS_TEXT=
 SET COBOL_ENCODING=
@@ -94,6 +100,12 @@ IF "%1"=="--num-executors" (
     SHIFT
     GOTO CmdParse
 )
+IF "%1"=="--dra-num-executors" (
+    SET DRA_NUM_EXECUTORS=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
 IF "%1"=="--executor-cores" (
     SET EXECUTOR_CORES=%2
     SHIFT
@@ -102,6 +114,18 @@ IF "%1"=="--executor-cores" (
 )
 IF "%1"=="--executor-memory" (
     SET EXECUTOR_MEMORY=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--dra-executor-cores" (
+    SET DRA_EXECUTOR_CORES=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--dra-executor-memory" (
+    SET DRA_EXECUTOR_MEMORY=%2
     SHIFT
     SHIFT
     GOTO CmdParse
@@ -262,6 +286,18 @@ IF "%1"=="--csv-quote" (
 )
 IF "%1"=="--csv-escape" (
     SET CSV_ESCAPE=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--csv-ignore-leading-white-space" (
+    SET CSV_IGNORE_LEADING_WHITESPACE=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--csv-ignore-trailing-white-space" (
+    SET CSV_IGNORE_TRAILING_WHITESPACE=%2
     SHIFT
     SHIFT
     GOTO CmdParse
@@ -454,10 +490,6 @@ SET SPARK_CONF=--conf spark.logConf=true
 :: Dynamic Resource Allocation
 :: check DRA safe prerequisites
 IF %DRA_ENABLED%==true (
-    IF DEFINED NUM_EXECUTORS (
-        ECHO WARNING: num-executors should NOT be set when using Dynamic Resource Allocation. DRA is disabled.
-        SET DRA_ENABLED=false
-    )
     IF NOT DEFINED DRA_MAX_EXECUTORS (
         ECHO WARNING: maxExecutors should be set for Dynamic Resource Allocation. DRA is disabled
         SET DRA_ENABLED=false
@@ -467,13 +499,35 @@ IF %DRA_ENABLED%==true (
 :: configure DRA and adaptive execution if enabled
 IF %DRA_ENABLED%==true (
     ECHO Dynamic Resource Allocation enabled
+
+    IF DEFINED NUM_EXECUTORS (
+        ECHO WARNING: num-executors should NOT be set when using Dynamic Resource Allocation and will be ignored.
+        ECHO Set dra-num-executors if you know what you are doing or disable dra
+    )
+
+    IF DEFINED EXECUTOR_MEMORY (
+        ECHO Using values from --dra-executor-memory. --executor-memory ignored.
+    )
+
+    IF DEFINED EXECUTOR_CORES (
+        ECHO Using values from --dra-executor-cores. --executor-cores ignored.
+    )
+
     SET SPARK_CONF=%SPARK_CONF% --conf spark.dynamicAllocation.enabled=true
     SET SPARK_CONF=%SPARK_CONF% --conf spark.shuffle.service.enabled=true
     SET SPARK_CONF=%SPARK_CONF% --conf spark.sql.adaptive.enabled=true
-    SET SPARK_CONF=%SPARK_CONF% --conf spark.dynamicAllocation.maxExecutors=%DRA_MAX_EXECUTORS%
+    IF DEFINED DRA_MAX_EXECUTORS SET SPARK_CONF=%SPARK_CONF% --conf spark.dynamicAllocation.maxExecutors=%DRA_MAX_EXECUTORS%
     IF DEFINED DRA_MIN_EXECUTORS SET SPARK_CONF=%SPARK_CONF% --conf spark.dynamicAllocation.minExecutors=%DRA_MIN_EXECUTORS%
     IF DEFINED DRA_ALLOCATION_RATIO SET SPARK_CONF=%SPARK_CONF% --conf spark.dynamicAllocation.executorAllocationRatio=%DRA_ALLOCATION_RATIO%
     IF DEFINED ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE SET SPARK_CONF=%SPARK_CONF% --conf spark.sql.adaptive.shuffle.targetPostShuffleInputSize=%ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE%
+
+    IF DEFINED DRA_NUM_EXECUTORS SET CMD_LINE=%CMD_LINE% --num-executors %DRA_NUM_EXECUTORS%
+    IF DEFINED DRA_EXECUTOR_MEMORY SET CMD_LINE=%CMD_LINE% --executor-memory %DRA_EXECUTOR_MEMORY%
+    IF DEFINED DRA_EXECUTOR_CORES SET CMD_LINE=%CMD_LINE% --executor-cores %DRA_EXECUTOR_CORES%
+) ELSE (
+    IF DEFINED NUM_EXECUTORS SET CMD_LINE=%CMD_LINE% --num-executors %NUM_EXECUTORS%
+    IF DEFINED EXECUTOR_MEMORY SET CMD_LINE=%CMD_LINE% --executor-memory %EXECUTOR_MEMORY%
+    IF DEFINED EXECUTOR_CORES SET CMD_LINE=%CMD_LINE% --executor-cores %EXECUTOR_CORES%
 )
 
 SET JVM_CONF=spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=%STD_HDFS_PATH% -Dspline.mongodb.url=%SPLINE_MONGODB_URL% -Dspline.mongodb.name=%SPLINE_MONGODB_NAME% -Dhdp.version=%HDP_VERSION% %MT_PATTERN%
@@ -483,9 +537,7 @@ SET CMD_LINE=%SPARK_SUBMIT%
 :: Adding command line parameters that go BEFORE the jar file
 IF DEFINED MASTER SET CMD_LINE=%CMD_LINE% --master %MASTER%
 IF DEFINED DEPLOY_MODE SET CMD_LINE=%CMD_LINE% --deploy-mode %DEPLOY_MODE%
-IF DEFINED NUM_EXECUTORS SET CMD_LINE=%CMD_LINE% --num-executors %NUM_EXECUTORS%
-IF DEFINED EXECUTOR_MEMORY SET CMD_LINE=%CMD_LINE% --executor-memory %EXECUTOR_MEMORY%
-IF DEFINED EXECUTOR_CORES SET CMD_LINE=%CMD_LINE% --executor-cores %EXECUTOR_CORES%
+
 IF DEFINED DRIVER_CORES SET CMD_LINE=%CMD_LINE% --driver-cores %DRIVER_CORES%
 IF DEFINED DRIVER_MEMORY SET CMD_LINE=%CMD_LINE% --driver-memory %DRIVER_MEMORY%
 IF DEFINED FILES SET CMD_LINE=%CMD_LINE% --files %FILES%
@@ -518,6 +570,8 @@ IF DEFINED DELIMITER SET CMD_LINE=%CMD_LINE% --delimiter %DELIMITER%
 IF DEFINED HEADER SET CMD_LINE=%CMD_LINE% --header %HEADER%
 IF DEFINED CSV_QUOTE SET CMD_LINE=%CMD_LINE% --csv-quote %CSV_QUOTE%
 IF DEFINED CSV_ESCAPE SET CMD_LINE=%CMD_LINE% --csv-escape %CSV_ESCAPE%
+IF DEFINED CSV_IGNORE_LEADING_WHITESPACE SET CMD_LINE=%CMD_LINE% --csv-ignore-leading-white-space %CSV_IGNORE_LEADING_WHITESPACE%
+IF DEFINED CSV_IGNORE_TRAILING_WHITESPACE SET CMD_LINE=%CMD_LINE% --csv-ignore-trailing-white-space %CSV_IGNORE_TRAILING_WHITESPACE%
 IF DEFINED TRIM_VALUES SET CMD_LINE=%CMD_LINE% --trimValues %TRIM_VALUES%
 IF DEFINED EMPTY_VALUES_AS_NULLS SET CMD_LINE=%CMD_LINE% --empty-values-as-nulls %EMPTY_VALUES_AS_NULLS%
 IF DEFINED NULL_VALUE SET CMD_LINE=%CMD_LINE% --null-value %NULL_VALUE%

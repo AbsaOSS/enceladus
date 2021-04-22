@@ -15,10 +15,6 @@
 
 class RunRestDAO {
 
-  getSplineUrlTemplate() {
-    return RestClient.getSync(`/runs/splineUrlTemplate`)
-  }
-
   getAllRunSummaries() {
     return RestClient.get("/runs/summaries")
   }

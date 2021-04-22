@@ -185,7 +185,7 @@ object MigrationToV1 extends MigrationBase with CollectionMigration with JsonMig
         model1.conformanceRule.LiteralConformanceRule(order, outputColumn, controlCheckpoint, value, "LiteralConformanceRule")
 
       case model0.conformanceRule.MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion, attributeMappings, targetAttribute, outputColumn, isNullSafe) =>
-        model1.conformanceRule.MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion, attributeMappings, targetAttribute, outputColumn, isNullSafe, "MappingConformanceRule")
+        model1.conformanceRule.MappingConformanceRule(order, controlCheckpoint, mappingTable, mappingTableVersion, attributeMappings, None ,targetAttribute, outputColumn, isNullSafe, "MappingConformanceRule")
 
       case model0.conformanceRule.NegationConformanceRule(order, outputColumn, controlCheckpoint, inputColumn) =>
         model1.conformanceRule.NegationConformanceRule(order, outputColumn, controlCheckpoint, inputColumn, "NegationConformanceRule")

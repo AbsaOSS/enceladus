@@ -22,6 +22,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
@@ -67,10 +68,10 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
     "getDataset" in {
       val expected = DatasetFactory.getDummyDataset(name, version)
-      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=false"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=${ValidationLevel.NoValidation}"
       Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
 
-      val result = menasDao.getDataset(name, version)
+      val result = menasDao.getDataset(name, version, ValidationLevel.NoValidation)
 
       result should matchTo(expected)
     }

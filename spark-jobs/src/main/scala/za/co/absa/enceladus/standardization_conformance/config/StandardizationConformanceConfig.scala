@@ -48,6 +48,8 @@ case class StandardizationConformanceConfig(datasetName: String = "",
                                             csvHeader: Option[Boolean] = None,
                                             csvQuote: Option[String] = None,
                                             csvEscape: Option[String] = None,
+                                            csvIgnoreLeadingWhiteSpace: Option[Boolean] = None,
+                                            csvIgnoreTrailingWhiteSpace: Option[Boolean] = None,
                                             cobolOptions: Option[CobolOptions] = None,
                                             fixedWidthTrimValues: Option[Boolean] = None,
                                             rawPathOverride: Option[String] = None,
@@ -83,6 +85,8 @@ case class StandardizationConformanceConfig(datasetName: String = "",
   override def withCsvHeader(value: Option[Boolean]): StandardizationConformanceConfig = copy(csvHeader = value)
   override def withCsvQuote(value: Option[String]): StandardizationConformanceConfig = copy(csvQuote = value)
   override def withCsvEscape(value: Option[String]): StandardizationConformanceConfig = copy(csvEscape = value)
+  override def withCsvIgnoreLeadingWhiteSpace(value: Option[Boolean]): StandardizationConformanceConfig = copy(csvIgnoreLeadingWhiteSpace = value)
+  override def withCsvIgnoreTrailingWhiteSpace(value: Option[Boolean]): StandardizationConformanceConfig = copy(csvIgnoreTrailingWhiteSpace = value)
   override def withCobolOptions(value: Option[CobolOptions]): StandardizationConformanceConfig = copy(cobolOptions = value)
   override def withFixedWidthTrimValues(value: Option[Boolean]): StandardizationConformanceConfig = copy(fixedWidthTrimValues = value)
   override def withRawPathOverride(value: Option[String]): StandardizationConformanceConfig = copy(rawPathOverride = value)

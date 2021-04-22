@@ -57,17 +57,18 @@ class ConformanceRuleTest extends AnyWordSpec with Matchers {
   "MappingConformanceRule" should {
     val filter = IsNullFilter("country")
     val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
-      mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
+      additionalColumns = None, mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
       targetAttribute = "country_name", mappingTableFilter = Option(filter), overrideMappingTableOwnFilter = Option(true))
-    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false,"mappingTableFilter":{"_t":"IsNullFilter","columnName":"country"},"overrideMappingTableOwnFilter":true}"""
+    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","additionalColumns":null,"isNullSafe":false,"mappingTableFilter":{"_t":"IsNullFilter","columnName":"country"},"overrideMappingTableOwnFilter":true}"""
     assertSerDe(rule, json)
   }
 
   "MappingConformanceRule without filter (old MappingConformanceRule)" should {
     val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
+      additionalColumns = None,
       mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
       targetAttribute = "country_name", overrideMappingTableOwnFilter = None)
-    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","isNullSafe":false}"""
+    val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","additionalColumns":null,"isNullSafe":false}"""
     assertDeserialization(rule, json)
   }
 

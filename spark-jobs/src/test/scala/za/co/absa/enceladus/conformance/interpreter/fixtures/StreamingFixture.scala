@@ -32,7 +32,7 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
   implicit val menasBaseUrls: List[String] = List.empty
-  implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1))
+  implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1), reportDate = "2020-03-23")
 
   protected def testHyperConformanceFromConfig(input: DataFrame,
                                                sinkTableName: String,

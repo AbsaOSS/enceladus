@@ -24,6 +24,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
 
@@ -45,7 +46,7 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
 
       val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil,
         properties = Some(Map("prop1" -> "value1")), propertiesValidation = mockedPropertiesValidation) // (not) validated props
-      Mockito.when(dao.getDataset("DatasetA", 1, validateProperties = true)).thenReturn(dataset)
+      Mockito.when(dao.getDataset("DatasetA", 1, ValidationLevel.ForRun)).thenReturn(dataset)
       doNothing.when(dao).authenticate()
 
 
