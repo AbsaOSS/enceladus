@@ -27,7 +27,6 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>4.0.0</hyperdrive.version>
-        <commons.version>0.0.10</commons.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
 
@@ -81,12 +80,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>za.co.absa.commons</groupId>
-            <artifactId>commons_${scala.compat.version}</artifactId>
-            <version>${commons.version}</version>
-        </dependency>
-
         <!-- Libraries -->
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -111,52 +104,9 @@
 
         <!-- Lineage tracking -->
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-mongo</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-hdfs</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-common</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.compat.version}</artifactId>
+            <version>${spline.agent.version}</version>
         </dependency>
     </dependencies>
     <build>

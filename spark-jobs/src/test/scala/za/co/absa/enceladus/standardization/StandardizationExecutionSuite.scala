@@ -19,6 +19,7 @@ import java.io.File
 import java.nio.file.Files
 
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
@@ -30,7 +31,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
@@ -60,7 +61,6 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
       testDataset.write.csv(stdPath)
 
       // Atum framework initialization is part of the 'prepareStandardization'
-      import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
       spark.disableControlMeasuresTracking()
 
       val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
@@ -88,14 +88,15 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     ).toDF("id", "data").as("DatasetA")
 
     // rawPath must exist, _INFO file creation assures so
-    ControlUtils.createInfoFile(someDataset,
-      "test app",
-      rawPath,
-      "2020-02-20",
-      1,
-      "CZ",
-      aggregateColumns = List("id", "data"),
-      writeToHDFS = true)
+    val cm = ControlMeasureBuilder.forDF(someDataset)
+        .withSourceApplication("test app")
+        .withInputPath(rawPath)
+        .withReportDate("2020-02-20")
+        .withReportVersion(1)
+        .withCountry("CZ")
+        .withAggregateColumns(List("id", "data"))
+        .build
+    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(cm, new Path(rawPath))
 
     Mockito.when(dao.storeNewRunObject(ArgumentMatchers.any[Run])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
     Mockito.when(dao.updateRunStatus(ArgumentMatchers.any[String], ArgumentMatchers.any[RunStatus])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
