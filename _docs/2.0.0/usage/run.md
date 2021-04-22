@@ -173,7 +173,7 @@ The list of options for configuring Spark deployment mode in Yarn and resource s
 | --num-executors **n**                                                |             | Specifies the number of executors to use. Effective only if DRA is off, |
 | --executor-memory **mem**                                            |             | Specifies an amount of memory to request for each executor. See memory specification syntax in Spark. Examples: `4g`, `8g`.  Effective only if DRA is off. |
 | --executor-cores **mem**                                             | `1`         | Specifies a number of cores to request for each executor.  Effective only if DRA is off. |
-| --dra-num-executors **n**                                            |             | Same as `--num-executors` but used when DRA is enabled. Use with care! |
+| --dra-num-executors **n**                                            |             | Same as `--num-executors` but used when DRA is enabled. Use with care! DRA won't scale below this number. |
 | --dra-executor-memory **mem**                                        |             | Same as `--executor-memory` but used when DRA is enabled. |
 | --dra-executor-cores **mem**                                         | `1`         | Same as `--executor-cores` but used when DRA is enabled. |
 | --driver-cores **n**                                                 |             | Specifies a number of CPU cores to allocate for the driver process. |
