@@ -109,12 +109,6 @@
             <version>${spark.sql.kafka.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
-            <version>${spark.sql.kafka.version}</version>
-        </dependency>
-
         <!-- Lineage tracking -->
         <dependency>
             <groupId>za.co.absa.spline.agent.spark</groupId>
@@ -209,25 +203,6 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <arg>-feature</arg>
                     </args>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.ant.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
