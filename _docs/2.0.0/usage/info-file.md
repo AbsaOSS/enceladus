@@ -72,7 +72,7 @@ For a fully expanded example go [here][info-file].
 
 ## Additional Information 
 
-Addional information regarding the processing of information is added into the \_INFO file during **Standardization** and **Conformance**.
+Additional information regarding the processing of information is added into the \_INFO file during **Standardization** and **Conformance**.
 
 |           Metadata-Key      | Description |
 |-----------------------------|-----------------|
