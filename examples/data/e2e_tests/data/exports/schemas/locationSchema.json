@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "exportVersion": 1
+  },
+  "item": {
+    "name": "locationSchema",
+    "description": "",
+    "fields": [
+      {
+        "name": "location",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "location"
+      },
+      {
+        "name": "show",
+        "type": "string",
+        "path": "",
+        "elementType": null,
+        "containsNull": null,
+        "nullable": false,
+        "metadata": {},
+        "children": [],
+        "absolutePath": "show"
+      }
+    ]
+  }
+}

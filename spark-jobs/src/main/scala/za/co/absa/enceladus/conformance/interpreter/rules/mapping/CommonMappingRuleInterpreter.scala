@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{StructField, StructType}
-import org.apache.spark.sql.{Column, DataFrame, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
 import za.co.absa.enceladus.conformance.config.FilterFromConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
@@ -27,6 +27,8 @@ import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
+import za.co.absa.enceladus.utils.error.Mapping
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
 
 import scala.util.Try
@@ -37,6 +39,15 @@ trait CommonMappingRuleInterpreter {
   protected val rule: MappingConformanceRule
   protected val log: Logger
 
+  protected def outputColumnNames(): String = rule.allOutputColumns().mkString(", ")
+
+  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
+
+  protected val mappings: Seq[Mapping] = rule.attributeMappings.map {
+    case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
+  }.toSeq
+
+
   def conform(df: DataFrame)
              (implicit spark: SparkSession,
               explosionState: ExplosionState,
@@ -46,7 +57,7 @@ trait CommonMappingRuleInterpreter {
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
                                    dao: MenasDAO,
-                                   progArgs: InterpreterContextArgs): (DataFrame, Option[String]) = {
+                                   progArgs: InterpreterContextArgs): (DataFrame, Map[String, String]) = {
     if (enableCrossJoin) {
       //A fix for cases, where the join condition only uses columns previously created by a literal rule
       //see https://github.com/AbsaOSS/enceladus/issues/892
@@ -82,12 +93,23 @@ trait CommonMappingRuleInterpreter {
     log.info("Join Condition: " + joinConditionStr)
 
     // validate the default value against the mapping table schema
-    val defaultValue = getDefaultValue(mappingTableDef)
+    val defaultValues: Map[String, String] = getDefaultValues(mappingTableDef)
 
     // validate join fields existence
     validateMappingFieldsExist(joinConditionStr, df.schema, mapTable.schema, rule)
 
-    (mapTable, defaultValue)
+    validateOutputColumns(rule)
+
+    (mapTable, defaultValues)
+  }
+
+  protected def joinDatasetAndMappingTable(mapTable: DataFrame, dfIn: Dataset[Row]): DataFrame = {
+    dfIn.as(CommonMappingRuleInterpreter.inputDfAlias).
+      join(mapTable.as(CommonMappingRuleInterpreter.mappingTableAlias), joinCondition, CommonMappingRuleInterpreter.joinType).
+      select(
+        col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
+        col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.${rule.targetAttribute}") as rule.outputColumn
+      )
   }
 
   protected def validateMappingFieldsExist(joinConditionStr: String,
@@ -100,41 +122,52 @@ trait CommonMappingRuleInterpreter {
   protected def joinCondition: Column = CommonMappingRuleInterpreter.getJoinCondition(rule)
 
   /**
-    * Returns a default value of the output column, if specified, for a particular mapping rule.
-    * Default values may be specified for each target attribute in a mapping table and must have the same type as
-    * the target attribute and must be presented as a Spark expression string.
-    *
-    * When a mapping table definition has a default value for the target attribute "*", this value acts as a default
-    * value for all target attributes, for which the default value is not set.
-    *
-    * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
-    *
-    * @param mappingTableDef A mapping rule definition
-    * @return A default value, if available, as a Spark expression represented as a string.
-    */
-  private def getDefaultValue(mappingTableDef: MappingTable)
-                             (implicit spark: SparkSession, dao: MenasDAO): Option[String] = {
+   * Returns a map of the default values of the output columns, if specified, for a particular mapping rule.
+   * Default values may be specified for each target attribute in a mapping table and must have the same type as
+   * the target attribute and must be presented as a Spark expression string.
+   *
+   * When a mapping table definition has a default value for the target attribute "*", this value acts as a default
+   * value for all target attributes, for which the default value is not set.
+   *
+   * A target attribute used is specified in a mapping rule definition in the list of conformance rules in the dataset.
+   *
+   * @param mappingTableDef A mapping rule definition
+   * @return A map of defaults as strings of Spark expressions, where the requested fields are the map's keys
+   */
+  private def getDefaultValues(mappingTableDef: MappingTable)
+                              (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
-    val attributeDefaultValueOpt = defaultMappingValueMap.get(rule.targetAttribute)
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")
-
-    val defaultValueOpt = attributeDefaultValueOpt match {
-      case Some(_) => attributeDefaultValueOpt
-      case None => genericDefaultValueOpt
-    }
-
-    if (defaultValueOpt.isDefined) {
-      val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
-      mappingTableSchemaOpt match {
-        case Some(schema) =>
-          CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
-            rule.targetAttribute, defaultValueOpt.get)
-        case None =>
-          log.warn("Mapping table schema loading failed")
+    val defaultValuesForTargets = rule.allOutputColumns().flatMap {case (_, targetAttribute) =>
+      val fieldDefault = defaultMappingValueMap.get(targetAttribute)
+      fieldDefault match {
+        case None => genericDefaultValueOpt.map(genDefault => targetAttribute -> genDefault)
+        case Some(x) => Some(targetAttribute -> x)
       }
     }
-    defaultValueOpt
+
+    val mappingTableSchemaOpt = Option(dao.getSchema(mappingTableDef.schemaName, mappingTableDef.schemaVersion))
+    mappingTableSchemaOpt match {
+      case Some(schema) =>
+        if(defaultValuesForTargets.nonEmpty){
+          defaultValuesForTargets.foreach { case (targetAttribute, defaultValue: String) =>
+            CommonMappingRuleInterpreter.ensureDefaultValueMatchSchema(mappingTableDef.name, schema,
+              targetAttribute, defaultValue)
+          }
+        }
+      case None =>
+        log.warn("Mapping table schema loading failed")
+    }
+    defaultValuesForTargets
+  }
+
+  private def validateOutputColumns(rule: MappingConformanceRule): Unit = {
+    val outputColParent = SchemaUtils.getParentPath(rule.outputColumn)
+    val allOutputsOnTheSamePath = rule.allOutputColumns().keys.map(SchemaUtils.getParentPath).forall(_ == outputColParent)
+    if (! allOutputsOnTheSamePath) {
+      throw new ValidationException(s"The output columns of a Mapping Conformance rule have to be on the same level")
+    }
   }
 }
 
