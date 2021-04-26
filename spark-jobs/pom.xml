@@ -134,6 +134,13 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.mrpowers</groupId>
+            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
+            <version>${spark.fast.tests.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
