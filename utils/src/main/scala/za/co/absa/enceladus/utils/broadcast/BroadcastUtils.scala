@@ -64,30 +64,46 @@ object BroadcastUtils {
    * Returns a UDF that takes values of join keys and returns the value of the target attribute or null
    * if there is no mapping for the specified keys.
    *
-   * @param mappingTable        A mapping table broadcasted to executors.
-   * @param defaultValueExprMap The map of defaults with string expressions
+   * @param mappingTable            A mapping table broadcasted to executors.
+   * @param defaultValueExpressions The map of defaults with string expressions
    * @return A UDF that maps joins keys to a target attribute value.
    */
   def getMappingUdfForSingleOutput(mappingTable: Broadcast[LocalMappingTable],
-                                   defaultValueExprMap: Map[String, String])(implicit spark: SparkSession): UserDefinedFunction = {
+                                   defaultValueExpressions: Map[String, String])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-    val defaultValueMap = defaultValueExprMap.mapValues(getValueOfSparkExpression)
+    val defaultValue = defaultValueExpressions.mapValues(getValueOfSparkExpression)
+      .get(mappingTable.value.outputColumns.values.head).orNull
 
-    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, isSingleOutput = true)
-
-    lambda
+    getLambda(numberOfArguments, mappingTable.value.getRowWithDefault(_, defaultValue), mappingTable.value.valueTypes.head)
   }
 
+  /**
+   * Returns a UDF that takes values of join keys and returns the target attribute values as a row or null
+   * if there is no mapping for the specified keys.
+   *
+   * @param mappingTable            A mapping table broadcasted to executors.
+   * @param defaultValueExpressions The map of defaults with string expressions
+   * @return A UDF that maps joins keys to a row of target attribute values.
+   */
   def getMappingUdfForMultipleOutputs(mappingTable: Broadcast[LocalMappingTable],
-                                   defaultValueExprMap: Map[String, String])(implicit spark: SparkSession): UserDefinedFunction = {
+                                      defaultValueExpressions: Map[String, String])(implicit spark: SparkSession): UserDefinedFunction = {
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-    val defaultValueMap = defaultValueExprMap.mapValues(getValueOfSparkExpression)
+    val defaultValues = defaultValueExpressions.mapValues(getValueOfSparkExpression)
+    val defaultRow = if (defaultValues.isEmpty) {
+      null
+    } else {
+      Row.fromSeq(mappingTable.value.outputColumns.values.toSeq.map(field => defaultValues.getOrElse(field, null)))
+    }
 
-    val lambda = getMappingLambda(mappingTable, defaultValueMap, numberOfArguments, isSingleOutput = false)
+    val fnc: Seq[Any] => Any = (seq: Seq[Any] ) => mappingTable.value.getRowWithDefault(seq, defaultRow)
+    val structFields: Seq[StructField] = mappingTable.value.outputColumns.keys
+      .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
+      .zip(mappingTable.value.valueTypes)
+      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
 
-    lambda
+    getLambda(numberOfArguments, fnc, StructType(structFields))
   }
 
   /**
@@ -102,71 +118,7 @@ object BroadcastUtils {
 
     val numberOfArguments = mappingTable.value.keyTypes.size
 
-    val lambda = getErrorLambda(mappingTable, outputColumns, mappings, numberOfArguments)
-
-    lambda
-  }
-
-  private def getMappingLambda(mappingTable: Broadcast[LocalMappingTable],
-                               defaultValues: Map[String, Any], numberOfArguments: Int, isSingleOutput: Boolean): UserDefinedFunction = {
-    val defaultValue = if (isSingleOutput) {
-      defaultValues.get(mappingTable.value.outputColumns.values.head).orNull
-    } else if (defaultValues.isEmpty) {
-      null
-    } else {
-      Row.fromSeq(mappingTable.value.outputColumns.values.toSeq.map(field => defaultValues.getOrElse(field, null)))
-    }
-    val valueType: DataType = if(isSingleOutput) mappingTable.value.valueTypes.head else {
-      val structFields: Seq[StructField] = mappingTable.value.outputColumns.keys
-        .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
-        .zip(mappingTable.value.valueTypes)
-        .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
-      StructType(structFields)
-    }
-    numberOfArguments match {
-      case 1 => udf(new UDF1[Any, Any] {
-        override def call(p1: Any): Any = mappingTable.value.getRowWithDefault(Seq(p1), defaultValue)
-      }, valueType)
-      case 2 => udf(new UDF2[Any, Any, Any] {
-        override def call(p1: Any, p2: Any): Any = mappingTable.value.getRowWithDefault(Seq(p1, p2), defaultValue)
-      }, valueType)
-      case 3 => udf(new UDF3[Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any): Any = mappingTable.value.getRowWithDefault(Seq(p1, p2, p3), defaultValue)
-      }, valueType)
-      case 4 => udf(new UDF4[Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any): Any = mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4), defaultValue)
-      }, valueType)
-      case 5 => udf(new UDF5[Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5), defaultValue)
-      }, valueType)
-      case 6 => udf(new UDF6[Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5, p6), defaultValue)
-      }, valueType)
-      case 7 => udf(new UDF7[Any, Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5, p6, p7), defaultValue)
-      }, valueType)
-      case 8 => udf(new UDF8[Any, Any, Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5, p6, p7, p8), defaultValue)
-      }, valueType)
-      case 9 => udf(new UDF9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9), defaultValue)
-      }, valueType)
-      case 10 => udf(new UDF10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any, p10: Any): Any =
-          mappingTable.value.getRowWithDefault(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10), defaultValue)
-      }, valueType)
-      case n => throw new IllegalArgumentException(s"Mapping UDFs with $n arguments are not supported. Should be between 1 and 10.")
-    }
-  }
-
-  private def getErrorLambda(mappingTable: Broadcast[LocalMappingTable], outputColumns: Seq[String],
-                             mappings: Seq[Mapping], numberOfParams: Int): UserDefinedFunction = {
-    def applyError(key: Seq[Any]): Any = {
+    val applyError: Seq[Any] => Any = (key: Seq[Any] ) => {
       if (mappingTable.value.contains(key)) {
         null
       } else {
@@ -176,41 +128,42 @@ object BroadcastUtils {
     }
     val errorMessageType = ScalaReflection.schemaFor[ErrorMessage].dataType
 
-    numberOfParams match {
-      case 1 => udf(new UDF1[Any, Any] {
-        override def call(p1: Any): Any = applyError(Seq(p1))
-      }, errorMessageType)
-      case 2 => udf(new UDF2[Any, Any, Any] {
-          override def call(p1: Any, p2: Any): Any = applyError(Seq(p1, p2))
-        }, errorMessageType)
-      case 3 => udf(new UDF3[Any, Any, Any, Any] {
-          override def call(p1: Any, p2: Any, p3: Any): Any = applyError(Seq(p1, p2, p3))
-        }, errorMessageType)
+    getLambda(numberOfArguments, applyError, errorMessageType)
+  }
+
+  private def getLambda(numberOfArguments: Int, fnc: Seq[Any] => Any, valueType: DataType): UserDefinedFunction = {
+    numberOfArguments match {
+      case 1 => udf(new UDF1[Any, Any] { override def call(p1: Any): Any = fnc(Seq(p1))}, valueType)
+      case 2 => udf(new UDF2[Any, Any, Any] { override def call(p1: Any, p2: Any): Any = fnc(Seq(p1, p2))}, valueType)
+      case 3 => udf(new UDF3[Any, Any, Any, Any] {override def call(p1: Any, p2: Any, p3: Any): Any = fnc(Seq(p1, p2, p3))}, valueType)
       case 4 => udf(new UDF4[Any, Any, Any, Any, Any] {
-          override def call(p1: Any, p2: Any, p3: Any, p4: Any): Any = applyError(Seq(p1, p2, p3, p4))
-        }, errorMessageType)
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any): Any = fnc(Seq(p1, p2, p3, p4))
+      }, valueType)
       case 5 => udf(new UDF5[Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any): Any = applyError(Seq(p1, p2, p3, p4, p5))
-      }, errorMessageType)
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any): Any =
+          fnc(Seq(p1, p2, p3, p4, p5))
+      }, valueType)
       case 6 => udf(new UDF6[Any, Any, Any, Any, Any, Any, Any] {
-          override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any): Any = applyError(Seq(p1, p2, p3, p4, p5, p6))
-        }, errorMessageType)
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any): Any =
+          fnc(Seq(p1, p2, p3, p4, p5, p6))
+      }, valueType)
       case 7 => udf(new UDF7[Any, Any, Any, Any, Any, Any, Any, Any] {
-        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any): Any = applyError(Seq(p1, p2, p3, p4, p5, p6, p7))
-      }, errorMessageType)
+        override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any): Any =
+          fnc(Seq(p1, p2, p3, p4, p5, p6, p7))
+      }, valueType)
       case 8 => udf(new UDF8[Any, Any, Any, Any, Any, Any, Any, Any, Any] {
         override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any): Any =
-          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8))
-      }, errorMessageType)
+          fnc(Seq(p1, p2, p3, p4, p5, p6, p7, p8))
+      }, valueType)
       case 9 => udf(new UDF9[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
         override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any): Any =
-          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9))
-      }, errorMessageType)
+          fnc(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9))
+      }, valueType)
       case 10 => udf(new UDF10[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any, Any] {
         override def call(p1: Any, p2: Any, p3: Any, p4: Any, p5: Any, p6: Any, p7: Any, p8: Any, p9: Any, p10: Any): Any =
-          applyError(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10))
-      }, errorMessageType)
-      case n => throw new IllegalArgumentException(s"Error column UDFs with $n arguments are not supported. Should be between 1 and 10.")
+          fnc(Seq(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10))
+      }, valueType)
+      case n => throw new IllegalArgumentException(s"UDFs with $n arguments are not supported. Should be between 1 and 10.")
     }
   }
 
