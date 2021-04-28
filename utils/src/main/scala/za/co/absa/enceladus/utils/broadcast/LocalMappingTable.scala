@@ -25,10 +25,10 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
 final case class LocalMappingTable private(
-                                    private val data: Map[Seq[Any], Any],
-                                    outputColumns: Map[String, String],
-                                    keyTypes: Seq[DataType],
-                                    valueTypes: Seq[DataType]
+                                            private val data: Map[Seq[Any], Any],
+                                            outputColumns: Map[String, String],
+                                            keyTypes: Seq[DataType],
+                                            valueType: DataType
                                   ) {
 
   def getRowWithDefault(key: Seq[Any], default: Any): Any = {
@@ -66,7 +66,10 @@ object LocalMappingTable {
     val valueTypes = targetAttributes.flatMap(targetAttribute => {
       SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema)
     })
-    val structFields: Seq[StructField] = outputColumns.keys.toSeq.zip(valueTypes)
+
+    val structFields: Seq[StructField] = outputColumns.keys
+      .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
+      .zip(valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
     val rowSchema = StructType(structFields)
 
@@ -83,7 +86,8 @@ object LocalMappingTable {
       (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
     }).toMap
 
-    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueTypes)
+    val valueType: DataType = if (outputColumns.size == 1) valueTypes.head else rowSchema
+    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueType)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {

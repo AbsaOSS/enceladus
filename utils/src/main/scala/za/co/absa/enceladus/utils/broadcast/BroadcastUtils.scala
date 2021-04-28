@@ -20,7 +20,7 @@ import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{expr, udf}
-import org.apache.spark.sql.types.{DataType, StructField, StructType}
+import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
@@ -75,7 +75,7 @@ object BroadcastUtils {
     val defaultValue = defaultValueExpressions.mapValues(getValueOfSparkExpression)
       .get(mappingTable.value.outputColumns.values.head).orNull
 
-    getLambda(numberOfArguments, mappingTable.value.getRowWithDefault(_, defaultValue), mappingTable.value.valueTypes.head)
+    getLambda(numberOfArguments, mappingTable.value.getRowWithDefault(_, defaultValue), mappingTable.value.valueType)
   }
 
   /**
@@ -97,13 +97,7 @@ object BroadcastUtils {
       Row.fromSeq(mappingTable.value.outputColumns.values.toSeq.map(field => defaultValues.getOrElse(field, null)))
     }
 
-    val fnc: Seq[Any] => Any = (seq: Seq[Any] ) => mappingTable.value.getRowWithDefault(seq, defaultRow)
-    val structFields: Seq[StructField] = mappingTable.value.outputColumns.keys
-      .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
-      .zip(mappingTable.value.valueTypes)
-      .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
-
-    getLambda(numberOfArguments, fnc, StructType(structFields))
+    getLambda(numberOfArguments, mappingTable.value.getRowWithDefault(_, defaultRow), mappingTable.value.valueType)
   }
 
   /**
