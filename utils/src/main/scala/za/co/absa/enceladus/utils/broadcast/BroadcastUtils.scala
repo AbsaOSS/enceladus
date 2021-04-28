@@ -125,6 +125,11 @@ object BroadcastUtils {
     getLambda(numberOfArguments, applyError, errorMessageType)
   }
 
+  /*
+    Using Java UDF, because since Spark 3.x, udf((p1:Any) => fnc(Seq(p1)) with return type Any would fail with
+    "Schema for type Any is not supported". Specifying the return type with DataType has been deprecated.
+    Therefore, in order to use UDFs generically and not get functionality changes, Java UDFs seem to be the solution
+   */
   private def getLambda(numberOfArguments: Int, fnc: Seq[Any] => Any, valueType: DataType): UserDefinedFunction = {
     numberOfArguments match {
       case 1 => udf(new UDF1[Any, Any] { override def call(p1: Any): Any = fnc(Seq(p1))}, valueType)
