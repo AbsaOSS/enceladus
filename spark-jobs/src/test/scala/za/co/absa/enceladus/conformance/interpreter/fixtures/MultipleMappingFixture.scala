@@ -91,7 +91,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
     val infoFileContents: String = fromFile(value, "UTF-8").mkString
 
     FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents,
-      "UTF-8",true)
+      Charset.defaultCharset, true)
   }
 
   private def prepareDataFrame(): Unit = {

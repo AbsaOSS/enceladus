@@ -68,7 +68,7 @@ object LocalMappingTable {
     })
 
     val structFields: Seq[StructField] = outputColumns.keys
-      .map(outputName => if (outputName.contains(".")) outputName.split("\\.").last else outputName).toSeq
+      .map(SchemaUtils.stripPathFromFieldName).toSeq
       .zip(valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
     val rowSchema = StructType(structFields)
@@ -80,13 +80,19 @@ object LocalMappingTable {
     val numberOfKeys = keyFields.size
     val numberOfValues = targetAttributes.size
 
+    val oneValue = (seq: Seq[Any]) => seq.head
+    val moreValues = (seq: Seq[Any], schema: StructType) => new GenericRowWithSchema(seq.toArray, schema)
+    val (valueType: DataType, valueFnc) = if (outputColumns.size == 1) {
+      (valueTypes.head, oneValue)
+    } else {
+      (rowSchema, moreValues(_, StructType(structFields)))
+    }
     val mappingTable = projectedDf.collect().map(row => {
       val values = (0 until numberOfValues).toArray map (row(_))
       val keys: Seq[Any] = (numberOfValues until numberOfValues + numberOfKeys) map(row(_))
-      (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
+      (keys, valueFnc(values))
     }).toMap
 
-    val valueType: DataType = if (outputColumns.size == 1) valueTypes.head else rowSchema
     LocalMappingTable(mappingTable, outputColumns, keyTypes, valueType)
   }
 
