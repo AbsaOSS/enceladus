@@ -43,8 +43,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     generateDesiredSchema('"' + arrayElementType.typeName + '"', metadata)
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of timestamps with no pattern") {
+  test("Array of timestamps with no pattern") {
     val seq  = Seq(
       Array("00:00:00 01.12.2018", "00:10:00 02.12.2018","00:20:00 03.12.2018"),
       Array("00:00:00 01.12.2019", "00:10:00 02.12.2019","00:20:00 03.12.2019"),
@@ -74,8 +73,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     assert(std.dataAsString(false) == expectedData)
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of timestamps with pattern defined") {
+  test("Array of timestamps with pattern defined") {
     val seq  = Seq(
       Array("00:00:00 01.12.2008", "00:10:00 02.12.2008","00:20:00 03.12.2008"),
       Array("00:00:00 01.12.2009", "00:10:00 02.12.2009","00:20:00 03.12.2009"),
@@ -120,8 +118,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     caught.errors.head should startWith ("Validation error for column 'arrayField[].arrayField', pattern 'fubar")
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of integers with pattern defined") {
+  test("Array of integers with pattern defined") {
     val seq  = Seq(
       Array("Size: 1", "Size: 2","Size: 3"),
       Array("Size: -7", "Size: ~13.13"),
@@ -161,13 +158,13 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val desiredSchema = generateDesiredSchema(FloatType, s""""${MetadataKeys.DefaultValue}": "3.14", "${MetadataKeys.MinusSign}": "~" """)
 
     val expectedData =
-      """+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||arrayField        |errCol                                                                                                                                                              |
-        |+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||[1.1, 2.2, 3.3]   |[]                                                                                                                                                                  |
-        ||[-7.7, 3.14]      |[{stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [-13.13], []}]                                                                            |
-        ||[3.14, null, 3.14]|[{stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [], []}, {stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [], []}]|
-        |+------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+      """+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+        ||arrayField        |errCol                                                                                                                                                               |
+        |+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+        ||[1.1, 2.2, 3.3]   |[]                                                                                                                                                                   |
+        ||[-7.7, 3.14]      |[{stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [-13.13], []}]                                                                             |
+        ||[3.14, null, 3.14]|[{stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [A], []}, {stdCastError, E00000, Standardization Error - Type cast, arrayField[*], [], []}]|
+        |+------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------+
         |
         |""".stripMargin.replace("\r\n", "\n")
     val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
