@@ -74,9 +74,9 @@ object LocalMappingTable {
     val rowSchema = StructType(structFields)
 
     val targetColumns: Seq[Column] = targetAttributes.map(targetAttribute => col(targetAttribute))
-    val keyColumns = keyFields.map(c => col(c))
+    val keyColumns: Seq[Column] = keyFields.map(c => col(c))
     val mappingColumns = targetColumns ++ keyColumns
-    
+
     val projectedDf = mappingTableDf.select(mappingColumns: _*)
     val numberOfKeys = keyFields.size
     val numberOfValues = targetAttributes.size

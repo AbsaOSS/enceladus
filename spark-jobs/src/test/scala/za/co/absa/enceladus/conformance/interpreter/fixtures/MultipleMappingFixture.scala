@@ -88,12 +88,9 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
       .mode(SaveMode.Overwrite)
       .parquet(getRawDataPath(mappingDS.hdfsPath))
     val value = "../examples/data/e2e_tests/data/hdfs/std/mappingConformanceRuleData/2020/03/23/v1/_INFO"
-    val fileContent = fromFile(value, "UTF-8")
-    val infoFileContents: String = fileContent.mkString
-    fileContent.close()
+    val infoFileContents: String = fromFile(value, "UTF-8").mkString
 
-    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents,
-      Charset.defaultCharset, true)
+    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents, Charset.defaultCharset())
   }
 
   private def prepareDataFrame(): Unit = {
