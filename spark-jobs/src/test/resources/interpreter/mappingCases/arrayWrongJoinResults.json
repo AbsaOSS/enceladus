@@ -1,0 +1,142 @@
+[ {
+  "id" : 1,
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "1", "WrappedArray(2, 1, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "3", "WrappedArray(2, 1, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "2", "WrappedArray(2, 1, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  } ]
+}, {
+  "id" : 2,
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "1", "WrappedArray(4, 3, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "3", "WrappedArray(4, 3, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "4", "WrappedArray(4, 3, 3)" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  } ]
+}, {
+  "id" : 3,
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "2", "WrappedArray()" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  }, {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "3", "WrappedArray()" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  } ]
+}, {
+  "id" : 4,
+  "errCol" : [ {
+    "errType" : "confMapError",
+    "errCode" : "E00001",
+    "errMsg" : "Conformance Error - Null produced by mapping conformance rule",
+    "errCol" : "array2.inner2.wrongNum1",
+    "rawValues" : [ "2", "WrappedArray()" ],
+    "mappings" : [ {
+      "mappingTableColumn" : "lkey",
+      "mappedDatasetColumn" : "array2.inner2.key9"
+    }, {
+      "mappingTableColumn" : "ikey",
+      "mappedDatasetColumn" : "array1.key7"
+    } ]
+  } ]
+}, {
+  "id" : 5,
+  "errCol" : [ ]
+}, {
+  "id" : 6,
+  "errCol" : [ ]
+}, {
+  "id" : 7,
+  "errCol" : [ ]
+}, {
+  "id" : 8,
+  "errCol" : [ ]
+} ]
