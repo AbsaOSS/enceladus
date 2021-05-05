@@ -82,7 +82,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private def performJoinsToOutputsColumn(outputsStructColumnName: String, explodedDf: DataFrame, mapTable: DataFrame): DataFrame = {
     val outputElements = rule.allOutputColumns().map { case (outputColumn: String, targetAttribute: String) =>
-      val newOutputColName = if (outputColumn.contains(".")) outputColumn.split("\\.").last else outputColumn
+      val newOutputColName = SchemaUtils.stripPathFromFieldName(outputColumn)
       col(s"${CommonMappingRuleInterpreter.mappingTableAlias}.$targetAttribute") as newOutputColName
     }.toSeq
     val columns = Seq(col(s"${CommonMappingRuleInterpreter.inputDfAlias}.*"),
@@ -95,7 +95,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
 
   private def getMultipleErrorCondition(expCtx: ExplosionContext, outputsStructColumnName: String) = {
     val arrayErrorConditions = rule.allOutputColumns().keys.foldLeft(lit(false))((acc: Column, nestedColumn: String) => {
-      val newOutputColName = if (nestedColumn.contains(".")) nestedColumn.split("\\.").last else nestedColumn
+      val newOutputColName = SchemaUtils.stripPathFromFieldName(nestedColumn)
       val nestedOutputName = s"$outputsStructColumnName.$newOutputColName"
       val nestedFieldCondition = col(nestedOutputName).isNull.and(expCtx.getArrayErrorCondition(nestedOutputName))
       acc.or(nestedFieldCondition)
@@ -183,17 +183,13 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
                                                             defaultMappingValues: Map[String, String],
                                                             mappingErrUdfCall: Column,
                                                             errorConditions: Column): DataFrame = {
-    val outputsStructColumnName = if (outputsStructColumnPath.contains(".")) {
-      outputsStructColumnPath.split("\\.").last
-    } else {
-      outputsStructColumnPath
-    }
+    val outputsStructColumnName = SchemaUtils.stripPathFromFieldName(outputsStructColumnPath)
     val otherStructFields = getOtherStructFields(df, parentPath, outputsStructColumnName)
     NestedArrayTransformations.nestedWithColumnAndErrorMap(df, parentPath, parentPath,
       ErrorMessage.errorColumnName,
       c => {
         val defaultAppliedStructCols: Seq[Column] = rule.allOutputColumns().map { case (outputName, targetAttribute) => {
-          val leafOutputColumnName = if (outputName.contains(".")) outputName.split("\\.").last else outputName
+          val leafOutputColumnName = SchemaUtils.stripPathFromFieldName(outputName)
           val fieldInOutputs = c.getField(outputsStructColumnName).getField(leafOutputColumnName)
           applyDefaultsToOutputs(defaultMappingValues, leafOutputColumnName, targetAttribute, fieldInOutputs)
         }
