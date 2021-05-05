@@ -30,7 +30,6 @@ import org.springframework.security.web.authentication._
 import za.co.absa.enceladus.menas.auth._
 import za.co.absa.enceladus.menas.auth.jwt.JwtAuthenticationFilter
 import za.co.absa.enceladus.menas.auth.kerberos.MenasKerberosAuthentication
-import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 
 @EnableWebSecurity
@@ -62,7 +61,9 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .and()
         .authorizeRequests()
           .antMatchers("/admin/health", "/api/oozie/isEnabled",
-            "/api/user/version", "/api/configuration/**")
+            "/api/user/version", "/api/configuration/**",
+            "/swagger-ui.html", "/webjars/**", "/v2/api-docs", "/swagger-resources",
+            "/swagger-resources/configuration/ui", "/swagger-resources/configuration/security")
           .permitAll()
         .anyRequest()
           .authenticated()
