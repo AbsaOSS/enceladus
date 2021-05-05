@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.Timestamp
 
-import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
@@ -29,8 +28,9 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.hermes.datasetComparison.DatasetComparator
 
-class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers with DatasetComparer {
+class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
@@ -79,7 +79,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
       Row(Seq(Timestamp.valueOf("2020-01-12 00:00:00"), Timestamp.valueOf("2020-12-02 00:10:00"), Timestamp.valueOf("2020-12-03 00:20:00")), Seq())
     )
     val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
-    assertSmallDatasetEquality(stdDF, expectedDF)
+    new DatasetComparator(expectedDF, stdDF).compare.resultDF shouldBe None
   }
 
   test("Array of timestamps with pattern defined") {
@@ -109,7 +109,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
       ))
     )
     val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
-    assertSmallDatasetEquality(stdDF, expectedDF)
+    new DatasetComparator(expectedDF, stdDF).compare.resultDF shouldBe None
   }
 
   test("Array of timestamps with invalid pattern") {
@@ -157,7 +157,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
       ))
     )
     val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
-    assertSmallDatasetEquality(stdDF, expectedDF)
+    new DatasetComparator(expectedDF, stdDF).compare.resultDF shouldBe None
   }
 
   test("Array of floats with minus sign changed and default defined") {
@@ -189,7 +189,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
       ))
     )
     val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
-    assertSmallDatasetEquality(stdDF, expectedDF)
+    new DatasetComparator(expectedDF, stdDF).compare.resultDF shouldBe None
   }
 
   test("Array of arrays of string") {
@@ -217,6 +217,6 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
       ))
     )
     val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
-    assertSmallDatasetEquality(stdDF, expectedDF)
+    new DatasetComparator(expectedDF, stdDF).compare.resultDF shouldBe None
   }
 }

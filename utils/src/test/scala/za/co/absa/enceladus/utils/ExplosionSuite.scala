@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.utils
 
-import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import org.slf4j.LoggerFactory
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
@@ -26,8 +26,9 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.spark.hats.Extensions._
+import za.co.absa.hermes.datasetComparison.DatasetComparator
 
-class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer {
+class ExplosionSuite extends AnyFunSuite with SparkTestBase with Matchers {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -72,7 +73,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(11, 1L, 10, 9)
     )
     val expectedDf = expectedData.toDfWithSchema(explodedDf.schema)
-    assertSmallDatasetEquality(explodedDf.limit(20), expectedDf) // checking just the data: just 20 first rows
+    new DatasetComparator(expectedDf, explodedDf.limit(20)).compare.resultDF shouldBe None // checking just the data: just 20 first rows
   }
 
   test("Test a simple array reconstruction") {
@@ -118,7 +119,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(11, 1, 1L, 10, 9)
     )
     val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf.schema)
-    assertSmallDatasetEquality(explodedDf.limit(20), expectedExplodedDf) // checking just the data: just 20 first rows
+    new DatasetComparator(expectedExplodedDf, explodedDf.limit(20)).compare.resultDF shouldBe None // checking just the data: just 20 first rows
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
@@ -141,7 +142,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
     )
 
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test("Test a array of array sequence of explosions") {
@@ -195,7 +196,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(10, 1, 0L, 2, 1, 1L, 7, 3)
     )
     val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf2.schema)
-    assertSmallDatasetEquality(explodedDf2.limit(10), expectedExplodedDf) // checking just the data: just 10 first rows
+    new DatasetComparator(expectedExplodedDf, explodedDf2.limit(10)).compare.passed shouldBe true // checking just the data: just 10 first rows
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
 
@@ -217,7 +218,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(1, Seq(Seq(401, 402, 403, 404, 405, 406), Seq(407, 408, 409, 410, 411, 412, 413)))
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test("Test handling of empty and null arrays") {
@@ -253,7 +254,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(1L, 10, 1, 2L)
     )
     val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDfProjection.schema)
-    assertSmallDatasetEquality(explodedDfProjection.limit(5), expectedExplodedDf) // checking just the data: just 5 first rows
+    new DatasetComparator(expectedExplodedDf, explodedDfProjection.limit(5)).compare.resultDF shouldBe None // checking just the data: just 5 first rows
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
@@ -274,7 +275,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, null)
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test("Test deconstruct()") {
@@ -310,7 +311,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, Row(0, 400L), null)
     )
     val expectedDeconstructedDf = expectedDeconstructedData.toDfWithSchema(deconstructedDf.schema)
-    assertSmallDatasetEquality(deconstructedDf, expectedDeconstructedDf) // checking just the data
+    new DatasetComparator(expectedDeconstructedDf, deconstructedDf).compare.resultDF shouldBe None // checking just the data
 
     val restoredDf = ExplodeTools.nestedRenameReplace(deconstructedDf, deconstructedCol, "leg.conditions", transientCol)
 
@@ -335,7 +336,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, Row(null, 400L))
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test ("Test multiple nesting of arrays and structs") {
@@ -384,7 +385,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(7L, null)
     )
     val expectedOriginalDf = expectedOriginalData.toDfWithSchema(df.schema)
-    assertSmallDatasetEquality(df, expectedOriginalDf) // checking just the data
+    new DatasetComparator(expectedOriginalDf, df).compare.resultDF shouldBe None // checking just the data
 
     val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
     val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", explodedDf1, explodeContext1)
@@ -429,7 +430,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(1L, Row(Row(100L, Row("5c", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 4)
     )
     val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf4.schema)
-    assertSmallDatasetEquality(explodedDf4.limit(5), expectedExplodedDf) // checking just the data: just 5 first rows
+    new DatasetComparator(expectedExplodedDf, explodedDf4.limit(5)).compare.resultDF shouldBe None // checking just the data: just 5 first rows
 
     // Check the filter generator as well
     val explodeConditionFilter = explodeContext4.getControlFrameworkFilter
@@ -438,8 +439,11 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf4, explodeContext4)
 
-    // Checking if restoration has been done correctly - data + schema
-    assertSmallDatasetEquality(restoredDf, expectedOriginalDf) // restored schema+data should be same as original
+    // Checking if restoration has been done correctly - schema
+    assertSchema(restoredDf.schema.treeString, expectedOriginalSchema)
+
+    // Checking if restoration has been done correctly - data
+    new DatasetComparator(expectedOriginalDf, restoredDf).compare.resultDF shouldBe None // restored schema+data should be same as original
   }
 
   test ("Test exploding a nested array that is the only element of a struct") {
@@ -470,7 +474,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, null)
     )
     val expectedOriginalDf = expectedOriginalData.toDfWithSchema(df.schema)
-    assertSmallDatasetEquality(df, expectedOriginalDf) // checking just the data
+    new DatasetComparator(expectedOriginalDf, df).compare.resultDF shouldBe None // checking just the data
 
     val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
 
@@ -502,7 +506,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, Row(null, null), 25769803776L, -1, null)
     )
     val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf.schema)
-    assertSmallDatasetEquality(explodedDf, expectedExplodedDf) // checking just the data
+    new DatasetComparator(expectedExplodedDf, explodedDf).compare.resultDF shouldBe None // checking just the data
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
@@ -526,7 +530,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, Row(null)) // differs from original here, it held just "null", after restoration: "Row(null)" (~ struct)
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test ("Test explosion of an array field inside a struct") {
@@ -561,7 +565,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(4L, Row(null, 400L))
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test ("Test explosion with an error column") {
@@ -600,7 +604,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(3L, Row(null, 300L), Seq(null))
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test ("Test empty struct inside an array") {
@@ -644,7 +648,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(true, 6L, null)
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   test ("Test empty struct inside an array with the only array field") {
@@ -682,7 +686,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
       Row(true, 5L, null)
     )
     val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
-    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
+    new DatasetComparator(expectedRestoredDf, restoredDf).compare.resultDF shouldBe None // checking just the data
   }
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {

@@ -135,9 +135,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.mrpowers</groupId>
-            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
-            <version>${spark.fast.tests.version}</version>
+            <groupId>za.co.absa.hermes</groupId>
+            <artifactId>dataset-comparison_${scala.compat.version}</artifactId>
+            <version>${hermes.dataset.comparison.version}</version>
             <scope>test</scope>
         </dependency>
 
