@@ -15,25 +15,21 @@
 
 package za.co.absa.enceladus.utils.schema
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
-import za.co.absa.hermes.datasetComparison.DatasetComparator
-import za.co.absa.hermes.datasetComparison.config.ManualConfig
 
-class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with Matchers {
+class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with DatasetComparer {
 
   private def getDummyDataFrame: DataFrame = {
     import spark.implicits._
 
     Seq(1, 1, 1, 2, 1).toDF("value")
   }
-
-  private val duplicateAllowingConfig = new ManualConfig(errorColumnName = "errCol", actualPrefix = "actual", expectedPrefix = "expected", allowDuplicates = true)
 
   test("Test setUniqueColumnNameOfCorruptRecord") {
     val expected1 = "_corrupt_record"
@@ -66,7 +62,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with Matchers {
       Row(1, 1)
     )
     val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
-    new DatasetComparator(expectedDF, dfOut, config = duplicateAllowingConfig).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
   test("Test withColumnIfNotExist() when the column exists") {
@@ -87,7 +83,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with Matchers {
       Row(1, Seq())
     )
     val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
-    new DatasetComparator(expectedDF, dfOut, config = duplicateAllowingConfig).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
   test("Test withColumnIfNotExist() when the column exists, but has a different case") {
@@ -108,6 +104,6 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with Matchers {
       Row(1, Seq())
     )
     val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
-    new DatasetComparator(expectedDF, dfOut, config = duplicateAllowingConfig).compare.resultDF shouldBe None
-  }
+    assertSmallDatasetEquality(dfOut, expectedDF)  }
+
 }

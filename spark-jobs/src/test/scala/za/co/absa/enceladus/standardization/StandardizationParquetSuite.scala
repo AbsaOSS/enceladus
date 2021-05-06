@@ -19,6 +19,7 @@ import java.sql.Timestamp
 import java.time.Instant
 import java.util.UUID
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
@@ -35,15 +36,11 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import StandardizationParquetSuite._
-import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
-import za.co.absa.hermes.datasetComparison.DatasetComparator
-import za.co.absa.hermes.datasetComparison.config.ManualConfig
 
-class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar with Matchers  {
+class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer  {
   type FixtureParam = String
 
-  private val duplicateAllowingConfig = new ManualConfig(errorColumnName = "errCol", actualPrefix = "actual", expectedPrefix = "expected", allowDuplicates = true)
 
   import spark.implicits._
   import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -103,7 +100,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Missing nullable fields are considered null") { tmpFileName =>
@@ -129,7 +126,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Missing non-nullable fields are filled with default values and error appears in error column") { tmpFileName =>
@@ -166,7 +163,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long") { tmpFileName =>
@@ -195,7 +192,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf, config = duplicateAllowingConfig).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to struct, and struct to long") { tmpFileName =>
@@ -226,7 +223,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf, config = duplicateAllowingConfig).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert array to struct, and struct to array") { tmpFileName =>
@@ -253,7 +250,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long, fail fast") { tmpFileName =>
@@ -338,7 +335,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("True uuids are used") { tmpFileName =>
@@ -363,7 +360,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     val expectedDF = expectedData.toDfWithSchema(actualDf.drop("enceladus_record_id").schema)
 
     // same except for the record id
-    new DatasetComparator(expectedDF, actualDf.drop("enceladus_record_id")).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf.drop("enceladus_record_id"), expectedDF, ignoreNullable = true)
 
     val destIds = actualDf.select('enceladus_record_id).collect().map(_.getAs[String](0)).toSet
     assert(destIds.size == 2)
@@ -397,7 +394,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
 
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDf).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
 }

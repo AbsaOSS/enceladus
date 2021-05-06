@@ -158,7 +158,6 @@
         <guava.version>30.1-jre</guava.version>
         <fixed.width.version>0.2.0</fixed.width.version>
         <hadoop.version>3.2.1</hadoop.version>
-        <hermes.dataset.comparison.version>0.4.0-SNAPSHOT</hermes.dataset.comparison.version>
         <htrace.version>3.1.0-incubating</htrace.version>
         <httpclient.version>4.4.1</httpclient.version>
         <jackson.spark.datatype.version>2.10.4</jackson.spark.datatype.version>
@@ -184,6 +183,7 @@
         <scalatest.version>3.2.2</scalatest.version>
         <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
+        <spark.fast.tests.version>1.0.0</spark.fast.tests.version>
         <spark.hats.version>0.2.2</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
         <spark.version>3.0.2</spark.version>

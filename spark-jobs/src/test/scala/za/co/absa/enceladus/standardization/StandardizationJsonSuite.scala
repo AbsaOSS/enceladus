@@ -16,12 +16,13 @@
 package za.co.absa.enceladus.standardization
 
 import java.sql.{Date, Timestamp}
+import java.time.LocalDateTime
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -31,9 +32,8 @@ import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.hermes.datasetComparison.DatasetComparator
 
-class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with Matchers {
+class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with DatasetComparer{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
   private val standardizationReader = new StandardizationPropertiesProvider()
@@ -82,6 +82,6 @@ class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with Mocki
     )
     val expectedDF = expectedData.toDfWithSchema(actualDF.schema) // checking just the data, not the schema here
 
-    new DatasetComparator(expectedDF, actualDF).compare.resultDF shouldBe None
+    assertSmallDatasetEquality(actualDF, expectedDF, ignoreNullable = true)
   }
 }
