@@ -25,8 +25,8 @@ import za.co.absa.enceladus.utils.general.JsonUtils
 class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
   import spark.implicits._
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
+
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
@@ -44,8 +44,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs") {
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutResults.json")
 
@@ -63,8 +62,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
+  test("Test broadcasting mapping rule works exactly like the original mapping rule when a default value is used") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/simpleSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
@@ -82,8 +80,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs with defaults") {
+  test("Test broadcasting mapping rule works exactly like the original mapping rule for a simple dataframe and multiple outputs with defaults") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutSchema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleDefValMultiOutResults.json")
 
@@ -101,8 +98,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can output a struct column") {
+  test("Test broadcasting rule can output a struct column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
 
@@ -120,8 +116,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can output a struct column and another output") {
+  test("Test broadcasting rule can output a struct column and another output") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/nested1SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested1ResultsMulti.json")
 
@@ -140,8 +135,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work for fields inside a struct") {
+  test("Test broadcasting rule can work for fields inside a struct") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested2Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested2Results.json")
 
@@ -159,8 +153,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work for struct fields at different levels") {
+  test("Test broadcasting rule can work for struct fields at different levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/nested3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/nested3Results.json")
 
@@ -178,8 +171,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work for struct fields at different levels and multiple outputs") {
+  test("Test broadcasting rule can work for struct fields at different levels and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/nested3SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested3ResultsMulti.json")
 
@@ -198,8 +190,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work on arrays") {
+  test("Test broadcasting rule can work on arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array1Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
@@ -217,8 +208,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work on arrays and multi outputs") {
+  test("Test broadcasting rule can work on arrays and multi outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array1SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array1ResultsMulti.json")
 
@@ -236,8 +226,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work on arrays within arrays") {
+  test("Test broadcasting rule can work on arrays within arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array2Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array2Results.json")
 
@@ -255,8 +244,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule can work on arrays within arrays and multiple outputs") {
+  test("Test broadcasting rule can work on arrays within arrays and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array2SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array2ResultsMulti.json")
 
@@ -274,8 +262,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule failure if key fields are in different array levels") {
+  test("Test broadcasting rule failure if key fields are in different array levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array3Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
@@ -293,8 +280,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule failure if key fields are in different array levels and multiple outputs") {
+  test("Test broadcasting rule failure if key fields are in different array levels and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array3SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array3ResultsMulti.json")
 
@@ -312,8 +298,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when key fields are in different array levels for an array of array") {
+  test("Test broadcasting rule when key fields are in different array levels for an array of array") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array4Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
@@ -331,8 +316,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when key fields are in different array levels for an array of array and multiple outputs") {
+  test("Test broadcasting rule when key fields are in different array levels for an array of array and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array4SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array4ResultsMulti.json")
 
@@ -350,8 +334,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
+  test("Test broadcasting rule when key fields are in different struct levels in a array of arrays") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array5Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
@@ -369,8 +352,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when key fields are in different struct levels in a array of arrays and multiple outputs") {
+  test("Test broadcasting rule when key fields are in different struct levels in a array of arrays and multiple outputs") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/multiple_output/array5SchemaMulti.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array5ResultsMulti.json")
 
@@ -388,9 +370,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when 3 key fields are at different array levels") {
+  test("Test broadcasting rule when 3 key fields are at different array levels") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array6Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
 
@@ -408,8 +388,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule when there are errors in the error column") {
+  test("Test broadcasting rule when there are errors in the error column") {
     val expectedSchema = getResourceString("/interpreter/mappingCases/array7Schema.txt")
     val expectedResults = getResourceString("/interpreter/mappingCases/array7Results.json")
 
@@ -429,13 +408,16 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //todo broadcast mapping relies on UDFs - issue #1710
-  ignore("Test broadcasting rule failure if key fields are in different arrays") {
+  test("Test broadcasting rule failure if key fields are in different arrays") {
+    val expectedResults = getResourceString("/interpreter/mappingCases/arrayWrongJoinResults.json")
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       nestedTestCaseFactory.getTestCase(true, true, wrongMappingRule1)
 
-    intercept[Exception] {
-      DynamicInterpreter().interpret(dataset, inputDf)
-    }
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"errCol")
+      .cache
+
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+    assertResults(actualResults, expectedResults)
   }
 }

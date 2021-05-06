@@ -37,6 +37,15 @@ object SchemaUtils {
   }
 
   /**
+   *
+   * @param columnName The dot-separated column path to the field
+   * @return The column name with the parent path removed
+   */
+  def stripPathFromFieldName(columnName: String): String = {
+    if (columnName.contains(".")) columnName.split("\\.").last else columnName
+  }
+
+  /**
     * Get a field from a text path and a given schema
     * @param path   The dot-separated path to the field
     * @param schema The schema which should contain the specified path

@@ -151,7 +151,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     spark.disableControlMeasuresTracking()
 
-    eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+    eventually(timeout(scaled(15.seconds)), interval(scaled(500.millis))) {
       val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
       implicit val formats: DefaultFormats.type = DefaultFormats
