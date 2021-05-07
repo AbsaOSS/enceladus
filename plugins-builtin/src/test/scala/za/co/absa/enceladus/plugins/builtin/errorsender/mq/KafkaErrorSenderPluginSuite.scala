@@ -163,12 +163,12 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
 
   Seq(
     SourcePhase.Standardization -> Seq(
-      "standardizaton,stdCastError,E00000,Standardization Error - Type cast",
-      "standardizaton,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute"
+      "Standardization,stdCastError,E00000,Standardization Error - Type cast",
+      "Standardization,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute"
     ),
     SourcePhase.Conformance -> Seq(
-      "conformance,confNegErr,E00004,Conformance Negation Error",
-      "conformance,confLitErr,E00005,Conformance Literal Error"
+      "Conformance,confNegErr,E00004,Conformance Negation Error",
+      "Conformance,confLitErr,E00005,Conformance Literal Error"
     )
   ).foreach { case (source, specificErrorParts) =>
     it should s"send $source errors to kafka as confluent_avro" in {

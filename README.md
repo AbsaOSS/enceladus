@@ -45,6 +45,9 @@ There are three models used to do this:
  - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
  - **Schema**: Specifies the schema towards which the dataset will be standardized
  - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
+ 
+The Menas web client calls the REST API to get the needed entities.
+The REST API exposes a Swagger Documentation UI which documents all the HTTP endpoints exposed. It can be found at **REST_API_HOST/swagger-ui.html**
 
 ### Standardization
 This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
@@ -69,7 +72,6 @@ Ensure the properties there fit your environment.
 - Without tests: `mvn clean package -DskipTests `
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
-- With component preload file generated: `mvn clean package -PgenerateComponentPreload`
 
 #### Test coverage:
 - Test coverage: `mvn scoverage:report`
@@ -87,10 +89,9 @@ The _Spline service_ can be omitted; in such case the **Standardization** and **
 as well as **Menas** `menas.oozie.lineageWriteApiUrl` settings should be set to empty string. 
 
 #### Deploying Menas
-Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
+Simply copy the **menas.war** and **menas-web.war** files produced when building the project into Tomcat's webapps directory. 
 
-#### Speed up initial loading time of menas
-- Build the project with the generateComponentPreload profile. Component preload will greatly reduce the number of HTTP requests required for the initial load of Menas
+#### Speed up initial loading time of Menas
 - Enable the HTTP compression
 - Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
 
