@@ -16,7 +16,7 @@
 # Run image using:
 # $> docker run \
 #       -e MENAS_MONGO_CONNECTION_STRING=mongodb://host.docker.internal:27017 \
-#       -e MENAS_MONGO_CONNECTION_DATABASE=rest_api \
+#       -e MENAS_MONGO_CONNECTION_DATABASE=menas \
 #       -p 8080:8080 \
 #       rest-api
 
@@ -29,7 +29,7 @@ LABEL \
     vendor="AbsaOSS" \
     copyright="2020 ABSA Group Limited" \
     license="Apache License, version 2.0" \
-    name="Menas"
+    name="Encelauds REST API"
 
 ARG WAR_FILE
 ARG PROPERTY_FILE
