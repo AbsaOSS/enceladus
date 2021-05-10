@@ -15,17 +15,19 @@
 
 package za.co.absa.enceladus.utils
 
-import org.apache.spark.sql.DataFrame
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.LoggerFactory
-import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.explode.ExplodeTools
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.hats.Extensions._
 
-class ExplosionSuite extends AnyFunSuite with SparkTestBase {
+class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -42,42 +44,35 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
                            | |-- value_size: integer (nullable = false)
                            | |-- value_idx: integer (nullable = true)
                            |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedResults =
-      """+-----+--------+----------+---------+
-        ||value|value_id|value_size|value_idx|
-        |+-----+--------+----------+---------+
-        ||1    |0       |10        |0        |
-        ||2    |0       |10        |1        |
-        ||3    |0       |10        |2        |
-        ||4    |0       |10        |3        |
-        ||5    |0       |10        |4        |
-        ||6    |0       |10        |5        |
-        ||7    |0       |10        |6        |
-        ||8    |0       |10        |7        |
-        ||9    |0       |10        |8        |
-        ||10   |0       |10        |9        |
-        ||2    |1       |10        |0        |
-        ||3    |1       |10        |1        |
-        ||4    |1       |10        |2        |
-        ||5    |1       |10        |3        |
-        ||6    |1       |10        |4        |
-        ||7    |1       |10        |5        |
-        ||8    |1       |10        |6        |
-        ||9    |1       |10        |7        |
-        ||10   |1       |10        |8        |
-        ||11   |1       |10        |9        |
-        |+-----+--------+----------+---------+
-        |only showing top 20 rows
-        |""".stripMargin.replace("\r\n", "\n")
-
-
     val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
-    val actualResults = showString(explodedDf)
 
     assert(explodeContext.explosions.nonEmpty)
-    assertSchema(explodedDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, expectedResults)
+    assertSchema(explodedDf.schema.treeString, expectedSchema) // checking schema first
+
+    val expectedData = Seq(
+      Row(1, 0L, 10, 0),
+      Row(2, 0L, 10, 1),
+      Row(3, 0L, 10, 2),
+      Row(4, 0L, 10, 3),
+      Row(5, 0L, 10, 4),
+      Row(6, 0L, 10, 5),
+      Row(7, 0L, 10, 6),
+      Row(8, 0L, 10, 7),
+      Row(9, 0L, 10, 8),
+      Row(10, 0L, 10, 9),
+      Row(2, 1L, 10, 0),
+      Row(3, 1L, 10, 1),
+      Row(4, 1L, 10, 2),
+      Row(5, 1L, 10, 3),
+      Row(6, 1L, 10, 4),
+      Row(7, 1L, 10, 5),
+      Row(8, 1L, 10, 6),
+      Row(9, 1L, 10, 7),
+      Row(10, 1L, 10, 8),
+      Row(11, 1L, 10, 9)
+    )
+    val expectedDf = expectedData.toDfWithSchema(explodedDf.schema)
+    assertSmallDatasetEquality(explodedDf.limit(20), expectedDf) // checking just the data: just 20 first rows
   }
 
   test("Test a simple array reconstruction") {
@@ -85,6 +80,9 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
     val sampleArray = Range(1, 6).map(a => Range(a, 10 + a).toList).toList
     val df = sampleArray.toDF().withColumn("static", lit(1))
 
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+
+    // Checking if explosion has been done correctly - schema
     val expectedExplodedSchema =
       """root
         | |-- value: integer (nullable = true)
@@ -93,70 +91,57 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- value_size: integer (nullable = false)
         | |-- value_idx: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assert(explodeContext.explosions.nonEmpty)
+    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema) // checking schema first
 
-    val expectedExplodedResults =
-      """+-----+------+--------+----------+---------+
-        ||value|static|value_id|value_size|value_idx|
-        |+-----+------+--------+----------+---------+
-        ||1    |1     |0       |10        |0        |
-        ||2    |1     |0       |10        |1        |
-        ||3    |1     |0       |10        |2        |
-        ||4    |1     |0       |10        |3        |
-        ||5    |1     |0       |10        |4        |
-        ||6    |1     |0       |10        |5        |
-        ||7    |1     |0       |10        |6        |
-        ||8    |1     |0       |10        |7        |
-        ||9    |1     |0       |10        |8        |
-        ||10   |1     |0       |10        |9        |
-        ||2    |1     |1       |10        |0        |
-        ||3    |1     |1       |10        |1        |
-        ||4    |1     |1       |10        |2        |
-        ||5    |1     |1       |10        |3        |
-        ||6    |1     |1       |10        |4        |
-        ||7    |1     |1       |10        |5        |
-        ||8    |1     |1       |10        |6        |
-        ||9    |1     |1       |10        |7        |
-        ||10   |1     |1       |10        |8        |
-        ||11   |1     |1       |10        |9        |
-        |+-----+------+--------+----------+---------+
-        |only showing top 20 rows
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking if explosion has been done correctly - data
+    val expectedExplodedData = Seq(
+      Row(1, 1, 0L, 10, 0),
+      Row(2, 1, 0L, 10, 1),
+      Row(3, 1, 0L, 10, 2),
+      Row(4, 1, 0L, 10, 3),
+      Row(5, 1, 0L, 10, 4),
+      Row(6, 1, 0L, 10, 5),
+      Row(7, 1, 0L, 10, 6),
+      Row(8, 1, 0L, 10, 7),
+      Row(9, 1, 0L, 10, 8),
+      Row(10, 1, 0L, 10, 9),
+      Row(2, 1, 1L, 10, 0),
+      Row(3, 1, 1L, 10, 1),
+      Row(4, 1, 1L, 10, 2),
+      Row(5, 1, 1L, 10, 3),
+      Row(6, 1, 1L, 10, 4),
+      Row(7, 1, 1L, 10, 5),
+      Row(8, 1, 1L, 10, 6),
+      Row(9, 1, 1L, 10, 7),
+      Row(10, 1, 1L, 10, 8),
+      Row(11, 1, 1L, 10, 9)
+    )
+    val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf.schema)
+    assertSmallDatasetEquality(explodedDf.limit(20), expectedExplodedDf) // checking just the data: just 20 first rows
 
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
+
+    // Checking if restoration has been done correctly - schema
     val expectedRestoredSchema =
       """root
         | |-- static: integer (nullable = false)
         | |-- value: array (nullable = true)
         | |    |-- element: integer (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedRestoredResults =
-      """+------+-----------------------------------+
-        ||static|value                              |
-        |+------+-----------------------------------+
-        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]    |
-        ||1     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]   |
-        ||1     |[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  |
-        ||1     |[4, 5, 6, 7, 8, 9, 10, 11, 12, 13] |
-        ||1     |[5, 6, 7, 8, 9, 10, 11, 12, 13, 14]|
-        |+------+-----------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-
-    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
-
-    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
-
-    val actualExplodedResults = showString(explodedDf)
-    val actualRestoredResults = showString(restoredDf)
-
-    // Checking if explosion has been done correctly
-    assert(explodeContext.explosions.nonEmpty)
-    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
-    assertResults(actualExplodedResults, expectedExplodedResults)
-
-    // Checking if restoration has been done correctly
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredResults)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1, Seq(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+      Row(1, Seq(2, 3, 4, 5, 6, 7, 8, 9, 10, 11)),
+      Row(1, Seq(3, 4, 5, 6, 7, 8, 9, 10, 11, 12)),
+      Row(1, Seq(4, 5, 6, 7, 8, 9, 10, 11, 12, 13)),
+      Row(1, Seq(5, 6, 7, 8, 9, 10, 11, 12, 13, 14))
+    )
+
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test("Test a array of array sequence of explosions") {
@@ -178,6 +163,10 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
     )
     val df = sampleMatrix.toDF().withColumn("static", lit(1))
 
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("value", df)
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("value", explodedDf1, explodeContext1)
+
+    // Checking if explosion has been done correctly - schema
     val expectedExplodedSchema =
       """root
         | |-- value: integer (nullable = true)
@@ -189,25 +178,28 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- value_size_1: integer (nullable = false)
         | |-- value_idx_1: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assert(explodeContext2.explosions.size == 2)
+    assertSchema(explodedDf2.schema.treeString, expectedExplodedSchema)
 
-    val expectedExplodedResults =
-      """+-----+------+--------+----------+---------+----------+------------+-----------+
-        ||value|static|value_id|value_size|value_idx|value_id_1|value_size_1|value_idx_1|
-        |+-----+------+--------+----------+---------+----------+------------+-----------+
-        ||1    |1     |0       |2         |0        |0         |6           |0          |
-        ||2    |1     |0       |2         |0        |0         |6           |1          |
-        ||3    |1     |0       |2         |0        |0         |6           |2          |
-        ||4    |1     |0       |2         |0        |0         |6           |3          |
-        ||5    |1     |0       |2         |0        |0         |6           |4          |
-        ||6    |1     |0       |2         |0        |0         |6           |5          |
-        ||7    |1     |0       |2         |1        |1         |7           |0          |
-        ||8    |1     |0       |2         |1        |1         |7           |1          |
-        ||9    |1     |0       |2         |1        |1         |7           |2          |
-        ||10   |1     |0       |2         |1        |1         |7           |3          |
-        |+-----+------+--------+----------+---------+----------+------------+-----------+
-        |only showing top 10 rows
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking if explosion has been done correctly - data
+    val expectedExplodedData = Seq(
+      Row(1, 1, 0L, 2, 0, 0L, 6, 0),
+      Row(2, 1, 0L, 2, 0, 0L, 6, 1),
+      Row(3, 1, 0L, 2, 0, 0L, 6, 2),
+      Row(4, 1, 0L, 2, 0, 0L, 6, 3),
+      Row(5, 1, 0L, 2, 0, 0L, 6, 4),
+      Row(6, 1, 0L, 2, 0, 0L, 6, 5),
+      Row(7, 1, 0L, 2, 1, 1L, 7, 0),
+      Row(8, 1, 0L, 2, 1, 1L, 7, 1),
+      Row(9, 1, 0L, 2, 1, 1L, 7, 2),
+      Row(10, 1, 0L, 2, 1, 1L, 7, 3)
+    )
+    val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf2.schema)
+    assertSmallDatasetEquality(explodedDf2.limit(10), expectedExplodedDf) // checking just the data: just 10 first rows
 
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
+
+    // Checking if restoration has been done correctly - schema
     val expectedRestoredSchema =
       """root
         | |-- static: integer (nullable = false)
@@ -215,34 +207,17 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |-- element: array (containsNull = true)
         | |    |    |-- element: integer (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedRestoredResults =
-      """+------+---------------------------------------------------------------------+
-        ||static|value                                                                |
-        |+------+---------------------------------------------------------------------+
-        ||1     |[[1, 2, 3, 4, 5, 6], [7, 8, 9, 10, 11, 12, 13]]                      |
-        ||1     |[[201, 202, 203, 204, 205, 206], [207, 208, 209, 210, 211, 212, 213]]|
-        ||1     |[[301, 302, 303, 304, 305, 306], [307, 308, 309, 310, 311, 312, 313]]|
-        ||1     |[[401, 402, 403, 404, 405, 406], [407, 408, 409, 410, 411, 412, 413]]|
-        |+------+---------------------------------------------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("value", df)
-    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("value", explodedDf1, explodeContext1)
-
-    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
-
-    val actualExplodedResults = showString(explodedDf2, 10)
-    val actualRestoredResults = showString(restoredDf)
-
-    // Checking if explosion has been done correctly
-    assert(explodeContext2.explosions.size == 2)
-    assertSchema(explodedDf2.schema.treeString, expectedExplodedSchema)
-    assertResults(actualExplodedResults, expectedExplodedResults)
-
-    // Checking if restoration has been done correctly
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredResults)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1, Seq(Seq(1, 2, 3, 4, 5, 6), Seq(7, 8, 9, 10, 11, 12, 13))),
+      Row(1, Seq(Seq(201, 202, 203, 204, 205, 206), Seq(207, 208, 209, 210, 211, 212, 213))),
+      Row(1, Seq(Seq(301, 302, 303, 304, 305, 306), Seq(307, 308, 309, 310, 311, 312, 313))),
+      Row(1, Seq(Seq(401, 402, 403, 404, 405, 406), Seq(407, 408, 409, 410, 411, 412, 413)))
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test("Test handling of empty and null arrays") {
@@ -252,6 +227,9 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
       """{"static":4}""")
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
+
+    // Checking if explosion has been done correctly - schema
     val expectedExplodedSchema =
       """root
         | |-- static: long (nullable = true)
@@ -260,56 +238,43 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- value_size: integer (nullable = false)
         | |-- value_idx: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assert(explodeContext.explosions.nonEmpty)
+    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
 
-    val expectedExplodedResults =
-      """+------+----------+---------+-----+
-        ||static|value_size|value_idx|value|
-        |+------+----------+---------+-----+
-        ||4     |-1        |null     |null |
-        ||3     |0         |null     |null |
-        ||1     |10        |0        |1    |
-        ||2     |10        |0        |2    |
-        ||1     |10        |1        |2    |
-        |+------+----------+---------+-----+
-        |only showing top 5 rows
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking if explosion has been done correctly - data
+    val explodedDfProjection = explodedDf
+      .select($"static", $"value_size", $"value_idx", $"value")
+      .orderBy($"value_size", $"value_idx", $"static")
+    val expectedExplodedData = Seq(
+      Row(4L, -1, null, null),
+      Row(3L, 0, null, null),
+      Row(1L, 10, 0, 1L),
+      Row(2L, 10, 0, 2L),
+      Row(1L, 10, 1, 2L)
+    )
+    val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDfProjection.schema)
+    assertSmallDatasetEquality(explodedDfProjection.limit(5), expectedExplodedDf) // checking just the data: just 5 first rows
 
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
+
+    // Checking if restoration has been done correctly - schema
     val expectedRestoredSchema =
       """root
         | |-- static: long (nullable = true)
         | |-- value: array (nullable = true)
         | |    |-- element: long (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedRestoredResults =
-      """+------+--------------------------------+
-        ||static|value                           |
-        |+------+--------------------------------+
-        ||1     |[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] |
-        ||2     |[2, 3, 4, 5, 6, 7, 8, 9, 10, 11]|
-        ||3     |[]                              |
-        ||4     |null                            |
-        |+------+--------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-
-    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("value", df)
-
-    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
-
-    val actualExplodedResults = showString(explodedDf
-      .select($"static", $"value_size", $"value_idx", $"value")
-      .orderBy($"value_size", $"value_idx", $"static"), 5)
-    val actualRestoredResults = showString(restoredDf)
-
-    // Checking if explosion has been done correctly
-    assert(explodeContext.explosions.nonEmpty)
-    assertSchema(explodedDf.schema.treeString, expectedExplodedSchema)
-    assertResults(actualExplodedResults, expectedExplodedResults)
-
-    // Checking if restoration has been done correctly
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredResults)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1L, Seq(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L)),
+      Row(2L, Seq(2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L)),
+      Row(3L, Seq()),
+      Row(4L, null)
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test("Test deconstruct()") {
@@ -320,6 +285,10 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
+    val d = ExplodeTools.deconstructNestedColumn(df, "leg.conditions")
+    val (deconstructedDf, deconstructedCol, transientCol) = ExplodeTools.DeconstructedNestedField.unapply(d).get
+
+    // Checking if explosion has been done correctly - schema
     val expectedDeconstructedSchema =
       """root
         | |-- id: long (nullable = true)
@@ -331,18 +300,21 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |-- action: string (nullable = true)
         | |    |    |-- check: string (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assertSchema(deconstructedDf.schema.treeString, expectedDeconstructedSchema)
 
-    val expectedDeconstructedData =
-      """+---+--------+------------------------+
-        ||id |leg     |electron                |
-        |+---+--------+------------------------+
-        ||1  |[0, 100]|[[b, a], [d, c], [f, e]]|
-        ||2  |[0, 200]|[[h, g], [j, i], [l, k]]|
-        ||3  |[0, 300]|[]                      |
-        ||4  |[0, 400]|null                    |
-        |+---+--------+------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking if explosion has been done correctly - data
+    val expectedDeconstructedData = Seq(
+      Row(1L, Row(0, 100L), Seq(Row("b", "a"), Row("d", "c"), Row("f", "e"))),
+      Row(2L, Row(0, 200L), Seq(Row("h", "g"), Row("j", "i"), Row("l", "k"))),
+      Row(3L, Row(0, 300L), Seq()),
+      Row(4L, Row(0, 400L), null)
+    )
+    val expectedDeconstructedDf = expectedDeconstructedData.toDfWithSchema(deconstructedDf.schema)
+    assertSmallDatasetEquality(deconstructedDf, expectedDeconstructedDf) // checking just the data
 
+    val restoredDf = ExplodeTools.nestedRenameReplace(deconstructedDf, deconstructedCol, "leg.conditions", transientCol)
+
+    // Checking if restoration has been done correctly - schema
     val expectedRestoredSchema =
       """root
         | |-- id: long (nullable = true)
@@ -353,31 +325,17 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- check: string (nullable = true)
         | |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
 
-    val expectedRestoredData =
-      """+---+-------------------------------+
-        ||id |leg                            |
-        |+---+-------------------------------+
-        ||1  |[[[b, a], [d, c], [f, e]], 100]|
-        ||2  |[[[h, g], [j, i], [l, k]], 200]|
-        ||3  |[[], 300]                      |
-        ||4  |[, 400]                        |
-        |+---+-------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val d = ExplodeTools.deconstructNestedColumn(df, "leg.conditions")
-    val (df2, deconstructedCol, transientCol) = ExplodeTools.DeconstructedNestedField.unapply(d).get
-
-    val df3 = ExplodeTools.nestedRenameReplace(df2, deconstructedCol, "leg.conditions", transientCol)
-
-    val actualDeconstructedResults = showString(df2, 5)
-    val actualRestoredResults = showString(df3, 5)
-
-    assertSchema(df2.schema.treeString, expectedDeconstructedSchema)
-    assertResults(actualDeconstructedResults, expectedDeconstructedData)
-
-    assertSchema(df3.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredData)
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1L, Row(Seq(Row("b", "a"), Row("d", "c"), Row("f", "e")), 100L)),
+      Row(2L, Row(Seq(Row("h", "g"), Row("j", "i"), Row("l", "k")), 200L)),
+      Row(3L, Row(Seq(), 300L)),
+      Row(4L, Row(null, 400L))
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test ("Test multiple nesting of arrays and structs") {
@@ -390,6 +348,14 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
       """{"id":7}""" :: Nil
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
+
+    // Checking that the original data is correct - schema
+    assert(SchemaUtils.isNonNestedArray(df.schema, "legs"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks.checkNums"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "id"))
+    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.legid"))
 
     val expectedOriginalSchema =
       """root
@@ -405,21 +371,27 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
         | |    |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assertSchema(df.schema.treeString, expectedOriginalSchema)
 
-    val expectedOriginalResults =
-      """+---+----------------------------------------------+
-        ||id |legs                                          |
-        |+---+----------------------------------------------+
-        ||1  |[[[[100, [[[1, 2, 3b, 4, 5c, 6]]]]], 100]]    |
-        ||2  |[[[[200, [[[8, 9, 10b, 11, 12c, 13]]]]], 200]]|
-        ||3  |[[[[300, []]], 300]]                          |
-        ||4  |[[[[400,]], 400]]                             |
-        ||5  |[[[], 500]]                                   |
-        ||6  |[]                                            |
-        ||7  |null                                          |
-        |+---+----------------------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking that the original data is correct - data
+    val expectedOriginalData = Seq(
+      Row(1L, Seq(Row(Seq(Row(100L, Seq(Row(Seq("1", "2", "3b", "4", "5c", "6"))))), 100L))),
+      Row(2L, Seq(Row(Seq(Row(200L, Seq(Row(Seq("8", "9", "10b", "11", "12c", "13"))))), 200L))),
+      Row(3L, Seq(Row(Seq(Row(300L, Seq())), 300L))),
+      Row(4L, Seq(Row(Seq(Row(400L, null)), 400L))),
+      Row(5L, Seq(Row(Seq(), 500L))),
+      Row(6L, Seq()),
+      Row(7L, null)
+    )
+    val expectedOriginalDf = expectedOriginalData.toDfWithSchema(df.schema)
+    assertSmallDatasetEquality(df, expectedOriginalDf) // checking just the data
 
+    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
+    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", explodedDf1, explodeContext1)
+    val (explodedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", explodedDf2, explodeContext2)
+    val (explodedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", explodedDf3, explodeContext3)
+
+    // Checking if explosion has been done correctly - schema
     val expectedExplodedSchema =
       """root
         | |-- id: long (nullable = true)
@@ -444,82 +416,30 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- legs_conditions_checks_checkNums_idx: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
 
-    val expectedExplodedResults =
-      """+------+----------+---------+-----+
-        ||static|value_size|value_idx|value|
-        |+------+----------+---------+-----+
-        ||4     |-1        |null     |null |
-        ||3     |0         |null     |null |
-        ||1     |10        |0        |1    |
-        ||2     |10        |0        |2    |
-        ||1     |10        |1        |2    |
-        |+------+----------+---------+-----+
-        |only showing top 5 rows
-        |""".stripMargin.replace("\r\n", "\n")
+    val actualExplodedSchema = explodedDf4.schema.treeString.replaceAll("higgs_\\d+","higgs")
+    assertSchema(actualExplodedSchema, expectedExplodedSchema)
 
-    val expectedRestoredSchema =
-      """root
-        | |-- id: long (nullable = true)
-        | |-- legs: array (nullable = true)
-        | |    |-- element: struct (containsNull = true)
-        | |    |    |-- conditions: array (nullable = true)
-        | |    |    |    |-- element: struct (containsNull = true)
-        | |    |    |    |    |-- amount: long (nullable = true)
-        | |    |    |    |    |-- checks: array (nullable = true)
-        | |    |    |    |    |    |-- element: struct (containsNull = true)
-        | |    |    |    |    |    |    |-- checkNums: array (nullable = true)
-        | |    |    |    |    |    |    |    |-- element: string (containsNull = true)
-        | |    |    |-- legid: long (nullable = true)
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking if explosion has been done correctly - data
+    assert(explodedDf4.count() == 17)
+    val expectedExplodedData = Seq(
+      Row(1L, Row(Row(100L, Row("1", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 0),
+      Row(1L, Row(Row(100L, Row("2", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 1),
+      Row(1L, Row(Row(100L, Row("3b", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 2),
+      Row(1L, Row(Row(100L, Row("4", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 3),
+      Row(1L, Row(Row(100L, Row("5c", null)), 100L), 0L, 1, 0, 0L, 1, 0, 0L, 1, 0, 0L, 6, 4)
+    )
+    val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf4.schema)
+    assertSmallDatasetEquality(explodedDf4.limit(5), expectedExplodedDf) // checking just the data: just 5 first rows
 
-    val expectedRestoredResults =
-      """+---+----------------------------------------------+
-        ||id |legs                                          |
-        |+---+----------------------------------------------+
-        ||1  |[[[[100, [[[1, 2, 3b, 4, 5c, 6]]]]], 100]]    |
-        ||2  |[[[[200, [[[8, 9, 10b, 11, 12c, 13]]]]], 200]]|
-        ||3  |[[[[300, []]], 300]]                          |
-        ||4  |[[[[400,]], 400]]                             |
-        ||5  |[[[], 500]]                                   |
-        ||6  |[]                                            |
-        ||7  |null                                          |
-        |+---+----------------------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-
-
-    val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("legs", df)
-    val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("legs.conditions", explodedDf1, explodeContext1)
-    val (explodedDf3, explodeContext3) = ExplodeTools.explodeArray("legs.conditions.checks", explodedDf2, explodeContext2)
-    val (explodedDf4, explodeContext4) = ExplodeTools.explodeArray("legs.conditions.checks.checkNums", explodedDf3, explodeContext3)
-
+    // Check the filter generator as well
     val explodeConditionFilter = explodeContext4.getControlFrameworkFilter
     val expectedExplodeFilter = "((((true AND (coalesce(legs_conditions_checks_checkNums_idx, 0) = 0)) AND (coalesce(legs_conditions_checks_idx, 0) = 0)) AND (coalesce(legs_conditions_idx, 0) = 0)) AND (coalesce(legs_idx, 0) = 0))"
+    assert(explodeConditionFilter.toString == expectedExplodeFilter)
 
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf4, explodeContext4)
 
-    val actualOriginalResults = showString(df)
-    val actualRestoredResults = showString(restoredDf)
-
-    assert(SchemaUtils.isNonNestedArray(df.schema, "legs"))
-    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions"))
-    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks"))
-    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.conditions.checks.checkNums"))
-    assert(!SchemaUtils.isNonNestedArray(df.schema, "id"))
-    assert(!SchemaUtils.isNonNestedArray(df.schema, "legs.legid"))
-
-    assertSchema(df.schema.treeString, expectedOriginalSchema)
-    assertResults(actualOriginalResults, expectedOriginalResults)
-
-    val actualExplodedSchema = explodedDf4.schema.treeString.replaceAll("higgs_\\d+","higgs")
-    assertSchema(actualExplodedSchema, expectedExplodedSchema)
-    assert(explodedDf4.count() == 17)
-
-    assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredResults)
-
-    // Check the filter generator as well
-    assert(explodeConditionFilter.toString == expectedExplodeFilter)
+    // Checking if restoration has been done correctly - data + schema
+    assertSmallDatasetEquality(restoredDf, expectedOriginalDf) // restored schema+data should be same as original
   }
 
   test ("Test exploding a nested array that is the only element of a struct") {
@@ -530,6 +450,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
+    // Checking that the original data is correct - schema
     val expectedOriginalSchema =
       """root
         | |-- id: long (nullable = true)
@@ -539,18 +460,21 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- action: string (nullable = true)
         | |    |    |    |-- check: string (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    assertSchema(df.schema.treeString, expectedOriginalSchema)
 
-    val expectedOriginalResults =
-      """+---+--------------------------+
-        ||id |leg                       |
-        |+---+--------------------------+
-        ||1  |[[[b, a], [d, c], [f, e]]]|
-        ||2  |[[[h, g], [j, i], [l, k]]]|
-        ||3  |[[]]                      |
-        ||4  |null                      |
-        |+---+--------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
+    // Checking that the original data is correct - data
+    val expectedOriginalData = Seq(
+      Row(1L, Row(Seq(Row("b", "a"), Row("d", "c"), Row("f", "e")))),
+      Row(2L, Row(Seq(Row("h", "g"), Row("j", "i"), Row("l", "k")))),
+      Row(3L, Row(Seq())),
+      Row(4L, null)
+    )
+    val expectedOriginalDf = expectedOriginalData.toDfWithSchema(df.schema)
+    assertSmallDatasetEquality(df, expectedOriginalDf) // checking just the data
 
+    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
+
+    // Checking if explosion has been done correctly - schema
     val expectedExplodedSchema =
       """root
         | |-- id: long (nullable = true)
@@ -563,8 +487,27 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- leg_conditions_size: integer (nullable = false)
         | |-- leg_conditions_idx: integer (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
+    val actualExplodedSchema = explodedDf.schema.treeString.replaceAll("higgs_\\d+","higgs")
+    assertSchema(actualExplodedSchema, expectedExplodedSchema)
 
-    val expectedRestoredSchema =
+    // Checking if explosion has been done correctly - data
+    val expectedExplodedData = Seq(
+      Row(1L, Row(Row("b", "a"), null), 0L, 3, 0),
+      Row(1L, Row(Row("d", "c"), null), 0L, 3, 1),
+      Row(1L, Row(Row("f", "e"), null), 0L, 3, 2),
+      Row(2L, Row(Row("h", "g"), null), 8589934592L, 3, 0),
+      Row(2L, Row(Row("j", "i"), null), 8589934592L, 3, 1),
+      Row(2L, Row(Row("l", "k"), null), 8589934592L, 3, 2),
+      Row(3L, Row(null, null), 17179869184L, 0, null),
+      Row(4L, Row(null, null), 25769803776L, -1, null)
+    )
+    val expectedExplodedDf = expectedExplodedData.toDfWithSchema(explodedDf.schema)
+    assertSmallDatasetEquality(explodedDf, expectedExplodedDf) // checking just the data
+
+    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
+
+    // Checking if restoration has been done correctly - schema
+    val expectedRestoredSchema = // this schema only differs from the original in `leg`'s nullability (true -> false)
       """root
         | |-- id: long (nullable = true)
         | |-- leg: struct (nullable = false)
@@ -573,34 +516,17 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- action: string (nullable = true)
         | |    |    |    |-- check: string (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedRestoredResults =
-      """+---+--------------------------+
-        ||id |leg                       |
-        |+---+--------------------------+
-        ||1  |[[[b, a], [d, c], [f, e]]]|
-        ||2  |[[[h, g], [j, i], [l, k]]]|
-        ||3  |[[]]                      |
-        ||4  |[]                        |
-        |+---+--------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-
-    val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
-    val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
-
-    val actualOriginalResults = showString(df)
-    val actualRestoredResults = showString(restoredDf)
-
-    assertSchema(df.schema.treeString, expectedOriginalSchema)
-    assertResults(actualOriginalResults, expectedOriginalResults)
-
-    val actualExplodedSchema = explodedDf.schema.treeString.replaceAll("higgs_\\d+","higgs")
-    assertSchema(actualExplodedSchema, expectedExplodedSchema)
-    assert(explodedDf.count() == 8)
-
     assertSchema(restoredDf.schema.treeString, expectedRestoredSchema)
-    assertResults(actualRestoredResults, expectedRestoredResults)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1L, Row(Seq(Row("b", "a"), Row("d", "c"), Row("f", "e")))),
+      Row(2L, Row(Seq(Row("h", "g"), Row("j", "i"), Row("l", "k")))),
+      Row(3L, Row(Seq())),
+      Row(4L, Row(null)) // differs from original here, it held just "null", after restoration: "Row(null)" (~ struct)
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test ("Test explosion of an array field inside a struct") {
@@ -614,6 +540,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
     val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf, explodeContext)
 
+    // Checking if restoration has been done correctly - schema
     val expectedSchema =
       """root
         | |-- id: long (nullable = true)
@@ -624,22 +551,17 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- check: string (nullable = true)
         | |    |-- legid: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedData =
-      """+---+-------------------------------+
-        ||id |leg                            |
-        |+---+-------------------------------+
-        ||1  |[[[b, a], [d, c], [f, e]], 100]|
-        ||2  |[[[h, g], [j, i], [l, k]], 200]|
-        ||3  |[[], 300]                      |
-        ||4  |[, 400]                        |
-        |+---+-------------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val actualResults = showString(restoredDf, 5)
-
     assertSchema(restoredDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, expectedData)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1L, Row(Seq(Row("b", "a"), Row("d", "c"), Row("f", "e")), 100L)),
+      Row(2L, Row(Seq(Row("h", "g"), Row("j", "i"), Row("l", "k")), 200L)),
+      Row(3L, Row(Seq(), 300L)),
+      Row(4L, Row(null, 400L))
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test ("Test explosion with an error column") {
@@ -648,15 +570,15 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
       """{"id":3,"errors":[],"leg":{"legid":300}}""" :: Nil
 
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
-
     val (explodedDf, explodeContext) = ExplodeTools.explodeArray("leg.conditions", df)
 
-    // Manupilate error column
+    // Manipulate error column
     val changedDf = explodedDf.select(concat($"errors", array($"leg.conditions.check")).as("errors"),
       $"id", $"leg", $"leg_conditions_id", $"leg_conditions_size", $"leg_conditions_idx")
 
     val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext, Some("errors"))
 
+    // Checking if restoration has been done correctly - schema
     val expectedSchema =
       """root
         | |-- id: long (nullable = true)
@@ -669,21 +591,16 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |-- errors: array (nullable = true)
         | |    |-- element: string (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedData =
-      """+---+-------------------------------+---------------------------+
-        ||id |leg                            |errors                     |
-        |+---+-------------------------------+---------------------------+
-        ||1  |[[[b, 1], [d, 2], [f, 3]], 100]|[Error 1, Error 2, 1, 2, 3]|
-        ||2  |[[[b, 0]], 200]                |[0]                        |
-        ||3  |[, 300]                        |[]                         |
-        |+---+-------------------------------+---------------------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val actualResults = showString(restoredDf, 5)
-
     assertSchema(restoredDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, expectedData)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(1L, Row(Seq(Row("b", "1"), Row("d", "2"), Row("f", "3")), 100L), Seq("Error 1", "Error 2", "1", "2", "3")),
+      Row(2L, Row(Seq(Row("b", "0")), 200L), Seq("0")),
+      Row(3L, Row(null, 300L), Seq(null))
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test ("Test empty struct inside an array") {
@@ -701,9 +618,9 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
 
     // Manipulate the exploded structs
     val changedDf = explodedDf2.nestedDropColumn("a.c.toDrop")
-
     val restoredDf = ExplodeTools.revertAllExplosions(changedDf, explodeContext2)
 
+    // Checking if restoration has been done correctly - schema
     val expectedSchema =
       """root
         | |-- myFlag: boolean (nullable = true)
@@ -715,24 +632,19 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |-- d: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedData =
-      """+------+-----+-------------+
-        ||myFlag|order|a            |
-        |+------+-----+-------------+
-        ||true  |1    |[[H1, [[1]]]]|
-        ||true  |2    |[[H2, []]]   |
-        ||true  |3    |[[H3,]]      |
-        ||true  |4    |[[,]]        |
-        ||true  |5    |[]           |
-        ||true  |6    |null         |
-        |+------+-----+-------------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val actualResults = showString(restoredDf, 10)
-
     assertSchema(restoredDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, expectedData)
+
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(true, 1L, Seq(Row("H1",  Seq(Row(1L))))),
+      Row(true, 2L, Seq(Row("H2", Seq()))),
+      Row(true, 3L, Seq(Row("H3", null))),
+      Row(true, 4L, Seq(Row(null, null))),
+      Row(true, 5L, Seq()),
+      Row(true, 6L, null)
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   test ("Test empty struct inside an array with the only array field") {
@@ -745,11 +657,10 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
     val df = JsonUtils.getDataFrameFromJson(spark, sample)
 
     val (explodedDf1, explodeContext1) = ExplodeTools.explodeArray("a", df)
-
     val (explodedDf2, explodeContext2) = ExplodeTools.explodeArray("a.c", explodedDf1, explodeContext1)
-
     val restoredDf = ExplodeTools.revertAllExplosions(explodedDf2, explodeContext2)
 
+    // Checking if restoration has been done correctly - schema
     val expectedSchema =
       """root
         | |-- myFlag: boolean (nullable = true)
@@ -760,33 +671,18 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
         | |    |    |    |-- element: struct (containsNull = true)
         | |    |    |    |    |-- d: long (nullable = true)
         |""".stripMargin.replace("\r\n", "\n")
-
-    val expectedData =
-      """+------+-----+---------+
-        ||myFlag|order|a        |
-        |+------+-----+---------+
-        ||true  |1    |[[[[1]]]]|
-        ||true  |2    |[[[]]]   |
-        ||true  |3    |[[]]     |
-        ||true  |4    |[]       |
-        ||true  |5    |null     |
-        |+------+-----+---------+
-        |""".stripMargin.replace("\r\n", "\n")
-
-    val actualResults = showString(restoredDf, 10)
-
     assertSchema(restoredDf.schema.treeString, expectedSchema)
-    assertResults(actualResults, expectedData)
-  }
 
-  // Call showString() by reflection since it is private
-  // Thanks https://stackoverflow.com/a/51218800/1038282
-  private def showString(df: DataFrame, numRows: Int = 20): String = {
-    val showString = classOf[org.apache.spark.sql.DataFrame].getDeclaredMethod("showString",
-      classOf[Int], classOf[Int], classOf[Boolean])
-    showString.setAccessible(true)
-    showString.invoke(df, numRows.asInstanceOf[Object], 0.asInstanceOf[Object],
-      false.asInstanceOf[Object]).asInstanceOf[String]
+    // Checking if restoration has been done correctly - data
+    val expectedRestoredData = Seq(
+      Row(true, 1L, Seq(Row(Seq(Row(1L))))),
+      Row(true, 2L, Seq(Row(Seq()))),
+      Row(true, 3L, Seq(Row(null))),
+      Row(true, 4L, Seq()),
+      Row(true, 5L, null)
+    )
+    val expectedRestoredDf = expectedRestoredData.toDfWithSchema(restoredDf.schema)
+    assertSmallDatasetEquality(restoredDf, expectedRestoredDf) // checking just the data
   }
 
   private def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
@@ -797,12 +693,5 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase {
     }
   }
 
-  private def assertResults(actualResults: String, expectedResults: String): Unit = {
-    if (actualResults != expectedResults) {
-      logger.error(s"EXPECTED:\n$expectedResults")
-      logger.error(s"ACTUAL:\n$actualResults")
-      fail("Actual conformed dataset data does not match the expected data (see above).")
-    }
-  }
 
 }
