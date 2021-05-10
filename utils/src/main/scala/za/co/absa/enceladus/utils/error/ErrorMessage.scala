@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.utils.error
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Column, SparkSession}
+import org.apache.spark.sql.functions.{array, lit, struct, typedLit}
+import org.apache.spark.sql.types.{StringType, StructType}
 
 /**
  * Case class to represent an error message
@@ -40,12 +41,31 @@ object ErrorMessage {
     errMsg = "Standardization Error - Type cast",
     errCol = errCol,
     rawValues = Seq(rawValue))
+
+  def stdCastErrExpression(errCol: String, column: Column): Column = struct(
+    lit("stdCastError").as("errType"),
+    lit(ErrorCodes.StdCastError).as("errCode"),
+    lit("Standardization Error - Type cast").as("errMsg"),
+    lit(typedLit(errCol)).as("errCol"),
+    array(column.cast(StringType)).as("rawValues"),
+    typedLit(Seq.empty[Mapping]).as("mappings")
+  )
+
   def stdNullErr(errCol: String): ErrorMessage = ErrorMessage(
     errType = "stdNullError",
     errCode = ErrorCodes.StdNullError,
     errMsg = "Standardization Error - Null detected in non-nullable attribute",
     errCol = errCol,
     rawValues = Seq("null"))
+
+  def stdNullErrExpression(errCol: String): Column = struct(
+    lit("stdNullError").as("errType"),
+    lit(ErrorCodes.StdNullError).as("errCode"),
+    lit("Standardization Error - Null detected in non-nullable attribute").as("errMsg"),
+    lit(typedLit(errCol)).as("errCol"),
+    array(lit("null")).as("rawValues"),
+    typedLit(Seq.empty[Mapping]).as("mappings"))
+
   def stdTypeError(errCol: String, sourceType: String, targetType: String): ErrorMessage = ErrorMessage(
     errType = "stdTypeError",
     errCode = ErrorCodes.StdTypeError,
@@ -58,6 +78,15 @@ object ErrorMessage {
     errMsg = s"The input data does not adhere to requested schema",
     errCol = null, // scalastyle:ignore null
     rawValues = Seq(errRow))
+
+  def stdSchemaErrorExpression(column: Column): Column = struct(
+    lit("stdSchemaError").as("errType"),
+    lit(ErrorCodes.StdSchemaError).as("errCode"),
+    lit("The input data does not adhere to requested schema").as("errMsg"),
+    lit("null").as("errCol"),
+    array(column.cast(StringType)).as("rawValues"),
+    typedLit(Seq.empty[Mapping]).as("mappings"))
+
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
     errCode = ErrorCodes.ConfMapError,

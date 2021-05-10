@@ -120,7 +120,7 @@ object StandardizationInterpreter {
     SchemaUtils.getField(corruptRecordColumn, origSchema).map {_ =>
       val column = col(corruptRecordColumn)
       when(column.isNotNull, // input row was not per expected schema
-        array(callUDF(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure
+        array(ErrorMessage.stdSchemaErrorExpression(column)
       )).otherwise( // schema is OK
         typedLit(Seq.empty[ErrorMessage])
       )

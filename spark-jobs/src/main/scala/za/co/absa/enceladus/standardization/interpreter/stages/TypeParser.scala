@@ -27,6 +27,7 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.error.ErrorMessage.{stdCastErrExpression, stdNullErrExpression}
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
 import za.co.absa.enceladus.utils.schema.{MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.time.DateTimePattern
@@ -241,8 +242,7 @@ object TypeParser {
       val errs1 = concat(
         flatten(array(errs.map(x => when(dropChildrenErrsCond, typedLit(Seq[ErrorMessage]())).otherwise(x)): _*)),
         // then add an error if this one is null
-        when(nullErrCond,
-          array(callUDF(UDFNames.stdNullErr, lit(inputFullPathName))))
+        when(nullErrCond, array(ErrorMessage.stdNullErrExpression(inputFullPathName)))
           .otherwise(
             typedLit(Seq[ErrorMessage]())
           )
@@ -261,18 +261,18 @@ object TypeParser {
 
       val err: Column  = if (field.nullable) {
         when(column.isNotNull and castHasError, // cast failed
-          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
+            array(stdCastErrExpression(columnIdForUdf, column))
         ).otherwise( // everything is OK
           typedLit(Seq.empty[ErrorMessage])
         )
       } else {
         when(column.isNull, // NULL not allowed
-          array(callUDF(UDFNames.stdNullErr, lit(columnIdForUdf)))
+          array(stdNullErrExpression(columnIdForUdf))
         ).otherwise( when(castHasError, // cast failed
-          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
-        ).otherwise( // everything is OK
-          typedLit(Seq.empty[ErrorMessage])
-        ))
+            array(stdCastErrExpression(columnIdForUdf, column))
+            ).otherwise( // everything is OK
+          typedLit(Seq.empty[ErrorMessage]))
+        )
       }
 
       val std: Column = when(size(err) > lit(0), // there was an error on cast
