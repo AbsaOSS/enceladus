@@ -15,21 +15,25 @@
 
 package za.co.absa.enceladus.standardization
 
+import java.sql.{Date, Timestamp}
+import java.time.LocalDateTime
+
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
-import org.slf4j.Logger
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar{
+class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with DatasetComparer{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
   private val standardizationReader = new StandardizationPropertiesProvider()
@@ -54,13 +58,30 @@ class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with Mocki
     val reader = csvReader.schema(inputSchema)
 
     val sourceDF = reader.load("src/test/resources/data/standardization_json_suite_data.json")
+    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
-    val expected = FileReader.readFileAsString("src/test/resources/data/standardization_json_suite_expected.txt")
-      .replace("\r\n", "\n")
+    val expectedData = Seq(
+      Row("Having data", "Hello world", true, 1, Date.valueOf("2005-07-31"), Seq(Timestamp.valueOf("2005-07-31 08:22:31"), Timestamp.valueOf("2005-07-31 18:22:44")), Seq()),
+      Row("Typed data", "Lorem Ipsum", true, 1000, Date.valueOf("2005-08-07"), Seq(), Seq()),
+      Row("Nulls", null, null, null, null, null, Seq()),
+      Row("Missing fields", null, null, null, null, null, Seq()),
+      Row("Object in atomic type", null, null, null, null, null, Seq(
+        Row("stdSchemaError", "E00007", "The input data does not adhere to requested schema", null, Seq("""{"description":"Object in atomic type","string":{"foo":bar}},"""), Seq())
+      )),
+      Row("Array in atomic type", null, null, null, null, null, Seq(
+        Row("stdCastError", "E00000", "Standardization Error - Type cast", "boolean", Seq("[false,true]"), Seq())
+      )),
+      Row("Array in string type", """["a","bb","ccc"]""", null, null, null, null, Seq()),
+      Row("ERROR", null, null, null, null, null, Seq(
+        Row("stdSchemaError", "E00007", "The input data does not adhere to requested schema", null, Seq("""{"description":"Object in array type","array":{"foo":bar}},"""), Seq()),
+        Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "description", Seq("null"), Seq())
+      )),
+      Row("Atomic type in array", null, null, null, null, null, Seq(
+        Row("stdSchemaError", "E00007", "The input data does not adhere to requested schema", null, Seq("""{"description":"Atomic type in array","array":"25/09/2005 11:22:33"},"""), Seq())
+      ))
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDF.schema) // checking just the data, not the schema here
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
-
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assertSmallDatasetEquality(actualDF, expectedDF, ignoreNullable = true)
   }
 }
