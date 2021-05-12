@@ -15,6 +15,22 @@
 # limitations under the License.
 #
 
+ifconfig # prints full IP info
+echo "Detecting 'eth1' interface..."
+DETECTED_IP=$(ifconfig -a | grep -A2 eth1 | grep inet | awk '{​​​​​​​​print $2}​​​​​​​​' | sed 's#/.*##g' | grep "\.")
+if [[ -z $DETECTED_IP ]]; then
+    echo "Detecting 'eth0' interface ('eth1' not found)..."
+    DETECTED_IP=$(ifconfig -a | grep -A2 eth0 | grep inet | awk '{​​​​​​​​print $2}​​​​​​​​' | sed 's#/.*##g' | grep "\." | head -1)
+fi
+DETECTED_HOSTNAME=$(hostname)
+echo -e "\n\nDETECTED_IP=$DETECTED_IP\nDETECTED_HOSTNAME=$DETECTED_HOSTNAME\n\n"
+echo -e "Current file contents:\n $(cat /etc/hosts)"
+echo "$DETECTED_IP menas-fargate-elb.ctodatadev.aws.dsarena.com" >> /etc/hosts
+echo -e "\n\n\nUpdated file contents:\n $(cat /etc/hosts)"
+CMD="$@"
+$CMD
+
+
 if [[ -n ${PRIVATE_KEY} && -n ${CERTIFICATE} && -n ${CA_CHAIN} ]]; then
     echo "Certificate, chain and private key present, running secured version"
     echo "${PRIVATE_KEY}" >> conf/private.pem
