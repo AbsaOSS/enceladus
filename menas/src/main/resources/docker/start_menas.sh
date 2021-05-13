@@ -19,7 +19,7 @@ DETECTED_HOSTNAME=$(hostname)
 DETECTED_IP=$(echo $DETECTED_HOSTNAME | cut -d"." -f 1 | sed -e 's/-/./g' | cut -c 4-)
 echo -e "\n\nDETECTED_IP=$DETECTED_IP\nDETECTED_HOSTNAME=$DETECTED_HOSTNAME\n\n"
 echo -e "Current file contents:\n $(cat /etc/hosts)"
-sed -i.bak -e 's/\(\(.\?[1-9]\{1,3\}\)\{1,4\}\) \(ip-.\+\)/\1 menas-fargate-elb.ctodatadev.aws.dsarena.com/g' /etc/hosts
+cat /etc/hosts | sed -e 's/\(\(.\?[1-9]\{1,3\}\)\{1,4\}\) \(ip-.\+\)/\1 menas-fargate-elb.ctodatadev.aws.dsarena.com/g' > /etc/hosts
 echo -e "\n\n\nUpdated file contents:\n $(cat /etc/hosts)"
 CMD="$@"
 $CMD
