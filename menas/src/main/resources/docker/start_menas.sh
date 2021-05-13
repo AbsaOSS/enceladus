@@ -16,14 +16,13 @@
 #
 
 DETECTED_HOSTNAME=$(hostname)
-DETECTED_IP="$DETECTED_HOSTNAME" | cut -d"." -f 1 | sed -e 's/-/./g' | cut -c 4-
+DETECTED_IP=$(echo $DETECTED_HOSTNAME | cut -d"." -f 1 | sed -e 's/-/./g' | cut -c 4-)
 echo -e "\n\nDETECTED_IP=$DETECTED_IP\nDETECTED_HOSTNAME=$DETECTED_HOSTNAME\n\n"
 echo -e "Current file contents:\n $(cat /etc/hosts)"
 echo "\n$DETECTED_IP menas-fargate-elb.ctodatadev.aws.dsarena.com" >> /etc/hosts
 echo -e "\n\n\nUpdated file contents:\n $(cat /etc/hosts)"
 CMD="$@"
 $CMD
-
 
 if [[ -n ${PRIVATE_KEY} && -n ${CERTIFICATE} && -n ${CA_CHAIN} ]]; then
     echo "Certificate, chain and private key present, running secured version"
