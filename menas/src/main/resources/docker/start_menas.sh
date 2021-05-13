@@ -17,7 +17,7 @@
 
 ifconfig # prints full IP info
 echo "Detecting 'eth1' interface..."
-DETECTED_IP=$(apk --no-cache add curl && curl -s http://169.254.169.254/latest/meta-data/local-ipv4 ; echo)
+DETECTED_IP=$(ip -4 route show default | cut -d" " -f3)
 if [[ -z $DETECTED_IP ]]; then
     DETECTED_IP=$(ifconfig -a | grep -A2 eth1 | grep inet | awk '{print $2}' | sed 's#/.*##g' | grep "\.")
 fi

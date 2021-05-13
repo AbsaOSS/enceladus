@@ -37,7 +37,7 @@ ARG PROPERTY_FILE
 ENV SPRING_CONFIG_NAME=${PROPERTY_FILE:-"application"}
 
 ADD ./src/main/resources/docker/start_menas.sh start_menas.sh
-RUN apk --no-cache add curl && chmod +x start_menas.sh && \
+RUN chmod +x start_menas.sh && \
     rm -rf webapps/*
 
 ADD ./target/${WAR_FILE} webapps/ROOT.war
