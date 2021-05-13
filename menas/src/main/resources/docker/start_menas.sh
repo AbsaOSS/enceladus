@@ -17,7 +17,10 @@
 
 ifconfig # prints full IP info
 echo "Detecting 'eth1' interface..."
-DETECTED_IP=$(ifconfig -a | grep -A2 eth1 | grep inet | awk '{print $2}' | sed 's#/.*##g' | grep "\.")
+DETECTED_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4 ; echo)
+if [[ -z $DETECTED_IP ]]; then
+    DETECTED_IP=$(ifconfig -a | grep -A2 eth1 | grep inet | awk '{print $2}' | sed 's#/.*##g' | grep "\.")
+fi
 if [[ -z $DETECTED_IP ]]; then
     echo "Detecting 'eth0' interface ('eth1' not found)..."
     DETECTED_IP=$(ifconfig -a | grep -A2 eth0 | grep inet | awk '{print $2}' | sed 's#/.*##g' | grep "\." | head -1)
