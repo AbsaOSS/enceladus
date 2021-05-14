@@ -15,7 +15,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>menas-web</artifactId>
+    <artifactId>menas</artifactId>
     <packaging>war</packaging>
 
     <parent>
@@ -31,7 +31,7 @@
                 <artifactId>dockerfile-maven-plugin</artifactId>
                 <version>${dockerfile.maven.version}</version>
                 <configuration>
-                    <repository>${dockerfile.menas-ui.repository}</repository>
+                    <repository>${dockerfile.menas.repository}</repository>
                     <tag>${dockerfile.tag}</tag>
                     <buildArgs>
                         <DOCKER_BASE_ARTIFACT>${dockerfile.base.artifact}</DOCKER_BASE_ARTIFACT>

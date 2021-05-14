@@ -13,7 +13,7 @@
 
 specVersion: '2.2'
 metadata:
-  name: menas-web
+  name: menas
 type: application
 framework:
   name: OpenUI5
