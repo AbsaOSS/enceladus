@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.standardization
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types
+import org.apache.spark.sql.{Row, types}
 import org.apache.spark.sql.types._
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
@@ -25,11 +26,11 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-class StandardizationXmlSuite extends AnyFunSuite with SparkTestBase with MockitoSugar{
+class StandardizationXmlSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with DatasetComparer {
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
 
   private val standardizationReader = new StandardizationPropertiesProvider()
@@ -64,21 +65,15 @@ class StandardizationXmlSuite extends AnyFunSuite with SparkTestBase with Mockit
     val corruptedRecords = sourceDF.filter(col("_corrupt_record").isNotNull)
     assert(corruptedRecords.isEmpty, s"Unexpected corrupted records found: ${corruptedRecords.collectAsList()}")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val stdDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
-    val actual = destDF.dataAsString(truncate = false)
-    val expected =
-      """+-----+----------+----------+------+
-        ||rowId|reportDate|legs      |errCol|
-        |+-----+----------+----------+------+
-        ||1    |2018-08-10|[[[1000]]]|[]    |
-        ||2    |2018-08-10|[[[2000]]]|[]    |
-        ||3    |2018-08-10|[[[]]]    |[]    |
-        ||4    |2018-08-10|null      |[]    |
-        |+-----+----------+----------+------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
-
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1L, "2018-08-10", Seq(Row(Row(1000))), Seq()),
+      Row(2L, "2018-08-10", Seq(Row(Row(2000))), Seq()),
+      Row(3L, "2018-08-10", Seq(Row(Row(null))), Seq()),
+      Row(4L, "2018-08-10", null, Seq())
+    )
+    val expectedDF = expectedData.toDfWithSchema(stdDF.schema) // checking just the data
+    assertSmallDatasetEquality(stdDF, expectedDF)
   }
 }
