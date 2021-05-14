@@ -118,7 +118,7 @@
         <module>dao</module>
         <module>data-model</module>
         <module>examples</module>
-        <module>menas</module>
+        <module>rest-api</module>
         <module>migrations-cli</module>
         <module>migrations</module>
         <module>plugins-api</module>
