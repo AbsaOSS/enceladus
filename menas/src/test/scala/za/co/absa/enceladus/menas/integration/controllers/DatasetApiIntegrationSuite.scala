@@ -226,11 +226,11 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
 
     val propDefs = Seq(
-      createPropDef("mandatoryField1", Mandatory(false), StringPropertyType("default1")),
-      createPropDef("mandatoryField2", Mandatory(false), StringPropertyType("default1")),
-      createPropDef("mandatoryField3", Mandatory(true), StringPropertyType("default1")),
+      createPropDef("mandatoryField1", Mandatory(false), StringPropertyType(Some("default1"))),
+      createPropDef("mandatoryField2", Mandatory(false), StringPropertyType()),
+      createPropDef("mandatoryField3", Mandatory(true), StringPropertyType()),
       createPropDef("enumField1", Optional, EnumPropertyType("optionA", "optionB")),
-      createPropDef("enumField2", Recommended, EnumPropertyType("optionC", "optionD"))
+      createPropDef("enumField2", Recommended, EnumPropertyType(Set("optionC", "optionD"), suggestedValue = None))
     )
 
     val properties = Map(

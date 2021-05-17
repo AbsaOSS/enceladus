@@ -53,5 +53,15 @@ var Functions = new function () {
         }
       }
     })
+  };
+
+  /**
+   * Checks if the property is enum-like by making sure that non-empty iterable of `allowedValues` exists
+   * @param propertyType
+   * @returns {boolean}
+   */
+  this.isEnum = function(propertyType) {
+    return propertyType.hasOwnProperty("allowedValues") && propertyType.allowedValues.length > 0;
   }
+
 }();

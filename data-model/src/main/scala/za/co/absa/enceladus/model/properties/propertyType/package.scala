@@ -28,16 +28,16 @@ package object propertyType {
     new Type(value = classOf[EnumPropertyType], name = "EnumPropertyType")
   ))
   sealed trait PropertyType {
-    def suggestedValue: String
+    def suggestedValue: Option[String]
 
     def isValueConforming(value: String): Try[Unit]
   }
 
-  case class StringPropertyType(suggestedValue: String = "") extends PropertyType {
+  case class StringPropertyType(suggestedValue: Option[String] = None) extends PropertyType {
     override def isValueConforming(value: String): Try[Unit] = Success(Unit)
   }
 
-  case class EnumPropertyType(allowedValues: Set[String], suggestedValue: String) extends PropertyType {
+  case class EnumPropertyType(allowedValues: Set[String], suggestedValue: Option[String]) extends PropertyType {
     override def isValueConforming(value: String): Try[Unit] = {
       if (allowedValues.contains(value)) {
         Success(Unit)
@@ -46,9 +46,12 @@ package object propertyType {
       }
     }
 
-    isValueConforming(suggestedValue) match {
-      case Success(_) =>
-      case Failure(e) => throw PropertyTypeValidationException(s"The suggested value $suggestedValue cannot be used: ${e.getMessage}", e)
+    suggestedValue.map { existingSuggestedValue =>
+      isValueConforming(existingSuggestedValue) match {
+        case Success(_) =>
+        case Failure(e) =>
+          throw PropertyTypeValidationException(s"The suggested value $existingSuggestedValue cannot be used: ${e.getMessage}", e)
+      }
     }
   }
 
@@ -58,9 +61,8 @@ package object propertyType {
      * @param allowedValues The first value will be assinged to the [[PropertyType#suggestedValue]] field.
      * @return
      */
-    def apply(allowedValues: String*): EnumPropertyType = EnumPropertyType(allowedValues.toSet, allowedValues(0))
+    def apply(allowedValues: String*): EnumPropertyType = EnumPropertyType(allowedValues.toSet, Some(allowedValues(0)))
   }
 
   case class PropertyTypeValidationException(msg: String, cause: Throwable) extends Exception(msg, cause)
-
 }
