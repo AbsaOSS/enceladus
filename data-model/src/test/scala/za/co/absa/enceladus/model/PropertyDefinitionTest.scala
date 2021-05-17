@@ -30,7 +30,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
       name = "testStringProperty1",
       version = 2,
       description = Some("test desc"),
-      propertyType = StringPropertyType(suggestedValue = "sort of default"),
+      propertyType = StringPropertyType(suggestedValue = Some("sort of default")),
       putIntoInfoFile = true,
       essentiality = Mandatory()
     )
@@ -47,12 +47,34 @@ class PropertyDefinitionTest extends AnyFunSuite {
     assert(stringPropertyDef.exportItem() == expectedPropertyDef)
   }
 
+  test("export string PropertyDefinition 2 - without suggestedValue") {
+    val stringPropertyDef = PropertyDefinition(
+      name = "testStringProperty1",
+      version = 2,
+      description = Some("test desc"),
+      propertyType = StringPropertyType(suggestedValue = None),
+      putIntoInfoFile = true,
+      essentiality = Mandatory()
+    )
+
+    val expectedPropertyDef =
+      s"""{"metadata":{"exportVersion":$modelVersion},"item":{
+         |"name":"testStringProperty1",
+         |"description":"test desc",
+         |"propertyType":{"_t":"StringPropertyType","suggestedValue":null},
+         |"putIntoInfoFile":true,
+         |"essentiality":{"_t":"Mandatory","allowRun":false}
+         |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+
+    assert(stringPropertyDef.exportItem() == expectedPropertyDef)
+  }
+
   test("export enum PropertyDefinition") {
     val enumPropertyDef = PropertyDefinition(
       name = "testEnumProperty1",
       version = 3,
       description = None,
-      propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "optionB")
+      propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = Some("optionB"))
     )
 
     val expectedPropertyDef =
@@ -66,13 +88,32 @@ class PropertyDefinitionTest extends AnyFunSuite {
     assert(enumPropertyDef.exportItem() == expectedPropertyDef)
   }
 
+  test("export enum PropertyDefinition 2 - no suggested value") {
+    val enumPropertyDef = PropertyDefinition(
+      name = "testEnumProperty1",
+      version = 3,
+      description = None,
+      propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = None)
+    )
+
+    val expectedPropertyDef =
+      s"""{"metadata":{"exportVersion":$modelVersion},"item":{
+         |"name":"testEnumProperty1",
+         |"propertyType":{"_t":"EnumPropertyType","allowedValues":["optionA","optionB","optionC"],"suggestedValue":null},
+         |"putIntoInfoFile":false,
+         |"essentiality":{"_t":"Optional"}
+         |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+
+    assert(enumPropertyDef.exportItem() == expectedPropertyDef)
+  }
+
   test("Suggested value conformity should be checked") {
     val errorMessage = intercept[PropertyTypeValidationException] {
       PropertyDefinition(
         name = "testEnumProperty1",
         version = 3,
         description = None,
-        propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = "invalidOption")
+        propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = Some("invalidOption"))
       )
     }.getMessage
 
