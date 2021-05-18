@@ -24,6 +24,7 @@ ___
 
 <!-- toc -->
 - [What is Enceladus?](#what-is-enceladus)
+    - [REST API](#rest-api)
     - [Menas](#menas)
     - [Standardization](#standardization)
     - [Conformance](#conformance)
@@ -38,13 +39,20 @@ ___
 ## What is Enceladus?
 **Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. data for country designation which are **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
 
-The project is comprised of three main components:
-### Menas
-This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.  
-There are three models used to do this:
+The project is comprised of four main components:
+
+### REST API
+The REST API exposes the Enceladus endpoints for creating, reading, updating and deleting the models, as well as other functionalities.
+The main three models used are:
  - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
  - **Schema**: Specifies the schema towards which the dataset will be standardized
  - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
+
+The REST API exposes a Swagger Documentation UI which documents all the HTTP exposed endpoints. It can be found at **REST_API_HOST/swagger-ui.html**
+
+### Menas
+This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.   
+The Menas web client calls and is based on the REST API to get the needed entities.
 
 ### Standardization
 This is a Spark job which reads an input dataset in any of the supported formats and **produces a parquet dataset with the Menas-specified schema** as output. 
@@ -69,7 +77,6 @@ Ensure the properties there fit your environment.
 - Without tests: `mvn clean package -DskipTests `
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
-- With component preload file generated: `mvn clean package -PgenerateComponentPreload`
 
 #### Test coverage:
 - Test coverage: `mvn scoverage:report`
@@ -77,27 +84,33 @@ Ensure the properties there fit your environment.
 The coverage reports are written in each module's `target` directory and aggregated in the root `target` directory.
 
 ## How to run
-#### Menas requirements:
+#### REST API requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline service deployment**](https://absaoss.github.io/spline/#get-spline)
+- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
+ in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
-The _Spline service_ can be omitted; in such case the **Standardization** and **Conformance** `spline.producer.url` setting
-as well as **Menas** `menas.oozie.lineageWriteApiUrl` settings should be set to empty string. 
+The _Spline UI_ can be omitted; in such case the **REST API** `spline.urlTemplate` setting should be set to empty string. 
+
+#### Deploying REST API
+Simply copy the **rest-api.war** file produced when building the project into Tomcat's webapps directory.
+Another possible method is building the Docker image based on the existing Dockerfile and deploying it as a container.
 
 #### Deploying Menas
-Simply copy the **menas.war** file produced when building the project into Tomcat's webapps directory. 
+There are several ways of deploying Menas:
+- Tomcat deployment: copy the **menas.war** file produced when building the project into Tomcat's webapps directory. The **"apiUrl"** value in package.json should be set either before building or after building the artifact and modifying it in place
+- Docker deployment: build the Docker image based on the existing Dockerfile and deploy it as a container. The **API_URL** environment variable should be provided when running the container 
+- CDN deployment: copy the built contents in the **dist** directory into your preferred CDN server. The **"apiUrl"** value in package.json in the **dist** directory should be set
 
-#### Speed up initial loading time of menas
-- Build the project with the generateComponentPreload profile. Component preload will greatly reduce the number of HTTP requests required for the initial load of Menas
+#### Speed up initial loading time of REST API
 - Enable the HTTP compression
-- Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of Menas for caching of static resources
+- Configure `spring.resources.cache.cachecontrol.max-age` in `application.properties` of REST API for caching of static resources
 
 #### Standardization and Conformance requirements:
 - [**Spark 2.4.4 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
 - [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
-- **Menas** running instance
+- **REST API** running instance
 - **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
    - **Use with in-memory authentication**
 e.g. `~/menas-credential.properties`:
@@ -105,7 +118,7 @@ e.g. `~/menas-credential.properties`:
 username=user
 password=changeme
 ```
-- **Menas Keytab File** in your home directory or on HDFS
+- **REST API Keytab File** in your home directory or on HDFS
    - **Use with kerberos authentication**, see [link](https://kb.iu.edu/d/aumh) for details on creating keytab files
  - **Directory structure** for the **RAW** dataset should follow the convention of `<path_to_dataset_in_menas>/<year>/<month>/<day>/v<dataset_version>`. This date is specified with the `--report-date` option when running the **Standardization** and **Conformance** jobs.
  - **_INFO file** must be present along with the **RAW** data on HDFS as per the above directory structure. This is a file tracking control measures via [Atum](https://github.com/AbsaOSS/atum), an example can be found [here](examples/data/input/_INFO).
@@ -119,7 +132,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
@@ -131,7 +144,7 @@ password=changeme
 --row-tag <tag>
 ```
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 #### Running Conformance
 ```
@@ -143,7 +156,7 @@ password=changeme
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
@@ -175,7 +188,7 @@ password=changeme
 --row-tag <tag>
 ```
 
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
 
 #### Helper scripts for running Standardization, Conformance or both together
 
@@ -272,8 +285,8 @@ The list of all options for running Standardization, Conformance and the combine
 
 |            Option                     |                           Description                                                                                                                                                       |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| --menas-auth-keytab **filename**      | A keytab file used for Kerberized authentication to Menas. Cannot be used together with `--menas-credentials-file`.                                                                         |
-| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas. Cannot be used together with `--menas-auth-keytab`.                                                     |
+| --menas-auth-keytab **filename**      | A keytab file used for Kerberized authentication to REST API. Cannot be used together with `--menas-credentials-file`.                                                                         |
+| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to REST API. Cannot be used together with `--menas-auth-keytab`.                                                     |
 | --dataset-name **name**               | A dataset name to be standardized or conformed.                                                                                                                                             |
 | --dataset-version **version**         | A version of a dataset to be standardized or conformed.                                                                                                                                     |
 | --report-date **YYYY-mm-dd**          | A date specifying a day for which a raw data is landed.                                                                                                                                     |

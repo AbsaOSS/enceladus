@@ -1,0 +1,25 @@
+{
+  "name": "menas",
+  "version": "3.0.0-SNAPSHOT",
+  "description": "Menas Client",
+  "main": "index.html",
+  "author": "ABSA Big Data R&D",
+  "license": "Apache License, Version 2.0",
+  "devDependencies": {
+    "@ui5/cli": "^2.8.1"
+  },
+  "config": {
+    "apiUrl": "${API_URL}",
+    "lineageConsumerApiUrl": "${LINEAGE_CONSUMER_URL}",
+    "lineageUiCdn": "${LINEAGE_UI_CDN}"
+  },
+  "dependencies": {
+    "chart.js": "^2.7.3",
+    "cronstrue": "^1.106.0",
+    "lodash": "^4.17.20",
+    "moment": "^2.22.2"
+  },
+  "scripts": {
+    "ui5-build": "ui5 build -a --exclude-task=createDebugFiles"
+  }
+}

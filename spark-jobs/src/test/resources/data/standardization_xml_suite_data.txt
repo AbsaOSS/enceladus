@@ -1,0 +1,4 @@
+<instrument><reportDate>2018-08-10</reportDate><rowId>1</rowId><legs><leg><price>1000</price></leg></legs></instrument>
+<instrument><reportDate>2018-08-10</reportDate><rowId>2</rowId><legs><leg><price>2000</price></leg></legs></instrument>
+<instrument><reportDate>2018-08-10</reportDate><rowId>3</rowId><legs></legs></instrument>
+<instrument><reportDate>2018-08-10</reportDate><rowId>4</rowId></instrument>
