@@ -92,7 +92,7 @@ var EntityValidationService = new function () {
 
     aProperties.map((oProp) => {
       const sDesc = oProp.description ? ` (${oProp.description})` : "";
-      const isEnum = Functions.isEnum(oProp.propertyType);
+      const isEnum = Functions.hasValidAllowedValues(oProp.propertyType);
       const msg = `${isEnum ? "Choose one of valid options for" : "Provide valid"} ${oProp.name}${sDesc}`;
 
       // check essentiality - if Mandatory property has no or empty value, we fail

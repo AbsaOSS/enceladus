@@ -104,7 +104,7 @@ class DatasetDialog extends EntityDialog {
    * @returns {undefined} or allowedValues sequence of Select-mappable object: (value, text)*
    */
   preprocessedAllowedValues(oProp) {
-    if(Functions.isEnum(oProp.propertyType)) {
+    if(Functions.hasValidAllowedValues(oProp.propertyType)) {
       let allowedMap = oProp.propertyType.allowedValues.map(val => {
         if (val == oProp.propertyType.suggestedValue) {
           return {value: val, text: `${val} (suggested value)`}

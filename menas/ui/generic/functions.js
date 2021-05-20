@@ -60,7 +60,7 @@ var Functions = new function () {
    * @param propertyType
    * @returns {boolean}
    */
-  this.isEnum = function(propertyType) {
+  this.hasValidAllowedValues = function(propertyType) {
     return propertyType.hasOwnProperty("allowedValues") && propertyType.allowedValues.length > 0;
   }
 

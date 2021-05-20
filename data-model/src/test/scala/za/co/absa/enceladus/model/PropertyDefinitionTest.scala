@@ -74,7 +74,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
       name = "testEnumProperty1",
       version = 3,
       description = None,
-      propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = Some("optionB"))
+      propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = Some("optionB"))
     )
 
     val expectedPropertyDef =
@@ -93,7 +93,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
       name = "testEnumProperty1",
       version = 3,
       description = None,
-      propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = None)
+      propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = None)
     )
 
     val expectedPropertyDef =
@@ -113,7 +113,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
         name = "testEnumProperty1",
         version = 3,
         description = None,
-        propertyType = EnumPropertyType(Set("optionA", "optionB", "optionC"), suggestedValue = Some("invalidOption"))
+        propertyType = EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = Some("invalidOption"))
       )
     }.getMessage
 

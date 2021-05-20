@@ -37,7 +37,11 @@ package object propertyType {
     override def isValueConforming(value: String): Try[Unit] = Success(Unit)
   }
 
-  case class EnumPropertyType(allowedValues: Set[String], suggestedValue: Option[String]) extends PropertyType {
+  case class EnumPropertyType(allowedValues: Seq[String], suggestedValue: Option[String]) extends PropertyType {
+    require(allowedValues.nonEmpty, "At least one allowed value must be defined for EnumPropertyType.")
+    require(allowedValues.forall(_.nonEmpty), "Empty string is disallowed as an allowedValue for EnumPropertyType." +
+      "Consider using the property in non-mandatory context instead.")
+
     override def isValueConforming(value: String): Try[Unit] = {
       if (allowedValues.contains(value)) {
         Success(Unit)
@@ -61,7 +65,7 @@ package object propertyType {
      * @param allowedValues The first value will be assinged to the [[PropertyType#suggestedValue]] field.
      * @return
      */
-    def apply(allowedValues: String*): EnumPropertyType = EnumPropertyType(allowedValues.toSet, Some(allowedValues(0)))
+    def apply(allowedValues: String*): EnumPropertyType = EnumPropertyType(allowedValues.toSeq, Some(allowedValues(0)))
   }
 
   case class PropertyTypeValidationException(msg: String, cause: Throwable) extends Exception(msg, cause)
