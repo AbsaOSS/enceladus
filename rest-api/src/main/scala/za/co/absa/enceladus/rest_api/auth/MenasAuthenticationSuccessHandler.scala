@@ -43,6 +43,7 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
                                        authentication: Authentication): Unit = {
     val user = authentication.getPrincipal.asInstanceOf[UserDetails]
     val csrfToken = UUID.randomUUID().toString
+    println("CSRF: " + csrfToken)
     response.addHeader(CsrfTokenKey, csrfToken)
 
     val expiry = Hours.hours(jwtLifespanHours).toStandardSeconds
@@ -65,7 +66,9 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
       .claim(RolesKey, filteredGroups)
       .compact()
 
+    println("JWT: " + csrfToken)
     response.addHeader(JwtKey, jwt)
+    println(response)
 
     clearAuthenticationAttributes(request)
   }

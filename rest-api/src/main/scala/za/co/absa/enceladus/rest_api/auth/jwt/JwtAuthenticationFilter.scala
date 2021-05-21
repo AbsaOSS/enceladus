@@ -37,6 +37,8 @@ import scala.util.{Failure, Success, Try}
 class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OncePerRequestFilter {
 
   override def doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, chain: FilterChain): Unit = {
+    println(request)
+    println(response)
     getAuthentication(request)
       .foreach(SecurityContextHolder.getContext.setAuthentication)
 

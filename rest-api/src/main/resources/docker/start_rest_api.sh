@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+sleep 300
+
 if [[ -n ${PRIVATE_KEY} && -n ${CERTIFICATE} && -n ${CA_CHAIN} ]]; then
     echo "Certificate, chain and private key present, running secured version"
     echo "${PRIVATE_KEY}" >> conf/private.pem

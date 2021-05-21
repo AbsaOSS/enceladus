@@ -55,6 +55,7 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
   def authenticate(): HttpHeaders = {
     apiCaller.call { baseUrl =>
       val response = requestAuthentication(url(baseUrl))
+      println(response)
       val statusCode = response.getStatusCode
 
       statusCode match {
