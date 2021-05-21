@@ -17,6 +17,9 @@
 
 sleep 300
 
+JAVA_OPTS="${JAVA_OPTS} -Dmenas.auth.servicename.principal=\"HTTP/$(hostname)@CORP.DSARENA.COM\""
+echo $JAVA_OPTS
+
 if [[ -n ${PRIVATE_KEY} && -n ${CERTIFICATE} && -n ${CA_CHAIN} ]]; then
     echo "Certificate, chain and private key present, running secured version"
     echo "${PRIVATE_KEY}" >> conf/private.pem
