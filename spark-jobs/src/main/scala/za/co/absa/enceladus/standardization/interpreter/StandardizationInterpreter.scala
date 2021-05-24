@@ -22,7 +22,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
-import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
+import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, TypeParser}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
@@ -54,17 +54,8 @@ object StandardizationInterpreter {
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
-    // TODO: remove when spark-xml handles empty arrays #417
-    val dfXmlSafe: Dataset[Row] = if (inputType.toLowerCase() == "xml") {
-      df.select(expSchema.fields.map { field: StructField =>
-        SparkXMLHack.hack(field, "", df).as(field.name)
-      }: _*)
-    } else {
-      df
-    }
-
     logger.info(s"Step 2: Standardization")
-    val std = standardizeDataset(dfXmlSafe, expSchema, failOnInputNotPerSchema)
+    val std = standardizeDataset(df, expSchema, failOnInputNotPerSchema)
 
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
