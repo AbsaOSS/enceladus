@@ -144,7 +144,7 @@ object MenasKerberosAuthentication {
     filter.setSuccessHandler(authenticationSuccessHandler)
     filter.setFailureHandler(new AuthenticationFailureHandler {
       override def onAuthenticationFailure(request: HttpServletRequest, response: HttpServletResponse, exception: AuthenticationException): Unit = {
-        logger.error(exception.getStackTrace.toString)
+        logger.error("The hidden issue", exception)
       }
     })
     filter
