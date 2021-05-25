@@ -81,12 +81,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>za.co.absa.commons</groupId>
-            <artifactId>commons_${scala.compat.version}</artifactId>
-            <version>${commons.version}</version>
-        </dependency>
-
         <!-- Libraries -->
         <dependency>
             <groupId>com.typesafe</groupId>
