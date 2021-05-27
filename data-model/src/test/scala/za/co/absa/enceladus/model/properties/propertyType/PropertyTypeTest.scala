@@ -45,6 +45,13 @@ class PropertyTypeTest extends AnyFlatSpec with Matchers {
     }
   }
 
+  it should "check allowedValues contains unique values" in {
+    val nonUniqueAllowedValues = Seq("duplicate", "duplicate", "other")
+      intercept[IllegalArgumentException] {
+        EnumPropertyType(nonUniqueAllowedValues, suggestedValue = None)
+      }.getMessage should include("Allowed values for EnumPropertyType should be unique")
+  }
+
   it should "allow empty suggested value no matter the allowedValues" in {
     EnumPropertyType(Seq("optionA", "optionB", "optionC"), suggestedValue = None) // throws no exception
   }

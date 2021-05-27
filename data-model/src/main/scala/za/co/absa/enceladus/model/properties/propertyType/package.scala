@@ -41,6 +41,8 @@ package object propertyType {
     require(allowedValues.nonEmpty, "At least one allowed value must be defined for EnumPropertyType.")
     require(allowedValues.forall(_.nonEmpty), "Empty string is disallowed as an allowedValue for EnumPropertyType." +
       "Consider using the property in non-mandatory context instead.")
+    require(allowedValues.size == allowedValues.toSet.size,
+      s"Allowed values for EnumPropertyType should be unique, but $allowedValues was given.")
 
     override def isValueConforming(value: String): Try[Unit] = {
       if (allowedValues.contains(value)) {
