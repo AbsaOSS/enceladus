@@ -63,7 +63,7 @@ class PropertyDefinitionTest extends AnyFunSuite {
          |"description":"test desc",
          |"propertyType":{"_t":"StringPropertyType","suggestedValue":null},
          |"putIntoInfoFile":true,
-         |"essentiality":{"_t":"Mandatory","allowRun":false}
+         |"essentiality":{"_t":"Mandatory"}
          |}}""".stripMargin.replaceAll("[\\r\\n]", "")
 
     assert(stringPropertyDef.exportItem() == expectedPropertyDef)

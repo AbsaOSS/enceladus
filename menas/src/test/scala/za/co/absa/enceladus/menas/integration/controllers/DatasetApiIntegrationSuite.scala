@@ -288,6 +288,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
     val expectedValidation = Validation(Map(
       "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
+      "mandatoryField3" -> List("Dataset property 'mandatoryField3' is mandatory, but does not exist!"),
       "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
       "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
     ))
