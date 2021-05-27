@@ -31,13 +31,13 @@
                           <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
                             <HBox alignItems="Center" justifyContent="End" renderType="Bare">
                               <Input type="Text" width="18rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}"
-                                class="propertyInput" value="{entity>value}" valueState="{entity>validation}" 
+                                class="propertyInput" value="{entity>value}" placeholder="{entity>suggestedValue}" valueState="{entity>validation}"
                                 valueStateText="{entity>validationText}"></Input>
-                              <Select width="18rem"
-                                items="{path: 'entity>propertyType/allowedValues', templateShareable: false}"
+                                  <Select width="18rem"
+                                items="{path: 'entity>allowedValues', templateShareable: false}"
                                 selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
-                                visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}">
-                                <core:Item key="{entity>value}" text="{entity>value}"></core:Item>
+                                visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}" forceSelection="false">
+                                <core:Item key="{entity>value}" text="{entity>text}"></core:Item>
                               </Select>
                               <core:Icon width="1rem" class="sapUiSmallMarginBegin" color="Neutral" tooltip="{entity>essentiality/_t}"
                                 src="{= ${entity>essentiality/_t} === 'Mandatory' ? 'sap-icon://alert' : (${entity>essentiality/_t} === 'Recommended' ? 'sap-icon://warning' : 'sap-icon://accept') }"></core:Icon>

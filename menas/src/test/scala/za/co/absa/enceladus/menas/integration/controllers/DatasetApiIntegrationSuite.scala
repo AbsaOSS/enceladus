@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -44,6 +44,53 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
 
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture)
+
+  s"POST $apiUrl/create" can {
+    "return 201" when {
+      "a Dataset is created" should {
+        "return the created Dataset (with empty properties stripped)" in {
+          val dataset = DatasetFactory.getDummyDataset("dummyDs",
+            properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
+
+          val response = sendPost[Dataset, Dataset](s"$apiUrl/create", bodyOpt = Some(dataset))
+          assertCreated(response)
+
+          val actual = response.getBody
+          val expected = toExpected(dataset, actual).copy(properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))) // keyC stripped
+          assert(actual == expected)
+        }
+      }
+    }
+  }
+
+  s"POST $apiUrl/edit" can {
+    "return 201" when { // todo not RESTful - consider 200 OK for editing result - issue #966
+      "a Schema with the given name and version is the latest that exists" should {
+        "return the updated Schema (with empty properties stripped)" in {
+          val datasetA1 = DatasetFactory.getDummyDataset("datasetA",
+            description = Some("init version"), properties = Some(Map("keyA" -> "valA")))
+          datasetFixture.add(datasetA1)
+
+          val datasetA2 = DatasetFactory.getDummyDataset("datasetA", description = Some("updated"),
+            properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
+
+          val response = sendPost[Dataset, Dataset](s"$apiUrl/edit", bodyOpt = Some(datasetA2))
+          assertCreated(response)
+
+          val actual = response.getBody
+          val expectedDs = DatasetFactory.getDummyDataset(
+              name = "datasetA",
+              version = 2,
+              description = Some("updated"),
+              parent = Some(DatasetFactory.toParent(datasetA1)),
+              properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))
+          )
+          val expected = toExpected(expectedDs, actual)
+          assert(actual == expected)
+        }
+      }
+    }
+  }
 
   s"GET $apiUrl/detail/{name}/latestVersion" should {
     "return 200" when {
@@ -193,7 +240,8 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
   s"PUT $apiUrl/{name}/properties" should {
     "201 Created with location " when {
       Seq(
-        ("non-empty properties map", """{"keyA":"valA","keyB":"valB"}""", Some(Map("keyA" -> "valA", "keyB" -> "valB"))),
+        ("non-empty properties map", """{"keyA":"valA","keyB":"valB","keyC":""}""",
+          Some(Map("keyA" -> "valA", "keyB" -> "valB"))), // empty string property would get removed (defined "" => undefined)
         ("empty properties map", "{}", Some(Map.empty)),
         ("no properties at all", "", None) // this is backwards compatible option with the pre-properties era versions
       ).foreach {case (testCaseName, payload, expectedPropertiesSet) =>
@@ -226,11 +274,11 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       PropertyDefinitionFactory.getDummyPropertyDefinition(name, essentiality = essentiality, propertyType = propertyType)
 
     val propDefs = Seq(
-      createPropDef("mandatoryField1", Mandatory(false), StringPropertyType("default1")),
-      createPropDef("mandatoryField2", Mandatory(false), StringPropertyType("default1")),
-      createPropDef("mandatoryField3", Mandatory(true), StringPropertyType("default1")),
+      createPropDef("mandatoryField1", Mandatory(false), StringPropertyType(Some("default1"))),
+      createPropDef("mandatoryField2", Mandatory(false), StringPropertyType()),
+      createPropDef("mandatoryField3", Mandatory(true), StringPropertyType()),
       createPropDef("enumField1", Optional, EnumPropertyType("optionA", "optionB")),
-      createPropDef("enumField2", Recommended, EnumPropertyType("optionC", "optionD"))
+      createPropDef("enumField2", Recommended, EnumPropertyType(Seq("optionC", "optionD"), suggestedValue = None))
     )
 
     val properties = Map(

@@ -92,24 +92,27 @@ var EntityValidationService = new function () {
 
     aProperties.map((oProp) => {
       const sDesc = oProp.description ? ` (${oProp.description})` : "";
-      //check essentiality - if Mandatory property has no or empty value, we fail
-      if(oProp.essentiality._t === "Mandatory" && !oProp.value) {
+      const isEnum = Functions.hasValidAllowedValues(oProp.propertyType);
+      const msg = `${isEnum ? "Choose one of valid options for" : "Provide valid"} ${oProp.name}${sDesc}`;
+
+      // check essentiality - if Mandatory property has no or empty value, we fail
+      if (oProp.essentiality._t === "Mandatory" && !oProp.value) {
         isOk = false;
         oProp.validation = "Error";
-        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
-      } else if(oProp.essentiality._t === "Recommended" && !oProp.value) {
+        oProp.validationText = msg;
+      } else if (oProp.essentiality._t === "Recommended" && !oProp.value) {
         oProp.validation = "Warning";
-        oProp.validationText = `Provide valid ${oProp.name}${sDesc}`;
+        oProp.validationText = msg;
       }
-      //for enum type properties, check that the value is allowed
-      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
-        if(oProp.propertyType.allowedValues.filter((oVal) => { return oVal.value === oProp.value }).length === 0) {
-          isOk = false;
-          oProp.validation = "Error";
-          oProp.validationText = `Choose one of valid options for ${oProp.name}${sDesc}`;
-        }
+
+      // for enum type properties, check that the value is allowed or blank
+      // (blank is not allowed for mandatory, but the above check takes care of that)
+      if (isEnum && !oProp.propertyType.allowedValues.includes(oProp.value) && oProp.value !== "") {
+        isOk = false;
+        oProp.validation = "Error";
+        oProp.validationText = msg;
       }
-    })
+    });
     return isOk;
   };
 
