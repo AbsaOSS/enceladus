@@ -1,7 +1,7 @@
 {
   "name": "menas",
   "version": "3.0.0-SNAPSHOT",
-  "description": "Menas Client",
+  "description": "Menas UI Client",
   "main": "index.html",
   "author": "ABSA Big Data R&D",
   "license": "Apache License, Version 2.0",
