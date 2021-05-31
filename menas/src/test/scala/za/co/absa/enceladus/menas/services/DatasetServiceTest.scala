@@ -181,4 +181,14 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     }
   }
 
+  test("DatasetService.removeBlankProperties removes properties with empty-string values (unit)") {
+    val properties = Map(
+      "propKey1" -> "someValue",
+      "propKey2" -> ""
+    )
+
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(properties))
+    DatasetService.removeBlankProperties(dataset.properties) shouldBe Some(Map("propKey1" -> "someValue"))
+  }
+
 }
