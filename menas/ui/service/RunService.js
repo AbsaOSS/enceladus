@@ -131,7 +131,7 @@ var RunService = new function () {
   };
 
   this._buildLineageUrl = function(outputPath, applicationId) {
-    const urlTemplate = "%s/index.html?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
+    const urlTemplate = "%s?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
     if (window.lineageConsumerApiUrl) {
       let lineageExecutionIdApiTemplate = window.lineageConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
       const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
