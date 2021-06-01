@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.utils.udf
 
-import org.apache.spark.sql.api.java.UDF1
-import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.udf
 import za.co.absa.enceladus.utils.types.parsers.NumericParser
@@ -36,23 +34,20 @@ object UDFBuilder {
     val vDefaultValue = defaultValue
     val vColumnNullable = columnNullable
 
-    val schema = ScalaReflection.schemaFor[UDFResult[T]]
-    udf(numericParserToTyped(vParser, vColumnNullable, vColumnNameForError, vDefaultValue), schema.dataType)
+    udf[UDFResult[T], String](numericParserToTyped(_, vParser, vColumnNullable, vColumnNameForError, vDefaultValue))
   }
 
-  private def numericParserToTyped[T](parser: NumericParser[T],
+  private def numericParserToTyped[T](input: String,
+                                      parser: NumericParser[T],
                                       columnNullable: Boolean,
                                       columnNameForError: String,
-                                      defaultValue: Option[T]): UDF1[String, UDFResult[T]] = {
-    (input: String) => {
-      val result = Option(input) match {
-        case Some(string) => parser.parse(string).map(Some(_))
-        case None if columnNullable => Success(None)
-        case None => Failure(nullException)
-      }
-
-      UDFResult.fromTry(result, columnNameForError, input, defaultValue)
+                                      defaultValue: Option[T]): UDFResult[T] = {
+    val result = Option(input) match {
+      case Some(string) => parser.parse(string).map(Some(_))
+      case None if columnNullable => Success(None)
+      case None => Failure(nullException)
     }
+    UDFResult.fromTry(result, columnNameForError, input, defaultValue)
   }
 
   private val nullException = new NumericParserException("Null value on input for non-nullable field")

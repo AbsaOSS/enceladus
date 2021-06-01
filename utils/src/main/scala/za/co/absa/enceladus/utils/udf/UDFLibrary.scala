@@ -38,7 +38,9 @@ object UDFLibrary {
     this.synchronized {
       if (!isRegistered) {
 
-        spark.udf.register(stdCastErr, stdCastError, StructType.apply(ErrorMessage.errorColSchema))
+        spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
+          ErrorMessage.stdCastErr(errCol, rawValue)
+        })
 
         spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
 
@@ -91,12 +93,6 @@ object UDFLibrary {
 
         isRegistered = true
       }
-    }
-  }
-
-  private val stdCastError = new UDF2[String, String, ErrorMessage] {
-    override def call(errCol: String, rawValue: String): ErrorMessage = {
-      ErrorMessage.stdCastErr(errCol, rawValue)
     }
   }
 
