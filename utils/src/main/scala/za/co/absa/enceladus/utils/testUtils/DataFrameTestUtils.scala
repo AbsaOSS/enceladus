@@ -13,14 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.conformance
+package za.co.absa.enceladus.utils.testUtils
 
-import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformerFactory, StreamTransformerFactoryProvider}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
+object DataFrameTestUtils {
 
-/**
- * This is the Conformance service provider for Hyperdrive.
- */
-class HyperConformanceProvider extends StreamTransformerFactoryProvider {
-  override def getComponentFactory: StreamTransformerFactory = HyperConformance
+  implicit class RowSeqToDf(val data: Seq[Row]) extends AnyVal {
+    def toDfWithSchema(schema: StructType)(implicit spark: SparkSession): DataFrame = {
+      spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
+    }
+  }
 }

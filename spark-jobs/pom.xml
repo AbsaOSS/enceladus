@@ -26,7 +26,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>4.0.0</hyperdrive.version>
+        <hyperdrive.version>4.2.1</hyperdrive.version>
         <commons.version>0.0.25</commons.version>
         <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
     </properties>
@@ -74,13 +74,12 @@
         </dependency>
 
         <!-- Hyperdrive -->
-        <!-- todo reenable with Hyperdrive API for Scala 2.12 #1712 -->
-<!--        <dependency>-->
-<!--            <groupId>za.co.absa.hyperdrive</groupId>-->
-<!--            <artifactId>api_${scala.compat.version}</artifactId>-->
-<!--            <version>${hyperdrive.version}</version>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
+            <dependency>
+            <groupId>za.co.absa.hyperdrive</groupId>
+            <artifactId>api_${scala.compat.version}</artifactId>
+            <version>${hyperdrive.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -132,6 +131,13 @@
             <version>${project.version}</version>
             <classifier>tests</classifier>
             <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.mrpowers</groupId>
+            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
+            <version>${spark.fast.tests.version}</version>
             <scope>test</scope>
         </dependency>
 
