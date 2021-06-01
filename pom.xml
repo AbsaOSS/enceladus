@@ -187,7 +187,7 @@
         <spark.fast.tests.version>1.0.0</spark.fast.tests.version>
         <spark.hats.version>0.2.2</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
-        <spark.version>3.1.1</spark.version>
+        <spark.version>3.1.2</spark.version>
         <spark.xml.version>0.5.0</spark.xml.version>
         <specs.version>3.8.6</specs.version>
 <!--        <spline.version>0.5.6</spline.version> 0.5.x is for Spark 2.x & Scala 2.12, for Spark3 probably 0.6.x when released - todo #1713-->

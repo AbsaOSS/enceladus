@@ -47,8 +47,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     generateDesiredSchema('"' + arrayElementType.typeName + '"', metadata)
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of timestamps with no pattern") {
+  test("Array of timestamps with no pattern") {
     val seq  = Seq(
       Array("00:00:00 01.12.2018", "00:10:00 02.12.2018","00:20:00 03.12.2018"),
       Array("00:00:00 01.12.2019", "00:10:00 02.12.2019","00:20:00 03.12.2019"),
@@ -83,8 +82,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     assertSmallDatasetEquality(stdDF, expectedDF)
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of timestamps with pattern defined") {
+  test("Array of timestamps with pattern defined") {
     val seq  = Seq(
       Array("00:00:00 01.12.2008", "00:10:00 02.12.2008","00:20:00 03.12.2008"),
       Array("00:00:00 01.12.2009", "00:10:00 02.12.2009","00:20:00 03.12.2009"),
@@ -130,8 +128,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     caught.errors.head should startWith ("Validation error for column 'arrayField[].arrayField', pattern 'fubar")
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of integers with pattern defined") {
+  test("Array of integers with pattern defined") {
     val seq  = Seq(
       Array("Size: 1", "Size: 2","Size: 3"),
       Array("Size: -7", "Size: ~13.13"),
@@ -163,8 +160,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     assertSmallDatasetEquality(stdDF, expectedDF)
   }
 
-  //todo incorrect stdCastError values - Issue #1756
-  ignore("Array of floats with minus sign changed and default defined") {
+  test("Array of floats with minus sign changed and default defined") {
     val seq  = Seq(
       Array("1.1", "2.2","3.3"),
       Array("~7.7", "-13.13"),
