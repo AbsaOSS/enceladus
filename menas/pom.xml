@@ -392,6 +392,7 @@
                 <version>${maven.rat.plugin.version}</version>
                 <configuration>
                     <excludes>
+                        <exclude>**/node_modules/**</exclude>
                         <exclude>ui/3rdParty/cRonstrue/cronstrue.min.js</exclude>
                     </excludes>
                 </configuration>
