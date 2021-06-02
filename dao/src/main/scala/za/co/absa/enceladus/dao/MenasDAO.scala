@@ -18,7 +18,9 @@ package za.co.absa.enceladus.dao
 import org.apache.spark.sql.types.StructType
 import za.co.absa.enceladus.model._
 import za.co.absa.atum.model._
+import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
+
 /**
   * Trait for Menas API DAO.
   */
@@ -26,7 +28,6 @@ trait MenasDAO {
 
   /**
     * Authenticates user with Menas
-    * @throws UnauthorizedException if authentication fails
     */
   @throws[UnauthorizedException]
   def authenticate(): Unit
@@ -39,7 +40,7 @@ trait MenasDAO {
     * @param validateProperties if set to other then  `NoValidation` datasets's `propertiesValidation` field will be populated
     * @return The retrieved dataset
     */
-  def getDataset(name: String, version: Int, validateProperties: ValidationLevel): Dataset
+  def getDataset(name: String, version: Int, validateProperties: ValidationLevel = DefaultValidationLevel): Dataset
 
   /**
    * Retrieves properties to be written to the info file

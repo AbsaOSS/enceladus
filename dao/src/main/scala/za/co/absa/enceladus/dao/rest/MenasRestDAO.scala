@@ -19,6 +19,7 @@ import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference, Validation}
+import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 /**
@@ -31,16 +32,21 @@ protected class MenasRestDAO(private[rest] val apiCaller: ApiCaller,
     restClient.authenticate()
   }
 
-  def getDataset(name: String, version: Int, validateProperties: ValidationLevel): Dataset = {
+  def getDataset(name: String, version: Int, validateProperties: ValidationLevel = DefaultValidationLevel): Dataset = {
+    val queryParam = if (validateProperties != DefaultValidationLevel) {
+      s"?validateProperties=$validateProperties"
+    } else {
+      ""
+    }
     apiCaller.call { apiBaseUrl =>
-      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=$validateProperties"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version$queryParam"
       restClient.sendGet[Dataset](url)
     }
   }
 
   def getDatasetPropertiesForInfoFile(datasetName: String, datasetVersion: Int): Map[String, String] = {
     apiCaller.call { apiBaseUrl =>
-      val url = s"$apiBaseUrl/api/dataset/$datasetName/$datasetVersion/properties/?putIntoInfoFile=true"
+      val url = s"$apiBaseUrl/api/dataset/$datasetName/$datasetVersion/properties?putIntoInfoFile=true"
       restClient.sendGet[Map[String, String]](url)
     }
   }
