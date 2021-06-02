@@ -98,14 +98,6 @@
 
     <repositories>
         <repository>
-            <id>openui5-absa</id>
-            <name>OpenUI5-Absa</name>
-            <url>https://dl.bintray.com/absa/openui5</url>
-            <releases>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-        </repository>
-        <repository>
             <id>confluent</id>
             <url>https://packages.confluent.io/maven/</url>
             <releases>
@@ -517,7 +509,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <excludes>
+                            <excludes combine.children="append">
                                 <exclude>**/*.json</exclude>
                                 <exclude>**/*.csv</exclude>
                                 <exclude>**/*.txt</exclude>
@@ -532,6 +524,7 @@
                                 <exclude>**/CODEOWNERS</exclude>
                                 <exclude>**/user.keytab*</exclude>
                                 <exclude>**/json_output</exclude>
+                                <exclude>**/*.iml</exclude>
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>**/node_modules/**</exclude>
