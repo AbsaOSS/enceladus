@@ -11,17 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# To build, first build menas and be in enceladus/menas folder. Then run:
-# $> docker build -t menas .
-# Run image using:
-# $> docker run \
-#       -e MENAS_MONGO_CONNECTION_STRING=mongodb://host.docker.internal:27017 \
-#       -e MENAS_MONGO_CONNECTION_DATABASE=menas \
-#       -p 8080:8080 \
-#       menas
-
-ARG DOCKER_BASE_ARTIFACT=tomcat
-ARG DOCKER_BASE_TAG=9-jre8-alpine
+ARG DOCKER_BASE_ARTIFACT=nginx
+ARG DOCKER_BASE_TAG=1-alpine
 
 FROM ${DOCKER_BASE_ARTIFACT}:${DOCKER_BASE_TAG}
 
@@ -31,42 +22,8 @@ LABEL \
     license="Apache License, version 2.0" \
     name="Menas"
 
-ARG WAR_FILE
-ARG PROPERTY_FILE
+ADD start_menas.sh /docker-entrypoint.d/start_menas.sh
+COPY nginx.conf nginx.conf
+RUN chmod +x /docker-entrypoint.d/start_menas.sh && rm -rf /usr/share/nginx/html/*
 
-ENV SPRING_CONFIG_NAME=${PROPERTY_FILE:-"application"}
-
-ADD ./src/main/resources/docker/start_menas.sh start_menas.sh
-RUN chmod +x start_menas.sh && \
-    rm -rf webapps/*
-
-ADD ./target/${WAR_FILE} webapps/ROOT.war
-ADD src/main/resources/docker/server.xml /tmp/server.xml
-
-ENV MENAS_ENVIRONMENT=Dev
-
-ENV MENAS_MONGO_CONNECTION_STRING="mongodb://localhost:27017"
-ENV MENAS_MONGO_CONNECTION_DATABASE=menas
-
-ENV MENAS_HADOOP_AUTH_METHOD=default
-
-ENV MENAS_SPARK_MASTER="local[1]"
-ENV SPLINE_URLTEMPLATE="//localhost:8080/spline/dataset/lineage/_search?path=%s&application_id=%s"
-
-ENV MENAS_AUTH_MECHANISM=inmemory
-ENV MENAS.AUTH.JWT.SECRET="u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn"
-ENV MENAS_AUTH_INMEMORY_USER=user
-ENV MENAS_AUTH_INMEMORY_PASSWORD=changeme
-
-ENV MENAS_AUTH_ADMIN_ROLE=ROLE_ADMIN
-ENV MENAS_AUTH_INMEMORY_ADMIN_USER=menas_admin
-ENV MENAS_AUTH_INMEMORY_ADMIN_PASSWORD=admin123
-
-ENV HADOOP_CONF_DIR=/tmp
-
-EXPOSE 8080
-EXPOSE 8443
-EXPOSE 8009
-#Debugging
-#EXPOSE 5005
-CMD ["./start_menas.sh"]
+COPY ./ui/dist /usr/share/nginx/html/
