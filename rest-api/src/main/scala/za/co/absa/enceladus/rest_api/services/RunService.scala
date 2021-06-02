@@ -45,9 +45,6 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.model.Validation._
 
-  @Value("${spline.urlTemplate}")
-  private val splineUrlTemplate: String = ""
-
   def getAllLatest(): Future[Seq[Run]] = {
     runMongoRepository.getAllLatest()
   }
@@ -104,17 +101,6 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
       case Some(run) => run
       case None      => throw NotFoundException()
     }
-  }
-
-  def getSplineUrl(datasetName: String, datasetVersion: Int, runId: Int): Future[String] = {
-    getRun(datasetName, datasetVersion, runId).map { run =>
-      val splineRef = run.splineRef
-      String.format(splineUrlTemplate, splineRef.outputPath, splineRef.sparkApplicationId)
-    }
-  }
-
-  def getSplineUrlTemplate(): Future[String] = {
-    Future.successful(splineUrlTemplate)
   }
 
   def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {
