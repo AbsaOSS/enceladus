@@ -212,14 +212,9 @@
         </dependency>
         <!-- WebJars -->
         <dependency>
-            <groupId>africa.absa</groupId>
+            <groupId>org.webjars</groupId>
             <artifactId>openui5</artifactId>
             <version>${openui5.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>africa.absa</groupId>
-            <artifactId>cronstrue-webjar</artifactId>
-            <version>${cronstrue.version}</version>
         </dependency>
         <dependency>
             <groupId>org.webjars.bower</groupId>
@@ -382,6 +377,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>${maven.rat.plugin.version}</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/node_modules/**</exclude>
+                        <exclude>ui/3rdParty/cRonstrue/cronstrue.min.js</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
