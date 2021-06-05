@@ -58,7 +58,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .and()
         .authorizeRequests()
           .antMatchers("/index.html", "/resources/**", "/generic/**",
-            "/service/**", "/webjars/**", "/css/**", "/components/**", "/admin/health",
+            "/service/**", "/webjars/**", "/3rdParty/**", "/css/**", "/components/**", "/admin/health",
             "/api/oozie/isEnabled", "/api/user/version", s"/${projectVersion}/**", "/api/configuration/**")
           .permitAll()
         .anyRequest()
