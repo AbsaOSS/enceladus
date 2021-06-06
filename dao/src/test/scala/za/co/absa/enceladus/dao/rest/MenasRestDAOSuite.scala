@@ -66,12 +66,22 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       Mockito.verify(restClient, Mockito.only()).authenticate()
     }
 
-    "getDataset" in {
+    "getDataset without validation" in {
       val expected = DatasetFactory.getDummyDataset(name, version)
-      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=${ValidationLevel.NoValidation}"
+      val url = s"$apiBaseUrl/api/dataset/$name/$version"
       Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
 
       val result = menasDao.getDataset(name, version, ValidationLevel.NoValidation)
+
+      result should matchTo(expected)
+    }
+
+    "getDataset with validation" in {
+      val expected = DatasetFactory.getDummyDataset(name, version)
+      val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=${ValidationLevel.Strictest}"
+      Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
+
+      val result = menasDao.getDataset(name, version, ValidationLevel.Strictest)
 
       result should matchTo(expected)
     }
