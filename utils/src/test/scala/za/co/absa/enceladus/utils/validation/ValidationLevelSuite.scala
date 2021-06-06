@@ -21,8 +21,14 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 
 class ValidationLevelSuite extends AnyFunSuite {
 
+  // these two simple steps should prevent an unintended default validation level change without thinking through the consequences
+
   test("Verify enumeration names") {
     // this ensures that the defined constant stays correct - as the `toString` function cannot be used in annotations, even indirectly
-    ValidationLevel.NoValidationName should be (ValidationLevel.NoValidation.toString)
+    ValidationLevel.Constants.DefaultValidationLevelName should be (ValidationLevel.NoValidation.toString)
+  }
+
+  test("Verify default validation level") {
+    ValidationLevel.Constants.DefaultValidationLevel.toString should be (ValidationLevel.Constants.DefaultValidationLevelName)
   }
 }
