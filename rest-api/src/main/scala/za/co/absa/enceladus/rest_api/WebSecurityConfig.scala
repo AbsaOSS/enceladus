@@ -62,7 +62,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .authorizeRequests()
           .antMatchers("/admin/health", "/api/oozie/isEnabled",
             "/api/user/version", "/api/configuration/**",
-            "/swagger-ui.html", "/webjars/**", "/v2/api-docs", "/swagger-resources",
+            "/swagger-ui.html", "/webjars/**", "/3rdParty/**", "/v2/api-docs", "/swagger-resources",
             "/swagger-resources/configuration/ui", "/swagger-resources/configuration/security")
           .permitAll()
         .anyRequest()

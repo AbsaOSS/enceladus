@@ -42,8 +42,14 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
   override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture)
 
 
-  private def minimalPdCreatePayload(name: String, suggestedValue: String) =
-    s"""{"name": "$name","propertyType": {"_t": "StringPropertyType","suggestedValue": "$suggestedValue"}}"""
+  private def minimalPdCreatePayload(name: String, suggestedValue: Option[String]) = {
+    val suggestedValuePart = suggestedValue match {
+      case Some(actualSuggestedValue) => s""","suggestedValue": "$actualSuggestedValue""""
+      case _ => ""
+    }
+
+    s"""{"name": "$name","propertyType": {"_t": "StringPropertyType"$suggestedValuePart}}"""
+  }
 
   private def invalidPayload(name: String) =
     s"""{
@@ -76,14 +82,16 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           }
         }
         "a PropertyDefinition is created with most of default values" should {
-          "return the created PropertyDefinition" in {
-            val propertyDefinition = minimalPdCreatePayload("smallPd", "default1")
-            val response = sendPostByAdmin[String, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
-            assertCreated(response)
+          Seq(Some("default1"), None).foreach { suggestedValue =>
+            s"return the created PropertyDefinition (suggestedValue=$suggestedValue)" in {
+              val propertyDefinition = minimalPdCreatePayload("smallPd", suggestedValue)
+              val response = sendPostByAdmin[String, PropertyDefinition](urlPattern, bodyOpt = Some(propertyDefinition))
+              assertCreated(response)
 
-            val actual = response.getBody
-            val expected = toExpected(PropertyDefinition("smallPd", propertyType = StringPropertyType("default1")), actual)
-            assert(actual == expected)
+              val actual = response.getBody
+              val expected = toExpected(PropertyDefinition("smallPd", propertyType = StringPropertyType(suggestedValue)), actual)
+              assert(actual == expected)
+            }
           }
         }
         "all prior versions of the PropertyDefinition are disabled" should {
@@ -254,7 +262,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           assert(body ==
             """{"metadata":{"exportVersion":1},"item":{
               |"name":"propertyDefinition",
-              |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
+              |"propertyType":{"_t":"StringPropertyType","suggestedValue":null},
               |"putIntoInfoFile":false,
               |"essentiality":{"_t":"Optional"}
               |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
@@ -311,7 +319,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
                  |"name":"propertyDefinition1",
                  |"version":23,
                  |"description":null,
-                 |"propertyType":{"_t":"StringPropertyType","suggestedValue":""},
+                 |"propertyType":{"_t":"StringPropertyType","suggestedValue":null},
                  |"putIntoInfoFile":false,
                  |"essentiality":{"_t":"Optional"},
                  |"disabled":false,
