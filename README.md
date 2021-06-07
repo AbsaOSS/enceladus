@@ -72,6 +72,13 @@ Each module provides configuration file templates with reasonable default values
 Make a copy of the `*.properties.template` and `*.conf.template` files in each module's `src/resources` directory removing the `.template` extension. 
 Ensure the properties there fit your environment.
 
+#### Build specifics on Windows
+ - Starting Spark 3/Hadoop 3 to build on Windows, it is necessary to have appropriate `winutils.exe` and `hadoop.dll` on `PATH`. 
+ Those can be obtained e.g. [here](https://github.com/kontext-tech/winutils).
+ 
+ Failing to do so, you may face the `java.lang.UnsatisfiedLinkError: org.apache.hadoop.io.nativeio.NativeIO$Windows.access0(Ljava/lang/String;I)Z
+`.
+
 #### Build commands:
 
 - Without tests: `mvn clean package -DskipTests `
