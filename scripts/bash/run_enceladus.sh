@@ -399,6 +399,8 @@ get_temp_log_file() {
     mktemp -p "$LOG_DIR" -t "$TEMPLATE"
 }
 
+CMD_LINE="$SPARK_SUBMIT"
+
 # Constructing the grand command line
 # Configuration passed to JVM
 
@@ -453,8 +455,6 @@ if [ "$HELP_CALL" == "1" ]; then
   source ${SRC_DIR}/_print_help.sh
   exit "$?"
 fi
-
-CMD_LINE="$SPARK_SUBMIT"
 
 # Adding command line parameters that go BEFORE the jar file
 add_to_cmd_line "--master" "${MASTER}"

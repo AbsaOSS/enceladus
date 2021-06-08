@@ -31,6 +31,7 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import DatasetService._
 
 import scala.util.{Failure, Success}
 
@@ -52,7 +53,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPath(dataset.hdfsPath)
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
-          .setProperties(dataset.properties)
+          .setProperties(removeBlankProperties(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]
       })
     }
@@ -104,12 +105,12 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       schemaName = newDataset.schemaName,
       schemaVersion = newDataset.schemaVersion,
       conformance = List(),
-      properties = newDataset.properties)
+      properties = removeBlankProperties(newDataset.properties))
     super.create(dataset, username)
   }
 
   def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
-    super.update(username, datasetName, datasetVersion) { dataset =>
+    update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }
@@ -118,8 +119,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
                         updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
     for {
       latestVersion <- getLatestVersionNumber(datasetName)
-      update <- super.update(username, datasetName, latestVersion) { latest =>
-        latest.copy(properties = updatedProperties)
+      update <- update(username, datasetName, latestVersion) { latest =>
+        latest.copy(properties = removeBlankProperties(updatedProperties))
       }
     } yield update
   }
@@ -398,6 +399,18 @@ object DatasetService {
 
     def mergeValidations(): Future[Validation] = {
       Future.foldLeft(validations.toList)(Validation())((v1, v2) => v1.merge(v2))
+    }
+  }
+
+  /**
+   * Removes properties having empty-string value. Effectively mapping such properties' values from Some("") to None.
+   * This is Backend-implementation related to DatasetService.replaceBlankProperties(dataset) on Frontend
+   * @param properties original properties
+   * @return properties without empty-string value entries
+   */
+  def removeBlankProperties(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
+    properties.map {
+      _.filter { case (_, propValue) => propValue.nonEmpty }
     }
   }
 }

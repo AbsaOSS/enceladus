@@ -142,6 +142,7 @@ sap.ui.define([
           this._router.navTo("home");
           this._eventBus.publish("nav", "login");
         });
+        PropertiesService.getProperties(); // refresh properties when logged in
       };
 
       let fnError = () => {

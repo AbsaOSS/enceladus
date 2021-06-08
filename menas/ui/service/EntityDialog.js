@@ -97,7 +97,32 @@ class DatasetDialog extends EntityDialog {
 
  }
 
+  /**
+   * Will create `oProps`'s allowedValues mapped into displayable sequence of objects, e.g.
+   * ```["a","b"] -> [{"value":"a", "text": "a"},{"value":"b", "text":"b (suggested value)"}]```
+   * @param oProp
+   * @returns {undefined} or allowedValues sequence of Select-mappable object: (value, text)*
+   */
+  preprocessedAllowedValues(oProp) {
+    if(Functions.hasValidAllowedValues(oProp.propertyType)) {
+      let allowedMap = oProp.propertyType.allowedValues.map(val => {
+        if (val == oProp.propertyType.suggestedValue) {
+          return {value: val, text: `${val} (suggested value)`}
+        } else {
+          return {value: val, text: val}
+        }
+      });
 
+      if (oProp.essentiality._t !== "Mandatory") {
+        allowedMap = [{value: "", text: ""}, ...allowedMap] // (ES6 prepending) - ability to undefine the property
+      }
+        return allowedMap;
+
+    } else {
+      return undefined;
+    }
+
+  }
 
   get schemaService() {
     return this._schemaService;
@@ -213,12 +238,14 @@ class AddDatasetDialog extends DatasetDialog {
     const aProps = aPropTemplate.map(oProp => {
       const oPreparedProp = jQuery.extend(true, {}, oProp);
       oPreparedProp.validation = "None";
-      oPreparedProp.value = oProp.propertyType.suggestedValue;
-      if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
-        oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
-      }
+
+      oPreparedProp.value = ""; // for Mandatory enums: this & forceSelection="false" on the <Select> results in no preselected value
+      oPreparedProp.suggestedValue = oProp.propertyType.suggestedValue;
+
+      // => e.g. [{"value":"a", "text": "a"},{"value":"b", "text":"b (suggested value)"}] or undefined for non-enums
+      oPreparedProp.allowedValues = this.preprocessedAllowedValues(oProp);
       return oPreparedProp;
-    })
+    });
 
     this.schemaService.getList(this.oDialog).then(() => {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
@@ -235,7 +262,7 @@ class AddDatasetDialog extends DatasetDialog {
       }), "entity");
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, DatasetDialog.hdfsPropertyNames)
-    })
+    });
 
     //#1571 - This hack is to attach change handlers on inputs generated as a result of the above async data binding
     //Suggested approach described in #1668
@@ -249,25 +276,26 @@ class EditDatasetDialog extends DatasetDialog {
   onPress() {
     const aPropsDef = sap.ui.getCore().getModel().getProperty("/properties");
     const aPropTemplate = aPropsDef.map ? aPropsDef : [];
-    
+
     this.schemaService.getList(this.oDialog).then(() => {
       let current = this.oController._model.getProperty("/currentDataset");
 
       const aProps = aPropTemplate.map(oProp => {
         const oPreparedProp = jQuery.extend(true, {}, oProp);
         oPreparedProp.validation = "None";
-        if(current.properties && current.properties[oPreparedProp.name]) {
+        if (current.properties && current.properties[oPreparedProp.name]) {
           oPreparedProp.value = current.properties[oPreparedProp.name];
         } else {
-          oPreparedProp.value = oProp.propertyType.suggestedValue;
+          oPreparedProp.value = "";
+          oPreparedProp.suggestedValue = oProp.propertyType.suggestedValue;
         }
 
-        if(oProp.propertyType.allowedValues && oProp.propertyType.allowedValues.length > 0) {
-          oPreparedProp.propertyType.allowedValues = oProp.propertyType.allowedValues.map(val => {return {value: val}})
-        }
+        // => e.g. [{"value":"a", "text": "a"},{"value":"b", "text":"b (suggested value)"}] or undefined for non-enums
+        oPreparedProp.allowedValues = this.preprocessedAllowedValues(oProp);
+
         return oPreparedProp;
-      })
-      
+      });
+
       current._properties = aProps;
       current.isEdit = true;
       current.title = "Edit";
