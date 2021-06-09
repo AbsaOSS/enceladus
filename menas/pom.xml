@@ -155,4 +155,25 @@
         </plugins>
     </build>
 
+    <profiles>
+        <profile>
+            <id>license-check</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.rat</groupId>
+                        <artifactId>apache-rat-plugin</artifactId>
+                        <version>${maven.rat.plugin.version}</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/node_modules/**</exclude>
+                                <exclude>ui/3rdParty/cRonstrue/cronstrue.min.js</exclude>
+                                <exclude>ui/dist/**</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
