@@ -20,5 +20,10 @@ object ValidationLevel extends Enumeration {
 
   final val NoValidation, ForRun, Strictest = Value
 
-  final val NoValidationName = "NoValidation" // This is used in an annotation - for that the type MUST NOT be specified
+  object Constants { // Not to mix with enumeration items
+    final val DefaultValidationLevel: ValidationLevel = NoValidation
+
+    final val DefaultValidationLevelName = "NoValidation" // This is used in an annotation - for that the type MUST NOT be specified
+  }
+
 }

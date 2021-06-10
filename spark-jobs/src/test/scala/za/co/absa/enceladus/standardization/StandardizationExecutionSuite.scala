@@ -63,7 +63,6 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
       testDataset.write.csv(stdPath)
 
       // Atum framework initialization is part of the 'prepareStandardization'
-      import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
       spark.disableControlMeasuresTracking()
 
       eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
@@ -93,15 +92,15 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     ).toDF("id", "data").as("DatasetA")
 
     // rawPath must exist, _INFO file creation assures so
-    val controlMeasure = ControlMeasureBuilder.forDF(someDataset)
+    val cm = ControlMeasureBuilder.forDF(someDataset)
         .withSourceApplication("test app")
         .withInputPath(rawPath)
         .withReportDate("2020-02-20")
         .withReportVersion(1)
         .withCountry("CZ")
         .withAggregateColumns(List("id", "data"))
-      .build
-    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(controlMeasure, new Path(rawPath))
+        .build
+    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(cm, new Path(rawPath))
 
     Mockito.when(dao.storeNewRunObject(ArgumentMatchers.any[Run])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
     Mockito.when(dao.updateRunStatus(ArgumentMatchers.any[String], ArgumentMatchers.any[RunStatus])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))

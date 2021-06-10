@@ -27,7 +27,6 @@
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>4.2.1</hyperdrive.version>
-        <commons.version>0.0.25</commons.version>
         <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
     </properties>
 
@@ -117,21 +116,10 @@
         </dependency>
 
         <!-- Lineage tracking -->
-        <!-- todo reenable with Spark3 compatible agent - issue #1713 -->
-<!--        <dependency>-->
-<!--            <groupId>za.co.absa.spline.agent.spark</groupId>-->
-<!--            <artifactId>agent-core_${scala.compat.version}</artifactId>-->
-<!--            <version>${spline.version}</version>-->
-<!--        </dependency>-->
-
-        <!-- to reuse util's customized NativeIO for hadoop on Windows -->
         <dependency>
-            <groupId>za.co.absa.enceladus</groupId>
-            <artifactId>utils</artifactId>
-            <version>${project.version}</version>
-            <classifier>tests</classifier>
-            <type>test-jar</type>
-            <scope>test</scope>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.compat.version}</artifactId>
+            <version>${spline.agent.version}</version>
         </dependency>
 
         <dependency>
@@ -229,25 +217,6 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <arg>-feature</arg>
                     </args>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.ant.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
