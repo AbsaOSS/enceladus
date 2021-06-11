@@ -16,8 +16,11 @@
 package za.co.absa.enceladus.dao.auth
 
 import com.typesafe.config.ConfigFactory
+import org.apache.hadoop.fs.LocalFileSystem
+import org.apache.hadoop.hdfs.DistributedFileSystem
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 
 sealed abstract class MenasCredentials {
@@ -42,7 +45,27 @@ object MenasPlainCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val conf = ConfigFactory.parseString(HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path))
+    val conf = fs match {
+      case _: LocalFileSystem => {
+        log.info("Local FS")
+        val str = HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
+        log.info(str)
+        ConfigFactory.parseString(str)
+      }
+      case _: DistributedFileSystem => {
+        log.debug("HDFS FS")
+        val str = HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
+        log.info(str)
+        ConfigFactory.parseString(str)
+      }
+      case _ => {
+        log.info("S3 FS")
+        val str = HadoopFsUtils.getOrCreate(fs).read(path)
+        log.info(str)
+        ConfigFactory.parseString(str)
+      }
+    }
+
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }
