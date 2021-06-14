@@ -211,6 +211,7 @@
         <log.level.testcode>ERROR</log.level.testcode>
         <log.pattern>[%p] %d{yy/MM/dd HH:mm:ss} %c{4}: %m%n</log.pattern>
         <log.specialfilters.acceptonmatch>false</log.specialfilters.acceptonmatch>
+        <aws.java.sdk.version>2.13.65</aws.java.sdk.version>
     </properties>
 
     <dependencies>

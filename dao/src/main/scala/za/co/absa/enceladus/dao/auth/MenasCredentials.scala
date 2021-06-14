@@ -15,11 +15,15 @@
 
 package za.co.absa.enceladus.dao.auth
 
+import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.S3ObjectInputStream
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.fs.LocalFileSystem
+import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import org.apache.hadoop.hdfs.DistributedFileSystem
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.commons.s3.SimpleS3Location
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 
@@ -60,9 +64,15 @@ object MenasPlainCredentials {
       }
       case _ => {
         log.info("S3 FS")
-        val str = HadoopFsUtils.getOrCreate(fs).read(path)
-        log.info(str)
-        ConfigFactory.parseString(str)
+        val s3Path: SimpleS3Location = path.toSimpleS3Location.get
+
+        val client = new AmazonS3Client()
+        val s3Object = client.getObject(s3Path.bucketName, s3Path.path)
+        val content: S3ObjectInputStream = s3Object.getObjectContent
+        val str1 = scala.io.Source.fromInputStream(content).mkString
+        log.info(str1)
+
+        ConfigFactory.parseString(str1)
       }
     }
 
