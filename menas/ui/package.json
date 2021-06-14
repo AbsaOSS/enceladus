@@ -10,7 +10,8 @@
   },
   "config": {
     "apiUrl": "${API_URL}",
-    "lineageReadApiUrl": "${SPLINE_URL}"
+    "lineageConsumerApiUrl": "${LINEAGE_CONSUMER_URL}",
+    "lineageUiCdn": "${LINEAGE_UI_CDN}"
   },
   "dependencies": {
     "chart.js": "^2.7.3",

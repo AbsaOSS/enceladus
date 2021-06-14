@@ -31,7 +31,9 @@
 
     <script src="node_modules/moment/min/moment.min.js"></script>
     <script src="node_modules/lodash/lodash.js"></script>
-    <script src="node_modules/cronstrue/dist/cronstrue.js"></script>
+
+    <!-- Included under MIT License used within Apache License, Version 2.0 -->
+    <script src="3rdParty/cRonstrue/cronstrue.min.js"></script>
 
     <script>
         function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
@@ -49,7 +51,9 @@
 
         $.getJSON('package.json', function(json) {
             window.apiUrl = json.config.apiUrl + "/api";
-            window.lineageReadApiUrl = json.config.lineageReadApiUrl;
+            window.lineageConsumerApiUrl = json.config.lineageConsumerApiUrl;
+            window.lineageUiCdn = json.config.lineageUiCdn;
+
             _menasLoadElem("link", "css/style.css", [
                 {k: "type", v: "text/css"},
                 {k: "rel", v: "stylesheet"}

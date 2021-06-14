@@ -26,10 +26,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.rest_api.services.DatasetService
-import za.co.absa.enceladus.utils.validation.ValidationLevel.{NoValidationName, ValidationLevel}
+import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevelName
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -134,7 +135,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
                                          @PathVariable("datasetVersion") datasetVersion: Int,
                                          @RequestParam(value = "validateProperties",
                                                        required = false,
-                                                       defaultValue = NoValidationName) validate: ValidationLevel
+                                                       defaultValue = DefaultValidationLevelName) validate: ValidationLevel
                                         ): CompletableFuture[Dataset] = {
     datasetService.getVersionValidated(datasetName, datasetVersion, validate).map {
       case Some(ds) => ds
