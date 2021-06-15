@@ -38,7 +38,6 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     super.afterAll()
   }
 
-  // todo: connected to #1756 for array-based processing, errCol nullability always comes out false after Spark 3.1 processing
   protected def normalizeErrColNullability(inputSchemaTree: String): String = {
     inputSchemaTree
       .replaceAll("errCol: array \\(nullable = false\\)", "errCol: array (nullable = true)")
