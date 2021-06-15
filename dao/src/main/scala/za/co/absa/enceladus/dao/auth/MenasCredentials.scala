@@ -15,9 +15,12 @@
 
 package za.co.absa.enceladus.dao.auth
 
+import java.io.File
+
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.S3ObjectInputStream
+import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, S3ObjectInputStream}
 import com.typesafe.config.ConfigFactory
+import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.LocalFileSystem
 import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import org.apache.hadoop.hdfs.DistributedFileSystem
@@ -26,6 +29,8 @@ import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.commons.s3.SimpleS3Location
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
+
+import scala.io.BufferedSource
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -50,20 +55,12 @@ object MenasPlainCredentials {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
     val conf = fs match {
-      case _: LocalFileSystem => {
-        log.info("Local FS")
-        val str = HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
-        log.info(str)
-        ConfigFactory.parseString(str)
-      }
-      case _: DistributedFileSystem => {
-        log.debug("HDFS FS")
+      case _: DistributedFileSystem | _: LocalFileSystem => {
         val str = HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
         log.info(str)
         ConfigFactory.parseString(str)
       }
       case _ => {
-        log.info("S3 FS")
         val s3Path: SimpleS3Location = path.toSimpleS3Location.get
 
         val client = new AmazonS3Client()
@@ -90,7 +87,21 @@ object MenasKerberosCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val localKeyTabPath = HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
+    val localKeyTabPath = fs match {
+      case _: DistributedFileSystem | _: LocalFileSystem => {
+        HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
+      }
+      case _ => {
+        val s3Path: SimpleS3Location = path.toSimpleS3Location.get
+
+        val client = new AmazonS3Client()
+        val request = new GetObjectRequest(s3Path.bucketName, s3Path.path)
+        val localKeytabPath = File.createTempFile("enceladusFSUtils", "hdfsFileToLocalTemp")
+        client.getObject(request, localKeytabPath)
+        localKeytabPath.getAbsolutePath
+      }
+    }
+
     val keytab = KeyTab.getInstance(localKeyTabPath)
     val username = keytab.getOneName.getName
 
