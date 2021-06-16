@@ -15,22 +15,12 @@
 
 package za.co.absa.enceladus.dao.auth
 
-import java.io.File
-
-import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{GetObjectRequest, ObjectMetadata, S3ObjectInputStream}
 import com.typesafe.config.ConfigFactory
-import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.LocalFileSystem
-import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import org.apache.hadoop.hdfs.DistributedFileSystem
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
-import za.co.absa.commons.s3.SimpleS3Location
-import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
-import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
-
-import scala.io.BufferedSource
+import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils, S3Utils}
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -54,24 +44,12 @@ object MenasPlainCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val conf = fs match {
-      case _: DistributedFileSystem | _: LocalFileSystem => {
-        val str = HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
-        log.info(str)
-        ConfigFactory.parseString(str)
-      }
-      case _ => {
-        val s3Path: SimpleS3Location = path.toSimpleS3Location.get
-
-        val client = new AmazonS3Client()
-        val s3Object = client.getObject(s3Path.bucketName, s3Path.path)
-        val content: S3ObjectInputStream = s3Object.getObjectContent
-        val str1 = scala.io.Source.fromInputStream(content).mkString
-        log.info(str1)
-
-        ConfigFactory.parseString(str1)
-      }
+    val confString = fs match {
+      case _: DistributedFileSystem | _: LocalFileSystem =>
+        HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
+      case _ => S3Utils.getOrCreate().getObjectContentAsString(path)
     }
+    val conf = ConfigFactory.parseString(confString)
 
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
@@ -91,15 +69,7 @@ object MenasKerberosCredentials {
       case _: DistributedFileSystem | _: LocalFileSystem => {
         HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
       }
-      case _ => {
-        val s3Path: SimpleS3Location = path.toSimpleS3Location.get
-
-        val client = new AmazonS3Client()
-        val request = new GetObjectRequest(s3Path.bucketName, s3Path.path)
-        val localKeytabPath = File.createTempFile("enceladusFSUtils", "hdfsFileToLocalTemp")
-        client.getObject(request, localKeytabPath)
-        localKeytabPath.getAbsolutePath
-      }
+      case _ => S3Utils.getOrCreate().getObjectLocalPath(path)
     }
 
     val keytab = KeyTab.getInstance(localKeyTabPath)
