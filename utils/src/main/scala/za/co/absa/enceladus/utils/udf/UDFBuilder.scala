@@ -34,7 +34,7 @@ object UDFBuilder {
     val vDefaultValue = defaultValue
     val vColumnNullable = columnNullable
 
-    udf[UDFResult[T], String](numericParserToTyped(_, vParser, vColumnNullable,  vColumnNameForError, vDefaultValue))
+    udf[UDFResult[T], String](numericParserToTyped(_, vParser, vColumnNullable, vColumnNameForError, vDefaultValue))
   }
 
   private def numericParserToTyped[T](input: String,
