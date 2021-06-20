@@ -79,6 +79,74 @@ trait Auditable[T <: Product] { self: T =>
     }).getOrElse(Seq())
   }
 
+
+
+  private[model] def getOptionalMapFieldsAudit(newValue: T, fieldName: AuditFieldName)(implicit ct: ClassTag[T]): Seq[AuditTrailChange] = {
+    def tupleToSomeString(v: (String, _)): Option[String] = Some(s"""key: "${v._1}" value: "${v._2}"""")
+
+    val index = getFieldIndex(fieldName.declaredField)
+
+    index.map({i =>
+      val maybeNewMap = newValue.productElement(i).asInstanceOf[Option[Map[String, _]]]
+      val maybeOldMap = self.productElement(i).asInstanceOf[Option[Map[String, _]]]
+
+      (maybeNewMap, maybeOldMap) match {
+        case (Some(newMap), Some(oldMap)) =>
+          val added = newMap.toSet.diff(oldMap.toSet).toMap
+          val removed = oldMap.toSet.diff(newMap.toSet).toMap
+          val changedKey = added.keySet.intersect(removed.keySet)
+          val onlyAdded = added -- changedKey
+          val onlyRemoved = removed -- changedKey
+
+          val addedList = onlyAdded.map(t =>
+            AuditTrailChange(field = fieldName.declaredField,
+              oldValue = None,
+              newValue = tupleToSomeString(t),
+              message = s"${fieldName.humanReadableField} added."
+            )
+          )
+          val removedList = onlyRemoved.map(t =>
+            AuditTrailChange(
+              field = fieldName.declaredField,
+              oldValue = tupleToSomeString(t),
+              newValue = None,
+              message = s"${fieldName.humanReadableField} removed."
+            )
+          )
+          val changedList = changedKey.map(k =>
+            AuditTrailChange(
+              field = fieldName.declaredField,
+              oldValue = tupleToSomeString(k, removed(k)),
+              newValue = tupleToSomeString(k, added(k)),
+              message = s"${fieldName.humanReadableField} changed."
+            )
+          )
+
+          removedList ++ addedList ++ changedList
+        case (None, Some(oldMap)) =>
+          oldMap.map((v: (String, Any)) =>
+            AuditTrailChange(
+              field = fieldName.declaredField,
+              oldValue = tupleToSomeString(v),
+              newValue = None,
+              message = s"${fieldName.humanReadableField} removed."
+            )
+          )
+        case (Some(newMap), None) =>
+          newMap.map((v: (String, Any)) =>
+            AuditTrailChange(
+              field = fieldName.declaredField,
+              oldValue = None,
+              newValue = tupleToSomeString(v),
+              message = s"${fieldName.humanReadableField} added."
+            )
+          )
+        case (_, _) => Set.empty
+      }
+
+    }).getOrElse(Set.empty).toSeq
+  }
+
   /**
    * Utility function to unwrap defined option values (if Some) or keep the original value otherwise.
    */

@@ -37,6 +37,15 @@ class AuditableTest extends AnyFunSuite {
     schemaVersion = 1,
     conformance = List(LiteralConformanceRule(order = 0, controlCheckpoint = true, outputColumn = "something", value = "1.01")))
 
+  val obj3 = Dataset(name = "Test DS",
+    version = 3,
+    hdfsPath = "newPath",
+    hdfsPublishPath = "newPublishPath",
+    schemaName = "newSchema",
+    schemaVersion = 1,
+    conformance = List(LiteralConformanceRule(order = 0, controlCheckpoint = true, outputColumn = "something", value = "1.01")),
+    properties = Some(Map("key1" -> "value1")))
+
   test("Testing getPrimitiveFieldsAudit empty") {
     val emptyRes = obj1.getPrimitiveFieldsAudit(obj2, Seq())
     assertResult(Seq())(emptyRes)
@@ -75,4 +84,21 @@ class AuditableTest extends AnyFunSuite {
           AuditTrailChange(field = "conformance", oldValue = Some("LiteralConformanceRule(0,something,true,1.01)"), None, message = "Conformance rule removed.")
     ))(removedRes)
   }
+
+  test("Testing added getOptionalMapFieldsAudit") {
+    val result = obj2.getOptionalMapFieldsAudit(obj3, AuditFieldName("properties", "Property"))
+    assertResult(Seq(
+      AuditTrailChange(field = "properties", newValue = Some("""key: "key1" value: "value1""""), oldValue = None, message = "Property added.")
+    ))(result)
+  }
+
+  test("Testing changed getOptionalMapFieldsAudit") {
+    val newObj2 = obj2.copy(properties = Some(Map("key1" -> "value previous")))
+    val result = newObj2.getOptionalMapFieldsAudit(obj3, AuditFieldName("properties", "Property"))
+    assertResult(Seq(
+      AuditTrailChange(field = "properties", newValue = Some("""key: "key1" value: "value1""""), oldValue = Some("""key: "key1" value: "value previous""""), message = "Property changed.")
+    ))(result)
+  }
+
+
 }
