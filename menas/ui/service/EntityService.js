@@ -307,7 +307,9 @@ class DatasetService extends EntityService {
 
     if (oEntity._properties && oEntity._properties.map) {
       oEntity._properties.map((oProp) => {
-        oProps[oProp.name] = oProp.value
+        if (oProp.value !== "") { // strips blank properties
+          oProps[oProp.name] = oProp.value
+        }
       });
     }
 
@@ -325,23 +327,7 @@ class DatasetService extends EntityService {
     }
   }
 
-  // if properties with empty string value exist, the returned properties copy will not contain these objects (backend expecting an empty option)
-  stripBlankProperties(properties) {
-    const updatedProperties = properties.map((oProp) => {
-      if (oProp.value === "") {
-        const changedProp = jQuery.extend({}, oProp);
-        changedProp.value = undefined;
-        return changedProp;
-      } else {
-        return oProp; // unchanged
-      }
-    });
-
-    return updatedProperties;
-  }
-
   update(oDataset) {
-    oDataset._properties = this.stripBlankProperties(oDataset._properties);
     return super.update(oDataset).then((oData) => {
       return this.schemaRestDAO.getByNameAndVersion(oData.schemaName, oData.schemaVersion).then((oData) => {
         this.modelBinder.setProperty(oData, "/schema");
@@ -351,7 +337,6 @@ class DatasetService extends EntityService {
   }
 
   create(oDataset) {
-    oDataset._properties = this.stripBlankProperties(oDataset._properties);
     return super.create(oDataset);
   }
 
