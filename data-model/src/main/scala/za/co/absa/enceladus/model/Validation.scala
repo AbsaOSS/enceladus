@@ -27,24 +27,42 @@ object Validation {
 
 }
 
-case class Validation (errors: Map[String, List[String]] = Map()) {
+case class Validation (errors: Map[String, List[String]] = Map(), warnings: Map[String, List[String]] = Map()) {
 
   @JsonIgnore
   def isValid: Boolean = errors.isEmpty
 
+  @JsonIgnore
+  def isEmpty: Boolean = errors.isEmpty && warnings.isEmpty
+
+  @JsonIgnore
+  def nonEmpty: Boolean = errors.nonEmpty && warnings.nonEmpty
+
   def withError(key: String, error: String): Validation = {
     this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
+  }
+
+  def withWarning(key: String, warning: String): Validation = {
+    this.copy(warnings = warnings + (key -> (warning :: warnings.getOrElse(key, Nil))))
   }
 
   def withErrorIf(condition: Boolean, key: => String, error: => String): Validation = {
     if (condition) withError(key, error) else this
   }
 
+  def withWarningIf(condition: Boolean, key: => String, warning: => String): Validation = {
+    if (condition) withWarning(key, warning) else this
+  }
+
   def merge(validation: Validation): Validation = {
-    val mergedMaps = validation.errors.foldLeft(errors) { case (acc, (key, list)) =>
+    val mergedErrMaps = validation.errors.foldLeft(errors) { case (acc, (key, list)) =>
       acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
     }
 
-    Validation(mergedMaps)
+    val mergedWarnMaps = validation.warnings.foldLeft(warnings) { case (acc, (key, list)) =>
+      acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
+    }
+
+    Validation(mergedErrMaps, mergedWarnMaps)
   }
 }
