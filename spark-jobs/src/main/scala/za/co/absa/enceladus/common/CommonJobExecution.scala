@@ -92,6 +92,9 @@ trait CommonJobExecution extends ProjectMetadata {
         throw new IllegalStateException("Dataset validation failed, errors found in fields:\n" +
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
+      case Some(validation) if validation.nonEmpty =>
+        log.warn("Dataset validation had some warnings:\n" +
+          validation.warnings.map { case (field, warnMsg) => s" - '$field': $warnMsg" }.mkString("\n"))
       case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
       case _ => // no problems found
     }

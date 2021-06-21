@@ -117,13 +117,21 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       "undefinedKey1" -> "valueX" // extra unwanted key
     )
 
-    val expectedValidationResultForRun = Validation(Map(
+    val baseValidation = Validation(Map(
       "optionalEnumAb" -> List("Value 'optionX' is not one of the allowed values (optionA, optionB)."),
       "undefinedKey1" -> List("There is no property definition for key 'undefinedKey1'."),
-      "mandatoryString2" -> List("Dataset property 'mandatoryString2' is mandatory, but does not exist!"))
+      "mandatoryString2" -> List("Dataset property 'mandatoryString2' is mandatory, but does not exist!")
+    ),
+      Map(
+        "recommendedString1" -> List("Property 'recommendedString1' is recommended to be present, but was not found!")
+      )
     )
 
-    val expectedValidationResultForSetup = expectedValidationResultForRun.withError(
+    val expectedValidationResultForRun = baseValidation.withWarning(
+        "mandatoryString3", "Property 'mandatoryString3' is recommended to be present, but was not found!"
+    )
+
+    val expectedValidationResultForSetup = baseValidation.withError(
       "mandatoryString3", "Dataset property 'mandatoryString3' is mandatory, but does not exist!"
     )
 
