@@ -302,15 +302,18 @@ class DatasetService extends EntityService {
   }
 
   cleanupEntity(oEntity) {
-
-    const oProps = {};
+    let oProps = {};
 
     if (oEntity._properties && oEntity._properties.map) {
+      // properties update => use _properties instead of properties + sanitize
       oEntity._properties.map((oProp) => {
         if (oProp.value !== "") { // strips blank properties
           oProps[oProp.name] = oProp.value
         }
       });
+    } else {
+      // no properties update (via populated _properties), use original properties on update (e.g. CRs are being updated)
+      oProps = oEntity.properties;
     }
 
     return {
