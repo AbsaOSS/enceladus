@@ -15,12 +15,20 @@
 
 package za.co.absa.enceladus.dao.auth
 
+import java.io.File
+import java.net.URI
+
 import com.typesafe.config.ConfigFactory
-import org.apache.hadoop.fs.LocalFileSystem
+import org.apache.hadoop.fs.{FSDataInputStream, FileSystem, LocalFileSystem, Path}
 import org.apache.hadoop.hdfs.DistributedFileSystem
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.commons.s3.SimpleS3Location
+import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils, S3Utils}
+
+import scala.io.Source
+import scala.reflect.io.Path
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -47,7 +55,10 @@ object MenasPlainCredentials {
     val confString = fs match {
       case _: DistributedFileSystem | _: LocalFileSystem =>
         HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
-      case _ => S3Utils.getOrCreate().getObjectContentAsString(path)
+      case _ => {
+        val ss: FSDataInputStream = fs.open(new org.apache.hadoop.fs.Path(path))
+        Source.fromInputStream(ss).mkString
+      }
     }
     val conf = ConfigFactory.parseString(confString)
 
@@ -63,13 +74,18 @@ object MenasKerberosCredentials {
     * @return An instance of Menas Credentials.
     */
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
-    val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
+    val fs = FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
     val localKeyTabPath = fs match {
       case _: DistributedFileSystem | _: LocalFileSystem => {
         HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
       }
-      case _ => S3Utils.getOrCreate().getObjectLocalPath(path)
+      case _ => {
+        val localFile = File.createTempFile("enceladusFSUtils", "s3FileToLocalTemp")
+         fs.copyToLocalFile(new org.apache.hadoop.fs.Path(path), new org.apache.hadoop.fs.Path(localFile.getAbsolutePath))
+
+        localFile.getAbsolutePath
+      }
     }
 
     val keytab = KeyTab.getInstance(localKeyTabPath)
