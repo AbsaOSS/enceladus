@@ -87,63 +87,40 @@ trait Auditable[T <: Product] { self: T =>
     val index = getFieldIndex(fieldName.declaredField)
 
     index.map({i =>
-      val maybeNewMap = newValue.productElement(i).asInstanceOf[Option[Map[String, _]]]
-      val maybeOldMap = self.productElement(i).asInstanceOf[Option[Map[String, _]]]
+      val newMap = newValue.productElement(i).asInstanceOf[Option[Map[String, _]]].getOrElse(Map.empty)
+      val oldMap = self.productElement(i).asInstanceOf[Option[Map[String, _]]].getOrElse(Map.empty)
 
-      (maybeNewMap, maybeOldMap) match {
-        case (Some(newMap), Some(oldMap)) =>
-          val added = newMap.toSet.diff(oldMap.toSet).toMap
-          val removed = oldMap.toSet.diff(newMap.toSet).toMap
-          val changedKey = added.keySet.intersect(removed.keySet)
-          val onlyAdded = added -- changedKey
-          val onlyRemoved = removed -- changedKey
+      val added = newMap.toSet.diff(oldMap.toSet).toMap
+      val removed = oldMap.toSet.diff(newMap.toSet).toMap
+      val changedKey = added.keySet.intersect(removed.keySet)
+      val onlyAdded = added -- changedKey
+      val onlyRemoved = removed -- changedKey
 
-          val addedList = onlyAdded.map(t =>
-            AuditTrailChange(field = fieldName.declaredField,
-              oldValue = None,
-              newValue = tupleToSomeString(t),
-              message = s"${fieldName.humanReadableField} added."
-            )
-          )
-          val removedList = onlyRemoved.map(t =>
-            AuditTrailChange(
-              field = fieldName.declaredField,
-              oldValue = tupleToSomeString(t),
-              newValue = None,
-              message = s"${fieldName.humanReadableField} removed."
-            )
-          )
-          val changedList = changedKey.map(k =>
-            AuditTrailChange(
-              field = fieldName.declaredField,
-              oldValue = tupleToSomeString(k, removed(k)),
-              newValue = tupleToSomeString(k, added(k)),
-              message = s"${fieldName.humanReadableField} changed."
-            )
-          )
+      val addedList = onlyAdded.map(t =>
+        AuditTrailChange(field = fieldName.declaredField,
+          oldValue = None,
+          newValue = tupleToSomeString(t),
+          message = s"${fieldName.humanReadableField} added."
+        )
+      )
+      val removedList = onlyRemoved.map(t =>
+        AuditTrailChange(
+          field = fieldName.declaredField,
+          oldValue = tupleToSomeString(t),
+          newValue = None,
+          message = s"${fieldName.humanReadableField} removed."
+        )
+      )
+      val changedList = changedKey.map(k =>
+        AuditTrailChange(
+          field = fieldName.declaredField,
+          oldValue = tupleToSomeString(k, removed(k)),
+          newValue = tupleToSomeString(k, added(k)),
+          message = s"${fieldName.humanReadableField} changed."
+        )
+      )
 
-          removedList ++ addedList ++ changedList
-        case (None, Some(oldMap)) =>
-          oldMap.map((v: (String, Any)) =>
-            AuditTrailChange(
-              field = fieldName.declaredField,
-              oldValue = tupleToSomeString(v),
-              newValue = None,
-              message = s"${fieldName.humanReadableField} removed."
-            )
-          )
-        case (Some(newMap), None) =>
-          newMap.map((v: (String, Any)) =>
-            AuditTrailChange(
-              field = fieldName.declaredField,
-              oldValue = None,
-              newValue = tupleToSomeString(v),
-              message = s"${fieldName.humanReadableField} added."
-            )
-          )
-        case (_, _) => Set.empty
-      }
-
+      removedList ++ addedList ++ changedList
     }).getOrElse(Set.empty).toSeq
   }
 
