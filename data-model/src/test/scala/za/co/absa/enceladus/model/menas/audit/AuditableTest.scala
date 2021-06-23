@@ -100,5 +100,24 @@ class AuditableTest extends AnyFunSuite {
     ))(result)
   }
 
+  test("Testing removed getOptionalMapFieldsAudit") {
+    val result = obj3.getOptionalMapFieldsAudit(obj2, AuditFieldName("properties", "Property"))
+    assertResult(Seq(
+      AuditTrailChange(field = "properties", newValue = None, oldValue = Some("""key: "key1" value: "value1""""), message = "Property removed.")
+    ))(result)
+  }
 
+  test("Testing added getOptionalMapFieldsAudit - explicitly None properties") {
+    val result = obj2.copy(properties = None).getOptionalMapFieldsAudit(obj3, AuditFieldName("properties", "Property"))
+    assertResult(Seq(
+      AuditTrailChange(field = "properties", newValue = Some("""key: "key1" value: "value1""""), oldValue = None, message = "Property added.")
+    ))(result)
+  }
+
+  test("Testing removed getOptionalMapFieldsAudit  - explicitly None properties") {
+    val result = obj3.getOptionalMapFieldsAudit(obj2.copy(properties = None), AuditFieldName("properties", "Property"))
+    assertResult(Seq(
+      AuditTrailChange(field = "properties", newValue = None, oldValue = Some("""key: "key1" value: "value1""""), message = "Property removed.")
+    ))(result)
+  }
 }
