@@ -55,13 +55,15 @@ case class Validation (errors: Map[String, List[String]] = Map(), warnings: Map[
   }
 
   def merge(validation: Validation): Validation = {
-    val mergedErrMaps = validation.errors.foldLeft(errors) { case (acc, (key, list)) =>
-      acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
+    def mergeKeyedMaps(first: Map[String, List[String]],
+                       second: Map[String, List[String]]): Map[String, List[String]] = {
+      first.foldLeft(second) { case (acc, (key, list)) =>
+        acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
+      }
     }
 
-    val mergedWarnMaps = validation.warnings.foldLeft(warnings) { case (acc, (key, list)) =>
-      acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
-    }
+    val mergedErrMaps = mergeKeyedMaps(validation.errors, errors)
+    val mergedWarnMaps = mergeKeyedMaps(validation.warnings, warnings)
 
     Validation(mergedErrMaps, mergedWarnMaps)
   }
