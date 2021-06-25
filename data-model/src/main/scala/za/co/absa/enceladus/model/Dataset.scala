@@ -111,7 +111,8 @@ case class Dataset(name: String,
           AuditFieldName("schemaName", "Schema Name"),
           AuditFieldName("schemaVersion", "Schema Version"),
           AuditFieldName("schedule", "Schedule"))) ++
-        super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")))
+        super.getSeqFieldsAudit(newRecord, AuditFieldName("conformance", "Conformance rule")) ++
+        super.getOptionalMapFieldsAudit(newRecord, AuditFieldName("properties", "Property")))
   }
 
   override def exportItem(): String = {
