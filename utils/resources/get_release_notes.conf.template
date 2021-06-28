@@ -1,5 +1,5 @@
 {
-  "use_zenhub" : false,
+  "use_zenhub" : true,
   "print_empty" : true,
   "print_only_title" : true,
   "organization" : "AbsaOss",
