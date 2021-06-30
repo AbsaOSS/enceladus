@@ -464,6 +464,11 @@ CALL :validate --dataset-version,%DATASET_VERSION%
 CALL :validate --report-date,%REPORT_DATE%
 CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-auth-keytab,%MENAS_AUTH_KEYTAB%
 
+IF NOT DEFINED DATE_PARSING_TYPE (
+    ECHO DATE_PARSING_TYPE not defined in `_enceladus_env.cmd`
+    SET VALID=="0"
+)
+
 :: For now this check is disabled in Windows version of the script
 :: IF NOT "%MASTER%"=="yarn" (
 ::   ECHO "Master '%MASTER%' is not allowed. The only allowed master is 'yarn'."
@@ -602,6 +607,8 @@ IF "%ASYNCHRONOUS_MODE%"=="true" (
 GOTO :eof
 
 :client_run
+:end
+
 CALL :temp_log_file TMP_PATH_NAME
 
 :: Initializing Kerberos ticket
@@ -638,7 +645,7 @@ IF EXIST %ERROR_SIGNAL_FILE% (
 :: Report the result and log location
 ECHO ""
 ECHO Job %RESULT%. Refer to logs at %TMP_PATH_NAME% | tee -a %TMP_PATH_NAME%
-EXIT /B %EXIT_STATUS%
+
 
 :: Functions
 
@@ -658,13 +665,25 @@ EXIT /B 0
 EXIT /B 0
 
 :temp_log_file
-    SET yyyy=%date:~-4%
-    SET MM=%date:~3,2%
-    SET DD=%date:~0,2%
-    ::alternate date parsing
-    ::SET YYYY=%date:~10,4%
-    ::SET MM=%date:~4,2%
-    ::SET DD=%date:~7,2%
+    IF %DATE_PARSING_TYPE%==parser1 (
+        ::25.06.2021
+        SET yyyy=%date:~-4%
+        SET MM=%date:~3,2%
+        SET DD=%date:~0,2%
+    )
+    IF %DATE_PARSING_TYPE%==parser2 (
+        ::Fri 06/25/2021
+        SET YYYY=%date:~10,4%
+        SET MM=%date:~4,2%
+        SET DD=%date:~7,2%
+    )
+    IF %DATE_PARSING_TYPE%==parser3 (
+        :: 2021-06-25
+        SET yyyy=%date:~0,4%
+        SET MM=%date:~5,2%
+        SET DD=%date:~8,2%
+    )
+    ::Time parsing
     SET HH=%time:~0,2%
     IF %HH% lss 10 (SET HH=0%time:~1,1%)
     SET MI=%time:~3,2%

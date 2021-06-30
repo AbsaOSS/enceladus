@@ -104,3 +104,10 @@ SET MASTER=yarn
 :: Switch that tells the script if it should exit if it encounters unrecognized.
 :: On true it prints an Error and exits with 127, on false it only prints a warning
 SET EXIT_ON_UNRECOGNIZED_OPTIONS=true
+
+:: The way how the date is formatted in the OS, to check it run `echo %date%` on command line
+:: parser1 for 25.06.2021
+:: parser2 for Fri 06/25/2021
+:: parser3 for 2021-06-25
+:: The type of delimiters and language doesn't matter, parsing is done positionally
+SET DATE_PARSING_TYPE=parser1
