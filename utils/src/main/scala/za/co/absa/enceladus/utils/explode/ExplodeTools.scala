@@ -22,6 +22,7 @@ import org.apache.spark.sql.types.StructType
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits._
 
 object ExplodeTools {
   // scalastyle:off null
@@ -178,10 +179,12 @@ object ExplodeTools {
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
+        // decDf.schema: "errCol: array (nullable = true)", while the result would contain "errCol: array (nullable = true)" bc. collect_list
         decDf.orderBy(orderByRecordCol, orderByInsideArray)
           .groupBy(groupByColumns: _*)
           .agg(collect_list(deconstructedField).as(tmpColName),
             array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
+          .setNullableStateOfColumn(errorCol, true) // explicitly nullable: expected schema outcome, see issue #1818
     }
 
     // Restore null values to yet another temporary field

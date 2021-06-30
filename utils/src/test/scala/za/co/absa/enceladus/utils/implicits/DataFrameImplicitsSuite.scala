@@ -15,11 +15,15 @@
 
 package za.co.absa.enceladus.utils.implicits
 
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
-class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
+class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase with Matchers {
+
   import spark.implicits._
 
   private val columnName = "data"
@@ -85,7 +89,7 @@ class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
   private def inputDataToString(width: Int, leftAlign: Boolean, limit: Option[Int] = Option(20)): String = {
     val (extraLine, seq) = limit match {
       case Some(n) =>
-        val line =  if (inputDataSeq.length > n) {
+        val line = if (inputDataSeq.length > n) {
           s"only showing top $n rows\n"
         } else {
           ""
@@ -152,5 +156,38 @@ class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
     val expected = inputDataToString(cellWidth, leftAlign, Option(50))
 
     assert(result == expected)
+  }
+
+  { // nullability changing tests
+    val testData = Seq(
+      Row("James", "Java"),
+      Row("Michael", "Python")
+    )
+
+    val originalSchema = StructType(Seq(
+      StructField("name", StringType, nullable = true),
+      StructField("language", StringType, nullable = false)
+    ))
+
+    val df1 = spark.createDataFrame(spark.sparkContext.parallelize(testData), originalSchema)
+    assert(df1.schema == originalSchema, "Nullability changing tests - initialization failed")
+
+    test("changing nullability of a column") {
+      val newSchema1 = df1.setNullableStateOfColumn("name", false).schema
+      newSchema1.toSet should contain(StructField("name", StringType, nullable = false))
+
+      val newSchema2 = df1.setNullableStateOfColumn("language", true).schema
+      newSchema2.toSet should contain(StructField("name", StringType, nullable = true))
+    }
+
+    test("changing nullability of a column - no-op (true)") {
+      val newSchema = df1.setNullableStateOfColumn("name", true).schema
+      newSchema shouldBe originalSchema
+    }
+
+    test("changing nullability of a column - no-op (false)") {
+      val newSchema = df1.setNullableStateOfColumn("language", false).schema
+      newSchema shouldBe originalSchema
+    }
   }
 }

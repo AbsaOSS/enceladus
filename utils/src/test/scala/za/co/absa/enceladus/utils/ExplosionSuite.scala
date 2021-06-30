@@ -588,7 +588,7 @@ class ExplosionSuite extends AnyFunSuite with SparkTestBase with DatasetComparer
         | |    |    |    |-- action: string (nullable = true)
         | |    |    |    |-- check: string (nullable = true)
         | |    |-- legid: long (nullable = true)
-        | |-- errors: array (nullable = false)
+        | |-- errors: array (nullable = true)
         | |    |-- element: string (containsNull = true)
         |""".stripMargin.replace("\r\n", "\n")
     assertSchema(restoredDf.schema.treeString, expectedSchema)

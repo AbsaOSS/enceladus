@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.implicits
 
 import java.io.ByteArrayOutputStream
 
+import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 
@@ -66,6 +67,24 @@ object DataFrameImplicits {
       */
     def withColumnIfDoesNotExist(colName: String, col: Column): DataFrame = {
       SparkUtils.withColumnIfDoesNotExist(df, colName, col)
+    }
+
+    /**
+     * Set nullable property of column.
+     *
+     * @param columnName is the column name to change
+     * @param nullable   boolean flag to set the nullability of the column `columnName` to
+     */
+    def setNullableStateOfColumn(columnName: String, nullable: Boolean): DataFrame = {
+      // Courtesy of https://stackoverflow.com/a/33195510
+
+      // modify [[StructField] with name `columnName`
+      val newSchema = StructType(df.schema.map {
+        case StructField(c, t, _, m) if c.equals(columnName) => StructField(c, t, nullable = nullable, m)
+        case y: StructField => y
+      })
+      // apply new schema
+      df.sqlContext.createDataFrame(df.rdd, newSchema)
     }
 
   }
