@@ -16,13 +16,11 @@
 package za.co.absa.enceladus.standardization
 
 import java.util.UUID
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import org.slf4j.Logger
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
@@ -33,6 +31,7 @@ import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserExcepti
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import org.apache.spark.sql.functions.{col, to_timestamp}
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
@@ -48,13 +47,15 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
   private val datasetVersion = 1
+  private val tsPattern = "yyyy-MM-dd HH:mm:ss zz"
 
 
   private val data = Seq (
-    (1, Array("A", "B"), FooClass(false)),
-    (2, Array("C"), FooClass(true))
+    (1, Array("A", "B"), FooClass(false), "1970-01-01 00:00:00 UTC"),
+    (2, Array("C"), FooClass(true), "1970-01-01 00:00:00 CET")
   )
-  private val sourceDataDF = data.toDF("id", "letters", "struct")
+  private val sourceDataDF = data.toDF("id", "letters", "struct", "str_ts")
+    .withColumn("ts", to_timestamp(col("str_ts"), tsPattern))
   private val dataSet = Dataset(name = datasetName,
                                 version = datasetVersion,
                                 description = None,
@@ -68,8 +69,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]): (StandardizationConfig, DataFrame) = {
     val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
-    val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
-    (cmd, csvReader.load(tmpFileName).orderBy("id"))
+    val reader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
+    (cmd, reader.load(tmpFileName).orderBy("id"))
   }
 
   def withFixture(test: OneArgTest): Outcome = {
@@ -436,6 +437,32 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     assert(actual == expected)
   }
 
+
+  test("Timestamp with timezone in metadata are shifted") {tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+    val expected =
+      """+-------------------+------+
+        ||ts                 |errCol|
+        |+-------------------+------+
+        ||1969-12-31 23:00:00|[]    |
+        ||1969-12-31 22:00:00|[]    |
+        |+-------------------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
+    )
+    val schema = StructType(seq)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+
+    val actual = destDF.dataAsString(truncate = false)
+    assert(actual == expected)
+  }
 }
 
 private case class FooClass(bar: Boolean)
