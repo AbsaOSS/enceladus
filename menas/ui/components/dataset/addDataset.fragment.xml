@@ -28,12 +28,13 @@
                                value="{entity>/description}"/>
                         <Label text="Dataset Properties"/>
                         <List width="100%" items="{path: 'entity>/_properties', sorter: {path: 'order'}}" class="sapUiMediumMarginBottom">
-                          <InputListItem class="inputListItemSmallLabel" label="{entity>name}" tooltip="{entity>description}">
+                          <InputListItem class="inputListItemSmallLabel" label="{entity>name}"
+                              tooltip="{= ${entity>description} ? ${entity>name} + ': ' + ${entity>description} : ${entity>name} }">
                             <HBox alignItems="Center" justifyContent="End" renderType="Bare">
-                              <Input type="Text" width="18rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}"
+                              <Input type="Text" width="16rem" visible="{= ${entity>propertyType/_t} === 'StringPropertyType'}"
                                 class="propertyInput" value="{entity>value}" placeholder="{entity>suggestedValue}" valueState="{entity>validation}"
                                 valueStateText="{entity>validationText}"></Input>
-                                  <Select width="18rem"
+                              <Select width="16rem"
                                 items="{path: 'entity>allowedValues', templateShareable: false}"
                                 selectedKey="{entity>value}" valueState="{entity>validation}" valueStateText="{entity>validationText}"
                                 visible="{= ${entity>propertyType/_t} === 'EnumPropertyType'}" forceSelection="false">
