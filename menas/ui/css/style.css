@@ -22,20 +22,13 @@ html, body {
   height: calc(100% - 112px);
 }
 
-.minW55rem {
-  min-width: 55rem !important;
-}
-
-.maxW65p {
-  max-width: 65% !important;
-}
-
 .w100p {
   width: 100%;
 }
 
-.w50p {
-  width: 50%;
+.propertyInput {
+  /*overriding default to have all fields of the same length */
+  width: 14rem !important;
 }
 
 .mt10 {
