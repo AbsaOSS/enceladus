@@ -154,14 +154,12 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       .foldLeft(Validation.empty){(acc, propDef)=>
         propDef.essentiality match {
           case Mandatory(true) if forRun =>
-            log.warn(s"Property '${propDef.name}' is required to be present, but was not found! (Run enabled)")
             acc.withWarning(propDef.name,
               s"""Property '${propDef.name}' is required to be present, but was not
                  | found! This warning will turn into error after the transition period""".stripMargin)
           case Mandatory(_) =>
             acc.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
           case Recommended =>
-            log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
             acc.withWarning(propDef.name, s"Property '${propDef.name}' is recommended to be present, but was not found!")
           case _ =>
             acc
