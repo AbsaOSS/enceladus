@@ -78,13 +78,18 @@ object DataFrameImplicits {
     def setNullableStateOfColumn(columnName: String, nullable: Boolean): DataFrame = {
       // Courtesy of https://stackoverflow.com/a/33195510
 
-      // modify [[StructField] with name `columnName`
+      // modify [[StructField] with name `columnName` if its nullability differs
       val newSchema = StructType(df.schema.map {
-        case StructField(c, t, _, m) if c.equals(columnName) => StructField(c, t, nullable = nullable, m)
+        case StructField(c, t, n, m) if c.equals(columnName) && n != nullable =>
+          StructField(c, t, nullable = nullable, m)
         case y: StructField => y
       })
-      // apply new schema
-      df.sqlContext.createDataFrame(df.rdd, newSchema)
+
+      if (newSchema == df.schema) {
+        df // no change
+      } else {
+        df.sqlContext.createDataFrame(df.rdd, newSchema) // apply new schema
+      }
     }
 
   }
