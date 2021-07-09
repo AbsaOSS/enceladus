@@ -443,18 +443,23 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    /* This might seem confusing for a quick observer. The reason why this is the correct result:
+       the source data has two timestamps 12:00:00AM and 23:00:00PM *without* time zone.
+       The metadata then signal the timestamp are to be considered in CET time zone. The data are ingested with that
+       time zone and adjusted to system time zone - UTC. Therefore they are seemingly shifted by one hour. */
     val expected =
-      """+-------------------+------+
-        ||ts                 |errCol|
-        |+-------------------+------+
-        ||1969-12-31 23:00:00|[]    |
-        ||1969-12-31 22:00:00|[]    |
-        |+-------------------+------+
+      """+---+-------------------+------+
+        ||id |ts                 |errCol|
+        |+---+-------------------+------+
+        ||1  |1969-12-31 23:00:00|[]    |
+        ||2  |1969-12-31 22:00:00|[]    |
+        |+---+-------------------+------+
         |
         |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
+      StructField("id", LongType, nullable = false),
       StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
     )
     val schema = StructType(seq)
