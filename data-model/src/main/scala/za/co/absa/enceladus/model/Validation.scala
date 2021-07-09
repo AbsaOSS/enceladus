@@ -16,18 +16,20 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import za.co.absa.enceladus.model.Validation.ValidationRecord
 
 object Validation {
+
+  type ValidationRecord = Map[String, List[String]]
 
   val NotSpecified = "not specified"
 
   val empty: Validation = Validation()
 
   def merge(a: Validation, b: Validation) : Validation = a.merge(b)
-
 }
 
-case class Validation (errors: Map[String, List[String]] = Map(), warnings: Map[String, List[String]] = Map()) {
+case class Validation (errors: ValidationRecord = Map(), warnings: ValidationRecord = Map()) {
 
   @JsonIgnore
   def isValid: Boolean = errors.isEmpty
@@ -55,8 +57,8 @@ case class Validation (errors: Map[String, List[String]] = Map(), warnings: Map[
   }
 
   def merge(validation: Validation): Validation = {
-    def mergeKeyedMaps(first: Map[String, List[String]],
-                       second: Map[String, List[String]]): Map[String, List[String]] = {
+    def mergeKeyedMaps(first: ValidationRecord,
+                       second: ValidationRecord): ValidationRecord = {
       first.foldLeft(second) { case (acc, (key, list)) =>
         acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
       }
