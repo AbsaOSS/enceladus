@@ -128,7 +128,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     )
 
     val expectedValidationResultForRun = baseValidation.withWarning(
-        "mandatoryString3", "Property 'mandatoryString3' is recommended to be present, but was not found!"
+        "mandatoryString3", "Property 'mandatoryString3' is required to be present, but was not found! This warning will turn into error after the transition period"
     )
 
     val expectedValidationResultForSetup = baseValidation.withError(

@@ -156,7 +156,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           case Mandatory(true) if forRun =>
             acc.withWarning(propDef.name,
               s"""Property '${propDef.name}' is required to be present, but was not
-                 | found! This warning will turn into error after the transition period""".stripMargin)
+                 | found! This warning will turn into error after the transition period""".stripMargin.replace("\n", ""))
           case Mandatory(_) =>
             acc.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
           case Recommended =>
