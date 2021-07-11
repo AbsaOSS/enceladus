@@ -38,7 +38,7 @@ case class Validation (errors: ValidationRecord = Map(), warnings: ValidationRec
   def isEmpty: Boolean = errors.isEmpty && warnings.isEmpty
 
   @JsonIgnore
-  def nonEmpty: Boolean = errors.nonEmpty && warnings.nonEmpty
+  def nonEmpty: Boolean = errors.nonEmpty || warnings.nonEmpty
 
   def withError(key: String, error: String): Validation = {
     this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
