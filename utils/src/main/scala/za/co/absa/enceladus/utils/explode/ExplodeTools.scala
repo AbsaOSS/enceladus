@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.utils.explode
 
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
-import za.co.absa.spark.hats.Extensions._
+import org.apache.spark.sql.{Column, DataFrame}
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits._
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.schema.SchemaUtils._
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits._
+import za.co.absa.spark.hats.Extensions._
 
 object ExplodeTools {
   // scalastyle:off null
@@ -179,7 +179,8 @@ object ExplodeTools {
       case Some(errorCol) =>
         // Implode taking into account the error column
         // Errors should be collected, flattened and made distinct
-        // decDf.schema: "errCol: array (nullable = true)", while the result would contain "errCol: array (nullable = true)" bc. collect_list
+        // decDf.schema: "errCol: array (nullable = true)", while the result would contain "errCol: array (nullable = false)"
+        // bc. collect_list. See issue #1818
         decDf.orderBy(orderByRecordCol, orderByInsideArray)
           .groupBy(groupByColumns: _*)
           .agg(collect_list(deconstructedField).as(tmpColName),
