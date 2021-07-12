@@ -28,27 +28,30 @@ package za.co.absa.enceladus.conformance.interpreter
   * @param broadcastMaxSizeMb             Specifies the maximum size of a mapping table for which the broadcasting strategy can be used.
   */
 sealed abstract case class FeatureSwitches(
-                                            experimentalMappingRuleEnabled: Boolean = false,
-                                            catalystWorkaroundEnabled: Boolean = false,
-                                            controlFrameworkEnabled: Boolean = false,
-                                            broadcastStrategyMode: ThreeStateSwitch = Auto,
-                                            broadcastMaxSizeMb: Int = 0,
-                                            allowOriginalColumnsMutability: Boolean = false
-                                          ) {
+                                                       experimentalMappingRuleEnabled: Boolean = false,
+                                                       catalystWorkaroundEnabled: Boolean = false,
+                                                       controlFrameworkEnabled: Boolean = false,
+                                                       broadcastStrategyMode: ThreeStateSwitch = Auto,
+                                                       broadcastMaxSizeMb: Int = 0,
+                                                       allowOriginalColumnsMutability: Boolean = false,
+                                                       errColNullability: Boolean = false // default value conforms to enceladus.errCol.nullable in reference.conf
+                                                     ) {
   private def copy(
                     experimentalMappingRuleEnabled: Boolean = this.experimentalMappingRuleEnabled,
                     catalystWorkaroundEnabled: Boolean = this.catalystWorkaroundEnabled,
                     controlFrameworkEnabled: Boolean = this.controlFrameworkEnabled,
                     broadcastStrategyMode: ThreeStateSwitch = this.broadcastStrategyMode,
                     broadcastMaxSizeMb: Int = this.broadcastMaxSizeMb,
-                    allowOriginalColumnsMutability: Boolean = this.allowOriginalColumnsMutability
+                    allowOriginalColumnsMutability: Boolean = this.allowOriginalColumnsMutability,
+                    errColNullability: Boolean = this.errColNullability
                   ): FeatureSwitches = {
     new FeatureSwitches(experimentalMappingRuleEnabled,
       catalystWorkaroundEnabled,
       controlFrameworkEnabled,
       broadcastStrategyMode,
       broadcastMaxSizeMb,
-      allowOriginalColumnsMutability) {}
+      allowOriginalColumnsMutability,
+      errColNullability) {}
   }
 
   def setExperimentalMappingRuleEnabled(value: Boolean): FeatureSwitches = {
@@ -73,6 +76,10 @@ sealed abstract case class FeatureSwitches(
 
   def setOriginalColumnsMutability(value: Boolean): FeatureSwitches = {
     copy(allowOriginalColumnsMutability = value)
+  }
+
+  def setErrColNullability(value: Boolean): FeatureSwitches = {
+    copy(errColNullability = value)
   }
 
 }

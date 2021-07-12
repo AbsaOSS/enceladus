@@ -3,7 +3,7 @@ root
  |-- int_num: integer (nullable = true)
  |-- long_num: long (nullable = true)
  |-- str_val: string (nullable = true)
- |-- errCol: array (nullable = true)
+ |-- errCol: array (nullable = false)
  |    |-- element: struct (containsNull = true)
  |    |    |-- errType: string (nullable = true)
  |    |    |-- errCode: string (nullable = true)

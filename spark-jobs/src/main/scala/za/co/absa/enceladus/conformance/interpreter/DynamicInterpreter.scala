@@ -40,6 +40,7 @@ import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits._
 
 case class DynamicInterpreter()(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -69,7 +70,8 @@ case class DynamicInterpreter()(implicit inputFs: FileSystem) {
     applyCheckpoint(conformedDf, "End")
     logExecutionPlan(conformedDf)
 
-    conformedDf
+    // explicitly set errCol (non)nullable, see issue #1818
+    ensureErrorColumnNullability(conformedDf, featureSwitches.errColNullability)
   }
 
   private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
@@ -388,6 +390,10 @@ case class DynamicInterpreter()(implicit inputFs: FileSystem) {
     } else {
       inputDf.withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
     }
+  }
+
+  private def ensureErrorColumnNullability(inputDf: DataFrame, nullable: Boolean): DataFrame = {
+    inputDf.setNullableStateOfColumn(ErrorMessage.errorColumnName, nullable)
   }
 
   /**

@@ -117,44 +117,46 @@ class StdInterpreterSuite extends AnyFunSuite with SparkTestBase with LoggerTest
     assertResult(exp.sortBy(_.a).toList)(res.as[ErrorPreserveStd].collect().sortBy(_.a).toList)
   }
 
-  test("Standardize Test") {
-    implicit val udfLib: UDFLibrary = new UDFLibrary()
+  Seq(true, false).foreach { errColNullability =>  // checking both nullability cases
+    test(s"Standardize Test (errCol ${ if(errColNullability) "" else "non-"}nullable)") {
+      implicit val udfLib: UDFLibrary = new UDFLibrary()
 
-    val sourceDF = spark.createDataFrame(
-      Array(
-        rootCC("rootfieldval",
-          subCC(123, "subfieldval"),
-          sub1CC(sub2CC(456, "subsubfieldval")),
-          Array(subarrayCC(789, "arrayfieldval", subCC(321, "xyz"))))))
+      val sourceDF = spark.createDataFrame(
+        Array(
+          rootCC("rootfieldval",
+            subCC(123, "subfieldval"),
+            sub1CC(sub2CC(456, "subsubfieldval")),
+            Array(subarrayCC(789, "arrayfieldval", subCC(321, "xyz"))))))
 
-    val expectedSchema = stdExpectedSchema.add(
-      StructField("errCol",
-        ArrayType(
-          ErrorMessage.errorColSchema, containsNull = false)))
+      val expectedSchema = stdExpectedSchema.add(StructField("errCol",
+          ArrayType(ErrorMessage.errorColSchema, containsNull = false),
+          nullable = errColNullability
+        ))
 
-    val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
+      val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "", errorColNullability = errColNullability)
 
-    logger.debug(standardizedDF.schema.treeString)
-    logger.debug(expectedSchema.treeString)
+      logger.debug(standardizedDF.schema.treeString)
+      logger.debug(expectedSchema.treeString)
 
-    assert(standardizedDF.schema.treeString === expectedSchema.treeString)
-  }
+      assert(standardizedDF.schema.treeString === expectedSchema.treeString)
+    }
 
-  test("Standardize Test (JSON source)") {
-    implicit val udfLib: UDFLibrary = new UDFLibrary()
-    val sourceDF = spark.read.json("src/test/resources/data/standardizeJsonSrc.json")
+    test(s"Standardize Test (JSON source, (errCol ${ if(errColNullability) "" else "non-"}nullable)") {
+      implicit val udfLib: UDFLibrary = new UDFLibrary()
+      val sourceDF = spark.read.json("src/test/resources/data/standardizeJsonSrc.json")
 
-    val expectedSchema = stdExpectedSchema.add(
-      StructField("errCol",
-        ArrayType(
-          ErrorMessage.errorColSchema, containsNull = false)))
+      val expectedSchema = stdExpectedSchema.add(StructField("errCol",
+        ArrayType(ErrorMessage.errorColSchema, containsNull = false),
+        nullable = errColNullability
+      ))
 
-    val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "")
+      val standardizedDF = StandardizationInterpreter.standardize(sourceDF, stdExpectedSchema, "", errorColNullability = errColNullability)
 
-    logger.debug(standardizedDF.schema.treeString)
-    logger.debug(expectedSchema.treeString)
+      logger.debug(standardizedDF.schema.treeString)
+      logger.debug(expectedSchema.treeString)
 
-    assert(standardizedDF.schema.treeString === expectedSchema.treeString)
+      assert(standardizedDF.schema.treeString === expectedSchema.treeString)
+    }
   }
 
   case class OrderCC(orderName: String, deliverName: Option[String])
