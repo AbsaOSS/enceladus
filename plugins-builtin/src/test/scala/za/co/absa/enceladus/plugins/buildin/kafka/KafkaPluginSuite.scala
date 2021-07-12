@@ -19,7 +19,7 @@ import com.typesafe.config.ConfigFactory
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
 import za.co.absa.enceladus.plugins.buildin.kafka.dummy.DummyControlInfoProducer
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
 
 import scala.collection.JavaConverters._
@@ -64,7 +64,9 @@ class KafkaPluginSuite extends AnyFunSuite {
         "my.client.id" -> "dummyClientId",
         "my.topic.name" -> "dummyTopicName",
         KafkaSecurityParams.SecurityProtocolKey -> "SASL_SSL",
-        KafkaSecurityParams.SaslMechanismKey -> "GSSAPI"
+        KafkaSecurityParams.SaslMechanismKey -> "GSSAPI",
+        SchemaRegistrySecurityParams.BasicAuthCredentialsSourceKey -> "USER_INFO",
+        SchemaRegistrySecurityParams.BasicAuthUserInfoKey -> "user1:password2"
       ).asJava)
     def testCreateKafkaConnection = KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")
 
@@ -75,6 +77,8 @@ class KafkaPluginSuite extends AnyFunSuite {
       assert(kafkaConnection.security.get.securityProtocol == "SASL_SSL")
       assert(kafkaConnection.security.get.saslMechanism.isDefined)
       assert(kafkaConnection.security.get.saslMechanism.get == "GSSAPI")
+      assert(kafkaConnection.schemaRegistrySecurityParams.get.credentialsSource == "USER_INFO")
+      assert(kafkaConnection.schemaRegistrySecurityParams.get.userInfo.get == "user1:password2")
       assert(kafkaConnection.bootstrapServers == "127.0.0.1:8081")
       assert(kafkaConnection.schemaRegistryUrl == "localhost:9092")
       assert(kafkaConnection.clientId == "dummyClientId")

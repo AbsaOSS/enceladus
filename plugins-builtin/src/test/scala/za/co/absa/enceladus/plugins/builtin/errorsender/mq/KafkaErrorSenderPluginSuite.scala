@@ -113,7 +113,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
 
     errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl, schemaRegistryUrl = testSchemaRegUrl,
-      clientId = testClientId, security = None, topicName = testTopicName)
+      clientId = testClientId, security = None, topicName = testTopicName, schemaRegistrySecurityParams = None)
 
     errorPlugin.keySchemaRegistryConfig shouldBe Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> testSchemaRegUrl,
