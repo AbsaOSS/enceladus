@@ -28,7 +28,7 @@
                         <Input id="newDatasetDescription" type="Text" placeholder="Description" width="100%"
                                value="{entity>/description}"/>
                         <Label text="Dataset Properties"/>
-                        <List width="100%" items="{path: 'entity>/_properties', sorter: {path: 'order'}}" class="sapUiMediumMarginBottom">
+                        <List width="100%" items="{path: 'entity>/_properties', sorter: {path: 'order'}}" class="sapUiMediumMarginBottom dsProps">
                             <InputListItem class="inputListItemSmallLabel" label="{entity>name}"
                                            tooltip="{= ${entity>description} ? ${entity>name} + ': ' + ${entity>description} : ${entity>name} }">
                                 <HBox alignItems="Center" justifyContent="End" renderType="Bare">
