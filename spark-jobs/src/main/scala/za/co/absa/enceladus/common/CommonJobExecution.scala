@@ -93,11 +93,11 @@ trait CommonJobExecution extends ProjectMetadata {
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
       case Some(validation) if validation.nonEmpty =>
-        log.warn("Dataset validation had some warnings:\n" +
-          validation.warnings.map { case (field, warnMsg) => {
-            val header = s" - '$field': "
-            s"$header${warnMsg.mkString(s"\n$header")}" }.mkString("\n")}
-        )
+        val warning = validation.warnings.map {case (field, warnMsg) =>
+          val header = s" - '$field': "
+          s"$header${warnMsg.mkString(s"\n$header")}"
+        }.mkString("\n")
+        log.warn("Dataset validation had some warnings:\n" + warning)
       case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
       case _ => // no problems found
     }
