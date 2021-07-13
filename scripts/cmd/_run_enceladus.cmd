@@ -602,6 +602,7 @@ IF "%ASYNCHRONOUS_MODE%"=="true" (
 GOTO :eof
 
 :client_run
+
 CALL :temp_log_file TMP_PATH_NAME
 
 :: Initializing Kerberos ticket
@@ -658,17 +659,20 @@ EXIT /B 0
 EXIT /B 0
 
 :temp_log_file
-    SET yyyy=%date:~-4%
-    SET MM=%date:~3,2%
-    SET DD=%date:~0,2%
-    ::alternate date parsing
-    ::SET YYYY=%date:~10,4%
-    ::SET MM=%date:~4,2%
-    ::SET DD=%date:~7,2%
-    SET HH=%time:~0,2%
-    IF %HH% lss 10 (SET HH=0%time:~1,1%)
-    SET MI=%time:~3,2%
-    SET SS=%time:~6,2%
+    ::Date&Time parsing
+    FOR /F "skip=1 tokens=1-6" %%A IN ('WMIC Path Win32_LocalTime Get Day^,Hour^,Minute^,Month^,Second^,Year /Format:table') DO (
+        if "%%B" NEQ "" (
+            SET /A FDATE=%%F*10000+%%D*100+%%A
+            :: prefixing 1000000 to ensure the hours is two digit (starting with 0 before 10)
+            SET /A FTIME=1000000+%%B*10000+%%C*100+%%E
+        )
+    )
+    SET YYYY=%FDATE:~0,4%
+    SET MM=%FDATE:~4,2%
+    SET DD=%FDATE:~6,2%
+    SET HH=%FTIME:~1,2%
+    SET MI=%FTIME:~3,2%
+    SET SS=%FTIME:~5,2%
     SET DATETIME=%YYYY%_%MM%_%DD%-%HH%_%MI%_%SS%
     CALL :last_part NAME,.,%CLASS%
     :loop_gtlf
