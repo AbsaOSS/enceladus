@@ -31,7 +31,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRule)
+      simpleTestCaseFactory.getTestCase(true, true, true, simpleMappingRule)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -49,7 +49,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputs)
+      simpleTestCaseFactory.getTestCase(true, true, false, simpleMappingRuleMultipleOutputs)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
@@ -67,7 +67,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleWithDefaultValue)
+      simpleTestCaseFactory.getTestCase(true, true, true, simpleMappingRuleWithDefaultValue)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -85,7 +85,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleDefValMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputsWithDefaults)
+      simpleTestCaseFactory.getTestCase(true, true, false, simpleMappingRuleMultipleOutputsWithDefaults)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")

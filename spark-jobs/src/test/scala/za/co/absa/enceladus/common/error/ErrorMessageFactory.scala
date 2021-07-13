@@ -15,8 +15,10 @@
 
 package za.co.absa.enceladus.common.error
 
+import javax.annotation.Nullable
+
 object ErrorMessageFactory {
-  val errColSchema: String =  "\n |-- errCol: array (nullable = true)\n"+
+  def errColSchema(nullable: Boolean): String =  s"\n |-- errCol: array (nullable = $nullable)\n"+
     " |    |-- element: struct (containsNull = false)\n"+
     " |    |    |-- errType: string (nullable = true)\n"+
     " |    |    |-- errCode: string (nullable = true)\n"+
@@ -29,7 +31,7 @@ object ErrorMessageFactory {
     " |    |    |    |    |-- mappingTableColumn: string (nullable = true)\n"+
     " |    |    |    |    |-- mappedDatasetColumn: string (nullable = true)\n"
 
-  def attachErrColToSchemaPrint(schemaPrint: String): String = {
-    schemaPrint + errColSchema
+  def attachErrColToSchemaPrint(nullable: Boolean, schemaPrint: String): String = {
+    schemaPrint + errColSchema(nullable)
   }
 }
