@@ -464,11 +464,6 @@ CALL :validate --dataset-version,%DATASET_VERSION%
 CALL :validate --report-date,%REPORT_DATE%
 CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-auth-keytab,%MENAS_AUTH_KEYTAB%
 
-IF NOT DEFINED DATE_PARSING_TYPE (
-    ECHO DATE_PARSING_TYPE not defined in `_enceladus_env.cmd`
-    SET VALID=="0"
-)
-
 :: For now this check is disabled in Windows version of the script
 :: IF NOT "%MASTER%"=="yarn" (
 ::   ECHO "Master '%MASTER%' is not allowed. The only allowed master is 'yarn'."
@@ -607,7 +602,6 @@ IF "%ASYNCHRONOUS_MODE%"=="true" (
 GOTO :eof
 
 :client_run
-:end
 
 CALL :temp_log_file TMP_PATH_NAME
 
@@ -645,7 +639,7 @@ IF EXIST %ERROR_SIGNAL_FILE% (
 :: Report the result and log location
 ECHO ""
 ECHO Job %RESULT%. Refer to logs at %TMP_PATH_NAME% | tee -a %TMP_PATH_NAME%
-
+EXIT /B %EXIT_STATUS%
 
 :: Functions
 
@@ -665,29 +659,20 @@ EXIT /B 0
 EXIT /B 0
 
 :temp_log_file
-    IF %DATE_PARSING_TYPE%==parser1 (
-        ::25.06.2021
-        SET yyyy=%date:~-4%
-        SET MM=%date:~3,2%
-        SET DD=%date:~0,2%
+    ::Date&Time parsing
+    FOR /F "skip=1 tokens=1-6" %%A IN ('WMIC Path Win32_LocalTime Get Day^,Hour^,Minute^,Month^,Second^,Year /Format:table') DO (
+        if "%%B" NEQ "" (
+            SET /A FDATE=%%F*10000+%%D*100+%%A
+            :: prefixing 1000000 to ensure the hours is two digit (starting with 0 before 10)
+            SET /A FTIME=1000000+%%B*10000+%%C*100+%%E
+        )
     )
-    IF %DATE_PARSING_TYPE%==parser2 (
-        ::Fri 06/25/2021
-        SET YYYY=%date:~10,4%
-        SET MM=%date:~4,2%
-        SET DD=%date:~7,2%
-    )
-    IF %DATE_PARSING_TYPE%==parser3 (
-        :: 2021-06-25
-        SET yyyy=%date:~0,4%
-        SET MM=%date:~5,2%
-        SET DD=%date:~8,2%
-    )
-    ::Time parsing
-    SET HH=%time:~0,2%
-    IF %HH% lss 10 (SET HH=0%time:~1,1%)
-    SET MI=%time:~3,2%
-    SET SS=%time:~6,2%
+    SET YYYY=%FDATE:~0,4%
+    SET MM=%FDATE:~4,2%
+    SET DD=%FDATE:~6,2%
+    SET HH=%FTIME:~1,2%
+    SET MI=%FTIME:~3,2%
+    SET SS=%FTIME:~5,2%
     SET DATETIME=%YYYY%_%MM%_%DD%-%HH%_%MI%_%SS%
     CALL :last_part NAME,.,%CLASS%
     :loop_gtlf
