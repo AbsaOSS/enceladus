@@ -19,7 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.{Constants, ErrorColNormalization, RecordIdGeneration}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, TypeParser}
@@ -47,8 +47,10 @@ object StandardizationInterpreter {
    * @param recordIdGenerationStrategy Decides if true uuid, pseudo (always the same) is used for the
    *                                   [[Constants.EnceladusRecordId]] or if the column is not added at all [[IdType.NoId]] (default).
    */
-  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
-                  recordIdGenerationStrategy: IdType = IdType.NoId)
+  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String,
+                  failOnInputNotPerSchema: Boolean = false,
+                  recordIdGenerationStrategy: IdType = IdType.NoId,
+                  errorColNullability: Boolean = false)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
@@ -60,14 +62,19 @@ object StandardizationInterpreter {
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
 
-    val idedStd = if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, cleanedStd.schema)) {
-      cleanedStd // no new id regeneration
-    } else {
-      RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, Constants.EnceladusRecordId, recordIdGenerationStrategy)
-    }
+    val resultDf = cleanedStd
+      .transform { inputDf =>
+        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, inputDf.schema)) {
+          cleanedStd // no new id regeneration
+        } else {
+          RecordIdGeneration.addRecordIdColumnByStrategy(inputDf, Constants.EnceladusRecordId, recordIdGenerationStrategy)
+        }
+      }
+      .transform(ErrorColNormalization.normalizeErrColNullability(_, errorColNullability))
+
 
     logger.info(s"Standardization process finished, returning to the application...")
-    idedStd
+    resultDf
   }
 
   private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)
@@ -79,7 +86,7 @@ object StandardizationInterpreter {
   }
 
   private def standardizeDataset(df: Dataset[Row], expSchema: StructType, failOnInputNotPerSchema: Boolean)
-                                (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
+                                (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
 
     val rowErrors: List[Column] = gatherRowErrors(df.schema)
     val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], rowErrors, None: Option[Column]) {
@@ -108,11 +115,11 @@ object StandardizationInterpreter {
 
   private def gatherRowErrors(origSchema: StructType)(implicit spark: SparkSession): List[Column] = {
     val corruptRecordColumn = spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf)
-    SchemaUtils.getField(corruptRecordColumn, origSchema).map {_ =>
+    SchemaUtils.getField(corruptRecordColumn, origSchema).map { _ =>
       val column = col(corruptRecordColumn)
       when(column.isNotNull, // input row was not per expected schema
         array(callUDF(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure
-      )).otherwise( // schema is OK
+        )).otherwise( // schema is OK
         typedLit(Seq.empty[ErrorMessage])
       )
     }.toList

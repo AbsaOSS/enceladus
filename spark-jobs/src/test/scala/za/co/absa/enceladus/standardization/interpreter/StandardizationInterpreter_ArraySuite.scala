@@ -56,13 +56,13 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType)
 
-    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(nullable = false,
       "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
       " |    |-- element: timestamp (containsNull = true)"
     )
 
-    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "", errorColNullability = false).cache()
     assert(stdDF.schema.treeString == expectedSchema) // checking schema first
 
     val expectedData = Seq(
@@ -91,12 +91,12 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType, s""""${MetadataKeys.Pattern}": "HH:mm:ss dd.MM.yyyy"""")
 
-    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(nullable = true,
     "root\n"+
       " |-- arrayField: array (nullable = true)\n" +
       " |    |-- element: timestamp (containsNull = true)"
     )
-    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "", errorColNullability = true).cache()
     assert(stdDF.schema.treeString == expectedSchema) // checking schema first
 
     val expectedData = Seq(
@@ -137,13 +137,13 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(IntegerType, s""""${MetadataKeys.Pattern}": "Size: #;Size: -#"""")
 
-    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(nullable = false,
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: integer (containsNull = true)"
     )
 
-    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "", errorColNullability = false).cache()
     assert(stdDF.schema.treeString == expectedSchema) // checking schema first
 
     val expectedData = Seq(
@@ -169,13 +169,13 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(FloatType, s""""${MetadataKeys.DefaultValue}": "3.14", "${MetadataKeys.MinusSign}": "~" """)
 
-    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(nullable = false,
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: float (containsNull = true)"
     )
 
-    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "", errorColNullability = false).cache()
     assert(stdDF.schema.treeString == expectedSchema) // checking schema first
 
     val expectedData = Seq(
@@ -201,14 +201,14 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
     val subArrayJson = """{"type": "array", "elementType": "string", "containsNull": false}"""
     val desiredSchema = generateDesiredSchema(subArrayJson, s""""${MetadataKeys.DefaultValue}": "Nope"""")
 
-    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(
+    val expectedSchema = ErrorMessageFactory.attachErrColToSchemaPrint(nullable = true,
       "root\n"+
         " |-- arrayField: array (nullable = true)\n" +
         " |    |-- element: array (containsNull = true)\n" +
         " |    |    |-- element: string (containsNull = true)"
     )
 
-    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val stdDF = StandardizationInterpreter.standardize(src, desiredSchema, "", errorColNullability = true).cache()
     assert(stdDF.schema.treeString == expectedSchema) // checking schema first
 
     val expectedData = Seq(

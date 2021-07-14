@@ -38,12 +38,6 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     super.afterAll()
   }
 
-  protected def normalizeErrColNullability(inputSchemaTree: String): String = {
-    inputSchemaTree
-      .replaceAll("errCol: array \\(nullable = false\\)", "errCol: array (nullable = true)")
-      .trim
-  }
-
   protected def cleanupContainsNullProperty(inputSchemaTree: String): String = {
     // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
     // the new version of the struct always has the flag containsNull = false.
