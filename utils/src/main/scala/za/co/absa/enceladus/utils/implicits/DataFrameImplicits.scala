@@ -75,7 +75,7 @@ object DataFrameImplicits {
      * @param columnName is the column name to change
      * @param nullable   boolean flag to set the nullability of the column `columnName` to
      */
-    def setNullableStateOfColumn(columnName: String, nullable: Boolean): DataFrame = {
+    def withNullableColumnState(columnName: String, nullable: Boolean): DataFrame = {
       // Courtesy of https://stackoverflow.com/a/33195510
 
       // modify [[StructField] with name `columnName` if its nullability differs

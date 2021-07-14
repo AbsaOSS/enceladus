@@ -185,7 +185,7 @@ object ExplodeTools {
           .groupBy(groupByColumns: _*)
           .agg(collect_list(deconstructedField).as(tmpColName),
             array_distinct(flatten(collect_list(col(errorCol)))).as(errorCol))
-          .setNullableStateOfColumn(errorCol, true) // explicitly nullable: expected schema outcome, see issue #1818
+          .withNullableColumnState(errorCol, true) // explicitly nullable: expected schema outcome, see issue #1818
     }
 
     // Restore null values to yet another temporary field
