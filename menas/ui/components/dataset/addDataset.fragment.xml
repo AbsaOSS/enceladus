@@ -16,7 +16,7 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
                          xmlns:hdfs="components.hdfs">
     <Dialog id="addDatasetDialog" title="{entity>/title} Dataset" stretchOnPhone="true" resizable="true"
-            draggable="true" contentWidth="55em">
+            draggable="true" contentWidth="573px">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="false" editable="true">
