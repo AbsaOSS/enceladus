@@ -16,35 +16,57 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import za.co.absa.enceladus.model.Validation.ValidationRecord
 
 object Validation {
+
+  type ValidationRecord = Map[String, List[String]]
 
   val NotSpecified = "not specified"
 
   val empty = Validation()
 
   def merge(a: Validation, b: Validation) : Validation = a.merge(b)
-
 }
 
-case class Validation (errors: Map[String, List[String]] = Map()) {
+case class Validation (errors: ValidationRecord = Map(), warnings: ValidationRecord = Map()) {
 
   @JsonIgnore
   def isValid(): Boolean = errors.isEmpty
 
+  @JsonIgnore
+  def isEmpty: Boolean = errors.isEmpty && warnings.isEmpty
+
+  @JsonIgnore
+  def nonEmpty: Boolean = errors.nonEmpty || warnings.nonEmpty
+
   def withError(key: String, error: String): Validation = {
     this.copy(errors = errors + (key -> (error :: errors.getOrElse(key, Nil))))
+  }
+
+  def withWarning(key: String, warning: String): Validation = {
+    this.copy(warnings = warnings + (key -> (warning :: warnings.getOrElse(key, Nil))))
   }
 
   def withErrorIf(condition: Boolean, key: => String, error: => String): Validation = {
     if (condition) withError(key, error) else this
   }
 
+  def withWarningIf(condition: Boolean, key: => String, warning: => String): Validation = {
+    if (condition) withWarning(key, warning) else this
+  }
+
   def merge(validation: Validation): Validation = {
-    val mergedMaps = validation.errors.foldLeft(errors) { case (acc, (key, list)) =>
-      acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
+    def mergeKeyedMaps(first: ValidationRecord,
+                       second: ValidationRecord): ValidationRecord = {
+      first.foldLeft(second) { case (acc, (key, list)) =>
+        acc + (key -> (acc.getOrElse(key, List.empty[String]) ++ list))
+      }
     }
 
-    Validation(mergedMaps)
+    val mergedErrMaps = mergeKeyedMaps(validation.errors, errors)
+    val mergedWarnMaps = mergeKeyedMaps(validation.warnings, warnings)
+
+    Validation(mergedErrMaps, mergedWarnMaps)
   }
 }
