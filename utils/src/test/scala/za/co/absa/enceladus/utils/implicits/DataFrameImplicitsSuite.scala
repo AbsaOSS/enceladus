@@ -173,25 +173,25 @@ class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase with Matche
     assert(df1.schema == originalSchema, "Nullability changing tests - initialization failed")
 
     test("changing nullability of a column (true -> false, false -> true)") {
-      val newSchema1 = df1.setNullableStateOfColumn("name", false).schema
+      val newSchema1 = df1.withNullableColumnState("name", false).schema
       newSchema1.toSet should contain(StructField("name", StringType, nullable = false))
 
-      val newSchema2 = df1.setNullableStateOfColumn("language", true).schema
+      val newSchema2 = df1.withNullableColumnState("language", true).schema
       newSchema2.toSet should contain(StructField("name", StringType, nullable = true))
     }
 
     test("changing nullability of an existing column - no-op (already true)") {
-      val newSchema = df1.setNullableStateOfColumn("name", true).schema
+      val newSchema = df1.withNullableColumnState("name", true).schema
       newSchema shouldBe originalSchema
     }
 
     test("changing nullability of an existing column - no-op (already false)") {
-      val newSchema = df1.setNullableStateOfColumn("language", false).schema
+      val newSchema = df1.withNullableColumnState("language", false).schema
       newSchema shouldBe originalSchema
     }
 
     test("attempted changing nullability of a non-existing column - no-op") {
-      val newSchema = df1.setNullableStateOfColumn("language", false).schema
+      val newSchema = df1.withNullableColumnState("language", false).schema
       newSchema shouldBe originalSchema
     }
   }

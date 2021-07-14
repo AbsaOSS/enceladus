@@ -393,7 +393,7 @@ case class DynamicInterpreter()(implicit inputFs: FileSystem) {
   }
 
   private def ensureErrorColumnNullability(inputDf: DataFrame, nullable: Boolean): DataFrame = {
-    inputDf.setNullableStateOfColumn(ErrorMessage.errorColumnName, nullable)
+    inputDf.withNullableColumnState(ErrorMessage.errorColumnName, nullable)
   }
 
   /**

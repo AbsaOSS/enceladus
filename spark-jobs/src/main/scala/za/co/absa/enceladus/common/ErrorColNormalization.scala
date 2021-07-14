@@ -28,7 +28,7 @@ object ErrorColNormalization {
   }
 
   def normalizeErrColNullability(dfInput: DataFrame, nullability: Boolean): DataFrame = {
-    dfInput.setNullableStateOfColumn(ErrorMessage.errorColumnName, nullability)
+    dfInput.withNullableColumnState(ErrorMessage.errorColumnName, nullability)
   }
 
 }
