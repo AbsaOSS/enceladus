@@ -157,16 +157,16 @@ class DatasetDialog extends EntityDialog {
     this.oDialog.getModel("entity").checkUpdate();
   }
 
-  isValid(oDataset) {
+  isValidWithDialogSwitch(oDataset, showDialogs) {
     this.resetValueState();
 
     let hasValidName = EntityValidationService.hasValidName(oDataset, "Dataset",
       this.oController.byId("newDatasetName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oDataset, "Dataset",
-        this.oController.byId("schemaVersionSelect"));
+      this.oController.byId("schemaVersionSelect"));
 
     //here the validation modifies the model's underlying data, trigger a check
-    let hasValidProperties = EntityValidationService.hasValidProperties(oDataset._properties);
+    let hasValidProperties = EntityValidationService.hasValidProperties(oDataset._properties, showDialogs);
     this.oDialog.getModel("entity").checkUpdate();
 
     if (oDataset.hdfsBrowserEnabled) {
@@ -176,8 +176,9 @@ class DatasetDialog extends EntityDialog {
       let hasValidPublishHDFSPath = EntityValidationService.hasValidHDFSPath(oDataset.hdfsPublishPath,
         "Dataset publish HDFS path",
         this.oController.byId("selectedPublishHDFSPathLabel"));
-      let hasExistingRawHDFSPath = hasValidRawHDFSPath ? this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
-      let hasExistingPublishHDFSPath = hasValidRawHDFSPath && hasValidPublishHDFSPath ?
+      let hasExistingRawHDFSPath = showDialogs && hasValidProperties && hasValidRawHDFSPath ?
+        this.oController.byId("newDatasetRawHDFSBrowser").validate() : false;
+      let hasExistingPublishHDFSPath = showDialogs && hasValidProperties && hasExistingRawHDFSPath && hasValidPublishHDFSPath ?
         this.oController.byId("newDatasetPublishHDFSBrowser").validate() : false;
 
       return hasValidName && hasValidSchema && hasExistingRawHDFSPath && hasExistingPublishHDFSPath && hasValidProperties;
@@ -192,6 +193,10 @@ class DatasetDialog extends EntityDialog {
 
       return hasValidName && hasValidSchema && hasValidRawSimplePath && hasValidPublishSimplePath && hasValidProperties;
     }
+  }
+
+  isValid(oDataset) {
+    return this.isValidWithDialogSwitch(oDataset, true);
   }
 
   onNameChange() {
@@ -219,7 +224,7 @@ class DatasetDialog extends EntityDialog {
     const fnChangeHandler = function(oEv) {
       const oDataset = this.oDialog.getModel("entity").getProperty("/");
       this.resetValueState();
-      this.isValid(oDataset)
+      this.isValidWithDialogSwitch(oDataset, false);
     }.bind(this);
     inputFields.map((oInpField) => {
       //detach first in case these components are re-used
