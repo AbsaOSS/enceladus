@@ -23,10 +23,12 @@ import za.co.absa.enceladus.menas.repositories.OozieRepository
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
+
 import scala.language.reflectiveCalls
 import DatasetService.RuleValidationsAndFields
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import DatasetService._
+import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
 
 import scala.util.{Failure, Success}
 
@@ -144,17 +146,17 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def validateRequiredPropertiesExistence(existingProperties: Set[String],
                                                   propDefs: Seq[PropertyDefinition]): Validation = {
     propDefs
-      .filter(!_.disabled)
-      .collect {
-        case propDef if propDef.isRequired && !existingProperties.contains(propDef.name) =>
-          Validation.empty.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
-
-        case propDef if propDef.isRecommended && !existingProperties.contains(propDef.name) =>
-          log.warn(s"Property '${propDef.name}' is recommended to be present, but was not found!")
-          Validation.empty
-
-
-      }.foldLeft(Validation.empty)(Validation.merge)
+      .filterNot(propDef => propDef.disabled || existingProperties.contains(propDef.name) )
+      .foldLeft(Validation.empty){(acc, propDef)=>
+        propDef.essentiality match {
+          case Mandatory() =>
+            acc.withError(propDef.name, s"Dataset property '${propDef.name}' is mandatory, but does not exist!")
+          case Recommended() =>
+            acc.withWarning(propDef.name, s"Property '${propDef.name}' is recommended to be present, but was not found!")
+          case _ =>
+            acc
+        }
+      }
   }
 
   /**

@@ -286,12 +286,17 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       "nonAccountedField" -> "randomVal"
     )
 
-    val expectedValidation = Validation(Map(
-      "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
-      "mandatoryField3" -> List("Dataset property 'mandatoryField3' is mandatory, but does not exist!"),
-      "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
-      "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
-    ))
+    val baseValidationForRun = Validation(
+      Map(
+        "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
+        "mandatoryField3" -> List("Dataset property 'mandatoryField3' is mandatory, but does not exist!"),
+        "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
+        "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
+      ),
+      Map(
+        "enumField2" -> List("Property 'enumField2' is recommended to be present, but was not found!")
+      )
+    )
 
     s"GET $apiUrl/{name}/{version}/properties/valid" should {
       "return 404" when {
@@ -323,14 +328,14 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             assertOk(response)
 
             val body = response.getBody
-            assert(body == expectedValidation)
+            assert(body == baseValidationForRun)
           }
         }
       }
     }
 
     Seq(
-      (s"$apiUrl/datasetA/2?validateProperties=true", Some(expectedValidation)),
+      (s"$apiUrl/datasetA/2?validateProperties=true", Some(baseValidationForRun)),
       (s"$apiUrl/datasetA/2?validateProperties=false", None),
       (s"$apiUrl/datasetA/2", None)
     ).foreach { case (url, expectedPropertiesValidation) =>
