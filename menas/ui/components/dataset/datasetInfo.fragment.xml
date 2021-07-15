@@ -39,7 +39,8 @@
       </f:FormContainer>
       <f:FormContainer formElements="{path: '/currentDataset/propertiesDisplay', sorter: {path:'order'}}">
         <f:FormElement label="{name}">
-          <Text text="{value}" />
+            <ObjectStatus text="{value}"
+                          state="{= ${value} !== 'Missing' ? undefined : ${essentiality} === 'Optional' ? 'Warning' : ${essentiality} === 'Mandatory' ? 'Error' : undefined }"/>
         </f:FormElement>
       </f:FormContainer>
       <f:FormContainer>
@@ -60,14 +61,14 @@
       </f:FormContainer>
       <f:FormContainer>
         <f:FormElement label="Last Updated">
-          <Text id="currentDatasetLastUpdate" 
+          <Text id="currentDatasetLastUpdate"
             text="{path: 'dataset>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
         </f:FormElement>
         <f:FormElement label="Last Updated By">
           <Text id="currentDatasetUserUpdated" text="{dataset>/userUpdated}" />
         </f:FormElement>
         <f:FormElement label="Created">
-          <Text id="currentDatasetCreated" 
+          <Text id="currentDatasetCreated"
             text="{path: 'dataset>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}" />
         </f:FormElement>
         <f:FormElement label="Created By">
