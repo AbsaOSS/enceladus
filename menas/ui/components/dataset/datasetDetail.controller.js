@@ -375,7 +375,7 @@ sap.ui.define([
 
         for(let property of aPropTemplates) {
           let propValue = 'Missing';
-          if(currentDataset.properties) {
+          if(currentDataset.properties && currentDataset.properties[property.name]) {
             propValue = currentDataset.properties[property.name];
           }
           currentDataset.propertiesDisplay.push({
