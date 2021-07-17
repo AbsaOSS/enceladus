@@ -287,14 +287,19 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
       "nonAccountedField" -> "randomVal"
     )
 
-    val expectedValidationForRun = Validation(Map(
+    val baseValidationForRun = Validation(Map(
       "mandatoryField2" -> List("Dataset property 'mandatoryField2' is mandatory, but does not exist!"),
       "enumField1" -> List("Value 'invalidOption' is not one of the allowed values (optionA, optionB)."),
       "nonAccountedField" -> List("There is no property definition for key 'nonAccountedField'.")
     ))
 
-    val expectedValidationStrictest = expectedValidationForRun
+    val expectedValidationForRun = baseValidationForRun
+      .withWarning("enumField2", "Property 'enumField2' is recommended to be present, but was not found!")
+      .withWarning("mandatoryField3", "Property 'mandatoryField3' is required to be present, but was not found! This warning will turn into error after the transition period")
+
+    val expectedValidationStrictest = baseValidationForRun
       .withError("mandatoryField3", "Dataset property 'mandatoryField3' is mandatory, but does not exist!")
+      .withWarning("enumField2", "Property 'enumField2' is recommended to be present, but was not found!")
 
     s"GET $apiUrl/{name}/{version}/properties/valid" should {
       "return 404" when {
