@@ -44,6 +44,9 @@ kafka.info.metrics.topic.name="control.info"
 # Optional security settings
 #kafka.security.protocol="SASL_SSL"
 #kafka.sasl.mechanism="GSSAPI"
+# Optional Schema Registry Security Parameters
+#kafka.schema.registry.basic.auth.credentials.source=USER_INFO
+#kafka.schema.registry.basic.auth.user.info=user:password
 ```
 
 ### KafkaErrorSenderPlugin
