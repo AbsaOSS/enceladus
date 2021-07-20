@@ -134,6 +134,7 @@ var Formatters = new function() {
     if (sStatus === 'Missing') {
       this.addStyleClass("italic");
     }
+    return sStatus;
   };
 
 }();

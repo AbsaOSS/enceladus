@@ -39,9 +39,9 @@
       </f:FormContainer>
       <f:FormContainer formElements="{path: '/currentDataset/propertiesDisplay', sorter: {path:'order'}}">
         <f:FormElement label="{name}">
-            <ObjectStatus text="{parts: [{path: 'value'}],
-                                formatter: '.formatter.italicMissingProp'}"
-                          state="{= ${value} !== 'Missing' ? undefined : ${essentiality} === 'Optional' ? 'Information' : ${essentiality} === 'Recommended' ? 'Warning' : ${essentiality} === 'Mandatory' ? 'Error' : undefined }"/>
+            <ObjectStatus text="{parts: [{path: 'value'}], formatter: 'Formatters.italicMissingProp'}"
+                          state="{= ${value} !== 'Missing' ? undefined : ${essentiality} === 'Optional' ? 'Information' : ${essentiality} === 'Recommended' ? 'Warning' : ${essentiality} === 'Mandatory' ? 'Error' : undefined }">
+            </ObjectStatus>
         </f:FormElement>
       </f:FormContainer>
       <f:FormContainer>
