@@ -32,6 +32,7 @@ object Constants {
     "spline.mongodb.url",
     "sun.boot.class.path",
     "sun.java.command",
-    "s3.kmsKeyId"
+    "s3.kmsKeyId",
+    "kafka.schema.registry.basic.auth.user.info"
   )
 }
