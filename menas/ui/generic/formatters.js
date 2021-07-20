@@ -130,4 +130,10 @@ var Formatters = new function() {
     }
   };
 
+  this.italicMissingProp = function (sStatus) {
+    if (sStatus === 'Missing') {
+      this.addStyleClass("italic");
+    }
+  };
+
 }();

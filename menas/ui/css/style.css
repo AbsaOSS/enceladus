@@ -128,14 +128,6 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
   margin-top: 4px;
 }
 
-.sapMObjStatusError{
-  font-style: italic;
-}
-
-.sapMObjStatusWarning{
-  font-style: italic;
-}
-
-.sapMObjStatusInformation{
+.italic{
   font-style: italic;
 }
