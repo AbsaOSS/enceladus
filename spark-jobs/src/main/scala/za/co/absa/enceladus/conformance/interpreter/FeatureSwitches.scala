@@ -34,7 +34,7 @@ sealed abstract case class FeatureSwitches(
                                                        broadcastStrategyMode: ThreeStateSwitch = Auto,
                                                        broadcastMaxSizeMb: Int = 0,
                                                        allowOriginalColumnsMutability: Boolean = false,
-                                                       errColNullability: Boolean = false // default value conforms to enceladus.errCol.nullable in reference.conf
+                                                       errColNullability: Boolean = true // default value conforms to enceladus.errCol.nullable in reference.conf
                                                      ) {
   private def copy(
                     experimentalMappingRuleEnabled: Boolean = this.experimentalMappingRuleEnabled,
