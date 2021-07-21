@@ -131,8 +131,9 @@ var Formatters = new function() {
   };
 
   this.italicMissingProp = function (sStatus) {
-    if (sStatus === 'Missing') {
+    if (sStatus === null) {
       this.addStyleClass("missingPropertyValue");
+      return 'Missing';
     }
     return sStatus;
   };
