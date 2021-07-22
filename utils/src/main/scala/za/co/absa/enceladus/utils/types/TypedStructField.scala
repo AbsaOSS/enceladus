@@ -399,6 +399,10 @@ object TypedStructField {
       }
     }
 
+    def defaultTimeZone: Option[String] = {
+      getMetadataString(MetadataKeys.DefaultTimeZone)
+    }
+
     override def validate(): Seq[ValidationIssue] = {
       validator.validate(this)
     }

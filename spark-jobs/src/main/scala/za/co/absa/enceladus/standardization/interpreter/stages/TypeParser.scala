@@ -545,11 +545,7 @@ object TypeParser {
                                       failOnInputNotPerSchema: Boolean,
                                       isArrayElement: Boolean)
                                      (implicit defaults: Defaults) extends DateTimeParser[Date] {
-    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
-      pattern.defaultTimeZone
-    } else {
-      defaults.getDefaultDateTimeZone
-    }
+    private val defaultTimeZone: Option[String] = field.defaultTimeZone.map(Option(_)).getOrElse(defaults.getDefaultDateTimeZone)
 
     private def applyPatternToStringColumn(column: Column, pattern: String): Column = {
       defaultTimeZone.map(tz =>
@@ -601,11 +597,7 @@ object TypeParser {
                                            isArrayElement: Boolean)
                                           (implicit defaults: Defaults) extends DateTimeParser[Timestamp] {
 
-    private val defaultTimeZone: Option[String] = if (pattern.isTimeZoned) {
-      pattern.defaultTimeZone
-    } else {
-      defaults.getDefaultTimestampTimeZone
-    }
+    private val defaultTimeZone: Option[String] = field.defaultTimeZone.map(Option(_)).getOrElse(defaults.getDefaultTimestampTimeZone)
 
     private def applyPatternToStringColumn(column: Column, pattern: String): Column = {
       val interim: Column = to_timestamp(column, pattern)
