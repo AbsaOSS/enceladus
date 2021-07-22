@@ -168,7 +168,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.version}</version>
+                <version>${maven.shade.plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -229,7 +229,7 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>${maven.scala.version}</version>
+                <version>${scala.maven.plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -250,7 +250,7 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.ant.plugin.version}</version>
+                <version>${maven.antrun.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>copy</id>
