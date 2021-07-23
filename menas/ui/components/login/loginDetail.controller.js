@@ -73,8 +73,16 @@ sap.ui.define([
     },
 
     onAfterRendering: function() {
-      if(!sap.ui.Device.browser.chrome || (sap.ui.Device.browser.chrome && sap.ui.Device.browser.version < 68)) {
-        sap.m.MessageBox.warning("Chrome (version 68 and higher) is currently the only supported browser for menas");
+      if (sap.ui.Device.browser.chrome && sap.ui.Device.browser.version < 68) {
+        sap.m.MessageBox.warning("Chrome browser version lower than 68 is known of having issue displaying the Menas application");
+      } else if (sap.ui.Device.browser.firefox && sap.ui.Device.browser.version < 78) {
+        sap.m.MessageBox.warning("Firefox browser version lower than 78 is known of having issue displaying the Menas application");
+      } else if (sap.ui.Device.browser.edge && sap.ui.Device.browser.version < 79) {
+        sap.m.MessageBox.warning("Edge browser version lower than 79 is known of having issue displaying the Menas application");
+      } else if (sap.ui.Device.browser.safari && sap.ui.Device.browser.version < 12) {
+        sap.m.MessageBox.warning("Safari browser version lower than 12 is known of having issue displaying the Menas application");
+      } else if (!sap.ui.Device.browser.chrome && !sap.ui.Device.browser.firefox && !sap.ui.Device.browser.edge && !sap.ui.Device.browser.safari) {
+        sap.m.MessageBox.warning("Your browser is not known if it to works wih Menas application");
       }
     },
 
