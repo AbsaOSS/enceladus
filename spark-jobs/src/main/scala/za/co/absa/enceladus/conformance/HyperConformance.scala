@@ -149,6 +149,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
+      .setErrColNullability(true)
 
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
 
