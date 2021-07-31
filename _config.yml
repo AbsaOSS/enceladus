@@ -13,5 +13,13 @@ plugins:
   - jekyll-mentions
   - jekyll-paginate
 
+markdown: kramdown
+kramdown:
+  input: GFM
+  gfm_quirks: [paragraph_end, no_auto_typographic]
+  html_to_native: true
+  hard_wrap: false
+  syntax_highlighter: rouge
+
 paginate: 15
 paginate_path: "/blog/page:num/"
