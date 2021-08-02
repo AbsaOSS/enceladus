@@ -473,10 +473,10 @@ Summary:
 | `z`                                        | General time zone                                | Pacific Standard Time; PST; GMT-08:00  |
 | `Z`                                        | RFC 822 time zone                                | -0800                                  |
 | `X`                                        | ISO 8601 time zone                               | -08; -0800; -08:00                     |
-| `_epoch_`                                  | Seconds since 1970/01/01 00:00:00                | 1557136493, 1557136493.136             |
-| `_epochmilli_`                             | Milliseconds since 1970/01/01 00:00:00.0000      | 1557136493128, 1557136493128.001       |
-| `_epochmicro_`                             | Microseconds since 1970/01/01 00:00:00.0000      | 1557136493128789, 1557136493128789.999 |
-| `_epochnano_`<sup>[*](#parsing-star)</sup> | Nanoseconds since 1970/01/01 00:00:00.0000       | 1557136493128789101                    |
+| `epoch`                                    | Seconds since 1970/01/01 00:00:00                | 1557136493, 1557136493.136             |
+| `epochmilli`                               | Milliseconds since 1970/01/01 00:00:00.0000      | 1557136493128, 1557136493128.001       |
+| `epochmicro`                               | Microseconds since 1970/01/01 00:00:00.0000      | 1557136493128789, 1557136493128789.999 |
+| `epochnano`<sup>[*](#parsing-star)</sup>   | Nanoseconds since 1970/01/01 00:00:00.0000       | 1557136493128789101                    |
 | `i`                                        | Microsecond                                      | 111, 321001                            |
 | `n`<sup>[*](#parsing-star)</sup>           | Nanosecond                                       | 999, 542113879                         |
 
