@@ -21,10 +21,11 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 import ConformancePropertiesProvider._
+import za.co.absa.enceladus.common.ErrorColNormalization
 
 /**
-  * Reads conformance properties from the configuration file
-  */
+ * Reads conformance properties from the configuration file
+ */
 class ConformancePropertiesProvider {
   private val enableCF: Boolean = true
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
@@ -36,13 +37,16 @@ class ConformancePropertiesProvider {
     enabled
   }
 
-  def readFeatureSwitches[T]()(implicit cmdConfig: ConformanceConfigParser[T]): FeatureSwitches = FeatureSwitches()
-    .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
-    .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
-    .setControlFrameworkEnabled(enableCF)
-    .setBroadcastStrategyMode(broadcastingStrategyMode)
-    .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
-    .setOriginalColumnsMutability(isOriginalColumnsMutabilityEnabled())
+  def readFeatureSwitches[T]()(implicit cmdConfig: ConformanceConfigParser[T]): FeatureSwitches = {
+    FeatureSwitches()
+      .setExperimentalMappingRuleEnabled(isExperimentalRuleEnabled())
+      .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled())
+      .setControlFrameworkEnabled(enableCF)
+      .setBroadcastStrategyMode(broadcastingStrategyMode)
+      .setBroadcastMaxSizeMb(broadcastingMaxSizeMb)
+      .setOriginalColumnsMutability(isOriginalColumnsMutabilityEnabled)
+      .setErrColNullability(isErrColNullability)
+  }
 
   private def isExperimentalRuleEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.experimentalMappingRule, experimentalRuleKey, defaultValue = false)
@@ -56,10 +60,16 @@ class ConformancePropertiesProvider {
     enabled
   }
 
-  private def isOriginalColumnsMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
+  private def isOriginalColumnsMutabilityEnabled[T]: Boolean = {
     val enabled = conf.getOptionBoolean(allowOriginalColumnsMutabilityKey).getOrElse(false)
     log.info(s"Original column mutability enabled = $enabled")
     enabled
+  }
+
+  private def isErrColNullability[T]: Boolean = {
+    val nullability = ErrorColNormalization.getErrorColNullabilityFromConfig(conf)
+    log.info(s"ErrCol nullability in Conformance = $nullability")
+    nullability
   }
 
   private def broadcastingStrategyMode: ThreeStateSwitch = {

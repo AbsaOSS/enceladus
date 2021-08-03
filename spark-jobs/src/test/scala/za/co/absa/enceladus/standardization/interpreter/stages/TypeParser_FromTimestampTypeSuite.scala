@@ -35,12 +35,12 @@ class TypeParser_FromTimestampTypeSuite extends TypeParserSuiteTemplate  {
   override protected def createCastTemplate(toType: DataType, pattern: String, timezone: Option[String]): String = {
     val isEpoch = DateTimePattern.isEpoch(pattern)
     (toType, isEpoch, timezone) match {
-      case (DateType, true, _)          => s"to_date(CAST((CAST(`%s` AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}L) AS TIMESTAMP))"
+      case (DateType, true, _)          => s"to_date(CAST((CAST(%s AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}) AS TIMESTAMP))"
       case (TimestampType, true, _)     => s"CAST((CAST(%s AS DECIMAL(30,9)) / ${DateTimePattern.epochFactor(pattern)}) AS TIMESTAMP)"
       case (TimestampType, _, Some(tz)) => s"to_utc_timestamp(%s, $tz)"
-      case (DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(`%s`, '$tz'))"
+      case (DateType, _, Some(tz))      => s"to_date(to_utc_timestamp(%s, $tz))"
       case (TimestampType, _, _)        => "%s"
-      case (DateType, _, _)             => "to_date(`%s`)"
+      case (DateType, _, _)             => "to_date(%s)"
       case _                            => s"CAST(%s AS ${toType.sql})"
     }
   }

@@ -26,7 +26,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, ErrorColNormalization}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -144,11 +144,12 @@ trait StandardizationExecution extends CommonJobExecution {
                               (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+    val errColNullability = ErrorColNormalization.getErrorColNullabilityFromConfig(conf)
 
     try {
       handleControlInfoValidation()
       StandardizationInterpreter.standardize(inputData, schema, cmd.rawFormat,
-        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
+        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy, errColNullability)
     } catch {
       case e@ValidationException(msg, errors) =>
         val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
