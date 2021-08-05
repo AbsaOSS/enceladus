@@ -15,24 +15,22 @@
 
 package za.co.absa.enceladus.menas.services
 
-import scala.concurrent.Future
+import org.mongodb.scala.model.Filters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.menas.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
+import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.menas.services.DatasetService.{RuleValidationsAndFields, _}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
-
-import scala.language.reflectiveCalls
-import DatasetService.RuleValidationsAndFields
-import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
+import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import DatasetService._
+import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
+import scala.concurrent.Future
+import scala.language.reflectiveCalls
 import scala.util.{Failure, Success}
 
 
@@ -215,6 +213,15 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       val filteredPropDefNames = propDefs.filter(filter).map(_.name).toSet
       properties.filterKeys(filteredPropDefNames.contains)
     }
+  }
+
+  def getLatestVersionsWithMissingProperty(missingProperty: Option[String]): Future[Seq[Dataset]] = {
+    val missingFilter = missingProperty match {
+      case Some(missingProp) => Filters.not(Filters.exists(s"properties.${missingProp}"))
+      case None => Filters.expr(true)
+    }
+
+    datasetMongoRepository.getLatestVersions(missingFilter)
   }
 
   override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {

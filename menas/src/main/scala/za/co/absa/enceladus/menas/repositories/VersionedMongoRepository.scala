@@ -75,6 +75,26 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
+  def getLatestVersionsWithMissingProp(missingProperty: Option[String]): Future[Seq[C]] = {
+    val missingFilter = missingProperty match {
+      case Some(missingProp) => Filters.not(Filters.exists(s"properties.${missingProp}"))
+      case None => Filters.expr(true)
+    }
+    getLatestVersions(missingFilter)
+  }
+
+  def getLatestVersions(postAggFilter: Bson): Future[Seq[C]] = {
+    val pipeline = Seq(
+      Aggregates.group("$name",
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.last("doc","$$ROOT")),
+      Aggregates.replaceRoot("$doc"),
+      Aggregates.filter(postAggFilter)
+    )
+
+    collection.aggregate[C](pipeline).toFuture()
+  }
+
   def getLatestVersions(): Future[Seq[C]] = {
     // there may be a way to this using mongo-joining (aggregation.lookup) instead
     getLatestVersionsSummary(None).flatMap { summaries =>
