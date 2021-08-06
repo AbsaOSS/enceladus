@@ -18,7 +18,7 @@ package za.co.absa.enceladus.menas.services
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionDto}
+import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionStats}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -26,13 +26,13 @@ import scala.concurrent.Future
 @Component
 class StatisticsService @Autowired() (propertyDefService: PropertyDefinitionService, datasetService: DatasetService){
 
-  def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionDto]] =
+  def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] =
     for {
       props: Seq[PropertyDefinition] <- propertyDefService.getLatestVersions()
-      propertiesWithMissingCounts: Seq[Future[PropertyDefinitionDto]] =
+      propertiesWithMissingCounts: Seq[Future[PropertyDefinitionStats]] =
       props.map((propertyDef: PropertyDefinition) =>
         datasetService.getLatestVersionsWithMissingProperty(Some(propertyDef.name))
-          .map((datasetsMissingProp: Seq[Dataset]) => PropertyDefinitionDto(propertyDef, datasetsMissingProp.size))
+          .map((datasetsMissingProp: Seq[Dataset]) => PropertyDefinitionStats(propertyDef, datasetsMissingProp.size))
       )
       results <- Future.sequence(propertiesWithMissingCounts)
     } yield results

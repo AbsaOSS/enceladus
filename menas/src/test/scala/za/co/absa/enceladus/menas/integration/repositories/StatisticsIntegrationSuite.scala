@@ -23,7 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, FixtureService, PropertyDefinitionFixtureService}
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
 import za.co.absa.enceladus.menas.services.StatisticsService
-import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionDto}
+import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionStats}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality.{Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
@@ -39,38 +39,9 @@ class StatisticsIntegrationSuite extends BaseRepositoryTest {
   private val propertyDefService: PropertyDefinitionFixtureService = null
 
   @Autowired
-  private val datasetMongoRepository: DatasetMongoRepository = null
-
-  @Autowired
-  private val propertyDefinitionRepository: PropertyDefinitionMongoRepository = null
-
-  @Autowired
   private val statisticsService: StatisticsService = null
 
   override def fixtures: List[FixtureService[_]] = List(datasetFixture)
-
-  val mockedDatasets = Seq(
-    DatasetFactory.getDummyDataset(name = "dataset1", version = 1, properties = Some(
-      Map())),
-    DatasetFactory.getDummyDataset(name = "dataset1", version = 2, properties = Some(
-      Map("mandatoryString1"->""))),
-    DatasetFactory.getDummyDataset(name = "dataset1", version = 3, properties = Some(
-      Map("mandatoryString1"->"", "mandatoryString2"->"3", "optionalEnumAb" -> "optionA"))),
-    DatasetFactory.getDummyDataset(name = "dataset2", version = 1, properties = Some(
-      Map("recommendedString1" -> "", "optionalString1"->""))),
-    DatasetFactory.getDummyDataset(name = "dataset2", version = 2, properties = Some(
-      Map("mandatoryString1"->"", "recommendedString1" -> "", "optionalString1"->""))),
-    DatasetFactory.getDummyDataset(name = "dataset3", version = 1, properties = Some(
-      Map("mandatoryString1"->""))),
-    DatasetFactory.getDummyDataset(name = "dataset3", version = 2, properties = Some(
-      Map("mandatoryString1"->"","mandatoryString2"->"3"))),
-    DatasetFactory.getDummyDataset(name = "dataset4", version = 1, properties = Some(
-      Map("mandatoryString1"->"", "mandatoryString2"->"3", "recommendedString1" -> "", "optionalString1"->"",
-        "mandatoryDisabledString1" -> "", "optionalEnumAb" -> "optionA"))),
-    DatasetFactory.getDummyDataset(name = "dataset5", version = 1, properties = Some(Map())),
-    DatasetFactory.getDummyDataset(name = "dataset6", version = 1, properties = Some(Map(
-      "mandatoryString1"->"", "mandatoryString2"->"3", "recommendedString1" -> "")))
-  )
 
   val mockedPropertyDefinitions = Seq(
     PropertyDefinition(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
@@ -87,26 +58,49 @@ class StatisticsIntegrationSuite extends BaseRepositoryTest {
       userCreated = "", userUpdated = "")
   )
 
+  val mockedDatasets = Seq(
+    DatasetFactory.getDummyDataset(name = "dataset1", version = 1, properties = Some(
+      Map())),
+    DatasetFactory.getDummyDataset(name = "dataset1", version = 2, properties = Some(
+      Map("mandatoryString1"->""))),
+    DatasetFactory.getDummyDataset(name = "dataset1", version = 3, properties = Some(
+      Map("mandatoryString1"->"", "mandatoryString2"->"3", "optionalEnumAb" -> "optionA"))),
+    DatasetFactory.getDummyDataset(name = "dataset2", version = 1, properties = Some(
+      Map("recommendedString1" -> "", "optionalString1"->""))),
+    DatasetFactory.getDummyDataset(name = "dataset2", version = 2, properties = Some(
+      Map("mandatoryString1"->"", "recommendedString1" -> ""))),
+    DatasetFactory.getDummyDataset(name = "dataset3", version = 1, properties = Some(
+      Map("mandatoryString1"->""))),
+    DatasetFactory.getDummyDataset(name = "dataset3", version = 2, properties = Some(
+      Map("mandatoryString1"->"","mandatoryString2"->"3"))),
+    DatasetFactory.getDummyDataset(name = "dataset4", version = 1, properties = Some(
+      Map("mandatoryString1"->"", "mandatoryString2"->"3", "recommendedString1" -> "", "optionalString1"->"",
+        "mandatoryDisabledString1" -> "", "optionalEnumAb" -> "optionA"))),
+    DatasetFactory.getDummyDataset(name = "dataset5", version = 1, properties = Some(Map())),
+    DatasetFactory.getDummyDataset(name = "dataset6", version = 1, properties = Some(Map(
+      "mandatoryString1"->"", "mandatoryString2"->"3", "recommendedString1" -> "")))
+  )
+
   "StatisticsService" should {
 
     "return the properties with missing counts" when {
-      "the specified datasets and propertie" in {
+      "the specified datasets and properties" in {
         datasetFixture.add(mockedDatasets: _*)
         propertyDefService.add(mockedPropertyDefinitions: _*)
 
         val actualStatistics = await(statisticsService.getPropertiesWithMissingCount())
 
         val expectedStatistics = Seq(
-          PropertyDefinitionDto(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
-            datasetNumberMissing = 1),
-          PropertyDefinitionDto(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
-            datasetNumberMissing = 2),
-          PropertyDefinitionDto(name = "optionalEnumAb", propertyType = EnumPropertyType("optionA", "optionB"), essentiality = Optional,
-            datasetNumberMissing = 4),
-          PropertyDefinitionDto(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional,
-            datasetNumberMissing = 4),
-          PropertyDefinitionDto(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended,
-            datasetNumberMissing = 3)
+          PropertyDefinitionStats(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
+            missingInDatasetsCount = 1), // missing in dataset5
+          PropertyDefinitionStats(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
+            missingInDatasetsCount = 2), // missing in dataset2,5
+          PropertyDefinitionStats(name = "optionalEnumAb", propertyType = mockedPropertyDefinitions.last.propertyType, essentiality = Optional,
+            missingInDatasetsCount = 4), // missing in dataset2,3,5,6
+          PropertyDefinitionStats(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional,
+            missingInDatasetsCount = 5), // missing in dataset1,2,3,5,6
+          PropertyDefinitionStats(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended,
+            missingInDatasetsCount = 3) // missing in dataset1,3,5
         )
 
         assert(actualStatistics == expectedStatistics)

@@ -18,20 +18,17 @@ package za.co.absa.enceladus.model.properties
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 
-case class PropertyDefinitionDto (
-  name: String,
-  version: Int = 1,
-
-  propertyType: PropertyType,
-  essentiality: Essentiality = Essentiality.Optional,
-  disabled: Boolean = false,
-  datasetNumberMissing: Int = 0
-
+case class PropertyDefinitionStats(name: String,
+                                   version: Int = 1,
+                                   propertyType: PropertyType,
+                                   essentiality: Essentiality = Essentiality.Optional,
+                                   disabled: Boolean = false,
+                                   missingInDatasetsCount: Int = 0
 )
 
-object PropertyDefinitionDto {
-  def apply(propertyDefinition: PropertyDefinition, missingCounts: Int): PropertyDefinitionDto = {
-    PropertyDefinitionDto(propertyDefinition.name, propertyDefinition.version, propertyDefinition.propertyType,
+object PropertyDefinitionStats {
+  def apply(propertyDefinition: PropertyDefinition, missingCounts: Int): PropertyDefinitionStats = {
+    PropertyDefinitionStats(propertyDefinition.name, propertyDefinition.version, propertyDefinition.propertyType,
       propertyDefinition.essentiality, propertyDefinition.disabled, missingCounts)
   }
 }
