@@ -18,20 +18,18 @@ package za.co.absa.enceladus.menas.controllers
 import java.util.concurrent.CompletableFuture
 
 import scala.concurrent.Future
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Async
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-
 import za.co.absa.enceladus.menas.models.LandingPageInformation
 import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.LandingPageStatisticsMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import za.co.absa.enceladus.menas.services.RunService
+import za.co.absa.enceladus.menas.services.{RunService, StatisticsService}
 
 @RestController
 @RequestMapping(Array("/api/landing"))
@@ -39,7 +37,8 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     mappingTableRepository: MappingTableMongoRepository,
     schemaRepository: SchemaMongoRepository,
     runsService: RunService,
-    landingPageRepository: LandingPageStatisticsMongoRepository) extends BaseController {
+    landingPageRepository: LandingPageStatisticsMongoRepository,
+    statisticsService: StatisticsService) extends BaseController {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.menas.utils.implicits._
@@ -55,8 +54,10 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
       mtCount <- mappingTableRepository.distinctCount()
       schemaCount <- schemaRepository.distinctCount()
       runCount <- runsService.getCount()
+      propertiesProperties <- statisticsService.getPropertiesWithMissingCount()
+      totalMissingProperties = propertiesProperties.map(_.missingInDatasetsCount).sum
       todaysStats <- runsService.getTodaysRunsStatistics()
-    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, todaysStats)
+    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, totalMissingProperties, todaysStats)
   }
 
   // scalastyle:off magic.number
@@ -67,6 +68,6 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     for {
       newStats <- landingPageInfo()
       res <- landingPageRepository.updateStatistics(newStats)
-    } yield res 
+    } yield res
   }
 }
