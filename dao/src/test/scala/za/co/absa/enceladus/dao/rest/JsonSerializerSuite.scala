@@ -15,7 +15,12 @@
 
 package za.co.absa.enceladus.dao.rest
 
+import java.time.ZonedDateTime
+
 import org.scalactic.{AbstractStringUniformity, Uniformity}
+import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.model.dataFrameFilter._
+import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
@@ -82,7 +87,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       """{
         |  "name": "Test",
         |  "version": 5,
-        |  "description": "",
+        |  "description": "some description here",
         |  "hdfsPath": "/bigdata/test",
         |  "hdfsPublishPath": "/bigdata/test2",
         |  "schemaName": "Cobol1",
@@ -114,7 +119,44 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |      },
         |      "targetAttribute": "CCC",
         |      "outputColumn": "ConformedCCC",
-        |      "isNullSafe": true
+        |      "additionalColumns": null,
+        |      "isNullSafe": true,
+        |      "mappingTableFilter": {
+        |        "_t": "AndJoinedFilters",
+        |        "filterItems": [
+        |          {
+        |            "_t": "OrJoinedFilters",
+        |            "filterItems": [
+        |              {
+        |                "_t": "EqualsFilter",
+        |                "columnName": "column1",
+        |                "value": "soughtAfterValue",
+        |                "valueType": "string"
+        |              },
+        |              {
+        |                "_t": "EqualsFilter",
+        |                "columnName": "column1",
+        |                "value": "alternativeSoughtAfterValue",
+        |                "valueType": "string"
+        |              }
+        |            ]
+        |          },
+        |          {
+        |            "_t": "DiffersFilter",
+        |            "columnName": "column2",
+        |            "value": "anotherValue",
+        |            "valueType": "string"
+        |          },
+        |          {
+        |            "_t": "NotFilter",
+        |            "inputFilter": {
+        |              "_t": "IsNullFilter",
+        |              "columnName": "col3"
+        |            }
+        |          }
+        |        ]
+        |      },
+        |      "overrideMappingTableOwnFilter": true
         |    },
         |    {
         |      "_t": "LiteralConformanceRule",
@@ -130,6 +172,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    "version": 4
         |  },
         |  "schedule": null,
+        |  "properties": null,
+        |  "propertiesValidation": null,
         |  "createdMessage": {
         |    "menasRef": {
         |      "collection": null,
@@ -143,14 +187,68 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |        "field": "",
         |        "oldValue": null,
         |        "newValue": null,
-        |        "message": "Test"
+        |        "message": "Dataset Test created."
         |      }
         |    ]
         |  }
         |}""".stripMargin
 
-      "deserializing should not throw" in {
-        JsonSerializer.fromJson[Dataset](datasetJson)
+      val dataset: Dataset = DatasetFactory.getDummyDataset(
+        name = "Test",
+        version = 5,
+        description = Some("some description here"),
+        hdfsPath = "/bigdata/test",
+        hdfsPublishPath = "/bigdata/test2",
+        schemaName = "Cobol1",
+        schemaVersion = 3,
+        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        userCreated = "system",
+        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        userUpdated = "system",
+
+        conformance = List(
+          CastingConformanceRule(0,
+            outputColumn = "ConformedInt",
+            controlCheckpoint = false,
+            inputColumn = "STRING_VAL",
+            outputDataType = "integer"
+          ),
+          MappingConformanceRule(1,
+            controlCheckpoint = true,
+            mappingTable = "CurrencyMappingTable",
+            mappingTableVersion = 9, //scalastyle:ignore magic.number
+            attributeMappings = Map("InputValue" -> "STRING_VAL"),
+            targetAttribute = "CCC",
+            outputColumn = "ConformedCCC",
+            isNullSafe = true,
+            mappingTableFilter = Some(
+              AndJoinedFilters(Set(
+                OrJoinedFilters(Set(
+                  EqualsFilter("column1", "soughtAfterValue"),
+                  EqualsFilter("column1", "alternativeSoughtAfterValue")
+                )),
+                DiffersFilter("column2", "anotherValue"),
+                NotFilter(IsNullFilter("col3"))
+              ))
+            ),
+            overrideMappingTableOwnFilter = Some(true)
+          ),
+          LiteralConformanceRule(2,
+            outputColumn = "ConformedLiteral",
+            controlCheckpoint = false,
+            value = "AAA"
+          )
+        ),
+        parent = Some(MenasReference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
+      )
+
+      "serializing" in {
+        val result = JsonSerializer.toJson(dataset)
+        result should equal(datasetJson)(after being whiteSpaceNormalised)
+      }
+      "deserializing" in {
+        val result = JsonSerializer.fromJson[Dataset](datasetJson)
+        result should matchTo(dataset)
       }
     }
 
@@ -227,8 +325,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
 
     "handle MappingTables" when {
       val mappingTableJson =
-        """
-          |{
+        """{
           |  "name": "dummyName",
           |  "version": 1,
           |  "description": null,
@@ -266,6 +363,106 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |}
           |""".stripMargin
       val mappingTable = MappingTableFactory.getDummyMappingTable()
+
+      "serializing" in {
+        val result = JsonSerializer.toJson(mappingTable)
+        result should equal(mappingTableJson)(after being whiteSpaceNormalised)
+      }
+      "deserializing" in {
+        val result = JsonSerializer.fromJson[MappingTable](mappingTableJson)
+        result should matchTo(mappingTable)
+      }
+    }
+
+    "handle MappingTables with filters" when {
+      val mappingTableJson =
+        """
+          |{
+          |  "name": "dummyName",
+          |  "version": 1,
+          |  "description": null,
+          |  "hdfsPath": "/dummy/path",
+          |  "schemaName": "dummySchema",
+          |  "schemaVersion": 1,
+          |  "defaultMappingValue": [],
+          |  "dateCreated": "2017-12-04T16:19:17Z",
+          |  "userCreated": "dummyUser",
+          |  "lastUpdated": "2017-12-04T16:19:17Z",
+          |  "userUpdated": "dummyUser",
+          |  "disabled": false,
+          |  "dateDisabled": null,
+          |  "userDisabled": null,
+          |  "parent": null,
+          |  "filter": {
+          |    "_t": "AndJoinedFilters",
+          |    "filterItems": [
+          |      {
+          |        "_t": "OrJoinedFilters",
+          |        "filterItems": [
+          |          {
+          |            "_t": "EqualsFilter",
+          |            "columnName": "column1",
+          |            "value": "soughtAfterValue",
+          |            "valueType": "string"
+          |          },
+          |          {
+          |            "_t": "EqualsFilter",
+          |            "columnName": "column1",
+          |            "value": "alternativeSoughtAfterValue",
+          |            "valueType": "string"
+          |          }
+          |        ]
+          |      },
+          |      {
+          |        "_t": "DiffersFilter",
+          |        "columnName": "column2",
+          |        "value": "anotherValue",
+          |        "valueType": "string"
+          |      },
+          |      {
+          |        "_t": "NotFilter",
+          |        "inputFilter": {
+          |          "_t": "IsNullFilter",
+          |          "columnName": "col3"
+          |        }
+          |      }
+          |    ]
+          |  },
+          |  "createdMessage": {
+          |    "menasRef": {
+          |      "collection": null,
+          |      "name": "dummyName",
+          |      "version": 1
+          |    },
+          |    "updatedBy": "dummyUser",
+          |    "updated": "2017-12-04T16:19:17Z",
+          |    "changes": [
+          |      {
+          |        "field": "",
+          |        "oldValue": null,
+          |        "newValue": null,
+          |        "message": "Mapping Table dummyName created."
+          |      }
+          |    ]
+          |  },
+          |  "defaultMappingValues": {}
+          |}
+          |""".stripMargin
+
+      val mappingTable = MappingTableFactory.getDummyMappingTable(
+        filter = Some(
+          AndJoinedFilters(Set(
+            OrJoinedFilters(Set(
+              EqualsFilter("column1", "soughtAfterValue"),
+              EqualsFilter("column1", "alternativeSoughtAfterValue")
+            )),
+            DiffersFilter("column2", "anotherValue"),
+            NotFilter(
+              IsNullFilter("col3")
+            )
+          ))
+        )
+      )
 
       "serializing" in {
         val result = JsonSerializer.toJson(mappingTable)
