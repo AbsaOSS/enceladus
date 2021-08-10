@@ -24,7 +24,14 @@ case class PropertyDefinitionStats(name: String,
                                    essentiality: Essentiality = Essentiality.Optional,
                                    disabled: Boolean = false,
                                    missingInDatasetsCount: Int = 0
-)
+) {
+  def setName(value: String): PropertyDefinitionStats = this.copy(name = value)
+  def setVersion(value: Int): PropertyDefinitionStats = this.copy(version = value)
+  def setPropertyType(value: PropertyType): PropertyDefinitionStats = this.copy(propertyType = value)
+  def setEssentiality(value: Essentiality): PropertyDefinitionStats = this.copy(essentiality = value)
+  def setDisabled(disabled: Boolean): PropertyDefinitionStats = this.copy(disabled = disabled)
+  def setMissingInDatasetsCount(disabled: Int): PropertyDefinitionStats = this.copy(missingInDatasetsCount = disabled)
+}
 
 object PropertyDefinitionStats {
   def apply(propertyDefinition: PropertyDefinition, missingCounts: Int): PropertyDefinitionStats = {

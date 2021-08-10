@@ -48,8 +48,8 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @GetMapping(Array("/latest"))
   @ResponseStatus(HttpStatus.OK)
-  def getAll(@RequestParam(value = "missing_property") missingProperty: Option[String]): CompletableFuture[Seq[Dataset]] = {
-    datasetService.getLatestVersionsWithMissingProperty(missingProperty)
+  def getAll(@RequestParam(value = "missing_property", required = false) missingProperty: Optional[String]): CompletableFuture[Seq[Dataset]] = {
+    datasetService.getLatestVersionsWithMissingProperty(missingProperty.toScalaOption)
   }
 
   @PostMapping(Array("/{datasetName}/rule/create"))
