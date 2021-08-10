@@ -15,19 +15,21 @@
 
 package za.co.absa.enceladus.menas.controllers
 
+import java.util.concurrent.CompletableFuture
+
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
 import za.co.absa.enceladus.menas.services.StatisticsService
 import za.co.absa.enceladus.model.properties.PropertyDefinitionStats
 
-import scala.concurrent.Future
-
 @RestController
 @RequestMapping(Array("/api/statistics"))
-class StatisticsController @Autowired() (statisticsService: StatisticsService){
+class StatisticsController @Autowired() (statisticsService: StatisticsService) extends BaseController {
+
+  import za.co.absa.enceladus.menas.utils.implicits._
 
   @GetMapping(Array("/properties/missing"))
-  def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] = {
+  def getPropertiesWithMissingCount(): CompletableFuture[Seq[PropertyDefinitionStats]] = {
     statisticsService.getPropertiesWithMissingCount()
   }
 
