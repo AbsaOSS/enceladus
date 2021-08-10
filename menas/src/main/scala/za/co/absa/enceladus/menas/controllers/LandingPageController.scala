@@ -30,6 +30,7 @@ import za.co.absa.enceladus.menas.repositories.LandingPageStatisticsMongoReposit
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
 import za.co.absa.enceladus.menas.services.{RunService, StatisticsService}
+import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
 
 @RestController
 @RequestMapping(Array("/api/landing"))
@@ -54,10 +55,14 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
       mtCount <- mappingTableRepository.distinctCount()
       schemaCount <- schemaRepository.distinctCount()
       runCount <- runsService.getCount()
-      propertiesProperties <- statisticsService.getPropertiesWithMissingCount()
-      totalMissingProperties = propertiesProperties.map(_.missingInDatasetsCount).sum
+      propertiesWithMissingCounts <- statisticsService.getPropertiesWithMissingCount()
+      totalMissingMandatoryProperties = propertiesWithMissingCounts
+        .filter(_.essentiality.isInstanceOf[Mandatory]).map(_.missingInDatasetsCount).sum
+      totalMissingRecommendedProperties = propertiesWithMissingCounts
+        .filter(_.essentiality.isInstanceOf[Recommended]).map(_.missingInDatasetsCount).sum
       todaysStats <- runsService.getTodaysRunsStatistics()
-    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, totalMissingProperties, todaysStats)
+    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount,
+      totalMissingMandatoryProperties, totalMissingRecommendedProperties, todaysStats)
   }
 
   // scalastyle:off magic.number

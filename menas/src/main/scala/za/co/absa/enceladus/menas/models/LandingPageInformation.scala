@@ -20,5 +20,6 @@ case class LandingPageInformation(
   totalNumberMappingTables: Int,
   totalNumberSchemas: Int,
   totalNumberRuns: Long,
-  totalNumberMissingProperties: Int,
+  totalNumberMissingMandatoryProperties: Int,
+  totalNumberMissingRecommendedProperties: Int,
   todaysRunsStatistics: TodaysRunsStatistics)
