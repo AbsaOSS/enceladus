@@ -293,8 +293,97 @@ sap.ui.define([
       })
     },
 
+    filterToHumanReadable: function(filterData){
+
+      const humanReadabilizeMutablyFn = function(filterNode) {
+        switch (filterNode._t) {
+          case "AndJoinedFilters":
+            console.log(`AndJoinedFilters for ${JSON.stringify(filterNode)}`); // todo remove logging in the end
+            filterNode._t = "AND";
+            break;
+          case "OrJoinedFilters":
+            console.log(`OrJoinedFilters for ${JSON.stringify(filterNode)}`);
+            filterNode._t = "OR";
+            break;
+          case "EqualsFilter":
+            console.log(`EqualsFilter for ${JSON.stringify(filterNode)}`);
+            filterNode._t = "==";
+            break;
+          case "DiffersFilter":
+            console.log(`DiffersFilter for ${JSON.stringify(filterNode)}`);
+            filterNode._t = "!=";
+            break;
+          case "NotFilter":
+            console.log(`NotFilter for ${JSON.stringify(filterNode)}`);
+            filterNode._t = "NOT";
+            break;
+          case "IsNullFilter":
+            console.log(`IsNullFilter for ${JSON.stringify(filterNode)}`);
+            filterNode._t = "isNull";
+            break;
+          default:
+        }
+
+
+        // recursively do the same:
+        // AndJoinedFilters, OrJoinedFilters have field `filterItems` defined; NotFilter has field `inputFilter` defined.
+        if(filterNode.filterItems) filterNode.filterItems.forEach(humanReadabilizeMutablyFn);
+        if(filterNode.inputFilter) humanReadabilizeMutablyFn(filterNode.inputFilter);
+      };
+
+      // the method is pure from the outside: making a deep copy to do the changes on:
+      let filterDataNode = jQuery.extend(true, { }, filterData);
+      humanReadabilizeMutablyFn(filterDataNode); // apply recursive changes mutably
+
+      return filterDataNode;
+    },
+
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
+      currentMT.filterJson = JSON.stringify(currentMT.filter);
+      console.log(`current MT: ${JSON.stringify(currentMT)}`);
+
+      // todo remove
+      let oData = [
+        {
+          name: "OR",
+          filterData: [{
+            name: "AND",
+            filterData: [{
+              name: "equalS", column: "columnA", datatype: "string"
+            },
+            {
+              name: "equals", column: "columnB", datatype: "integer"
+            }]
+          },
+          {
+            name: "not",
+            filterData:[{
+              name: "differs", column: "columnA", datatype: "string"
+            }]
+          }]
+        },
+        {
+          name: "not",
+          filterData: [{
+            name: "equals ", column: "columnC", datatype: "string"
+          }]
+        }
+
+      ];
+
+      let treeModel = new sap.ui.model.json.JSONModel();
+      // set the data to the model
+
+      let humanReadableFilter = this.filterToHumanReadable(currentMT.filter);
+      console.log(`humanReadableFilter: ${JSON.stringify(humanReadableFilter)}`);
+
+      treeModel.setData([humanReadableFilter]); // array wrap to make the root collapsible item
+      let treeTable = this.getView().byId("filterTree");
+
+      treeTable.setModel(treeModel);
+      treeTable.bindRows("/");
+
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
       if (currentMT) {
         this.fetchSchema();
