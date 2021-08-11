@@ -520,3 +520,53 @@ class MappingTableService extends DependentEntityService {
   }
 
 }
+
+class DatasetPropertiesService extends EntityService {
+
+  constructor(model, eventBus) {
+    super(eventBus, new PropertyRestDAO(), new PropertyProvider(), new ModelBinder(model, "/currentProperty"))
+  }
+
+  updateMasterPage() {
+    this.eventBus.publish("properties", "list");
+  }
+
+  publishUpdatedEvent(property) {
+    this.eventBus.publish("properties", "updated", property);
+  }
+
+  getList(oControl, sSearchQuery) {
+    const promise = this.restDAO.getMissingProperties().then((oData) => {
+      oControl.setModel(new sap.ui.model.json.JSONModel(oData), "properties");
+      return oData
+    }).fail(() => {
+      sap.m.MessageBox.error(this.messageProvider.failedToGetList())
+    });
+
+    return EntityService.withBusyControl(oControl, promise)
+  }
+
+  getPropertyDefinition(propertyName) {
+    return PropertiesDAO.getProperty(propertyName).then((oData) => {
+      return oData;
+    })
+  }
+
+  getDatasetsMissing(propertyName) {
+    return this.restDAO.getDatasetsMissingProperty(propertyName).then((oData) => {
+      this.modelBinder.setProperty(oData, "/missingIn");
+      return oData
+    }).fail(() => {
+      sap.m.MessageBox.error("Failed to get Missing Properties")
+    })
+  }
+
+  cleanupEntity(oEntity) {
+    return {
+      name: oEntity.name,
+      version: oEntity.version,
+      description: oEntity.description
+    }
+  }
+
+}

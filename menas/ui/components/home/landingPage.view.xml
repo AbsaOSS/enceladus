@@ -70,6 +70,23 @@
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
+                        <GenericTile header="Properties" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="properties"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <content>
+                                        <VBox>
+                                            <NumericContent icon="sap-icon://warning" value="{path: '/landingPageInfo/totalNumberMissingMandatoryProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
+                                            <NumericContent icon="sap-icon://quality-issue" value="{path: '/landingPageInfo/totalNumberMissingRecommendedProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
+                                        </VBox>
+                                    </content>
+                                </TileContent>
+                                <TileContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
                     </items>
                 </FlexBox>
             </Panel>

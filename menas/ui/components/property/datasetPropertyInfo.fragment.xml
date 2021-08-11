@@ -1,0 +1,45 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
+    <form:SimpleForm id="info">
+        <form:content>
+            <Label text="Property"/>
+            <Text id="currentPropertyName" text="{property>/name}"/>
+            <Label text="Description"/>
+            <Text id="currentPropertyDescription" text="{property>/description}"/>
+            <Label text="Version"/>
+            <Text id="currentPropertyVersion" text="{property>/version}"/>
+
+            <Label text="Property Type"/>
+            <Text id="currentPropertyType" text="{property>/propertyType}"/>
+            <Label text="Essentiality"/>
+            <Text id="currentPropertyEssentiality" text="{property>/essentiality/_t}"/>
+            <Label text="Disabled"/>
+            <Text id="currentPropertyDisabled" text="{property>/disabled}"/>
+
+            <Label text="Last Update"/>
+            <Text id="currentPropertyLastUpdated"
+                  text="{path: 'property>/lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+            <Label text="Last Update By"/>
+            <Text id="currentPropertyUserUpdated" text="{property>/userUpdated}"/>
+            <Label text="Created"/>
+            <Text id="currentPropertyDateCreated"
+                  text="{path: 'property>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
+            <Label text="Created By"/>
+            <Text id="currentPropertyUserCreated" text="{property>/userCreated}"/>
+        </form:content>
+    </form:SimpleForm>
+</core:FragmentDefinition>
