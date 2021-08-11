@@ -293,47 +293,47 @@ sap.ui.define([
       })
     },
 
-    filterToHumanReadable: function(filterData){
+    filterToTreeStruct: function(filterData){
 
-      const humanReadabilizeMutablyFn = function(filterNode) {
+      // recursive function to apply on all level of the tree data
+      const filterToTreeStructMutatingFn = function(filterNode) {
         switch (filterNode._t) {
           case "AndJoinedFilters":
-            console.log(`AndJoinedFilters for ${JSON.stringify(filterNode)}`); // todo remove logging in the end
-            filterNode._t = "AND";
+            filterNode.text = "AND";
+            filterNode.icon = "sap-icon://combine";
             break;
           case "OrJoinedFilters":
-            console.log(`OrJoinedFilters for ${JSON.stringify(filterNode)}`);
-            filterNode._t = "OR";
+            filterNode.text = "OR";
+            filterNode.icon = "sap-icon://split";
             break;
           case "EqualsFilter":
-            console.log(`EqualsFilter for ${JSON.stringify(filterNode)}`);
-            filterNode._t = "==";
+            filterNode.text = `Value of "${filterNode.columnName}" equals to "${filterNode.value}" (of type ${filterNode.valueType})`;
+            filterNode.icon = "sap-icon://filter";
             break;
           case "DiffersFilter":
-            console.log(`DiffersFilter for ${JSON.stringify(filterNode)}`);
-            filterNode._t = "!=";
+            filterNode.text = `Value of "${filterNode.columnName}" differs from "${filterNode.value}" (of type ${filterNode.valueType})`;
+            filterNode.icon = "sap-icon://clear-filter";
             break;
           case "NotFilter":
-            console.log(`NotFilter for ${JSON.stringify(filterNode)}`);
-            filterNode._t = "NOT";
+            filterNode.text = "NOT";
+            filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
             break;
           case "IsNullFilter":
-            console.log(`IsNullFilter for ${JSON.stringify(filterNode)}`);
-            filterNode._t = "isNull";
+            filterNode.text = `Value of "${filterNode.columnName}" is not null`;
+            filterNode.icon = "sap-icon://SAP-icons-TNT/marquee";
             break;
           default:
         }
 
-
         // recursively do the same:
         // AndJoinedFilters, OrJoinedFilters have field `filterItems` defined; NotFilter has field `inputFilter` defined.
-        if(filterNode.filterItems) filterNode.filterItems.forEach(humanReadabilizeMutablyFn);
-        if(filterNode.inputFilter) humanReadabilizeMutablyFn(filterNode.inputFilter);
+        if(filterNode.filterItems) filterNode.filterItems.forEach(filterToTreeStructMutatingFn);
+        if(filterNode.inputFilter) filterToTreeStructMutatingFn(filterNode.inputFilter);
       };
 
       // the method is pure from the outside: making a deep copy to do the changes on:
       let filterDataNode = jQuery.extend(true, { }, filterData);
-      humanReadabilizeMutablyFn(filterDataNode); // apply recursive changes mutably
+      filterToTreeStructMutatingFn(filterDataNode); // apply recursive changes mutably
 
       return filterDataNode;
     },
@@ -341,48 +341,15 @@ sap.ui.define([
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
       currentMT.filterJson = JSON.stringify(currentMT.filter);
-      console.log(`current MT: ${JSON.stringify(currentMT)}`);
+      console.debug(`current MT: ${JSON.stringify(currentMT)}`); // todo remove?
 
-      // todo remove
-      let oData = [
-        {
-          name: "OR",
-          filterData: [{
-            name: "AND",
-            filterData: [{
-              name: "equalS", column: "columnA", datatype: "string"
-            },
-            {
-              name: "equals", column: "columnB", datatype: "integer"
-            }]
-          },
-          {
-            name: "not",
-            filterData:[{
-              name: "differs", column: "columnA", datatype: "string"
-            }]
-          }]
-        },
-        {
-          name: "not",
-          filterData: [{
-            name: "equals ", column: "columnC", datatype: "string"
-          }]
-        }
+      let filterTreeStruct = this.filterToTreeStruct(currentMT.filter);
+      console.debug(`filterTreeStruct: ${JSON.stringify(filterTreeStruct)}`); // todo remove?
 
-      ];
-
-      let treeModel = new sap.ui.model.json.JSONModel();
-      // set the data to the model
-
-      let humanReadableFilter = this.filterToHumanReadable(currentMT.filter);
-      console.log(`humanReadableFilter: ${JSON.stringify(humanReadableFilter)}`);
-
-      treeModel.setData([humanReadableFilter]); // array wrap to make the root collapsible item
-      let treeTable = this.getView().byId("filterTree");
-
-      treeTable.setModel(treeModel);
-      treeTable.bindRows("/");
+      let treeModel = new sap.ui.model.json.JSONModel([filterTreeStruct]); // array wrap to make the root collapsible item
+      let tree = this.getView().byId("filterTree");
+      tree.setModel(treeModel);
+      tree.expandToLevel(2);
 
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
       if (currentMT) {

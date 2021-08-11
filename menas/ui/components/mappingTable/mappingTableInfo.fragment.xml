@@ -44,31 +44,10 @@
             <Label text="Filter"/>
             <Text text="{mappingTable>/filterJson}"/>
             <Label text="Filter Tree" />
-            <table:TreeTable id="filterTree">
-                <table:columns>
-                    <table:Column label="FilterName">
-                        <t:template>
-                            <Text text="{_t}"/>
-                        </t:template>
-                    </table:Column>
-                    <table:Column label="Column">
-                        <t:template>
-                            <Text text="{columnName}"/>
-                        </t:template>
-                    </table:Column>
-                    <table:Column label="Value">
-                        <t:template>
-                            <Text text="{value}"/>
-                        </t:template>
-                    </table:Column>
+            <Tree id="filterTree" items="{path: '/'}">
+                <StandardTreeItem title="{text}" icon="{icon}"/>
+            </Tree>
 
-                    <table:Column label="ValueType">
-                        <t:template>
-                            <Text text="{valueType}"/>
-                        </t:template>
-                    </table:Column>
-                </table:columns>
-            </table:TreeTable>
         </form:content>
     </form:SimpleForm>
 </core:FragmentDefinition>
