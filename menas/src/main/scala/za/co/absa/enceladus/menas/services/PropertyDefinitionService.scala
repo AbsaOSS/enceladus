@@ -41,6 +41,10 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     }
   }
 
+  def getDistinctCount(): Future[Int] = {
+    propertyDefMongoRepository.distinctCount()
+  }
+
   override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
     val propertyDefBase = PropertyDefinition(
       name = newPropertyDef.name,
