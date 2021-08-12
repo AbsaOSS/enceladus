@@ -91,15 +91,15 @@ class StatisticsIntegrationSuite extends BaseRepositoryTest {
         val actualStatistics = await(statisticsService.getPropertiesWithMissingCount())
 
         val expectedStatistics = Seq(
-          PropertyDefinitionStats(name = "mandatoryString1", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
+          PropertyDefinitionStats(name = "mandatoryString1", essentiality = Mandatory(allowRun = false),
             missingInDatasetsCount = 1), // missing in dataset5
-          PropertyDefinitionStats(name = "mandatoryString2", propertyType = StringPropertyType(), essentiality = Mandatory(allowRun = false),
+          PropertyDefinitionStats(name = "mandatoryString2", essentiality = Mandatory(allowRun = false),
             missingInDatasetsCount = 2), // missing in dataset2,5
-          PropertyDefinitionStats(name = "optionalEnumAb", propertyType = mockedPropertyDefinitions.last.propertyType, essentiality = Optional,
+          PropertyDefinitionStats(name = "optionalEnumAb", essentiality = Optional,
             missingInDatasetsCount = 4), // missing in dataset2,3,5,6
-          PropertyDefinitionStats(name = "optionalString1", propertyType = StringPropertyType(), essentiality = Optional,
+          PropertyDefinitionStats(name = "optionalString1", essentiality = Optional,
             missingInDatasetsCount = 5), // missing in dataset1,2,3,5,6
-          PropertyDefinitionStats(name = "recommendedString1", propertyType = StringPropertyType(), essentiality = Recommended,
+          PropertyDefinitionStats(name = "recommendedString1", essentiality = Recommended,
             missingInDatasetsCount = 3) // missing in dataset1,3,5
         )
 

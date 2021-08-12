@@ -29,7 +29,7 @@ import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.LandingPageStatisticsMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import za.co.absa.enceladus.menas.services.{RunService, StatisticsService}
+import za.co.absa.enceladus.menas.services.{PropertyDefinitionService, RunService, StatisticsService}
 import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
 
 @RestController
@@ -38,6 +38,7 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     mappingTableRepository: MappingTableMongoRepository,
     schemaRepository: SchemaMongoRepository,
     runsService: RunService,
+    propertyDefinitionService: PropertyDefinitionService,
     landingPageRepository: LandingPageStatisticsMongoRepository,
     statisticsService: StatisticsService) extends BaseController {
 
@@ -55,13 +56,14 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
       mtCount <- mappingTableRepository.distinctCount()
       schemaCount <- schemaRepository.distinctCount()
       runCount <- runsService.getCount()
+      propertiesCount <- propertyDefinitionService.getDistinctCount()
       propertiesWithMissingCounts <- statisticsService.getPropertiesWithMissingCount()
       totalMissingMandatoryProperties = propertiesWithMissingCounts
         .filter(_.essentiality.isInstanceOf[Mandatory]).map(_.missingInDatasetsCount).sum
       totalMissingRecommendedProperties = propertiesWithMissingCounts
         .filter(_.essentiality.isInstanceOf[Recommended]).map(_.missingInDatasetsCount).sum
       todaysStats <- runsService.getTodaysRunsStatistics()
-    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount,
+    } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, propertiesCount,
       totalMissingMandatoryProperties, totalMissingRecommendedProperties, todaysStats)
   }
 
