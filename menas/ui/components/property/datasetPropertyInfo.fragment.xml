@@ -24,7 +24,7 @@
             <Text id="currentPropertyVersion" text="{property>/version}"/>
 
             <Label text="Property Type"/>
-            <Text id="currentPropertyType" text="{property>/propertyType}"/>
+            <Text id="currentPropertyType" text="{property>/propertyType/_t}"/>
             <Label text="Essentiality"/>
             <Text id="currentPropertyEssentiality" text="{property>/essentiality/_t}"/>
             <Label text="Disabled"/>

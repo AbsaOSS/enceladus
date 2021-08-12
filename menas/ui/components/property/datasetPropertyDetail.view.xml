@@ -34,27 +34,16 @@
                     <IconTabFilter id="BasicInfo" icon="sap-icon://hint" key="info" text="Basic Info">
                         <core:Fragment type="XML" fragmentName="components.property.datasetPropertyInfo"/>
                     </IconTabFilter>
-                    <IconTabFilter id="MissingInDatasets" icon="sap-icon://detail-view" key="mising" text="Missing In Datasets">
+                    <IconTabFilter id="MissingInDatasets" icon="sap-icon://detail-view" key="missing" text="Missing In Datasets">
                         <Panel headerText="Datasets" height="50%">
                             <List items="{/currentProperty/missingIn/datasets}" mode="None"
                                   noDataText="Currently not missing in any Datasets">
                                 <StandardListItem title="{name}" description="v{version}" type="Active"
-                                                  press="usedInNavTo" cust:collection="properties"
+                                                  press="missingNavTo" cust:collection="datasets"
                                                   cust:name="{name}" cust:version="{version}"/>
                             </List>
                         </Panel>
                     </IconTabFilter>
-
-                    <!--<IconTabFilter id="UsedIn" icon="sap-icon://detail-view" text="Used In">
-                        <Panel headerText="Datasets" height="50%">
-                            <List items="{/currentSchema/usedIn/datasets}" mode="None"
-                                  noDataText="Currently not used in any Datasets">
-                                <StandardListItem title="{name}" description="v{version}" type="Active"
-                                                  press="usedInNavTo" cust:collection="datasets"
-                                                  cust:name="{name}" cust:version="{version}"/>
-                            </List>
-                        </Panel>
-                    </IconTabFilter>-->
 
                 </items>
             </IconTabBar>

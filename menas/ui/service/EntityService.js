@@ -547,9 +547,7 @@ class DatasetPropertiesService extends EntityService {
   }
 
   getPropertyDefinition(propertyName) {
-    return PropertiesDAO.getProperty(propertyName).then((oData) => {
-      return oData;
-    })
+    return PropertiesDAO.getProperty(propertyName);
   }
 
   getDatasetsMissing(propertyName) {

@@ -46,26 +46,28 @@ sap.ui.define([
       if (Prop.get(oParams, "id") === undefined) {
         this._datasetPropertiesService.getTop().then(() => this.load())
       } {
-        this._datasetPropertiesService.getPropertyDefinition(oParams.id).then(() => this.load())
+        this._datasetPropertiesService.getPropertyDefinition(oParams.id).then((resp) => {
+          this._datasetPropertiesService.getDatasetsMissing(oParams.id).then((missing) => {
+            this._model.setProperty("/currentProperty/missingIn/datasets", missing);
+          })
+          this.load(resp);
+          }
+        );
       }
       this.byId("propertyIconTabBar").setSelectedKey("info");
     },
 
-    /*usedInNavTo: function (oEv) {
+    missingNavTo: function (oEv) {
       let source = oEv.getSource();
       sap.ui.core.UIComponent.getRouterFor(this).navTo(source.data("collection"), {
         id: source.data("name"),
         version: source.data("version")
       });
-    },*/
+    },
 
-    load: function () {
-      const currentProperty = this._model.getProperty("/currentProperty");
-      this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentProperty), "property");
-      if (currentProperty) {
-        this._datasetPropertiesService.getPropertyDefinition()
-          .then(version => this._model.setProperty("/editingEnabled", currentProperty.version === version));
-      }
+    load: function (property) {
+      this._model.setProperty("/currentProperty", property);
+      this.byId("info").setModel(new sap.ui.model.json.JSONModel(property), "property");
     }
 
   });
