@@ -139,8 +139,7 @@ class StandardizationPropertiesProvider {
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
         "ascii_charset" -> cmd.charset.flatMap(charset => if (isAscii) Option(StringParameter(charset)) else None),
-        "ebcdic_code_page" -> cmd.charset.flatMap(charset => if (!isAscii) Option(StringParameter(charset)) else None),
-        "schema_retention_policy" -> Some(StringParameter("collapse_root"))
+        "ebcdic_code_page" -> cmd.charset.flatMap(charset => if (!isAscii) Option(StringParameter(charset)) else None)
       )
     } else {
       HashMap()
