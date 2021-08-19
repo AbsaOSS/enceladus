@@ -15,17 +15,20 @@
 
 package za.co.absa.enceladus.common
 
-/**
- * This is where one can set which versions of Spark are supported. Shared between
- * [[za.co.absa.enceladus.standardization.StandardizationJob]] and [[za.co.absa.enceladus.conformance.DynamicConformanceJob]]
- *
- * Expected to be used by [[version.SparkVersionGuard]]
- */
+import com.typesafe.config.Config
+import org.apache.spark.sql.DataFrame
+import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits._
 
-import za.co.absa.commons.version.Version._
-import za.co.absa.commons.version.impl.SemVer20Impl.SemanticVersion
 
-object SparkCompatibility {
-  val minSparkVersionIncluded: SemanticVersion = semver"3.1.2"
-  val maxSparkVersionExcluded: Option[SemanticVersion] = Some(semver"3.2.0")
+object ErrorColNormalization {
+
+  def getErrorColNullabilityFromConfig(conf: Config): Boolean = {
+    conf.getBoolean("enceladus.errCol.nullable") // may throw ConfigException._
+  }
+
+  def normalizeErrColNullability(dfInput: DataFrame, nullability: Boolean): DataFrame = {
+    dfInput.withNullableColumnState(ErrorMessage.errorColumnName, nullability)
+  }
+
 }

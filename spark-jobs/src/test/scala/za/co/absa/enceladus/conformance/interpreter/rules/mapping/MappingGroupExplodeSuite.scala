@@ -30,7 +30,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, false, simpleMappingRule)
+      simpleTestCaseFactory.getTestCase(true, false, true, simpleMappingRule)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -48,7 +48,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, false, simpleMappingRuleMultipleOutputs)
+      simpleTestCaseFactory.getTestCase(true, false, false, simpleMappingRuleMultipleOutputs)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
@@ -66,7 +66,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, false, simpleMappingRuleWithDefaultValue)
+      simpleTestCaseFactory.getTestCase(true, false, true, simpleMappingRuleWithDefaultValue)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -84,7 +84,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleDefValMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, false, simpleMappingRuleMultipleOutputsWithDefaults)
+      simpleTestCaseFactory.getTestCase(true, false, false, simpleMappingRuleMultipleOutputsWithDefaults)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
@@ -102,7 +102,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, nestedMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, false, true, nestedMappingRule1)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
@@ -120,7 +120,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested1ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, nestedMappingRule1Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, nestedMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1",
@@ -139,7 +139,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested2Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, nestedMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, false, true, nestedMappingRule2)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum2")
@@ -157,7 +157,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested3Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, nestedMappingRule3)
+      nestedTestCaseFactory.getTestCase(true, false, true, nestedMappingRule3)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"conformedNum3", $"errCol")
@@ -175,7 +175,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested3ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, nestedMappingRule3Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, nestedMappingRule3Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2",
@@ -194,7 +194,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule1)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
@@ -212,7 +212,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array1ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule1Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
@@ -230,7 +230,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array2Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule2)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -248,7 +248,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array2ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule2Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule2Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -266,7 +266,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule3)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule3)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -284,7 +284,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array3ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule3Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule3Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -302,7 +302,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule4)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule4)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -320,7 +320,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array4ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule4Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule4Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -338,7 +338,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule5)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule5)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -356,7 +356,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array5ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule5Multi)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule5Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -374,7 +374,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule6)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule6)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -392,7 +392,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array7Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, arrayMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, false, true, arrayMappingRule2)
 
     val inputDf2 = inputDf.withColumn("errCol", array(typedLit(ErrorMessage("Initial", "000", "ErrMsg", "id", Seq(), Seq()))))
 
@@ -409,7 +409,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
   test("Test group explode rule failure if key fields are in different arrays") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, false, wrongMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, false, true, wrongMappingRule1)
 
     intercept[Exception] {
       DynamicInterpreter().interpret(dataset, inputDf)

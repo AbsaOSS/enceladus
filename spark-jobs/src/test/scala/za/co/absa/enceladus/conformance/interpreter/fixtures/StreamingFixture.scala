@@ -84,6 +84,7 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
       .setExperimentalMappingRuleEnabled(false)
       .setCatalystWorkaroundEnabled(catalystWorkaround)
       .setControlFrameworkEnabled(false)
+      .setErrColNullability(true)
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
     val hyperConformance = new HyperConformance()

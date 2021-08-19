@@ -51,7 +51,7 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
 
   protected def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
+    if ( fixLineEnding(actualSchema.trim) != fixLineEnding(expectedSchema.trim)) {
       logger.error("EXPECTED:")
       logger.error(expectedSchema)
       logger.error("ACTUAL:")
