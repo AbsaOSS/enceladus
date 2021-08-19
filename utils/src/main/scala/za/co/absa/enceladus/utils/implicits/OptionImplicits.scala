@@ -18,9 +18,13 @@ package za.co.absa.enceladus.utils.implicits
 import scala.util.{Failure, Success, Try}
 
 object OptionImplicits {
-  implicit class OptionEnhancements[T](option: Option[T]) {
-    def toTry(failure: Exception): Try[T] = {
+  implicit class OptionEnhancements[T](val option: Option[T]) extends  AnyVal {
+    def toTry(failure: => Exception): Try[T] = {
       option.fold[Try[T]](Failure(failure))(Success(_))
+    }
+
+    def getOrThrow(exception: => Throwable): T = {
+      option.getOrElse(throw exception)
     }
   }
 }

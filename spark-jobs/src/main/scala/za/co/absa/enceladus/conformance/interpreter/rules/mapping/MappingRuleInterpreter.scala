@@ -79,13 +79,14 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     // errNested will duplicate error values if the previous rule has any errCol
     // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
     // applied deduplicate logic while flattening error column
-    spark.udf.register(s"${idField}_flattenErrDistinct",
+    val udfName = UDFNames.uniqueUDFName("flattenErrDistinct", idField)
+    spark.udf.register(udfName,
       new UDF1[Seq[Seq[Row]], Seq[Row]] {
         override def call(t1: Seq[Seq[Row]]): Seq[Row] = {t1.flatten.distinct}
       },
       errNestedSchema.elementType)
     val withErr = errNested.withColumn(ErrorMessage.errorColumnName,
-                                       expr(s"${idField}_flattenErrDistinct(${ErrorMessage.errorColumnName})"))
+                                       expr(s"$udfName(${ErrorMessage.errorColumnName})"))
     import spark.implicits._
     // join on the errors
     res.drop(ErrorMessage.errorColumnName).as("conf")
