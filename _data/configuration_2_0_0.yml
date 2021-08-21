@@ -26,6 +26,14 @@
         always-the-same <code>Int</code> hash (Murmur3-based, for testing)."
     - name: <i>none</i>
       description: no column will be added to the output.
+  - name: kafka.schema.registry.basic.auth.credentials.source
+    options:
+      - name: TODO
+        description: TODO
+  - name: kafka.schema.registry.basic.auth.user.info
+    options:
+      - name: TODO
+        description: TODO
   - name: menas.rest.uri
     options:
     - name: string with URLs
