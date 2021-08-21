@@ -15,10 +15,16 @@
 
 package za.co.absa.enceladus.dao.auth
 
+import java.io.File
+
 import com.typesafe.config.ConfigFactory
+import org.apache.hadoop.fs.{FSDataInputStream, LocalFileSystem, Path}
+import org.apache.hadoop.hdfs.DistributedFileSystem
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
+
+import scala.io.Source
 
 sealed abstract class MenasCredentials {
   val username: String
@@ -42,7 +48,15 @@ object MenasPlainCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val conf = ConfigFactory.parseString(HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path))
+    val confString = fs match {
+      case _: DistributedFileSystem | _: LocalFileSystem =>
+        HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path)
+      case _ => {
+        val fileStream: FSDataInputStream = fs.open(new Path(path))
+        Source.fromInputStream(fileStream).mkString
+      }
+    }
+    val conf = ConfigFactory.parseString(confString)
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }
@@ -57,7 +71,16 @@ object MenasKerberosCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val localKeyTabPath = HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
+    val localKeyTabPath = fs match {
+      case _: DistributedFileSystem | _: LocalFileSystem => {
+        HadoopFsUtils.getOrCreate(fs).getLocalPathToFileOrCopyToLocal(path)
+      }
+      case _ => {
+        val localFile = File.createTempFile("enceladusFSUtils", "s3FileToLocalTemp")
+        fs.copyToLocalFile(new Path(path), new Path(localFile.getAbsolutePath))
+        localFile.getAbsolutePath
+      }
+    }
     val keytab = KeyTab.getInstance(localKeyTabPath)
     val username = keytab.getOneName.getName
 

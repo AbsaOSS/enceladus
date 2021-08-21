@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import com.typesafe.config.Config
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaSecurityParams.{SaslMechanismKey, SecurityProtocolKey}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaSecurityParams._
 import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 
 /**
@@ -27,8 +27,12 @@ case class KafkaSecurityParams(
                                 saslMechanism: Option[String]
                               ) {
   def toMap: Map[String, String] = {
-    Map(SecurityProtocolKey -> securityProtocol) ++
-      saslMechanism.fold(Map.empty[String, String])(saslValue => Map(SaslMechanismKey -> saslValue))
+    Map(
+      SecurityProtocolKey -> Some(securityProtocol),
+      SaslMechanismKey -> saslMechanism
+    ).collect {
+      case (key, Some(value)) => key -> value
+    }
   }
 }
 
