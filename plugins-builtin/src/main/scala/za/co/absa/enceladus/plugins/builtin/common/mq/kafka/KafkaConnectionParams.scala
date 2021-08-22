@@ -25,7 +25,8 @@ case class KafkaConnectionParams(
                                   schemaRegistryUrl: String,
                                   clientId: String,
                                   security: Option[KafkaSecurityParams],
-                                  topicName: String
+                                  topicName: String,
+                                  schemaRegistrySecurityParams: Option[SchemaRegistrySecurityParams]
                                 )
 
 object KafkaConnectionParams {
@@ -52,7 +53,8 @@ object KafkaConnectionParams {
       conf.getString(SchemaRegistryUrlKey),
       conf.getString(clientIdKey),
       KafkaSecurityParams.fromConfig(conf),
-      conf.getString(topicNameKey)
+      conf.getString(topicNameKey),
+      SchemaRegistrySecurityParams.fromConfig(conf)
     )
   }
 

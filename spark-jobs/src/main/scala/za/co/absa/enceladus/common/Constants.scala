@@ -31,6 +31,7 @@ object Constants {
     "spark.yarn.dist.files",
     "sun.boot.class.path",
     "sun.java.command",
-    "s3.kmsKeyId"
+    "s3.kmsKeyId",
+    "kafka.schema.registry.basic.auth.user.info"
   )
 }
