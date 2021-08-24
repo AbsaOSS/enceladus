@@ -159,8 +159,21 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |      "overrideMappingTableOwnFilter": true
         |    },
         |    {
+        |      "_t": "MappingConformanceRule",
+        |      "order": 2,"controlCheckpoint": true,
+        |      "mappingTable": "CurrencyMappingTable2",
+        |      "mappingTableVersion": 10,
+        |      "attributeMappings": {},
+        |      "targetAttribute": "CCC",
+        |      "outputColumn": "ConformedCCC",
+        |      "additionalColumns": null,
+        |      "isNullSafe": false,
+        |      "mappingTableFilter": null,
+        |      "overrideMappingTableOwnFilter": false
+        |    },
+        |    {
         |      "_t": "LiteralConformanceRule",
-        |      "order": 2,
+        |      "order": 3,
         |      "outputColumn": "ConformedLiteral",
         |      "controlCheckpoint": false,
         |      "value": "AAA"
@@ -233,7 +246,15 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             ),
             overrideMappingTableOwnFilter = Some(true)
           ),
-          LiteralConformanceRule(2,
+          MappingConformanceRule(2,
+            controlCheckpoint = true,
+            mappingTable = "CurrencyMappingTable2",
+            mappingTableVersion = 10, //scalastyle:ignore magic.number
+            attributeMappings = Map(),
+            targetAttribute = "CCC",
+            outputColumn = "ConformedCCC"
+          ),
+          LiteralConformanceRule(3,
             outputColumn = "ConformedLiteral",
             controlCheckpoint = false,
             value = "AAA"
