@@ -530,7 +530,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual: Seq[Dataset] = await(datasetMongoRepository.getLatestVersionsWithMissingProp(Some("prop1")))
 
-        val expected = Seq(abc1, dataset3ver1, dataset2ver2)
+        val expected = Seq(abc1, dataset2ver2, dataset3ver1)
         assert(actual == expected)
       }
     }
