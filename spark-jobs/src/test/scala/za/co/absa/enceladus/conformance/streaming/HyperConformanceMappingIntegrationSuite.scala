@@ -23,6 +23,7 @@ class HyperConformanceMappingIntegrationSuite extends AnyFunSuite with Streaming
 
   test("Test streaming multiple mapping") {
     implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
+    implicit val infoVersionFactory: InfoVersionFactory = new InfoVersionLiteralFactory(1)
     val df: DataFrame = testHyperConformance(standardizedDf,
       "result", mappingDS)
       .orderBy("result.property")

@@ -27,7 +27,7 @@ import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
+import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -39,6 +39,7 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
+                        infoVersionFactory: InfoVersionFactory,
                         infoDateFactory: InfoDateFactory) extends StreamTransformer {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
@@ -62,9 +63,9 @@ class HyperConformance (implicit cmd: ConformanceConfig,
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
                                      (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-    val reportVersion = getReportVersion
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
+    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn()
 
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
@@ -73,21 +74,13 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
       .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
     log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
     log.info(s"Input schema: ${streamData.schema.prettyJson}")
-  }
-
-  @throws[IllegalArgumentException]
-  private def getReportVersion(implicit cmd: ConformanceConfig): Int = {
-    cmd.reportVersion match {
-      case Some(version) => version
-      case None => throw new IllegalArgumentException("Report version is not provided.")
-    }
   }
 }
 
@@ -150,6 +143,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setBroadcastMaxSizeMb(0)
 
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
+    implicit val infoVersionColumn: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
