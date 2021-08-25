@@ -529,6 +529,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(dataset1ver1, dataset1ver2, dataset2ver1, dataset2ver2, dataset3ver1, dataset4ver1, abc1)
 
         val actual: Seq[Dataset] = await(datasetMongoRepository.getLatestVersionsWithMissingProp(Some("prop1")))
+          .sortBy(_.name)
 
         val expected = Seq(abc1, dataset2ver2, dataset3ver1)
         assert(actual == expected)
