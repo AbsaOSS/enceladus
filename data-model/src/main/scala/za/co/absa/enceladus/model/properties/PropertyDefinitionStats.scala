@@ -20,13 +20,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 case class PropertyDefinitionStats(name: String,
                                    version: Int = 1,
                                    essentiality: Essentiality = Essentiality.Optional,
-                                   missingInDatasetsCount: Int = 0
-) {
-  def setName(value: String): PropertyDefinitionStats = this.copy(name = value)
-  def setVersion(value: Int): PropertyDefinitionStats = this.copy(version = value)
-  def setEssentiality(value: Essentiality): PropertyDefinitionStats = this.copy(essentiality = value)
-  def setMissingInDatasetsCount(disabled: Int): PropertyDefinitionStats = this.copy(missingInDatasetsCount = disabled)
-}
+                                   missingInDatasetsCount: Int = 0)
 
 object PropertyDefinitionStats {
   def apply(propertyDefinition: PropertyDefinition, missingCounts: Int): PropertyDefinitionStats = {

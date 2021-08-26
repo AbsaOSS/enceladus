@@ -56,12 +56,16 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
       mtCount <- mappingTableRepository.distinctCount()
       schemaCount <- schemaRepository.distinctCount()
       runCount <- runsService.getCount()
-      propertiesCount <- propertyDefinitionService.getDistinctCount()
       propertiesWithMissingCounts <- statisticsService.getPropertiesWithMissingCount()
-      totalMissingMandatoryProperties = propertiesWithMissingCounts
-        .filter(_.essentiality.isInstanceOf[Mandatory]).map(_.missingInDatasetsCount).sum
-      totalMissingRecommendedProperties = propertiesWithMissingCounts
-        .filter(_.essentiality.isInstanceOf[Recommended]).map(_.missingInDatasetsCount).sum
+      (propertiesCount, totalMissingMandatoryProperties, totalMissingRecommendedProperties) =
+      propertiesWithMissingCounts.foldLeft(0, 0, 0) {(acum, item) =>
+        val (count, mandatoryCount, recommendedCount) = acum
+        item.essentiality match {
+          case Mandatory(_) =>  (count + 1, mandatoryCount + item.missingInDatasetsCount, recommendedCount)
+          case Recommended() => (count + 1, mandatoryCount, recommendedCount + item.missingInDatasetsCount)
+          case _ => (count + 1, mandatoryCount, recommendedCount)
+        }
+      }
       todaysStats <- runsService.getTodaysRunsStatistics()
     } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, propertiesCount,
       totalMissingMandatoryProperties, totalMissingRecommendedProperties, todaysStats)

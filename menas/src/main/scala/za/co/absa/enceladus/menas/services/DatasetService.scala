@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.menas.services
 
-import org.mongodb.scala.model.Filters
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
@@ -215,14 +214,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  def getLatestVersionsWithMissingProperty(missingProperty: Option[String]): Future[Seq[Dataset]] = {
-    val missingFilter = missingProperty match {
-      case Some(missingProp) => Filters.not(Filters.exists(s"properties.${missingProp}"))
-      case None => Filters.expr(true)
-    }
-
-    datasetMongoRepository.getLatestVersions(missingFilter)
-  }
+  def getLatestVersions(missingProperty: Option[String]): Future[Seq[Dataset]] =
+    datasetMongoRepository.getLatestVersions(missingProperty)
 
   override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {
     getLatestVersionValue(item.name).flatMap {

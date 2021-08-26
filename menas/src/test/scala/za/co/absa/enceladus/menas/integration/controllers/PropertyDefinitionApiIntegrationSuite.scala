@@ -384,7 +384,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val response = sendGet[Array[PropertyDefinition]](s"$apiUrl") // Array to avoid erasure
           assertOk(response)
 
-          val responseData = response.getBody.toSeq.map(pd => (pd.name, pd.version))
+          val responseData = response.getBody.toSeq.map(pd => (pd.name, pd.version)).sortBy(_._1)
           val expectedData = Seq("propertyDefinitionA" -> 2, "propertyDefinitionB" -> 3) // disabled pdA-v3 not reported
           assert(responseData == expectedData)
         }
