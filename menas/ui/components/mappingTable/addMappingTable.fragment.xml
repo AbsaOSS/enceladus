@@ -67,23 +67,23 @@
                             <t:columns>
                                 <t:Column label="FilterName">
                                     <t:template>
-                                        <Text text="{_t}"/>
+                                        <Text text="{treeModel>_t}"/>
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Column">
                                     <t:template>
-                                        <Input type="Text" value="{columnName}" visible="{= !!${columnName}}" />
+                                        <Input type="Text" value="{treeModel>columnName}" visible="{= !!${treeModel>columnName}}" />
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Value">
                                     <t:template>
-                                        <Input type="Text" value="{value}" visible="{= !!${value}}"/>
+                                        <Input type="Text" value="{treeModel>value}" visible="{= !!${treeModel>value}}"/>
                                     </t:template>
                                 </t:Column>
 
                                 <t:Column label="ValueType">
                                     <t:template>
-                                        <Input type="Text" value="{valueType}" visible="{= !!${valueType}}"/>
+                                        <Input type="Text" value="{treeModel>valueType}" visible="{= !!${treeModel>valueType}}"/>
                                     </t:template>
                                 </t:Column>
                             </t:columns>
