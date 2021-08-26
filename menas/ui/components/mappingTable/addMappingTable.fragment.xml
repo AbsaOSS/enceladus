@@ -14,6 +14,7 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:t="sap.ui.table"
                          xmlns:hdfs="components.hdfs">
     <Dialog id="addMappingTableDialog" title="{entity>/title} Mapping Table" resizable="true" draggable="true"
             class="minW40rem">
@@ -57,6 +58,37 @@
                                               HDFSPath="{entity>/hdfsPath}"/>
 
                         </VBox>
+                        <Label text="Filter"/>
+                        <Text text="{entity>/filterJson}"/>
+                        <Label text="Filter Tree" />
+<!-- tried this, too, for the treetable, but same result: rows="{path:'treeModel>/'}"-->
+                        <t:TreeTable id="filterTreeEdit"
+                            >
+                            <t:columns>
+                                <t:Column label="FilterName">
+                                    <t:template>
+                                        <Text text="{_t}"/>
+                                    </t:template>
+                                </t:Column>
+                                <t:Column label="Column">
+                                    <t:template>
+                                        <Input type="Text" value="{columnName}" visible="{= !!${columnName}}" />
+                                    </t:template>
+                                </t:Column>
+                                <t:Column label="Value">
+                                    <t:template>
+                                        <Input type="Text" value="{value}" visible="{= !!${value}}"/>
+                                    </t:template>
+                                </t:Column>
+
+                                <t:Column label="ValueType">
+                                    <t:template>
+                                        <Input type="Text" value="{valueType}" visible="{= !!${valueType}}"/>
+                                    </t:template>
+                                </t:Column>
+                            </t:columns>
+                        </t:TreeTable>
+
                     </form:content>
                 </form:SimpleForm>
             </VBox>

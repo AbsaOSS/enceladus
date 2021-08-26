@@ -36,6 +36,8 @@ class EntityDialog {
 
   submit() {
     let newEntity = this.oDialog.getModel("entity").oData;
+    console.log(`submitted entity: ${JSON.stringify(newEntity)}`);
+
     if (!newEntity.isEdit && newEntity.name && typeof (newEntity.nameUnique) === "undefined") {
       // need to wait for the service call
       setTimeout(this.submit.bind(this), 500);
@@ -476,13 +478,33 @@ class EditMappingTableDialog extends MappingTableDialog {
   onPress() {
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
+      //current.filterJson = JSON.stringify(current.filter);
+      //console.log(`current MT: ${JSON.stringify(current)}`);
+      current.filters = [current.filter];
+      console.log(`current filters: ${JSON.stringify(current.filters)}`);
+
+      let treeModel = new sap.ui.model.json.JSONModel();
+
+      treeModel.setData([current.filter]); // array wrap to make the root collapsible item
+      let treeTable = this.oController.byId("filterTreeEdit");
+
+      // set the data to the model
+      // treeTable.setModel(treeModel);
+      // treeTable.bindRows("/");
 
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+      const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
+      this.oDialog.setModel(model, "entity");
+      this.oDialog.setModel(treeModel, "treeModel");
+
+      treeTable.bindRows("treeModel>/");
+
+      console.log(`treeModel: ${JSON.stringify(treeModel.oData)}`);
+
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
