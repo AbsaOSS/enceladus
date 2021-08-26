@@ -38,9 +38,9 @@
                         <Panel headerText="Datasets" height="50%">
                             <List items="{/currentProperty/missingIn/datasets}" mode="None"
                                   noDataText="Currently not missing in any Datasets">
-                                <StandardListItem title="{name}" description="v{version}" type="Active"
+                                <StandardListItem title="{_id}" description="v{latestVersion}" type="Active"
                                                   press="missingNavTo" cust:collection="datasets"
-                                                  cust:name="{name}" cust:version="{version}"/>
+                                                  cust:name="{_id}" cust:version="{latestVersion}"/>
                             </List>
                         </Panel>
                     </IconTabFilter>
