@@ -387,6 +387,20 @@ class EditSchemaDialog extends SchemaDialog {
 class MappingTableDialog extends EntityDialog {
   static hdfsPropertyNames = ["/hdfsPath"];
 
+  submit() {
+    let newEntity = this.oDialog.getModel("entity").oData;
+    //console.log(`submitted MT entity: ${JSON.stringify(newEntity)}`);
+
+    let updatedFilters = newEntity.updatedFilters;
+    // todo cleanup or assert? or replace with validation in the validate step?
+    console.log(`Updated filters count (should be 1) = ${updatedFilters.length}`);
+
+    this.oDialog.getModel("entity").setProperty("/filter", updatedFilters[0]);
+    console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
+
+    super.submit()
+  }
+
   constructor(oDialog, mappingTableService, schemaService, oController) {
     super(oDialog, mappingTableService, oController);
     this._schemaService = schemaService;
@@ -440,6 +454,8 @@ class MappingTableDialog extends EntityDialog {
 
       return hasValidName && hasValidSchema && hasValidSimplePath;
     }
+
+    // todo #1863 check that there is only one root filter containing the rest?
   }
 
   onNameChange() {
@@ -480,17 +496,8 @@ class EditMappingTableDialog extends MappingTableDialog {
       const current = this.oController._model.getProperty("/currentMappingTable");
       //current.filterJson = JSON.stringify(current.filter);
       //console.log(`current MT: ${JSON.stringify(current)}`);
-      current.filters = [current.filter];
-      console.log(`current filters: ${JSON.stringify(current.filters)}`);
-
-      let treeModel = new sap.ui.model.json.JSONModel();
-
-      treeModel.setData([current.filter]); // array wrap to make the root collapsible item
-      let treeTable = this.oController.byId("filterTreeEdit");
-
-      // set the data to the model
-      // treeTable.setModel(treeModel);
-      // treeTable.bindRows("/");
+      current.updatedFilters = [current.filter];
+      console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
 
       current.isEdit = true;
       current.title = "Edit";
@@ -499,11 +506,6 @@ class EditMappingTableDialog extends MappingTableDialog {
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");
-      this.oDialog.setModel(treeModel, "treeModel");
-
-      treeTable.bindRows("treeModel>/");
-
-      console.log(`treeModel: ${JSON.stringify(treeModel.oData)}`);
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });

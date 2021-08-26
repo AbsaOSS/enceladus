@@ -61,29 +61,29 @@
                         <Label text="Filter"/>
                         <Text text="{entity>/filterJson}"/>
                         <Label text="Filter Tree" />
-<!-- tried this, too, for the treetable, but same result: rows="{path:'treeModel>/'}"-->
                         <t:TreeTable id="filterTreeEdit"
+                                     rows="{path:'entity>/updatedFilters'}"
                             >
                             <t:columns>
                                 <t:Column label="FilterName">
                                     <t:template>
-                                        <Text text="{treeModel>_t}"/>
+                                        <Text text="{entity>_t}"/>
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Column">
                                     <t:template>
-                                        <Input type="Text" value="{treeModel>columnName}" visible="{= !!${treeModel>columnName}}" />
+                                        <Input type="Text" value="{entity>columnName}" visible="{= !!${entity>columnName}}" />
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Value">
                                     <t:template>
-                                        <Input type="Text" value="{treeModel>value}" visible="{= !!${treeModel>value}}"/>
+                                        <Input type="Text" value="{entity>value}" visible="{= !!${entity>value}}"/>
                                     </t:template>
                                 </t:Column>
 
                                 <t:Column label="ValueType">
                                     <t:template>
-                                        <Input type="Text" value="{treeModel>valueType}" visible="{= !!${treeModel>valueType}}"/>
+                                        <Input type="Text" value="{entity>valueType}" visible="{= !!${entity>valueType}}"/>
                                     </t:template>
                                 </t:Column>
                             </t:columns>

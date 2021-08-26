@@ -468,7 +468,8 @@ class MappingTableService extends DependentEntityService {
       description: oEntity.description,
       hdfsPath: oEntity.hdfsPath,
       schemaName: oEntity.schemaName,
-      schemaVersion: oEntity.schemaVersion
+      schemaVersion: oEntity.schemaVersion,
+      filter: oEntity.filter
     }
   }
 

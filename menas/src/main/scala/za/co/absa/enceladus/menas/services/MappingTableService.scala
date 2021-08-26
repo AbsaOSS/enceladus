@@ -66,6 +66,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
+        .setFilter(mt.filter)
     }
   }
 
