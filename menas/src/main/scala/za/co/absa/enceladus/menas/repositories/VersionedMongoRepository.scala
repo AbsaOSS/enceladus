@@ -75,35 +75,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
-  def getLatestVersionsWithMissingProp(missingProperty: Option[String]): Future[Seq[C]] = {
-    val missingFilter = missingProperty match {
-      case Some(missingProp) => Filters.not(Filters.exists(s"properties.${missingProp}"))
-      case None => Filters.expr(true)
-    }
-    getLatestVersions(missingFilter)
-  }
-
-  def getLatestVersions(postAggFilter: Bson): Future[Seq[C]] = {
-    val pipeline = Seq(
-      Aggregates.group("$name",
-        Accumulators.max("latestVersion", "$version"),
-        Accumulators.last("doc","$$ROOT")),
-      Aggregates.replaceRoot("$doc"),
-      Aggregates.filter(postAggFilter)
-    )
-
-    collection.aggregate[C](pipeline).toFuture()
-  }
-
-  def getLatestVersions(): Future[Seq[C]] = {
-    // there may be a way to this using mongo-joining (aggregation.lookup) instead
-    getLatestVersionsSummary(None).flatMap { summaries =>
-      val resultIn = summaries.map { summary =>
-        getVersion(summary._id, summary.latestVersion).map(_.toSeq)
-      }
-
-      Future.sequence(resultIn).map(_.flatten)
-    }
+  def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {
+    val missingFilter = missingProperty.map(missingProp =>
+      Filters.not(Filters.exists(s"properties.$missingProp")))
+    collectLatestVersions(missingFilter)
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
@@ -181,6 +156,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .sort(Sorts.ascending("name", "version"))
       .toFuture()
+  }
+
+  private def collectLatestVersions(postAggFilter: Option[Bson]): Future[Seq[C]] = {
+    val pipeline = Seq(
+      filter(Filters.notEqual("disabled", true)),
+      Aggregates.group("$name",
+      Accumulators.max("latestVersion", "$version"),
+      Accumulators.last("doc","$$ROOT")),
+      Aggregates.replaceRoot("$doc")) ++
+      postAggFilter.map(Aggregates.filter)
+
+    collection.aggregate[C](pipeline).toFuture()
   }
 
   private[repositories] def getNotDisabledFilter: Bson = {

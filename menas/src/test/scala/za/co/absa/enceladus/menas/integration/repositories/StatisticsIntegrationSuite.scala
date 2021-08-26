@@ -88,7 +88,7 @@ class StatisticsIntegrationSuite extends BaseRepositoryTest {
         datasetFixture.add(mockedDatasets: _*)
         propertyDefService.add(mockedPropertyDefinitions: _*)
 
-        val actualStatistics = await(statisticsService.getPropertiesWithMissingCount())
+        val actualStatistics = await(statisticsService.getPropertiesWithMissingCount()).sortBy(_.name)
 
         val expectedStatistics = Seq(
           PropertyDefinitionStats(name = "mandatoryString1", essentiality = Mandatory(allowRun = false),
