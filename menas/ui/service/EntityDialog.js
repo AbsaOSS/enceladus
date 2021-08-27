@@ -410,6 +410,11 @@ class MappingTableDialog extends EntityDialog {
 
     // filter toolbar:
     oController.byId("addAndBtn").attachPress(this.onFilterAddAnd, this);
+    oController.byId("addOrBtn").attachPress(this.onFilterAddOr, this);
+    oController.byId("addNotBtn").attachPress(this.onFilterAddNot, this);
+    oController.byId("addEqualsBtn").attachPress(this.onFilterAddEquals, this);
+    oController.byId("addDiffersBtn").attachPress(this.onFilterAddDiffers, this);
+    oController.byId("addIsNullBtn").attachPress(this.onFilterAddIsNull, this);
     oController.byId("removeSelectedBtn").attachPress(this.onRemoveSelected, this);
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
@@ -472,32 +477,53 @@ class MappingTableDialog extends EntityDialog {
   }
 
   onFilterAddAnd() {
-    console.log("onAddAnd event fired");
+    this.onFilterAdd({ _t : "AndJoinedFilters", filterItems : []})
+  }
 
-    var oTreeTable = this.oController.byId("filterTreeEdit");
-    var aSelectedIndices = oTreeTable.getSelectedIndices();
-    var oModel = oTreeTable.getBinding().getModel();
+  onFilterAddOr() {
+    this.onFilterAdd({ _t : "OrJoinedFilters", filterItems : []})
+  }
+
+  onFilterAddNot() {
+    this.onFilterAdd({_t: "NotFilter", inputFilter: []}) // deliberately [] as empty init (null -> could not add)
+  }
+
+  onFilterAddEquals() {
+    // todo this is not editable due to edit box not being show for "" values.
+    this.onFilterAdd({_t: "EqualsFilter", columnName: "<fillIn>", value: "<fillIn>", valueType: "string"})
+  }
+
+  onFilterAddDiffers() {
+    this.onFilterAdd({_t: "DiffersFilter", columnName: "<fillIn>", value: "<fillIn>", valueType: "string"})
+  }
+
+  onFilterAddIsNull() {
+    this.onFilterAdd({_t: "IsNullFilter", columnName: "<fillIn>"})
+  }
+
+
+  onFilterAdd(blankFilter) {
+    console.log(`onFilterAdd with ${JSON.stringify(blankFilter)}`);
+
+    const oTreeTable = this.oController.byId("filterTreeEdit");
+    const aSelectedIndices = oTreeTable.getSelectedIndices();
+    const oModel = oTreeTable.getBinding().getModel();
 
     console.log(`aSelectedIndices = ${aSelectedIndices.length}`);
 
     if (aSelectedIndices.length !== 1) {
-      sap.m.MessageToast.show("Select exactly one row first.");
+      sap.m.MessageToast.show("Select exactly one row first.");  // todo solve for empty
       return;
     }
 
-    var oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
-    var oNewParent = oNewParentContext.getProperty();
-
-    const blankAnd = {
-      _t : "AndJoinedFilters",
-      filterItems : []
-    };
+    const oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
+    const oNewParent = oNewParentContext.getProperty();
 
     // based on what type of filter is selected, attach the new filter to it
     if (oNewParent.filterItems) { //and / or -> add
-      oNewParent.filterItems = oNewParent.filterItems.concat(blankAnd)
+      oNewParent.filterItems = oNewParent.filterItems.concat(blankFilter)
     } else if (oNewParent.inputFilter) {
-      oNewParent.inputFilter = blankAnd // not -> replace
+      oNewParent.inputFilter = blankFilter // not -> replace
     } else {
       sap.m.MessageToast.show("Could not add filter. Leaf filter was selected"); // todo solve for empty
       return;

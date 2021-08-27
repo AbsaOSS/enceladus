@@ -64,13 +64,19 @@
                         <t:TreeTable id="filterTreeEdit" rows="{path:'entity>/updatedFilters'}">
                             <t:extension>
                                 <OverflowToolbar style="Clear">
-                                    <Title id="title" text="Add:"/>
-                                    <Button id="addAndBtn" text="AND" icon="sap-icon://scissors" />
-                                    <Button id="addOrBtn" text="OR" icon="sap-icon://paste" />
-                                    <Button id="addNotBtn" text="NOT" icon="sap-icon://scissors" />
-                                    <Button id="addEqualsBtn" text="Equals" icon="sap-icon://scissors" />
-                                    <Button id="addDiffersBtn" text="Differs" icon="sap-icon://scissors" />
-                                    <Button id="addIsNullBtn" text="IsNull" icon="sap-icon://scissors" />
+                                    <MenuButton text="Add">
+                                        <menu>
+                                            <Menu>
+                                                <MenuItem id="addAndBtn" text="AND" icon="sap-icon://scissors" />
+                                                <MenuItem id="addOrBtn" text="OR" icon="sap-icon://paste" />
+                                                <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://scissors" />
+                                                <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://scissors" />
+                                                <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://scissors" />
+                                                <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://scissors" />
+
+                                            </Menu>
+                                        </menu>
+                                    </MenuButton>
                                     <ToolbarSpacer/>
                                     <Button id="removeSelectedBtn" text="Remove selected" icon="sap-icon://delete" />
                                 </OverflowToolbar>
