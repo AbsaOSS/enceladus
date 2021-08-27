@@ -60,10 +60,21 @@
                         </VBox>
                         <Label text="Filter"/>
                         <Text text="{entity>/filterJson}"/>
-                        <Label text="Filter Tree" />
-                        <t:TreeTable id="filterTreeEdit"
-                                     rows="{path:'entity>/updatedFilters'}"
-                            >
+                        <Label text="Filter Tree"/>
+                        <t:TreeTable id="filterTreeEdit" rows="{path:'entity>/updatedFilters'}">
+                            <t:extension>
+                                <OverflowToolbar style="Clear">
+                                    <Title id="title" text="Add:"/>
+                                    <Button id="addAndBtn" text="AND" icon="sap-icon://scissors" />
+                                    <Button id="addOrBtn" text="OR" icon="sap-icon://paste" />
+                                    <Button id="addNotBtn" text="NOT" icon="sap-icon://scissors" />
+                                    <Button id="addEqualsBtn" text="Equals" icon="sap-icon://scissors" />
+                                    <Button id="addDiffersBtn" text="Differs" icon="sap-icon://scissors" />
+                                    <Button id="addIsNullBtn" text="IsNull" icon="sap-icon://scissors" />
+                                    <ToolbarSpacer/>
+                                    <Button id="removeSelectedBtn" text="Remove selected" icon="sap-icon://delete" />
+                                </OverflowToolbar>
+                            </t:extension>
                             <t:columns>
                                 <t:Column label="FilterName">
                                     <t:template>
@@ -72,7 +83,7 @@
                                 </t:Column>
                                 <t:Column label="Column">
                                     <t:template>
-                                        <Input type="Text" value="{entity>columnName}" visible="{= !!${entity>columnName}}" />
+                                        <Input type="Text" value="{entity>columnName}" visible="{= !!${entity>columnName}}"/>
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Value">
@@ -88,7 +99,6 @@
                                 </t:Column>
                             </t:columns>
                         </t:TreeTable>
-
                     </form:content>
                 </form:SimpleForm>
             </VBox>

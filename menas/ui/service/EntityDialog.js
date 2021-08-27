@@ -408,6 +408,10 @@ class MappingTableDialog extends EntityDialog {
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
 
+    // filter toolbar:
+    oController.byId("addAndBtn").attachPress(this.onFilterAddAnd, this);
+    oController.byId("removeSelectedBtn").attachPress(this.onRemoveSelected, this);
+
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
   }
 
@@ -465,6 +469,69 @@ class MappingTableDialog extends EntityDialog {
     } else {
       this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
+  }
+
+  onFilterAddAnd() {
+    console.log("onAddAnd event fired");
+
+    var oTreeTable = this.oController.byId("filterTreeEdit");
+    var aSelectedIndices = oTreeTable.getSelectedIndices();
+    var oModel = oTreeTable.getBinding().getModel();
+
+    console.log(`aSelectedIndices = ${aSelectedIndices.length}`);
+
+    if (aSelectedIndices.length !== 1) {
+      sap.m.MessageToast.show("Select exactly one row first.");
+      return;
+    }
+
+    var oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
+    var oNewParent = oNewParentContext.getProperty();
+
+    const blankAnd = {
+      _t : "AndJoinedFilters",
+      filterItems : []
+    };
+
+    // based on what type of filter is selected, attach the new filter to it
+    if (oNewParent.filterItems) { //and / or -> add
+      oNewParent.filterItems = oNewParent.filterItems.concat(blankAnd)
+    } else if (oNewParent.inputFilter) {
+      oNewParent.inputFilter = blankAnd // not -> replace
+    } else {
+      sap.m.MessageToast.show("Could not add filter. Leaf filter was selected"); // todo solve for empty
+      return;
+
+    }
+
+    oModel.refresh();
+  }
+
+  onRemoveSelected() {
+    console.log("onRemoveSelected event fired");
+
+    var oTreeTable = this.oController.byId("filterTreeEdit");
+    var aSelectedIndices = oTreeTable.getSelectedIndices();
+    var oModel = oTreeTable.getBinding().getModel();
+
+    console.log(`aSelectedIndices = ${aSelectedIndices.length}`);
+
+    if (aSelectedIndices.length === 0) {
+      sap.m.MessageToast.show("Select at least one row first.");
+      return;
+    }
+
+    // delete the data.
+    aSelectedIndices.forEach(idx => {
+        var oContext = oTreeTable.getContextByIndex(idx);
+        var oData = oContext.getProperty();
+
+        if (oData) {
+          // The property is simply set to undefined to preserve the tree state (expand/collapse states of nodes).
+          oModel.setProperty(oContext.getPath(), undefined, oContext, true);
+        }
+      }
+    );
   }
 }
 
