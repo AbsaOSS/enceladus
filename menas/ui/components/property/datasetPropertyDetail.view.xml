@@ -35,8 +35,8 @@
                         <core:Fragment type="XML" fragmentName="components.property.datasetPropertyInfo"/>
                     </IconTabFilter>
                     <IconTabFilter id="MissingInDatasets" icon="sap-icon://detail-view" key="missing" text="Missing In Datasets">
-                        <Panel headerText="Datasets" height="50%">
-                            <List items="{/currentProperty/missingIn/datasets}" mode="None"
+                        <Panel id="missingInDatasets" headerText="Datasets" height="50%">
+                            <List items="{/currentProperty/missingIn/datasets}" mode="None" enableBusyIndicator="true"
                                   noDataText="Currently not missing in any Datasets">
                                 <StandardListItem title="{_id}" description="v{latestVersion}" type="Active"
                                                   press="missingNavTo" cust:collection="datasets"

@@ -34,7 +34,6 @@ sap.ui.define([
       }, this);
 
       this._eventBus = sap.ui.getCore().getEventBus();
-      // this._eventBus.subscribe("properties", "updated", this.onEntityUpdated, this);
 
       this._datasetPropertiesService = new DatasetPropertiesService(this._model, this._eventBus);
 
@@ -45,9 +44,13 @@ sap.ui.define([
     routeMatched: function (oParams) {
       if (Prop.get(oParams, "id") === undefined) {
         this._datasetPropertiesService.getTop().then(() => this.load())
-      } {
+      } else {
         this._datasetPropertiesService.getPropertyDefinition(oParams.id).then((resp) => {
+          let masterPage = this.byId("missingInDatasets");
+          masterPage.setBusyIndicatorDelay(0);
+          masterPage.setBusy(true);
           this._datasetPropertiesService.getDatasetsMissing(oParams.id).then((missing) => {
+            masterPage.setBusy(false);
             this._model.setProperty("/currentProperty/missingIn/datasets", missing);
           })
           this.load(resp);
