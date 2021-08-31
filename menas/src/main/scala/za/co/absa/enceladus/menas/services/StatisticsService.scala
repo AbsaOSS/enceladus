@@ -25,17 +25,21 @@ import scala.concurrent.Future
 @Component
 class StatisticsService @Autowired() (propertyDefService: PropertyDefinitionService, datasetService: DatasetService){
   //#TODO find optimizations #1897
-  def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] =
-    for {
-      props: Seq[PropertyDefinition] <- propertyDefService.getLatestVersions()
-      propertiesWithMissingCounts: Seq[Future[PropertyDefinitionStats]] =
-        props.map(propertyDef =>
+  def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] = {
+    val propertyDefsFuture = propertyDefService.getLatestVersions()
+    propertyDefsFuture
+      .map { (props: Seq[PropertyDefinition]) =>
+        val propertiesWithMissingCounts: Seq[Future[PropertyDefinitionStats]] = props.map(propertyDef =>
           datasetService
             .getLatestVersions(Some(propertyDef.name))
             .map(datasetsMissingProp =>
               PropertyDefinitionStats(propertyDef, datasetsMissingProp.size))
         )
-      results <- Future.sequence(propertiesWithMissingCounts)
-    } yield results
+         propertiesWithMissingCounts
+      }
+      .flatMap { propertiesWithMissingCounts: Seq[Future[PropertyDefinitionStats]] =>
+        Future.sequence(propertiesWithMissingCounts)
+      }
+  }
 
 }

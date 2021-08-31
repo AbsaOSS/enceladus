@@ -29,7 +29,7 @@ import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.LandingPageStatisticsMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import za.co.absa.enceladus.menas.services.{PropertyDefinitionService, RunService, StatisticsService}
+import za.co.absa.enceladus.menas.services.{RunService, StatisticsService}
 import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
 
 @RestController
@@ -38,7 +38,6 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     mappingTableRepository: MappingTableMongoRepository,
     schemaRepository: SchemaMongoRepository,
     runsService: RunService,
-    propertyDefinitionService: PropertyDefinitionService,
     landingPageRepository: LandingPageStatisticsMongoRepository,
     statisticsService: StatisticsService) extends BaseController {
 
@@ -51,22 +50,29 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
   }
 
   def landingPageInfo(): Future[LandingPageInformation] = {
-    for {
-      dsCount <- datasetRepository.distinctCount()
-      mtCount <- mappingTableRepository.distinctCount()
-      schemaCount <- schemaRepository.distinctCount()
-      runCount <- runsService.getCount()
-      propertiesWithMissingCounts <- statisticsService.getPropertiesWithMissingCount()
-      (propertiesCount, totalMissingMandatoryProperties, totalMissingRecommendedProperties) =
-      propertiesWithMissingCounts.foldLeft(0, 0, 0) {(acum, item) =>
+    val dsCountFuture = datasetRepository.distinctCount()
+    val mappingTableFuture = mappingTableRepository.distinctCount()
+    val schemaFuture = schemaRepository.distinctCount()
+    val runFuture = runsService.getCount()
+    val propertiesWithMissingCountsFuture = statisticsService.getPropertiesWithMissingCount()
+    val propertiesTotalsFuture: Future[(Int, Int, Int)] = propertiesWithMissingCountsFuture.map(props => {
+      props.foldLeft(0, 0, 0) { (acum, item) =>
         val (count, mandatoryCount, recommendedCount) = acum
         item.essentiality match {
-          case Mandatory(_) =>  (count + 1, mandatoryCount + item.missingInDatasetsCount, recommendedCount)
+          case Mandatory(_) => (count + 1, mandatoryCount + item.missingInDatasetsCount, recommendedCount)
           case Recommended() => (count + 1, mandatoryCount, recommendedCount + item.missingInDatasetsCount)
           case _ => (count + 1, mandatoryCount, recommendedCount)
         }
       }
-      todaysStats <- runsService.getTodaysRunsStatistics()
+    })
+    val todaysStatsfuture = runsService.getTodaysRunsStatistics()
+    for {
+      dsCount <- dsCountFuture
+      mtCount <- mappingTableFuture
+      schemaCount <- schemaFuture
+      runCount <- runFuture
+      (propertiesCount, totalMissingMandatoryProperties, totalMissingRecommendedProperties) <- propertiesTotalsFuture
+      todaysStats <- todaysStatsfuture
     } yield LandingPageInformation(dsCount, mtCount, schemaCount, runCount, propertiesCount,
       totalMissingMandatoryProperties, totalMissingRecommendedProperties, todaysStats)
   }
