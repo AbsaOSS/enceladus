@@ -16,20 +16,28 @@
 package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.commons.configuration2.Configuration
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions.{col, lit}
+import org.apache.spark.sql.types.StructField
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory.log
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 sealed trait InfoVersionFactory {
-  def getInfoVersionColumn(): Column
+  def getInfoVersionColumn(df: DataFrame): Column
 }
 
 class InfoVersionLiteralFactory(reportVersion: Int) extends InfoVersionFactory {
-  override def getInfoVersionColumn(): Column = lit(reportVersion)
+  override def getInfoVersionColumn(df: DataFrame): Column = lit(reportVersion)
 }
 
 class InfoVersionColumnFactory(columnName: String) extends InfoVersionFactory {
-  override def getInfoVersionColumn(): Column = col(columnName)
+  override def getInfoVersionColumn(df: DataFrame): Column = {
+    val dt: Option[StructField] = SchemaUtils.getField(columnName, df.schema)
+    dt match {
+      case Some(_) => col(columnName)
+      case None => throw new IllegalArgumentException(s"The specified info column does not exist: $columnName")
+    }
+  }
 }
 
 object InfoVersionFactory {
@@ -45,7 +53,8 @@ object InfoVersionFactory {
       log.info(s"Info version: configuration infoVersionColumn = $infoVersionColumn")
       new InfoVersionColumnFactory(infoVersionColumn)
     } else {
-      throw new IllegalArgumentException("Neither report version, nor info version is provided.")
+      log.info(s"Info version: default version = 1")
+      new InfoVersionLiteralFactory(1)
     }
   }
 }

@@ -65,7 +65,7 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
-    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn()
+    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn(rawDf)
 
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)

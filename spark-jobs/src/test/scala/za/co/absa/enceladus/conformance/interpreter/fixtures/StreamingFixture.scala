@@ -42,7 +42,7 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
     when(configStub.containsKey(reportVersionColumnKey)).thenReturn(true)
-    when(configStub.getString(reportVersionColumnKey)).thenReturn("strings.all_random_upper")
+    when(configStub.getString(reportVersionColumnKey)).thenReturn("numerics.SmartObject.all_random")
     when(configStub.containsKey(reportDateKey)).thenReturn(true)
     when(configStub.getString(reportDateKey)).thenReturn(reportDate)
     when(configStub.containsKey(datasetNameKey)).thenReturn(true)
