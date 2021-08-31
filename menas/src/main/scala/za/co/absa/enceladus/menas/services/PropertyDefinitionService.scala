@@ -17,8 +17,7 @@ package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
-import za.co.absa.enceladus.menas.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.menas.repositories.PropertyDefinitionMongoRepository
 import za.co.absa.enceladus.model.UsedIn
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
@@ -40,6 +39,10 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
         .setEssentiality(propertyDef.essentiality)
         .setDescription(propertyDef.description)
     }
+  }
+
+  def getDistinctCount(): Future[Int] = {
+    propertyDefMongoRepository.distinctCount()
   }
 
   override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
