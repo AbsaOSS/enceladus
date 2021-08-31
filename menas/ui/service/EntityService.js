@@ -531,10 +531,6 @@ class DatasetPropertiesService extends EntityService {
     this.eventBus.publish("properties", "list");
   }
 
-  publishUpdatedEvent(property) {
-    this.eventBus.publish("properties", "updated", property);
-  }
-
   getList(oControl, sSearchQuery) {
     const promise = this.restDAO.getMissingProperties().then((oData) => {
       oControl.setModel(new sap.ui.model.json.JSONModel(oData), "properties");
@@ -557,14 +553,6 @@ class DatasetPropertiesService extends EntityService {
     }).fail(() => {
       sap.m.MessageBox.error("Failed to get Missing Properties")
     })
-  }
-
-  cleanupEntity(oEntity) {
-    return {
-      name: oEntity.name,
-      version: oEntity.version,
-      description: oEntity.description
-    }
   }
 
 }

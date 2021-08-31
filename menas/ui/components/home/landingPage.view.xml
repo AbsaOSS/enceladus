@@ -100,11 +100,11 @@
             <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
                 <items>
                     <VBox class="sapUiSmallMarginEnd">
-                        <Text text="Missing Mandatory Properties"/>
+                        <Text text="Missing Mandatory Dataset Properties"/>
                         <NumericContent icon="sap-icon://warning" value="{path: '/landingPageInfo/totalNumberMissingMandatoryProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
                     </VBox>
                     <VBox class="sapUiSmallMarginEnd">
-                        <Text text="Missing Recommended Properties"/>
+                        <Text text="Missing Recommended Dataset Properties"/>
                         <NumericContent icon="sap-icon://quality-issue" value="{path: '/landingPageInfo/totalNumberMissingRecommendedProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
                     </VBox>
                 </items>

@@ -15,12 +15,8 @@
 
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
-  "sap/ui/core/Fragment",
-  "sap/m/MessageToast",
-  "sap/m/MessageItem",
-  "sap/m/MessageBox",
-  "components/AuditTrail"
-], function (Controller, Fragment, MessageToast, MessageItem, MessageBox, AuditTrail) {
+  "sap/ui/core/Fragment"
+], function (Controller, Fragment) {
   "use strict";
 
   return Controller.extend("components.property.datasetPropertyDetail", {

@@ -30,32 +30,10 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       this._propertiesService = new DatasetPropertiesService(this._model, this._eventBus)
-      // this._searchField = this.byId("mappingTableSearchField")
     },
 
     list: function () {
       this._propertiesService.getList(this.byId("masterPage"));
-    },
-
-    onSearch: function(oEv) {
-      this._propertiesService.getList(this.byId("masterPage"), oEv.getSource().getValue())
-    },
-
-    _searchFilter: function(sValue) {
-      return [new sap.ui.model.Filter([
-          new sap.ui.model.Filter("name", function(sText) {
-            return (sText || "").toUpperCase().indexOf(sValue.toUpperCase()) > -1;
-          })], false)];
-    },
-
-    onSuggest: function(oEv) {
-      let value = oEv.getParameter("suggestValue");
-      let filters = [];
-      if (value) {
-        filters = this._searchFilter(value)
-      }
-      this._searchField.getBinding("suggestionItems").filter(filters);
-      this._searchField.suggest();
     },
 
     onPressMasterBack: function () {

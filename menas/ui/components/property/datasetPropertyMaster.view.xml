@@ -17,12 +17,6 @@
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="masterPage" title="Properties" showNavButton="true" navButtonPress="onPressMasterBack">
         <content>
-            <!--<SearchField id="propertySearchField" placeholder="Search..." enableSuggestions="true" search="onSearch"
-                suggest="onSuggest" suggestionItems="{path: '/propertiesSuggestions', sorter: { path: 'name' }}">
-                <suggestionItems>
-                    <SuggestionItem text="{name}"/>
-                </suggestionItems>
-            </SearchField>-->
             <List items="{properties>/}"
                   mode="SingleSelectMaster"
                   selectionChange="propertySelected"
