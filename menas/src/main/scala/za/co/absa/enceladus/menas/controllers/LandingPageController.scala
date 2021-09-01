@@ -29,7 +29,7 @@ import za.co.absa.enceladus.menas.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.menas.repositories.LandingPageStatisticsMongoRepository
 import za.co.absa.enceladus.menas.repositories.MappingTableMongoRepository
 import za.co.absa.enceladus.menas.repositories.SchemaMongoRepository
-import za.co.absa.enceladus.menas.services.{PropertyDefinitionService, RunService, StatisticsService}
+import za.co.absa.enceladus.menas.services.{RunService, StatisticsService}
 import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
 
 @RestController

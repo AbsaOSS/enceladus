@@ -70,6 +70,18 @@
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
+                        <GenericTile header="Dataset Properties" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="properties"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://multi-select" value="{path: '/landingPageInfo/totalNumberProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
+                                </TileContent>
+                                <TileContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
                     </items>
                 </FlexBox>
             </Panel>
@@ -85,6 +97,20 @@
                   maintainAspectRatio="false">
               </lab:BarChartJS>
             </Panel>
+            <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
+                <items>
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Text text="Missing Mandatory Dataset Properties"/>
+                        <NumericContent icon="sap-icon://warning" value="{path: '/landingPageInfo/totalNumberMissingMandatoryProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
+                    </VBox>
+                    <VBox class="sapUiSmallMarginEnd">
+                        <Text text="Missing Recommended Dataset Properties"/>
+                        <NumericContent icon="sap-icon://quality-issue" value="{path: '/landingPageInfo/totalNumberMissingRecommendedProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
+                    </VBox>
+                </items>
+            </FlexBox>
+            <VBox>
+            </VBox>
         </content>
     </Page>
 </core:View>
