@@ -26,7 +26,7 @@ import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, S
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -34,7 +34,6 @@ import za.co.absa.enceladus.utils.validation.ValidationException
  * Object representing set of tools for performing the actual standardization
  */
 object StandardizationInterpreter {
-  private implicit val defaults: Defaults = GlobalDefaults
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -51,11 +50,13 @@ object StandardizationInterpreter {
                   recordIdGenerationStrategy: IdType = IdType.NoId)
                  (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
 
+    implicit val defaults: Defaults = new DefaultsByFormat(inputType)
+
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
     // TODO: remove when spark-xml handles empty arrays #417
-    val dfXmlSafe: Dataset[Row] = if (inputType.toLowerCase() == "xml") {
+    val dfXmlSafe: Dataset[Row] = if (inputType == "xml") {
       df.select(expSchema.fields.map { field: StructField =>
         SparkXMLHack.hack(field, "", df).as(field.name)
       }: _*)
@@ -88,7 +89,7 @@ object StandardizationInterpreter {
   }
 
   private def standardizeDataset(df: Dataset[Row], expSchema: StructType, failOnInputNotPerSchema: Boolean)
-                                (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
+                                (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame  = {
 
     val rowErrors: List[Column] = gatherRowErrors(df.schema)
     val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], rowErrors, None: Option[Column]) {

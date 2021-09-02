@@ -72,7 +72,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
     // The above is true not only for JVM, but for the most of the CPU/hardware implementations of numeric data types
 
     def defaultValue(dt: DataType, nullable: Boolean): Any = {
-      GlobalDefaults.getDataTypeDefaultValueWithNull(dt, field.nullable).get.orNull
+      GlobalDefaults.getDataTypeDefaultValueWithNull(dt, nullable).get.orNull
     }
 
     val neg = negate(inputColumn)
