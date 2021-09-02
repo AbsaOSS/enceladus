@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.cache.annotation.{CacheEvict}
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.menas.services.DatasetService.{RuleValidationsAndFields, _}
@@ -41,6 +42,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  @CacheEvict(value = Array("statistics", "missing_prop"), allEntries = true)
   override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
       updateSchedule(dataset, latest).map({ withSchedule =>

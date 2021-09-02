@@ -27,6 +27,7 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
+import org.springframework.cache.annotation.Cacheable
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 
@@ -75,7 +76,9 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).toFuture()
   }
 
+  @Cacheable(value = Array("missing_prop"), key = "#missingProperty", sync = false)
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {
+    logger.info("Cache missed missing_prop")
     val missingFilter = missingProperty.map(missingProp =>
       Filters.not(Filters.exists(s"properties.$missingProp")))
     collectLatestVersions(missingFilter)

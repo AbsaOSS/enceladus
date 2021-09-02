@@ -16,16 +16,20 @@
 package za.co.absa.enceladus.menas.services
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
+import org.springframework.cache.annotation.Cacheable
+import org.springframework.stereotype.{Component, Service}
 import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionStats}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-@Component
+@Service
 class StatisticsService @Autowired() (propertyDefService: PropertyDefinitionService, datasetService: DatasetService){
   //#TODO find optimizations #1897
+  @Cacheable(value = Array("statistics"),sync = false)
   def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] = {
+    propertyDefService.logger.info("cache miss statistics")
+    Thread.sleep(2000)
     val propertyDefsFuture = propertyDefService.getLatestVersions()
     propertyDefsFuture
       .map { (props: Seq[PropertyDefinition]) =>
