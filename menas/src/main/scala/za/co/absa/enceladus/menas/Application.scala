@@ -19,17 +19,25 @@ import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, Ser
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager
 import org.springframework.context.annotation._
+import org.springframework.data.redis.cache.{RedisCacheManager, RedisCacheWriter}
 import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
+import org.springframework.data.redis.serializer.GenericToStringSerializer
 
 @SpringBootApplication
 @EnableAsync
 @EnableCaching
+@EnableRedisRepositories
 @EnableScheduling
 @Configuration
 class Application() {
@@ -55,8 +63,29 @@ class Application() {
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
   }
 
+  @Bean def jedisConnectionFactory: JedisConnectionFactory = {
+    val properties = redisProperties
+    val configuration = new RedisStandaloneConfiguration
+    configuration.setHostName(properties.getHost)
+    configuration.setPort(properties.getPort)
+    new JedisConnectionFactory(configuration)
+  }
+
+  @Bean def redisTemplate: RedisTemplate[String, AnyRef] = {
+    val template = new RedisTemplate[String, AnyRef]
+    template.setConnectionFactory(jedisConnectionFactory)
+    template.setValueSerializer(new GenericToStringSerializer(classOf[Any]))
+    template
+  }
+
   @Bean
-  def cacheManager = new ConcurrentMapCacheManager("missing_prop", "statistics")
+  @Primary def redisProperties = new RedisProperties()
+
+  @Primary
+  @Bean def cacheManager: RedisCacheManager = RedisCacheManager.create(jedisConnectionFactory)
+
+  @Bean
+  def alternateCacheManager = new ConcurrentMapCacheManager("missing_prop", "statistics")
 }
 
 object Application extends App {
