@@ -26,7 +26,7 @@ import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, S
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
+import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -48,9 +48,7 @@ object StandardizationInterpreter {
    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
                   recordIdGenerationStrategy: IdType = IdType.NoId)
-                 (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
-
-    implicit val defaults: Defaults = new DefaultsByFormat(inputType)
+                 (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)

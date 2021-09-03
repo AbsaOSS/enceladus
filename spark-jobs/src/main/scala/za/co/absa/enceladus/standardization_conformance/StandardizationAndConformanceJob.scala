@@ -20,6 +20,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.modules.SourcePhase
+import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
@@ -31,6 +32,8 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val udfLib: UDFLibrary = new UDFLibrary
+    implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
+
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
 
