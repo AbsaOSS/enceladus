@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization
 
 import java.io.File
 import java.nio.file.Files
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -30,7 +29,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
-import za.co.absa.atum.utils.ControlUtils
+import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
@@ -60,7 +59,6 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
       testDataset.write.csv(stdPath)
 
       // Atum framework initialization is part of the 'prepareStandardization'
-      import za.co.absa.atum.AtumImplicits.SparkSessionWrapper
       spark.disableControlMeasuresTracking()
 
       val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
@@ -88,7 +86,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     ).toDF("id", "data").as("DatasetA")
 
     // rawPath must exist, _INFO file creation assures so
-    ControlUtils.createInfoFile(someDataset,
+    ControlMeasureUtils.createInfoFile(someDataset,
       "test app",
       rawPath,
       "2020-02-20",

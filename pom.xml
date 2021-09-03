@@ -139,7 +139,8 @@
         <scoverage.maven.plugin.version>1.3.0</scoverage.maven.plugin.version>
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
-        <atum.version>3.3.0</atum.version>
+        <absa.commons.version>0.0.27</absa.commons.version>
+        <atum.version>3.6.0</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
         <cobrix.version>2.1.0</cobrix.version>
