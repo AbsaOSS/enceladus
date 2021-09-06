@@ -25,6 +25,7 @@
                         <StandardListItem id="Datasets" title="Datasets" type="Navigation" press="onDatasetPress" icon="sap-icon://database" />
                         <StandardListItem id="MappingTables" title="Mapping Tables" type="Navigation" icon="sap-icon://SAP-icons-TNT/value-mapping"
                                         press="onMappingPress" />
+                        <StandardListItem id="Properties" title="Dataset Properties" type="Navigation" press="onPropertiesPress" icon="sap-icon://multi-select"/>
                     </items>
                 </List>
                 <footer>
@@ -41,6 +42,7 @@
             <mvc:XMLView id="schemasPage" viewName="components.schema.schemaMaster"/>
             <mvc:XMLView id="datasetsPage" viewName="components.dataset.datasetMaster"/>
             <mvc:XMLView id="mappingTablesPage" viewName="components.mappingTable.mappingTableMaster"/>
+            <mvc:XMLView id="propertiesPage" viewName="components.property.datasetPropertyMaster"/>
         </masterPages>
     </SplitApp>
 </mvc:View>
