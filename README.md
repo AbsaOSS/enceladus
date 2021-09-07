@@ -39,7 +39,6 @@ ___
 - [Plugins](#plugins)
     - [Built-in Plugins](#built-in-plugins)
 - [How to contribute](#how-to-contribute)
-- [Documentation](#documentation)
 <!-- tocstop -->
 
 ## What is Enceladus?
