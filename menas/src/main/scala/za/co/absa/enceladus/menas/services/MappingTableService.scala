@@ -99,7 +99,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
         accValidations.withErrorIf(
           !fields.contains(defaultValue.columnName),
           "item.defaultMappingValue",
-          s"Cannot fiend field ${defaultValue.columnName} in schema")
+          s"Cannot find field ${defaultValue.columnName} in schema")
       }
     })
   }
