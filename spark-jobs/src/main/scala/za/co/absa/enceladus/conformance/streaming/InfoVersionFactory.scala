@@ -46,11 +46,11 @@ object InfoVersionFactory {
   def getFactoryFromConfig(conf: Configuration): InfoVersionFactory = {
     if (conf.containsKey(reportVersionKey)) {
       val reportVersion = conf.getInt(reportVersionKey)
-      log.info(s"Info version: configuration reportVersion = $reportVersion")
+      log.info(s"Information version: Explicit from the job configuration = $reportVersion")
       new InfoVersionLiteralFactory(reportVersion)
     } else if (conf.containsKey(reportVersionColumnKey)) {
       val infoVersionColumn = conf.getString(reportVersionColumnKey)
-      log.info(s"Info version: configuration infoVersionColumn = $infoVersionColumn")
+      log.info(s"Information version: Derived from the configured column = $infoVersionColumn")
       new InfoVersionColumnFactory(infoVersionColumn)
     } else {
       log.info(s"Info version: default version = 1")

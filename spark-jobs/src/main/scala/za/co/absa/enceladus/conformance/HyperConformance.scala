@@ -39,8 +39,8 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 class HyperConformance (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         menasBaseUrls: List[String],
-                        infoVersionFactory: InfoVersionFactory,
-                        infoDateFactory: InfoDateFactory) extends StreamTransformer {
+                        infoDateFactory: InfoDateFactory,
+                        infoVersionFactory: InfoVersionFactory) extends StreamTransformer {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @throws[IllegalArgumentException]
@@ -65,7 +65,7 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
-    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn(rawDf)
+    val infoVersionCol = infoVersionFactory.getInfoVersionColumn(rawDf)
 
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
@@ -74,7 +74,7 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
       .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionColumn)
+      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionCol)
     conformedDf
   }
 
