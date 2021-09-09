@@ -22,12 +22,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.menas.integration.fixtures._
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -71,8 +73,32 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
             description = Some("init version"), properties = Some(Map("keyA" -> "valA")))
           datasetFixture.add(datasetA1)
 
-          val datasetA2 = DatasetFactory.getDummyDataset("datasetA", description = Some("updated"),
-            properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
+          val exampleMappingCr = MappingConformanceRule(0,
+            controlCheckpoint = true,
+            mappingTable = "CurrencyMappingTable",
+            mappingTableVersion = 9, //scalastyle:ignore magic.number
+            attributeMappings = Map("InputValue" -> "STRING_VAL"),
+            targetAttribute = "CCC",
+            outputColumn = "ConformedCCC",
+            isNullSafe = true,
+            mappingTableFilter = Some(
+              AndJoinedFilters(Set(
+                OrJoinedFilters(Set(
+                  EqualsFilter("column1", "soughtAfterValue"),
+                  EqualsFilter("column1", "alternativeSoughtAfterValue")
+                )),
+                DiffersFilter("column2", "anotherValue"),
+                NotFilter(IsNullFilter("col3"))
+              ))
+            ),
+            overrideMappingTableOwnFilter = Some(true)
+          )
+
+          val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+            description = Some("updated"),
+            properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")),
+            conformance = List(exampleMappingCr)
+          )
 
           val response = sendPost[Dataset, Dataset](s"$apiUrl/edit", bodyOpt = Some(datasetA2))
           assertCreated(response)
@@ -83,7 +109,8 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
               version = 2,
               description = Some("updated"),
               parent = Some(DatasetFactory.toParent(datasetA1)),
-              properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))
+              properties = Some(Map("keyA" -> "valA", "keyB" -> "valB")),
+              conformance = List(exampleMappingCr)
           )
           val expected = toExpected(expectedDs, actual)
           assert(actual == expected)
