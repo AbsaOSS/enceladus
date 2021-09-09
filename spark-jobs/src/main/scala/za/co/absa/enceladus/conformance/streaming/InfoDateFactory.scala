@@ -73,6 +73,9 @@ object InfoDateFactory {
 
   def getFactoryFromConfig(conf: Configuration): InfoDateFactory = {
     if (conf.containsKey(reportDateKey)) {
+      if (conf.containsKey(eventTimestampColumnKey)) {
+        log.warn(s"Both $reportDateKey and $eventTimestampColumnKey specified, applying literal")
+      }
       val reportDate = conf.getString(reportDateKey)
       log.info(s"Information date: Explicit from the job configuration = $reportDate")
       new InfoDateLiteralFactory(reportDate)

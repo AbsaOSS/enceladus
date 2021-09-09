@@ -45,6 +45,9 @@ object InfoVersionFactory {
 
   def getFactoryFromConfig(conf: Configuration): InfoVersionFactory = {
     if (conf.containsKey(reportVersionKey)) {
+      if (conf.containsKey(reportVersionColumnKey)) {
+        log.warn(s"Both $reportVersionKey and $reportVersionColumnKey specified, applying literal")
+      }
       val reportVersion = conf.getInt(reportVersionKey)
       log.info(s"Information version: Explicit from the job configuration = $reportVersion")
       new InfoVersionLiteralFactory(reportVersion)

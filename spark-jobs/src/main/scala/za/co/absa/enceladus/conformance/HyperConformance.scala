@@ -65,7 +65,7 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
-    val infoVersionCol = infoVersionFactory.getInfoVersionColumn(rawDf)
+    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn(rawDf)
 
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
@@ -74,7 +74,7 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
       .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
       .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionCol)
+      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 
@@ -143,7 +143,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setBroadcastMaxSizeMb(0)
 
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
-    implicit val infoVersionColumn: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
+    implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
     implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
     new HyperConformance()
