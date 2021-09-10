@@ -32,13 +32,14 @@ import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 import za.co.absa.enceladus.model.menas.scheduler.oozie._
 import za.co.absa.enceladus.menas.models._
+import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.versionedModel._
-import scala.collection.immutable
 
+import scala.collection.immutable
 import scala.compat.java8.FutureConverters._
 import scala.collection.JavaConverters
 import scala.concurrent.Future
@@ -61,9 +62,9 @@ package object implicits {
     classOf[RuntimeConfig], classOf[OozieSchedule], classOf[OozieScheduleInstance], classOf[ScheduleTiming], classOf[DataFormat],
     classOf[UserInfo], classOf[VersionedSummary], classOf[MenasAttachment], classOf[MenasReference],
     classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality],
-    classOf[LandingPageInformation], classOf[TodaysRunsStatistics]
-  ),
-    CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
+    classOf[LandingPageInformation], classOf[TodaysRunsStatistics],
+    classOf[DataFrameFilter]
+  ), CodecRegistries.fromCodecs(new ZonedDateTimeAsDocumentCodec()), DEFAULT_CODEC_REGISTRY)
 
   def javaMapToScalaMap[K, V](javaMap: java.util.Map[K, V]): immutable.Map[K, V] = {
     // in Scala 2.12, we could just do javaMap.asScala.toMap // https://stackoverflow.com/a/64614317/1773349
