@@ -19,6 +19,7 @@ import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.{DataFrame, Row}
+import org.mockito.Mockito.lenient
 import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.HyperConformance
@@ -41,7 +42,8 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
                                               (implicit menasDAO: MenasDAO): DataFrame = {
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
-    when(configStub.containsKey(reportVersionColumnKey)).thenReturn(true)
+    when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
+    lenient.when(configStub.containsKey(reportVersionColumnKey)).thenReturn(true)
     when(configStub.getString(reportVersionColumnKey)).thenReturn("numerics.SmartObject.all_random")
     when(configStub.containsKey(reportDateKey)).thenReturn(true)
     when(configStub.getString(reportDateKey)).thenReturn(reportDate)

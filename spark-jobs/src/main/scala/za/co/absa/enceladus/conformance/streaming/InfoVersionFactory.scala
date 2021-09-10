@@ -26,21 +26,22 @@ sealed trait InfoVersionFactory {
   def getInfoVersionColumn(df: DataFrame): Column
 }
 
-class InfoVersionLiteralFactory(reportVersion: Int) extends InfoVersionFactory {
-  override def getInfoVersionColumn(df: DataFrame): Column = lit(reportVersion)
-}
+object InfoVersionFactory {
 
-class InfoVersionColumnFactory(columnName: String) extends InfoVersionFactory {
-  override def getInfoVersionColumn(df: DataFrame): Column = {
-    val dt: Option[StructField] = SchemaUtils.getField(columnName, df.schema)
-    dt match {
-      case Some(_) => col(columnName)
-      case None => throw new IllegalArgumentException(s"The specified info column does not exist: $columnName")
+  private class InfoVersionLiteralFactory(reportVersion: Int) extends InfoVersionFactory {
+    override def getInfoVersionColumn(df: DataFrame): Column = lit(reportVersion)
+  }
+
+  private class InfoVersionColumnFactory(columnName: String) extends InfoVersionFactory {
+    override def getInfoVersionColumn(df: DataFrame): Column = {
+      val dt: Option[StructField] = SchemaUtils.getField(columnName, df.schema)
+      dt match {
+        case Some(_) => col(columnName)
+        case None => throw new IllegalArgumentException(s"The specified info column does not exist: $columnName")
+      }
     }
   }
-}
 
-object InfoVersionFactory {
   import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 
   def getFactoryFromConfig(conf: Configuration): InfoVersionFactory = {
