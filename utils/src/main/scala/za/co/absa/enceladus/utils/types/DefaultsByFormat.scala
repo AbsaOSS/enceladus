@@ -22,7 +22,7 @@ import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 import java.util.TimeZone
 import scala.util.Try
 
-class DefaultsByFormat(format: String, globalDefaults: Defaults = GlobalDefaults) extends  Defaults {
+class DefaultsByFormat(formatName: String, globalDefaults: Defaults = GlobalDefaults) extends  Defaults {
   protected val config = new ConfigReader()
 
   /** A function which defines default values for primitive types */
@@ -59,7 +59,7 @@ class DefaultsByFormat(format: String, globalDefaults: Defaults = GlobalDefaults
   }
 
   private def formatSpecificConfigurationName(configurationName: String): String = {
-    s"$configurationName-$format"
+    s"$configurationName-$formatName"
   }
 
   private val defaultTimestampTimeZone: Option[String] =
