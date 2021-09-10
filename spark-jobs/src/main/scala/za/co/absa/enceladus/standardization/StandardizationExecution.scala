@@ -83,7 +83,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     val defaultTimeZoneForTimestamp = defaults.getDefaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_timestamps"-> defaultTimeZoneForTimestamp)
-    val defaultTimeZoneForDate = defaults.getDefaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    val defaultTimeZoneForDate = defaults.getDefaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_dates"-> defaultTimeZoneForDate)
 
     // Add Dataset properties marked with putIntoInfoFile=true
