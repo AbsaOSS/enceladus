@@ -41,4 +41,9 @@ case class SchemaField
   def getAllChildren: Seq[String] = {
     children.flatMap(child => child.getAllChildren :+ child.getAbsolutePath)
   }
+
+  @JsonIgnore
+  def getAllChildrenBasePath: Seq[String] = {
+    children.flatMap(child => child.getAllChildrenBasePath :+ child.path)
+  }
 }
