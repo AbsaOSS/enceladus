@@ -83,6 +83,18 @@
             <timezone>Europe/Prague</timezone>
             <url>https://github.com/yruslan</url>
         </developer>
+        <developer>
+            <id>dk1844</id>
+            <name>Daniel Kavan</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/dk1844</url>
+        </developer>
+        <developer>
+            <id>AdrianOlosutean</id>
+            <name>Adrian Olosutean</name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/AdrianOlosutean</url>
+        </developer>
     </developers>
 
     <distributionManagement>
