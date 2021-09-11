@@ -22,8 +22,9 @@ import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 import java.util.TimeZone
 import scala.util.Try
 
-class DefaultsByFormat(formatName: String, globalDefaults: Defaults = GlobalDefaults) extends  Defaults {
-  protected val config = new ConfigReader()
+class DefaultsByFormat(formatName: String,
+                       globalDefaults: Defaults = GlobalDefaults,
+                       private val config: ConfigReader = new ConfigReader()) extends  Defaults {
 
   /** A function which defines default values for primitive types */
   override def getDataTypeDefaultValue(dt: DataType): Any = globalDefaults.getDataTypeDefaultValue(dt)

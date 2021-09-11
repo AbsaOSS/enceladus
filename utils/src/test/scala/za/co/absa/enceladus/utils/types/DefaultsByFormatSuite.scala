@@ -15,29 +15,58 @@
 
 package za.co.absa.enceladus.utils.types
 
+import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 class DefaultsByFormatSuite extends AnyFunSuite {
+
+  private val customConfig = new ConfigReader(
+    ConfigFactory.empty()
+      .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("PST"))
+      .withValue("defaultDateTimeZone-csv", ConfigValueFactory.fromAnyRef("JST"))
+      .withValue("defaultDateTimeZone-parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
+      .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("CET"))
+      .withValue("defaultTimestampTimeZone-xml", ConfigValueFactory.fromAnyRef("Africa/Johannesburg"))
+      .withValue("defaultTimestampTimeZone-json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
+  )
+
+
   test("Format specific timestamp time zone override exists") {
-    val default = new DefaultsByFormat("testFormat")
+    val default = new DefaultsByFormat("xml", config = customConfig)
     assert(default.getDefaultTimestampTimeZone.contains("Africa/Johannesburg"))
   }
 
   test("Format specific timestamp time zone override does not exists") {
-    val default = new DefaultsByFormat("testFormatNotExisting")
+    val default = new DefaultsByFormat("txt", config = customConfig)
     assert(default.getDefaultTimestampTimeZone.contains("CET"))
   }
 
   test("Format specific timestamp time zone override is not a valid time zone id") {
     intercept[IllegalStateException] {
-      new DefaultsByFormat("testFormatFail")
+      new DefaultsByFormat("parquet", config = customConfig)
     }
   }
 
-  test("Format specific date time zone override does not exists") {
+  test("Date time zone does not exist at all") {
     val default = new DefaultsByFormat("testFormat")
     assert(default.getDefaultDateTimeZone.isEmpty)
   }
 
+  test("Format specific date time zone override exists") {
+    val defaults = new DefaultsByFormat("csv", config = customConfig)
+    assert(defaults.getDefaultDateTimeZone.contains("JST"))
+  }
+
+  test("Format specific date time zone override does not exists") {
+    val defaults = new DefaultsByFormat("testFormat", config = customConfig)
+    assert(defaults.getDefaultDateTimeZone.contains("PST"))
+  }
+
+  test("Format specific date time zone override is not a valid time zone id") {
+    intercept[IllegalStateException] {
+      new DefaultsByFormat("json", config = customConfig)
+    }
+  }
 
 }
