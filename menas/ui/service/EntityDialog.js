@@ -389,14 +389,21 @@ class MappingTableDialog extends EntityDialog {
 
   submit() {
     let newEntity = this.oDialog.getModel("entity").oData;
+    const updatedFilters = newEntity.updatedFilters;
     //console.log(`submitted MT entity: ${JSON.stringify(newEntity)}`);
 
-    let updatedFilters = newEntity.updatedFilters;
-    // todo cleanup or assert? or replace with validation in the validate step?
-    console.log(`Updated filters count (should be 1) = ${updatedFilters.length}`);
+    console.log(`Updated filters count (should be 1) = ${updatedFilters}`); // todo remove
+    if (updatedFilters.length > 1) {
+      console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
+      sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
+    } else {
+      console.log(`Updated filters count (should be 0/1) = ${updatedFilters.length}`);
+      let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
 
-    this.oDialog.getModel("entity").setProperty("/filter", updatedFilters[0]);
-    console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
+      this.oDialog.getModel("entity").setProperty("/filter", updatedFilter); // todo solve for empty
+      console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
+
+    }
 
     super.submit()
   }
@@ -501,15 +508,54 @@ class MappingTableDialog extends EntityDialog {
     this.onFilterAdd({_t: "IsNullFilter", columnName: "<fillIn>"})
   }
 
+  addNiceNamesToFilterData(filterData){
+
+    // fn to add human readable text
+    const applyFn = function(filterNode) {
+      switch (filterNode._t) {
+        case "AndJoinedFilters":
+          filterNode.text = "AND";
+          break;
+        case "OrJoinedFilters":
+          filterNode.text = "OR";
+          break;
+        case "EqualsFilter":
+          filterNode.text = "Equals";
+          break;
+        case "DiffersFilter":
+          filterNode.text = `Differs`;
+          break;
+        case "NotFilter":
+          filterNode.text = "NOT";
+          break;
+        case "IsNullFilter":
+          filterNode.text = `is NULL`;
+          break;
+        default:
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterData(filterData, applyFn);
+  }
+
+  removeNiceNamesFromFilterData(filterData){
+
+    // fn to add human readable text
+    const applyFn = function(filterNode) {
+      filterNode.text = undefined;
+    };
+
+    return FilterTreeUtils.applyToFilterData(filterData, applyFn);
+  }
 
   onFilterAdd(blankFilter) {
-    console.log(`onFilterAdd with ${JSON.stringify(blankFilter)}`);
+    const namedBlankFilter = this.addNiceNamesToFilterData(blankFilter);
 
     const oTreeTable = this.oController.byId("filterTreeEdit");
     const aSelectedIndices = oTreeTable.getSelectedIndices();
     const oModel = oTreeTable.getBinding().getModel();
 
-    console.log(`aSelectedIndices = ${aSelectedIndices.length}`);
+    console.log(`aSelectedIndices = ${aSelectedIndices.length}`); // todo solve for empty
 
     if (aSelectedIndices.length !== 1) {
       sap.m.MessageToast.show("Select exactly one row first.");  // todo solve for empty
@@ -521,11 +567,11 @@ class MappingTableDialog extends EntityDialog {
 
     // based on what type of filter is selected, attach the new filter to it
     if (oNewParent.filterItems) { //and / or -> add
-      oNewParent.filterItems = oNewParent.filterItems.concat(blankFilter)
+      oNewParent.filterItems = oNewParent.filterItems.concat(namedBlankFilter)
     } else if (oNewParent.inputFilter) {
-      oNewParent.inputFilter = blankFilter // not -> replace
+      oNewParent.inputFilter = namedBlankFilter // not -> replace
     } else {
-      sap.m.MessageToast.show("Could not add filter. Leaf filter was selected"); // todo solve for empty
+      sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. "); // todo solve for empty
       return;
 
     }
@@ -539,8 +585,6 @@ class MappingTableDialog extends EntityDialog {
     var oTreeTable = this.oController.byId("filterTreeEdit");
     var aSelectedIndices = oTreeTable.getSelectedIndices();
     var oModel = oTreeTable.getBinding().getModel();
-
-    console.log(`aSelectedIndices = ${aSelectedIndices.length}`);
 
     if (aSelectedIndices.length === 0) {
       sap.m.MessageToast.show("Select at least one row first.");
@@ -589,13 +633,15 @@ class EditMappingTableDialog extends MappingTableDialog {
       const current = this.oController._model.getProperty("/currentMappingTable");
       //current.filterJson = JSON.stringify(current.filter);
       //console.log(`current MT: ${JSON.stringify(current)}`);
-      current.updatedFilters = [current.filter];
+      current.updatedFilters = [this.addNiceNamesToFilterData(current.filter)];
       console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
 
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
+
+
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");

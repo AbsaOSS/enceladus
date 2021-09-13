@@ -293,10 +293,10 @@ sap.ui.define([
       })
     },
 
-    filterToTreeStruct: function(filterData){
+    addIconsAndNiceNamesToFilterData: function(filterData){
 
-      // recursive function to apply on all level of the tree data
-      const filterToTreeStructMutatingFn = function(filterNode) {
+      // fn to add icon and human readable text
+      const applyFn = function(filterNode) {
         switch (filterNode._t) {
           case "AndJoinedFilters":
             filterNode.text = "AND";
@@ -324,18 +324,9 @@ sap.ui.define([
             break;
           default:
         }
-
-        // recursively do the same:
-        // AndJoinedFilters, OrJoinedFilters have field `filterItems` defined; NotFilter has field `inputFilter` defined.
-        if(filterNode.filterItems) filterNode.filterItems.forEach(filterToTreeStructMutatingFn);
-        if(filterNode.inputFilter) filterToTreeStructMutatingFn(filterNode.inputFilter);
       };
 
-      // the method is pure from the outside: making a deep copy to do the changes on:
-      let filterDataNode = jQuery.extend(true, { }, filterData);
-      filterToTreeStructMutatingFn(filterDataNode); // apply recursive changes mutably
-
-      return filterDataNode;
+      return FilterTreeUtils.applyToFilterData(filterData, applyFn);
     },
 
     load: function() {
@@ -343,7 +334,7 @@ sap.ui.define([
       currentMT.filterJson = JSON.stringify(currentMT.filter);
       console.debug(`current MT: ${JSON.stringify(currentMT)}`); // todo remove?
 
-      let filterTreeStruct = this.filterToTreeStruct(currentMT.filter);
+      let filterTreeStruct = this.addIconsAndNiceNamesToFilterData(currentMT.filter);
       console.debug(`filterTreeStruct: ${JSON.stringify(filterTreeStruct)}`); // todo remove?
 
       let treeModel = new sap.ui.model.json.JSONModel([filterTreeStruct]); // array wrap to make the root collapsible item

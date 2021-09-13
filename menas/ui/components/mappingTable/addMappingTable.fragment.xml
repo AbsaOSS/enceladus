@@ -73,7 +73,6 @@
                                                 <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://scissors" />
                                                 <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://scissors" />
                                                 <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://scissors" />
-
                                             </Menu>
                                         </menu>
                                     </MenuButton>
@@ -84,7 +83,7 @@
                             <t:columns>
                                 <t:Column label="FilterName">
                                     <t:template>
-                                        <Text text="{entity>_t}"/>
+                                        <Text text="{entity>text}"/>
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Column">
