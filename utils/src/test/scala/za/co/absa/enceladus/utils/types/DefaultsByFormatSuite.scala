@@ -23,22 +23,24 @@ class DefaultsByFormatSuite extends AnyFunSuite {
 
   private val customConfig = new ConfigReader(
     ConfigFactory.empty()
-      .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("PST"))
-      .withValue("defaultDateTimeZone-csv", ConfigValueFactory.fromAnyRef("JST"))
-      .withValue("defaultDateTimeZone-parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
-      .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("CET"))
-      .withValue("defaultTimestampTimeZone-xml", ConfigValueFactory.fromAnyRef("Africa/Johannesburg"))
-      .withValue("defaultTimestampTimeZone-json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
+      .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("UTC"))
+      .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("UTC"))
+      .withValue("enceladus.defaultDateTimeZone.default", ConfigValueFactory.fromAnyRef("PST"))
+      .withValue("enceladus.defaultDateTimeZone.csv", ConfigValueFactory.fromAnyRef("JST"))
+      .withValue("enceladus.defaultDateTimeZone.parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
+//      .withValue("enceladus.defaultTimestampTimeZone.default", ConfigValueFactory.fromAnyRef("CET"))
+//      .withValue("enceladus.defaultTimestampTimeZone.xml", ConfigValueFactory.fromAnyRef("Africa/Johannesburg"))
+      .withValue("enceladus.defaultTimestampTimeZone.json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
   )
 
 
   test("Format specific timestamp time zone override exists") {
-    val default = new DefaultsByFormat("xml", config = customConfig)
+    val default = new DefaultsByFormat("xml")
     assert(default.getDefaultTimestampTimeZone.contains("Africa/Johannesburg"))
   }
 
   test("Format specific timestamp time zone override does not exists") {
-    val default = new DefaultsByFormat("txt", config = customConfig)
+    val default = new DefaultsByFormat("txt")
     assert(default.getDefaultTimestampTimeZone.contains("CET"))
   }
 
@@ -67,6 +69,17 @@ class DefaultsByFormatSuite extends AnyFunSuite {
     intercept[IllegalStateException] {
       new DefaultsByFormat("json", config = customConfig)
     }
+  }
+
+  test("Getting the obsolete settings") {
+    val localConfig = new ConfigReader(
+      ConfigFactory.empty()
+        .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("PST"))
+        .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("JST"))
+    )
+    val defaults = new DefaultsByFormat("csv", config = localConfig)
+    assert(defaults.getDefaultTimestampTimeZone.contains("PST"))
+    assert(defaults.getDefaultDateTimeZone.contains("JST"))
   }
 
 }

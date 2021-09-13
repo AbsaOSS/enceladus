@@ -21,6 +21,7 @@ import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import java.util.TimeZone
 import scala.util.Try
+import DefaultsByFormat._
 
 class DefaultsByFormat(formatName: String,
                        globalDefaults: Defaults = GlobalDefaults,
@@ -60,19 +61,28 @@ class DefaultsByFormat(formatName: String,
   }
 
   private def formatSpecificConfigurationName(configurationName: String): String = {
-    s"$configurationName-$formatName"
+    configurationFullName(configurationName, formatName)
+  }
+
+  private def configurationFullName(base: String, suffix: String): String = {
+    s"$base.$suffix"
   }
 
   private val defaultTimestampTimeZone: Option[String] =
-    readTimezone(formatSpecificConfigurationName(DefaultsByFormat.TimestampTimeZoneName))
-      .orElse(readTimezone(DefaultsByFormat.TimestampTimeZoneName))
+    readTimezone(formatSpecificConfigurationName(TimestampTimeZoneKeyName))
+      .orElse(readTimezone(configurationFullName(TimestampTimeZoneKeyName, DefaultKeyName)))
+      .orElse(readTimezone(DefaultsByFormat.ObsoleteTimestampTimeZoneName))
 
   private val defaultDateTimeZone: Option[String] =
-    readTimezone(formatSpecificConfigurationName(DefaultsByFormat.DateTimeZoneName))
-      .orElse(readTimezone(DefaultsByFormat.DateTimeZoneName))
+    readTimezone(formatSpecificConfigurationName(DateTimeZoneKeyName))
+      .orElse(readTimezone(configurationFullName(DateTimeZoneKeyName, DefaultKeyName)))
+      .orElse(readTimezone(DefaultsByFormat.ObsoleteDateTimeZoneName))
 }
 
 object DefaultsByFormat {
-  final val TimestampTimeZoneName = "defaultTimestampTimeZone"
-  final val DateTimeZoneName = "defaultDateTimeZone"
+  private final val DefaultKeyName = "default"
+  private final val ObsoleteTimestampTimeZoneName = "defaultTimestampTimeZone"
+  private final val ObsoleteDateTimeZoneName = "defaultDateTimeZone"
+  private final val TimestampTimeZoneKeyName = "enceladus.defaultTimestampTimeZone"
+  private final val DateTimeZoneKeyName = "enceladus.defaultDateTimeZone"
 }
