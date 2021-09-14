@@ -22,15 +22,16 @@ import org.apache.spark.SparkContext
 import za.co.absa.spline.persistence.api._
 
 /**
- * The object contains static information about settings needed for initialization of the HdfsPersistenceWriterFactory class.
+ * The class represents persistence layer factory for Hadoop FS (inluding AWS S3). Based on
+ * * [[za.co.absa.spline.persistence.hdfs.HdfsPersistenceFactory]].
  */
 object HadoopFsPersistenceFactory {
-  val fileNameKey = "spline.hdfs.file.name"
-  val filePermissionsKey = "spline.hdfs.file.permissions"
+  private val fileNameKey = "spline.hdfs.file.name"
+  private val filePermissionsKey = "spline.hdfs.file.permissions"
 }
 
 /**
- * The class represents a factory creating HDFS persistence layers for all main data lineage entities.
+ * The class represents a factory creating Hadoop FS persistence layers for all main data lineage entities.
  *
  * @param configuration A source of settings
  */
@@ -40,7 +41,8 @@ class HadoopFsPersistenceFactory(configuration: Configuration) extends Persisten
 
   private val hadoopConfiguration = SparkContext.getOrCreate().hadoopConfiguration
   private val fileName = configuration.getString(fileNameKey, "_LINEAGE")
-  private val defaultFilePermissions = FsPermission.getFileDefault.applyUMask(FsPermission.getUMask(FileSystem.get(hadoopConfiguration).getConf))
+  private val defaultFilePermissions = FsPermission.getFileDefault
+    .applyUMask(FsPermission.getUMask(FileSystem.get(hadoopConfiguration).getConf))
   private val filePermissions = new FsPermission(configuration.getString(filePermissionsKey, defaultFilePermissions.toShort.toString))
 
   log.info(s"Lineage destination path: $fileName")

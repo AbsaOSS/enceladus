@@ -32,9 +32,11 @@ import za.co.absa.spline.persistence.hdfs.serialization.JSONSerialization
 import scala.concurrent.{ExecutionContext, Future, blocking}
 
 /**
-  * The class represents persistence layer that persists the [[za.co.absa.spline.model.DataLineage DataLineage]] entity to a file on HDFS.
+  * The class represents persistence layer that persists on Hadoop FS. Based on
+  * [[za.co.absa.spline.persistence.hdfs.HdfsDataLineageWriter]].
   */
-class HadoopFsDataLineageWriter(hadoopConfiguration: Configuration, fileName: String, filePermissions: FsPermission) extends DataLineageWriter with Logging {
+class HadoopFsDataLineageWriter(hadoopConfiguration: Configuration, fileName: String, filePermissions: FsPermission)
+  extends DataLineageWriter with Logging {
   /**
     * The method stores a particular data lineage to the persistence layer.
     *
@@ -82,17 +84,17 @@ class HadoopFsDataLineageWriter(hadoopConfiguration: Configuration, fileName: St
       path,
       filePermissions,
       true,
-      hadoopConfiguration.getInt("io.file.buffer.size", 4096),
+      hadoopConfiguration.getInt("io.file.buffer.size", 4096), // scalastyle:ignore magic.number
       fs.getDefaultReplication(path),
       fs.getDefaultBlockSize(path),
-      null)) {
+      null)) { // scalastyle:ignore null
       _.write(content.getBytes)
     }
   }
 
   private def getPath(lineage: DataLineage): Option[Path] =
     lineage.rootOperation match {
-      case dn: Write => Some(new Path(dn.path, fileName))
+      case writeOp: Write => Some(new Path(writeOp.path, fileName))
       case _ => None
     }
 }
