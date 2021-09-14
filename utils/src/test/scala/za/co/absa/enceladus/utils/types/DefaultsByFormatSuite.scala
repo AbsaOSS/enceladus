@@ -21,18 +21,11 @@ import za.co.absa.enceladus.utils.config.ConfigReader
 
 class DefaultsByFormatSuite extends AnyFunSuite {
 
-  private val customConfig = new ConfigReader(
+  private val customTimestampConfig  = new ConfigReader(
     ConfigFactory.empty()
-      .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("UTC"))
-      .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("UTC"))
-      .withValue("enceladus.defaultDateTimeZone.default", ConfigValueFactory.fromAnyRef("PST"))
-      .withValue("enceladus.defaultDateTimeZone.csv", ConfigValueFactory.fromAnyRef("JST"))
-      .withValue("enceladus.defaultDateTimeZone.parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
-//      .withValue("enceladus.defaultTimestampTimeZone.default", ConfigValueFactory.fromAnyRef("CET"))
-//      .withValue("enceladus.defaultTimestampTimeZone.xml", ConfigValueFactory.fromAnyRef("Africa/Johannesburg"))
+      .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("UTC")) // fallback to "obsolete"
       .withValue("enceladus.defaultTimestampTimeZone.json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
   )
-
 
   test("Format specific timestamp time zone override exists") {
     val default = new DefaultsByFormat("xml")
@@ -44,9 +37,14 @@ class DefaultsByFormatSuite extends AnyFunSuite {
     assert(default.getDefaultTimestampTimeZone.contains("CET"))
   }
 
+  test("Format specific timestamp zone fallbacks to obsolete") {
+    val defaults = new DefaultsByFormat("xml", config = customTimestampConfig)
+    assert(defaults.getDefaultTimestampTimeZone.contains("UTC"))
+  }
+
   test("Format specific timestamp time zone override is not a valid time zone id") {
     intercept[IllegalStateException] {
-      new DefaultsByFormat("parquet", config = customConfig)
+      new DefaultsByFormat("json", config = customTimestampConfig)
     }
   }
 
@@ -55,19 +53,27 @@ class DefaultsByFormatSuite extends AnyFunSuite {
     assert(default.getDefaultDateTimeZone.isEmpty)
   }
 
+  private val customDateConfig = new ConfigReader(
+    ConfigFactory.empty()
+      .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("UTC")) // fallback to "obsolete"
+      .withValue("enceladus.defaultDateTimeZone.default", ConfigValueFactory.fromAnyRef("PST"))
+      .withValue("enceladus.defaultDateTimeZone.csv", ConfigValueFactory.fromAnyRef("JST"))
+      .withValue("enceladus.defaultDateTimeZone.parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
+  )
+
   test("Format specific date time zone override exists") {
-    val defaults = new DefaultsByFormat("csv", config = customConfig)
+    val defaults = new DefaultsByFormat("csv", config = customDateConfig)
     assert(defaults.getDefaultDateTimeZone.contains("JST"))
   }
 
   test("Format specific date time zone override does not exists") {
-    val defaults = new DefaultsByFormat("testFormat", config = customConfig)
+    val defaults = new DefaultsByFormat("testFormat", config = customDateConfig)
     assert(defaults.getDefaultDateTimeZone.contains("PST"))
   }
 
   test("Format specific date time zone override is not a valid time zone id") {
     intercept[IllegalStateException] {
-      new DefaultsByFormat("json", config = customConfig)
+      new DefaultsByFormat("parquet", config = customDateConfig)
     }
   }
 
