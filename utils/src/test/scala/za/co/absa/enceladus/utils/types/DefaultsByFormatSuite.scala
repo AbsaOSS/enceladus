@@ -24,7 +24,7 @@ class DefaultsByFormatSuite extends AnyFunSuite {
   private val customTimestampConfig  = new ConfigReader(
     ConfigFactory.empty()
       .withValue("defaultTimestampTimeZone", ConfigValueFactory.fromAnyRef("UTC")) // fallback to "obsolete"
-      .withValue("enceladus.defaultTimestampTimeZone.json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
+      .withValue("standardization.defaultTimestampTimeZone.json", ConfigValueFactory.fromAnyRef("WrongTimeZone"))
   )
 
   test("Format specific timestamp time zone override exists") {
@@ -56,9 +56,9 @@ class DefaultsByFormatSuite extends AnyFunSuite {
   private val customDateConfig = new ConfigReader(
     ConfigFactory.empty()
       .withValue("defaultDateTimeZone", ConfigValueFactory.fromAnyRef("UTC")) // fallback to "obsolete"
-      .withValue("enceladus.defaultDateTimeZone.default", ConfigValueFactory.fromAnyRef("PST"))
-      .withValue("enceladus.defaultDateTimeZone.csv", ConfigValueFactory.fromAnyRef("JST"))
-      .withValue("enceladus.defaultDateTimeZone.parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
+      .withValue("standardization.defaultDateTimeZone.default", ConfigValueFactory.fromAnyRef("PST"))
+      .withValue("standardization.defaultDateTimeZone.csv", ConfigValueFactory.fromAnyRef("JST"))
+      .withValue("standardization.defaultDateTimeZone.parquet", ConfigValueFactory.fromAnyRef("Gibberish"))
   )
 
   test("Format specific date time zone override exists") {
