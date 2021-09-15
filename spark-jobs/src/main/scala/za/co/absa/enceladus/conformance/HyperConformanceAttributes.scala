@@ -27,6 +27,7 @@ object HyperConformanceAttributes {
   val datasetVersionKey = "dataset.version"
   val reportDateKey = "report.date"
   val reportVersionKey = "report.version"
+  val reportVersionColumnKey = "report.version.column"
   val eventTimestampColumnKey = "event.timestamp.column"
   val eventTimestampPatternKey = "event.timestamp.pattern"
 }
@@ -46,7 +47,9 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
     datasetVersionKey ->
       PropertyMetadata("Dataset version", None, required = true),
     reportDateKey ->
-      PropertyMetadata("Report date", Some("The current date is used by default0"), required = false),
+      PropertyMetadata("Report date", Some("The current date is used by default "), required = false),
+    reportVersionColumnKey ->
+      PropertyMetadata("Report version column", Some("Taken from another column"), required = false),
     reportVersionKey ->
       PropertyMetadata("Report version", Some("Will be determined automatically by default if not specified"), required = false),
     eventTimestampColumnKey ->
