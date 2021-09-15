@@ -399,7 +399,6 @@ class MappingTableDialog extends EntityDialog {
 
       this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
       console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
-
     }
 
     super.submit()
@@ -643,8 +642,6 @@ class EditMappingTableDialog extends MappingTableDialog {
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
-
-
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");

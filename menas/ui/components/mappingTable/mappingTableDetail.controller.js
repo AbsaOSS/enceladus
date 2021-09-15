@@ -331,16 +331,13 @@ sap.ui.define([
 
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
+
       currentMT.filterJson = JSON.stringify(currentMT.filter);
-      console.debug(`current MT: ${JSON.stringify(currentMT)}`); // todo remove?
 
-      let filterTreeStruct = this.addIconsAndNiceNamesToFilterData(currentMT.filter);
-      console.debug(`filterTreeStruct: ${JSON.stringify(filterTreeStruct)}`); // todo remove?
+      let filterDataWithNamesAndIcons = this.addIconsAndNiceNamesToFilterData(currentMT.filter);
+      currentMT.filterTree = [filterDataWithNamesAndIcons];
 
-      let treeModel = new sap.ui.model.json.JSONModel([filterTreeStruct]); // array wrap to make the root collapsible item
       let tree = this.getView().byId("filterTree");
-      tree.setModel(treeModel);
-      tree.expandToLevel(2);
 
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
       if (currentMT) {
@@ -352,7 +349,8 @@ sap.ui.define([
         this._mtRestDAO.getLatestVersionByName(currentMT.name)
           .then(version => this._model.setProperty("/editingEnabled", currentMT.version === version));
       }
-    }
 
+      tree.expandToLevel(2);
+    }
   });
 });

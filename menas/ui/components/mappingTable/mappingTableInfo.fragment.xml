@@ -41,11 +41,12 @@
                 text="{path: 'mappingTable>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
             <Label text="Created By"/>
             <Text text="{mappingTable>/userCreated}"/>
+            <!-- todo remove -->
             <Label text="Filter"/>
             <Text text="{mappingTable>/filterJson}"/>
             <Label text="Filter Tree" />
-            <Tree id="filterTree" items="{path: '/'}">
-                <StandardTreeItem title="{text}" icon="{icon}"/>
+            <Tree id="filterTree" items="{path: 'mappingTable>/filterTree'}" >
+                <StandardTreeItem title="{mappingTable>text}" icon="{mappingTable>icon}"/>
             </Tree>
 
         </form:content>

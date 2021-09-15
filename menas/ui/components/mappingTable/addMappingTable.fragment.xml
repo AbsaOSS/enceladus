@@ -58,10 +58,16 @@
                                               HDFSPath="{entity>/hdfsPath}"/>
 
                         </VBox>
+                        <!-- todo remove -->
                         <Label text="Filter"/>
                         <Text text="{entity>/filterJson}"/>
                         <Label text="Filter Tree"/>
-                        <t:TreeTable id="filterTreeEdit" rows="{path:'entity>/updatedFilters'}">
+                        <t:TreeTable id="filterTreeEdit" rows="{
+                            path:'entity>/updatedFilters',
+                            parameters: {
+                                numberOfExpandedLevels: 1
+                            }
+                        }">
                             <t:extension>
                                 <OverflowToolbar style="Clear">
                                     <MenuButton text="Add">
