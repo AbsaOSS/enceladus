@@ -21,20 +21,23 @@ class FilterTreeUtils {
    * @returns copy of the `filterData` root node with changes applied
    */
   static applyToFilterData(filterData, applyFn) {
+    if (!filterData) {
+      return filterData; // when empty, return as-is
+    }
 
     // recursive function to apply on all level of the tree data
-    const recursiveFn = function(filterNode) {
+    const recursiveFnWrapper = function(filterNode) {
       applyFn(filterNode);
 
       // recursively do the same:
       // AndJoinedFilters, OrJoinedFilters have field `filterItems` defined; NotFilter has field `inputFilter` defined.
-      if(filterNode.filterItems) filterNode.filterItems.forEach(recursiveFn);
-      if(filterNode.inputFilter) recursiveFn(filterNode.inputFilter);
+      if(filterNode.filterItems) filterNode.filterItems.forEach(recursiveFnWrapper);
+      if(filterNode.inputFilter) recursiveFnWrapper(filterNode.inputFilter);
     };
 
     // the method is pure from the outside: making a deep copy to do the changes on at first:
     let filterDataNode = jQuery.extend(true, { }, filterData);
-    recursiveFn(filterDataNode); // apply recursive changes mutably
+    recursiveFnWrapper(filterDataNode); // apply recursive changes mutably
 
     return filterDataNode;
   }

@@ -555,25 +555,30 @@ class MappingTableDialog extends EntityDialog {
     const aSelectedIndices = oTreeTable.getSelectedIndices();
     const oModel = oTreeTable.getBinding().getModel();
 
-    console.log(`aSelectedIndices = ${aSelectedIndices.length}`); // todo solve for empty
+    switch (aSelectedIndices.length) {
+      case 0:
+        // the filter is empty, just add the first filter:
+        oModel.setProperty("/updatedFilters", [namedBlankFilter]);
+        break;
 
-    if (aSelectedIndices.length !== 1) {
-      sap.m.MessageToast.show("Select exactly one row first.");  // todo solve for empty
-      return;
-    }
+      case 1:
+        const oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
+        const oNewParent = oNewParentContext.getProperty();
 
-    const oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
-    const oNewParent = oNewParentContext.getProperty();
+        // based on what type of filter is selected, attach the new filter to it
+        if (oNewParent.filterItems) { //and / or -> add
+          oNewParent.filterItems = oNewParent.filterItems.concat(namedBlankFilter)
+        } else if (oNewParent.inputFilter) {
+          oNewParent.inputFilter = namedBlankFilter // not -> replace
+        } else {
+          sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
+          return;
+        }
+        break;
 
-    // based on what type of filter is selected, attach the new filter to it
-    if (oNewParent.filterItems) { //and / or -> add
-      oNewParent.filterItems = oNewParent.filterItems.concat(namedBlankFilter)
-    } else if (oNewParent.inputFilter) {
-      oNewParent.inputFilter = namedBlankFilter // not -> replace
-    } else {
-      sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. "); // todo solve for empty
-      return;
-
+      default:
+        sap.m.MessageToast.show("Select exactly one item to add a child filter!");
+        return;
     }
 
     oModel.refresh();
