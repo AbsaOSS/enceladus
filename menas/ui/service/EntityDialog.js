@@ -390,9 +390,6 @@ class MappingTableDialog extends EntityDialog {
   submit() {
     let newEntity = this.oDialog.getModel("entity").oData;
     const updatedFilters = newEntity.updatedFilters;
-    //console.log(`submitted MT entity: ${JSON.stringify(newEntity)}`);
-
-    console.log(`Updated filters count (should be 1) = ${updatedFilters}`); // todo remove
     if (updatedFilters.length > 1) {
       console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
       sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
@@ -400,7 +397,7 @@ class MappingTableDialog extends EntityDialog {
       console.log(`Updated filters count (should be 0/1) = ${updatedFilters.length}`);
       let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
 
-      this.oDialog.getModel("entity").setProperty("/filter", updatedFilter); // todo solve for empty
+      this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
       console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
 
     }
@@ -551,25 +548,25 @@ class MappingTableDialog extends EntityDialog {
   onFilterAdd(blankFilter) {
     const namedBlankFilter = this.addNiceNamesToFilterData(blankFilter);
 
-    const oTreeTable = this.oController.byId("filterTreeEdit");
-    const aSelectedIndices = oTreeTable.getSelectedIndices();
-    const oModel = oTreeTable.getBinding().getModel();
+    const treeTable = this.oController.byId("filterTreeEdit");
+    const selectedIndices = treeTable.getSelectedIndices();
+    const treeTableModel = treeTable.getBinding().getModel();
 
-    switch (aSelectedIndices.length) {
+    switch (selectedIndices.length) {
       case 0:
         // the filter is empty, just add the first filter:
-        oModel.setProperty("/updatedFilters", [namedBlankFilter]);
+        treeTableModel.setProperty("/updatedFilters", [namedBlankFilter]);
         break;
 
       case 1:
-        const oNewParentContext = oTreeTable.getContextByIndex(aSelectedIndices[0]);
-        const oNewParent = oNewParentContext.getProperty();
+        const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
+        const newParent = newParentContext.getProperty();
 
         // based on what type of filter is selected, attach the new filter to it
-        if (oNewParent.filterItems) { //and / or -> add
-          oNewParent.filterItems = oNewParent.filterItems.concat(namedBlankFilter)
-        } else if (oNewParent.inputFilter) {
-          oNewParent.inputFilter = namedBlankFilter // not -> replace
+        if (newParent.filterItems) { //and / or -> add
+          newParent.filterItems = newParent.filterItems.concat(namedBlankFilter)
+        } else if (newParent.inputFilter) {
+          newParent.inputFilter = namedBlankFilter // not -> replace
         } else {
           sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
           return;
@@ -577,33 +574,34 @@ class MappingTableDialog extends EntityDialog {
         break;
 
       default:
-        sap.m.MessageToast.show("Select exactly one item to add a child filter!");
+        sap.m.MessageToast.show("Select exactly one item to add a child to!");
         return;
     }
 
-    oModel.refresh();
+    treeTableModel.refresh();
+    if (selectedIndices) {
+      treeTable.expand(selectedIndices[0]); // nice of the user to directly see the child among the expanded parent
+    }
   }
 
   onRemoveSelected() {
-    console.log("onRemoveSelected event fired");
+    const treeTable = this.oController.byId("filterTreeEdit");
+    const selectedIndices = treeTable.getSelectedIndices();
+    const treeTableModel = treeTable.getBinding().getModel();
 
-    var oTreeTable = this.oController.byId("filterTreeEdit");
-    var aSelectedIndices = oTreeTable.getSelectedIndices();
-    var oModel = oTreeTable.getBinding().getModel();
-
-    if (aSelectedIndices.length === 0) {
-      sap.m.MessageToast.show("Select at least one row first.");
+    if (selectedIndices.length === 0) {
+      sap.m.MessageToast.show("Select one or more items to remove.");
       return;
     }
 
     // delete the data.
-    aSelectedIndices.forEach(idx => {
-        var oContext = oTreeTable.getContextByIndex(idx);
-        var oData = oContext.getProperty();
+    selectedIndices.forEach(idx => {
+        const context = treeTable.getContextByIndex(idx);
+        const data = context.getProperty();
 
-        if (oData) {
+        if (data) {
           // The property is simply set to undefined to preserve the tree state (expand/collapse states of nodes).
-          oModel.setProperty(oContext.getPath(), undefined, oContext, true);
+          treeTableModel.setProperty(context.getPath(), undefined, context, true);
         }
       }
     );
