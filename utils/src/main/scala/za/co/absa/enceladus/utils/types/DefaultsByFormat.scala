@@ -83,6 +83,6 @@ object DefaultsByFormat {
   private final val DefaultKeyName = "default"
   private final val ObsoleteTimestampTimeZoneName = "defaultTimestampTimeZone"
   private final val ObsoleteDateTimeZoneName = "defaultDateTimeZone"
-  private final val TimestampTimeZoneKeyName = "enceladus.defaultTimestampTimeZone"
-  private final val DateTimeZoneKeyName = "enceladus.defaultDateTimeZone"
+  private final val TimestampTimeZoneKeyName = "standardization.defaultTimestampTimeZone"
+  private final val DateTimeZoneKeyName = "standardization.defaultDateTimeZone"
 }
