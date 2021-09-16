@@ -605,11 +605,23 @@ class MappingTableDialog extends EntityDialog {
       }
     );
   }
+
+  // on MTDialog open - base
+  onPress() {
+    const suggestedColumnTypes = FilterTreeUtils.columnTypeNames.map(function (val) {
+      return {name: val}
+    }); // [ {name: string}, ...]
+
+    const typeModel = new sap.ui.model.json.JSONModel(suggestedColumnTypes);
+    this.oDialog.setModel(typeModel, "suggestedColumnTypes");
+  }
 }
 
 class AddMappingTableDialog extends MappingTableDialog {
 
   onPress() {
+    super.onPress();
+
     this.schemaService.getList(this.oDialog).then(() => {
       this.oDialog.setModel(new sap.ui.model.json.JSONModel({
         name: "",
@@ -631,10 +643,10 @@ class AddMappingTableDialog extends MappingTableDialog {
 class EditMappingTableDialog extends MappingTableDialog {
 
   onPress() {
+    super.onPress();
+
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
-      //current.filterJson = JSON.stringify(current.filter);
-      //console.log(`current MT: ${JSON.stringify(current)}`);
       current.updatedFilters = [this.addNiceNamesToFilterData(current.filter)];
       console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
 

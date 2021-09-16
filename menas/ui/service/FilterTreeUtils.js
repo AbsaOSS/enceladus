@@ -42,4 +42,10 @@ class FilterTreeUtils {
     return filterDataNode;
   }
 
+  // simple spark-sql types for hinting, origin: https://spark.apache.org/docs/latest/sql-ref-datatypes.htm
+  static columnTypeNames = [
+    "boolean", "byte", "short", "integer", "long", "bigint", "float", "double", "decimal", "numeric",
+    "date", "timestamp", "string", "binary", "interval"
+  ]
+
 }

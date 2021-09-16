@@ -105,7 +105,15 @@
 
                                 <t:Column label="ValueType">
                                     <t:template>
-                                        <Input type="Text" value="{entity>valueType}" visible="{= !!${entity>valueType}}"/>
+                                        <Input type="Text" value="{entity>valueType}"
+                                               visible="{= !!${entity>valueType}}"
+                                               showSuggestion="true"
+                                               suggestionItems="{suggestedColumnTypes>/}">
+                                            <suggestionItems>
+                                                <core:Item key="{suggestedColumnTypes>name}" text="{suggestedColumnTypes>name}"/>
+                                            </suggestionItems>
+                                        </Input>
+
                                     </t:template>
                                 </t:Column>
                             </t:columns>
