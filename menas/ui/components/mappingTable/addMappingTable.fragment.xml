@@ -94,19 +94,21 @@
                                 </t:Column>
                                 <t:Column label="Column">
                                     <t:template>
-                                        <Input type="Text" value="{entity>columnName}" visible="{= !!${entity>columnName}}"/>
+                                        <Input type="Text" value="{entity>columnName}"
+                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' || ${entity>_t} === 'IsNullFilter' }" />
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Value">
                                     <t:template>
-                                        <Input type="Text" value="{entity>value}" visible="{= !!${entity>value}}"/>
+                                        <Input type="Text" value="{entity>value}"
+                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"/>
+                                        <!-- todo use a formatter instead? -->
                                     </t:template>
                                 </t:Column>
-
                                 <t:Column label="ValueType">
                                     <t:template>
                                         <Input type="Text" value="{entity>valueType}"
-                                               visible="{= !!${entity>valueType}}"
+                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"
                                                showSuggestion="true"
                                                suggestionItems="{suggestedColumnTypes>/}">
                                             <suggestionItems>
