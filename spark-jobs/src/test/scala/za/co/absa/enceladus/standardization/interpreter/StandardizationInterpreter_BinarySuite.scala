@@ -20,6 +20,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -28,6 +29,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with SparkTestB
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val fieldName = "binaryField"
 
