@@ -21,7 +21,7 @@ import java.net.URI
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.atum.location.S3Location.StringS3LocationExt
+import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 
 object FileSystemUtils {
 
@@ -34,7 +34,7 @@ object FileSystemUtils {
    * @return FileSystem instance (backed by S3/HDFS)
    */
   def getFileSystemFromPath(path: String)(implicit hadoopConf: Configuration): FileSystem = {
-    path.toS3Location match {
+    path.toSimpleS3Location match {
 
       case Some(s3Location) => // s3 over hadoop fs api
         val s3BucketUri: String = s"s3://${s3Location.bucketName}" // s3://<bucket>
