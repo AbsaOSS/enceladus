@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.permission.FsPermission
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.slf4s.Logging
 import za.co.absa.spline.common.ARM._
-import za.co.absa.atum.location.S3Location.StringS3LocationExt
+import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
 import za.co.absa.spline.model.DataLineage
 import za.co.absa.spline.model.op.Write
 import za.co.absa.spline.persistence.api.DataLineageWriter
@@ -62,9 +62,9 @@ class HadoopFsDataLineageWriter(hadoopConfiguration: Configuration, fileName: St
    * @return FS + relative path
    **/
   def pathStringToFsWithPath(pathString: String): (FileSystem, Path) = {
-    pathString.toS3Location match {
+    pathString.toSimpleS3Location match {
       case Some(s3Location) =>
-        val s3Uri = new URI(s3Location.s3String) // s3://<bucket>
+        val s3Uri = new URI(s3Location.asSimpleS3LocationString) // s3://<bucket>
         val s3Path = new Path(s"/${s3Location.path}") // /<text-file-object-path>
 
         val fs = FileSystem.get(s3Uri, hadoopConfiguration)
