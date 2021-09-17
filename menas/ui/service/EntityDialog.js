@@ -390,16 +390,19 @@ class MappingTableDialog extends EntityDialog {
   submit() {
     let newEntity = this.oDialog.getModel("entity").oData;
     const updatedFilters = newEntity.updatedFilters;
-    if (updatedFilters.length > 1) {
-      console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
-      sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
-    } else {
-      console.log(`Updated filters count (should be 0/1) = ${updatedFilters.length}`);
-      let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
 
-      this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
-      console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
-    }
+    if (updatedFilters) {
+      if (updatedFilters.length > 1) {
+        console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
+        sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
+      } else {
+        console.log(`Updated filters count (should be 0/1) = ${updatedFilters.length}`);
+        let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
+
+        this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
+        console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
+      }
+    } // do nothing on empty filter
 
     super.submit()
   }
@@ -551,30 +554,29 @@ class MappingTableDialog extends EntityDialog {
     const selectedIndices = treeTable.getSelectedIndices();
     const treeTableModel = treeTable.getBinding().getModel();
 
-    switch (selectedIndices.length) {
-      case 0:
-        // the filter is empty, just add the first filter:
-        treeTableModel.setProperty("/updatedFilters", [namedBlankFilter]);
-        break;
+    const currentFilters = this.oDialog.getModel("entity").getProperty("/updatedFilters");
+    const filtersEmpty = !currentFilters || currentFilters.filter(x => x).length == 0; // after removal of previous, there can be [null]
 
-      case 1:
-        const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
-        const newParent = newParentContext.getProperty();
+    if (filtersEmpty) {
+      treeTableModel.setProperty("/updatedFilters", [namedBlankFilter]); // add first filter by replacing the empty model
 
-        // based on what type of filter is selected, attach the new filter to it
-        if (newParent.filterItems) { //and / or -> add
-          newParent.filterItems = newParent.filterItems.concat(namedBlankFilter)
-        } else if (newParent.inputFilter) {
-          newParent.inputFilter = namedBlankFilter // not -> replace
-        } else {
-          sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
-          return;
-        }
-        break;
+    } else if(selectedIndices.length == 1) {
+      const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
+      const newParent = newParentContext.getProperty();
 
-      default:
-        sap.m.MessageToast.show("Select exactly one item to add a child to!");
+      // based on what type of filter is selected, attach the new filter to it
+      if (newParent.filterItems) { //and / or -> add
+        newParent.filterItems = newParent.filterItems.concat(namedBlankFilter)
+      } else if (newParent.inputFilter) {
+        newParent.inputFilter = namedBlankFilter // not -> replace
+      } else {
+        sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
         return;
+      }
+    } else {
+
+      sap.m.MessageToast.show("Select exactly one item to add a child to!");
+      return;
     }
 
     treeTableModel.refresh();
