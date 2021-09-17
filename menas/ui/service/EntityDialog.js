@@ -495,16 +495,15 @@ class MappingTableDialog extends EntityDialog {
   }
 
   onFilterAddEquals() {
-    // todo this is not editable due to edit box not being show for "" values.
-    this.onFilterAdd({_t: "EqualsFilter", columnName: "<fillIn>", value: "<fillIn>", valueType: "string"})
+    this.onFilterAdd({_t: "EqualsFilter", columnName: "", value: "", valueType: ""})
   }
 
   onFilterAddDiffers() {
-    this.onFilterAdd({_t: "DiffersFilter", columnName: "<fillIn>", value: "<fillIn>", valueType: "string"})
+    this.onFilterAdd({_t: "DiffersFilter", columnName: "", value: "", valueType: ""})
   }
 
   onFilterAddIsNull() {
-    this.onFilterAdd({_t: "IsNullFilter", columnName: "<fillIn>"})
+    this.onFilterAdd({_t: "IsNullFilter", columnName: ""})
   }
 
   addNiceNamesToFilterData(filterData){
