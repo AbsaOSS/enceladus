@@ -82,5 +82,13 @@ class DefaultsSuite extends AnyFunSuite {
   test("Nullable default is None") {
     assert(GlobalDefaults.getDataTypeDefaultValueWithNull(BooleanType, nullable = true) === Success(None))
   }
+
+  test("Default time zone for timestamps does not exists") {
+    assert(GlobalDefaults.getDefaultTimestampTimeZone.isEmpty)
+  }
+
+  test("Default time zone for dates does not exist") {
+    assert(GlobalDefaults.getDefaultDateTimeZone.isEmpty)
+  }
 }
 

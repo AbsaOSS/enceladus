@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
-import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -27,10 +26,12 @@ import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenera
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 

@@ -41,7 +41,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   def getLatestVersions(): Future[Seq[C]] = {
-    versionedMongoRepository.getLatestVersions()
+    versionedMongoRepository.getLatestVersions(None)
   }
 
   def getSearchSuggestions(): Future[Seq[String]] = {
