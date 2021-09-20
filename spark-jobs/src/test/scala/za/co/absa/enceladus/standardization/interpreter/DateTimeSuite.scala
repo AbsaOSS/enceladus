@@ -16,31 +16,31 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
-
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.field.FieldValidationFailure
 import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException, ValidationWarning}
 
-import scala.io.Source
 
-class DateTimeSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase{
+class DateTimeSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
+  private implicit val defaults: Defaults = GlobalDefaults
+
   lazy val data: DataFrame = spark.createDataFrame(TestSamples.dateSamples)
-  lazy val schemaWrong: StructType = DataType.fromJson(Source
-    .fromFile("src/test/resources/data/dateTimestampSchemaWrong.json")
-    .getLines().mkString("\n"))
+  lazy val schemaWrong: StructType = DataType
+    .fromJson(FileReader.readFileAsString("src/test/resources/data/dateTimestampSchemaWrong.json"))
     .asInstanceOf[StructType]
-  lazy val schemaOk: StructType = DataType.fromJson(Source
-    .fromFile("src/test/resources/data/dateTimestampSchemaOk.json")
-    .getLines().mkString("\n"))
+  lazy val schemaOk: StructType = DataType
+    .fromJson(FileReader.readFileAsString("src/test/resources/data/dateTimestampSchemaOk.json"))
     .asInstanceOf[StructType]
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary()
@@ -76,7 +76,7 @@ class DateTimeSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase{
   }
 
   test("Date Time Standardization Example Test should throw an exception") {
-    val std = intercept[ValidationException] {
+    intercept[ValidationException] {
       StandardizationInterpreter.standardize(data, schemaWrong, "dates")
     }
   }
