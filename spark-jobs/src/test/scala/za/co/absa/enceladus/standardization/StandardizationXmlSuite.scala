@@ -27,10 +27,12 @@ import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpret
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationXmlSuite extends AnyFunSuite with SparkTestBase with MockitoSugar{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 

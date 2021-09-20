@@ -234,11 +234,11 @@ class PropertyRestDAO extends RestDAO {
   }
 
   getMissingProperties() {
-    return RestClient.get(`api/statistics/properties/missing`)
+    return RestClient.get(`/statistics/properties/missing`)
   }
 
   getDatasetsMissingProperty(propertyName) {
-    return RestClient.get(`api/dataset/latest?missing_property=${propertyName}`)
+    return RestClient.get(`/dataset/latest?missing_property=${propertyName}`)
   }
 }
 

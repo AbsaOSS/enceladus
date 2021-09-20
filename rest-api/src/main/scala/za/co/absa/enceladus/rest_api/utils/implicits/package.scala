@@ -27,6 +27,7 @@ import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDa
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api.versionedModelDetail._
 import za.co.absa.enceladus.model.conformanceRule._
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
