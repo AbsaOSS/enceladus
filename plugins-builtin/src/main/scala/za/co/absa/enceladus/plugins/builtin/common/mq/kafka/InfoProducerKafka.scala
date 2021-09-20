@@ -50,6 +50,11 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
       sec.saslMechanism.foreach(saslMechanism => props.put("sasl.mechanism", saslMechanism))
     })
 
+    kafkaConnectionParams.schemaRegistrySecurityParams.foreach(param => {
+      props.put(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, param.credentialsSource)
+      param.userInfo.foreach(info => props.put(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG, info))
+    })
+
     new KafkaProducer[GenericRecord, GenericRecord](props)
   }
 

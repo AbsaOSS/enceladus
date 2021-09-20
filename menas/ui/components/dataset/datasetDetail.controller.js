@@ -370,15 +370,19 @@ sap.ui.define([
 
       //transform properties into a bindable format
       const aPropTemplates = this._model.getProperty(`/properties`) || [];
-      if(currentDataset && currentDataset.properties) {
+      if(currentDataset) {
         currentDataset.propertiesDisplay = [];
-        for(let sName in currentDataset.properties) {
-          const oPropTemplMatch = aPropTemplates.find((oTempl) => { return oTempl.name === sName });
-          const iOrder = oPropTemplMatch ? oPropTemplMatch.order : Infinity;
+
+        for(let property of aPropTemplates) {
+          let propValue = null;
+          if(currentDataset.properties && currentDataset.properties[property.name]) {
+            propValue = currentDataset.properties[property.name];
+          }
           currentDataset.propertiesDisplay.push({
-            name: sName,
-            value: currentDataset.properties[sName],
-            order: iOrder
+            name: property.name,
+            value: propValue,
+            order: property.order,
+            essentiality: property.essentiality._t
           });
         }
       }
