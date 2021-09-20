@@ -89,18 +89,22 @@
                             <t:columns>
                                 <t:Column label="FilterName">
                                     <t:template>
-                                        <Text text="{entity>text}"/>
+                                        <ObjectStatus text="{entity>text}" state="{entity>filter_valueState}"
+                                                      icon="{= ${entity>filter_valueState} === 'None' ? undefined : 'sap-icon://error' }"
+                                                      tooltip="{entity>filter_valueStateText}"/>
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Column">
                                     <t:template>
                                         <Input type="Text" value="{entity>columnName}" placeholder="Enter col. name"
+                                               valueState="{entity>columnName_valueState}" valueStateText="{entity>columnName_valueStateText}"
                                                visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' || ${entity>_t} === 'IsNullFilter' }" />
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="Value">
                                     <t:template>
                                         <Input type="Text" value="{entity>value}" placeholder="Enter value"
+                                               valueState="{entity>value_valueState}" valueStateText="{entity>value_valueStateText}"
                                                visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"/>
                                         <!-- todo use a formatter instead? -->
                                     </t:template>
@@ -110,8 +114,9 @@
                                         <Input type="Text" value="{entity>valueType}"
                                                placeholder="Enter type"
                                                visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"
+                                               valueState="{entity>valueType_valueState}" valueStateText="{entity>valueType_valueStateText}"
                                                showSuggestion="true"
-                                               suggestionItems="{suggestedColumnTypes>/}">
+                                               suggestionItems="{path: 'suggestedColumnTypes>/', templateShareable:false}">
                                             <suggestionItems>
                                                 <core:Item key="{suggestedColumnTypes>name}" text="{suggestedColumnTypes>name}"/>
                                             </suggestionItems>

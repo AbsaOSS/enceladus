@@ -326,7 +326,7 @@ sap.ui.define([
         }
       };
 
-      return FilterTreeUtils.applyToFilterData(filterData, applyFn);
+      return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
     },
 
     load: function() {

@@ -97,7 +97,7 @@ class DatasetDialog extends EntityDialog {
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
 
- }
+  }
 
   /**
    * Will create `oProps`'s allowedValues mapped into displayable sequence of objects, e.g.
@@ -106,7 +106,7 @@ class DatasetDialog extends EntityDialog {
    * @returns {undefined} or allowedValues sequence of Select-mappable object: (value, text)*
    */
   preprocessedAllowedValues(oProp) {
-    if(Functions.hasValidAllowedValues(oProp.propertyType)) {
+    if (Functions.hasValidAllowedValues(oProp.propertyType)) {
       let allowedMap = oProp.propertyType.allowedValues.map(val => {
         if (val == oProp.propertyType.suggestedValue) {
           return {value: val, text: `${val} (suggested value)`}
@@ -118,7 +118,7 @@ class DatasetDialog extends EntityDialog {
       if (oProp.essentiality._t !== "Mandatory") {
         allowedMap = [{value: "", text: ""}, ...allowedMap] // (ES6 prepending) - ability to undefine the property
       }
-        return allowedMap;
+      return allowedMap;
 
     } else {
       return undefined;
@@ -444,6 +444,49 @@ class MappingTableDialog extends EntityDialog {
     // simple path-based
     this.oController.byId("addMtSimplePath").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("addMtSimplePath").setValueStateText("");
+
+    // todo move tree validation reset here?
+  }
+
+  resetFilterDataValidation(filterData) {
+
+    // fn to add human readable text
+    const applyFn = function (filterNode) {
+      switch (filterNode._t) {
+        case "AndJoinedFilters":
+        case "OrJoinedFilters":
+        case "NotFilter":
+          filterNode.filter_valueState = "None";
+          filterNode.filter_valueStateText = "";
+
+          break;
+        case "IsNullFilter":
+          filterNode.filter_valueState = "None";
+          filterNode.filter_valueStateText = "";
+
+          filterNode.columnName_valueState = "None";
+          filterNode.columnName_valueStateText = "";
+          break;
+
+        case "EqualsFilter":
+        case "DiffersFilter":
+          filterNode.filter_valueState = "None";
+          filterNode.filter_valueStateText = "";
+
+          filterNode.columnName_valueState = "None";
+          filterNode.columnName_valueStateText = "";
+
+          filterNode.value_valueState = "None";
+          filterNode.value_valueStateText = "";
+
+          filterNode.valueType_valueState = "None";
+          filterNode.valueType_valueStateText = "";
+          break;
+        default:
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
   }
 
   isValid(oMT) {
@@ -454,20 +497,93 @@ class MappingTableDialog extends EntityDialog {
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
 
+    const treeTable = this.oController.byId("filterTreeEdit");
+    const treeTableModel = treeTable.getBinding().getModel();
+
+    // todo move to "filterData validation fn?"
+    const filterData = treeTableModel.getProperty("/updatedFilters");
+    console.log(`filterTreeOData = ${JSON.stringify(filterData)}`);
+
+    let hasValidFilter = true;
+    // filter data can be [filter], [null] or null
+    if (!filterData || filterData.map(x => x).length == 0) {
+       hasValidFilter = true;
+    } else {
+      // validate filter tree
+      const validateInUiFn = function (filterNode) {
+        switch (filterNode._t) {
+          // todo simplify or redesign?
+          case "AndJoinedFilters":
+          case "OrJoinedFilters":
+            if (filterNode.filterItems.map(x => x).length == 0) { // empty deleted ([null]) is not valid
+              filterNode.filter_valueState = "Error";
+              filterNode.filter_valueStateText = "No children!";
+              hasValidFilter = false;
+            }
+            break;
+
+          case "NotFilter":
+            if (!filterNode.inputFilter) {
+              filterNode.filter_valueState = "Error";
+              filterNode.filter_valueStateText = "No children!";
+              hasValidFilter = false;
+            }
+            break;
+
+           case "EqualsFilter":
+           case "DiffersFilter":
+             if (filterNode.columnName.length == 0) {
+               filterNode.columnName_valueState = "Error";
+               filterNode.columnName_valueStateText = "Fill in column name.";
+               hasValidFilter = false;
+             }
+
+             if (filterNode.value.length == 0) {
+               filterNode.value_valueState = "Error";
+               filterNode.value_valueStateText = "Fill in value.";
+               hasValidFilter = false;
+             }
+
+             if (filterNode.valueType.length == 0) {
+               filterNode.valueType_valueState = "Error";
+               filterNode.valueType_valueStateText = "Fill in value.";
+               hasValidFilter = false;
+             }
+             break;
+
+          case "IsNullFilter":
+            if (filterNode.columnName.length == 0) {
+              filterNode.columnName_valueState = "Error";
+              filterNode.columnName_valueStateText = "Fill in column name.";
+              hasValidFilter = false;
+            }
+            break;
+
+          default:
+        }
+      };
+
+      const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
+      const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(resetValidatedFilter, validateInUiFn);
+      treeTableModel.setProperty("/updatedFilters", [validatedFilter]);
+
+      treeTableModel.refresh();
+    }
+
     if (oMT.hdfsBrowserEnabled) {
       let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
         "Mapping Table HDFS path",
         this.oController.byId("selectedHDFSPathLabel"));
       let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-      return hasValidName && hasValidSchema && hasExistingHDFSPath;
+      return hasValidName && hasValidSchema && hasExistingHDFSPath && hasValidFilter;
     } else {
 
       let hasValidSimplePath = EntityValidationService.hasValidSimplePath(oMT.hdfsPath,
         "Mapping Table path",
         this.oController.byId("addMtSimplePath"));
 
-      return hasValidName && hasValidSchema && hasValidSimplePath;
+      return hasValidName && hasValidSchema && hasValidSimplePath && hasValidFilter;
     }
 
     // todo #1863 check that there is only one root filter containing the rest?
@@ -483,15 +599,15 @@ class MappingTableDialog extends EntityDialog {
   }
 
   onFilterAddAnd() {
-    this.onFilterAdd({ _t : "AndJoinedFilters", filterItems : []})
+    this.onFilterAdd({_t: "AndJoinedFilters", filterItems: []})
   }
 
   onFilterAddOr() {
-    this.onFilterAdd({ _t : "OrJoinedFilters", filterItems : []})
+    this.onFilterAdd({_t: "OrJoinedFilters", filterItems: []})
   }
 
   onFilterAddNot() {
-    this.onFilterAdd({_t: "NotFilter", inputFilter: []}) // deliberately [] as empty init (null -> could not add)
+    this.onFilterAdd({_t: "NotFilter", inputFilter: null}) // deliberately [] as empty init (null -> could not add)
   }
 
   onFilterAddEquals() {
@@ -506,10 +622,10 @@ class MappingTableDialog extends EntityDialog {
     this.onFilterAdd({_t: "IsNullFilter", columnName: ""})
   }
 
-  addNiceNamesToFilterData(filterData){
+  addNiceNamesToFilterData(filterData) {
 
     // fn to add human readable text
-    const applyFn = function(filterNode) {
+    const applyFn = function (filterNode) {
       switch (filterNode._t) {
         case "AndJoinedFilters":
           filterNode.text = "AND";
@@ -533,21 +649,21 @@ class MappingTableDialog extends EntityDialog {
       }
     };
 
-    return FilterTreeUtils.applyToFilterData(filterData, applyFn);
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
   }
 
-  removeNiceNamesFromFilterData(filterData){
+  removeNiceNamesFromFilterData(filterData) {
 
     // fn to add human readable text
-    const applyFn = function(filterNode) {
+    const applyFn = function (filterNode) {
       filterNode.text = undefined;
     };
 
-    return FilterTreeUtils.applyToFilterData(filterData, applyFn);
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
   }
 
   onFilterAdd(blankFilter) {
-    const namedBlankFilter = this.addNiceNamesToFilterData(blankFilter);
+    const namedBlankFilter = this.resetFilterDataValidation(this.addNiceNamesToFilterData(blankFilter));
 
     const treeTable = this.oController.byId("filterTreeEdit");
     const selectedIndices = treeTable.getSelectedIndices();
@@ -559,14 +675,14 @@ class MappingTableDialog extends EntityDialog {
     if (filtersEmpty) {
       treeTableModel.setProperty("/updatedFilters", [namedBlankFilter]); // add first filter by replacing the empty model
 
-    } else if(selectedIndices.length == 1) {
+    } else if (selectedIndices.length == 1) {
       const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
       const newParent = newParentContext.getProperty();
 
       // based on what type of filter is selected, attach the new filter to it
-      if (newParent.filterItems) { //and / or -> add
+      if (newParent._t == 'AndJoinedFilters' || newParent._t == 'OrJoinedFilters' ) { //and / or -> add
         newParent.filterItems = newParent.filterItems.concat(namedBlankFilter)
-      } else if (newParent.inputFilter) {
+      } else if (newParent._t == 'NotFilter') {
         newParent.inputFilter = namedBlankFilter // not -> replace
       } else {
         sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
@@ -648,7 +764,8 @@ class EditMappingTableDialog extends MappingTableDialog {
 
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
-      current.updatedFilters = [this.addNiceNamesToFilterData(current.filter)];
+
+      current.updatedFilters = [this.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
       console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
 
       current.isEdit = true;

@@ -14,13 +14,8 @@
  */
 
 class FilterTreeUtils {
-  /**
-   * Aux method to apply a function recursively to all nodes in all levels of the filterData structure (immutable fn'l way)
-   * @param filterData root node
-   * @param applyFn function to apply (expected to be mutating)
-   * @returns copy of the `filterData` root node with changes applied
-   */
-  static applyToFilterData(filterData, applyFn) {
+
+  static #applyToFilterData(filterData, applyFn, mutable) {
     if (!filterData) {
       return filterData; // when empty, return as-is
     }
@@ -35,11 +30,26 @@ class FilterTreeUtils {
       if(filterNode.inputFilter) recursiveFnWrapper(filterNode.inputFilter);
     };
 
-    // the method is pure from the outside: making a deep copy to do the changes on at first:
-    let filterDataNode = jQuery.extend(true, { }, filterData);
+    // if the method is to be pure from the outside: making a deep copy to do the changes on at first:
+    let filterDataNode = mutable ? filterData : jQuery.extend(true, { }, filterData);
     recursiveFnWrapper(filterDataNode); // apply recursive changes mutably
 
     return filterDataNode;
+  }
+
+
+  /**
+   * Aux method to apply a function recursively to all nodes in all levels of the filterData structure (immutable fn'l way)
+   * @param filterData root node
+   * @param applyFn function to apply (expected to be mutating)
+   * @returns copy of the `filterData` root node with changes applied
+   */
+  static applyToFilterDataImmutably(filterData, applyFn) {
+    return this.#applyToFilterData(filterData, applyFn, false)
+  }
+
+  static applyToFilterDataMutably(filterData, applyFn) {
+    return this.#applyToFilterData(filterData, applyFn, true)
   }
 
   // simple spark-sql types for hinting, origin: https://spark.apache.org/docs/latest/sql-ref-datatypes.htm
