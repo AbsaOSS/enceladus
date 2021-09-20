@@ -30,5 +30,12 @@ spark-submit --conf "spark.driver.extraJavaOptions= -Dkey1=value1 -Dkey2=value2"
 
 <!-- specific sections on Standardization & Conformance options may follow in the future -->
 
+Note, that
+  - `conformance.autoclean.standardized.hdfs.folder` when set to true and the job is writing to S3, there will be a leftover empty file like `conformance-output_$folder$` after the autoclean.
+  This, however, will not negatively impact the functionality of other jobs and is due to the EMR comitter. The recommendation is that the same `standardized.hdfs.path` value to be set for
+   all jobs performing autoclean so that there won't be more of these files. 
+  If this is not the case, a bucket lifecycle policy can be set so that all files ending in `$folder$` be deleted regularly
+  
+
 [readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md
 [spark-app-conf]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/main/resources/reference.conf
