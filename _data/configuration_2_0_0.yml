@@ -31,6 +31,28 @@
     - name: string with URLs
       description: 'Comma-separated list of URLs where Menas will be looked for. E.g.:
         <code>http://example.com/menas1,http://domain.com:8080/menas2</code>'
+  - name: standardization.defaultTimestampTimeZone.default
+    options:
+    - name: string with any valid time zone name
+      description: The time zone for normalization of timestamps that don't have their own time zone either in data
+        itself or in metadata. If left empty the system time zone will be used.
+  - name: standardization.defaultTimestampTimeZone.[rawFormat]
+    options:
+      - name: string with any valid time zone name
+        description: Same as above <code>standardization.defaultTimestampTimeZone.default</code>, but applies only for
+          the specific input raw format - then it takes precedence over
+          <code>standardization.defaultTimestampTimeZone.default</code>.
+  - name: standardization.defaultDateTimeZone.default
+    options:
+    - name: string with any valid time zone name
+      description: The time zone for normalization of dates that don't have their own time zone either in data itself
+        or in metadata in case they need it. Most probably this should be left undefined.
+  - name: standardization.defaultDateTimeZone.[rawFormat]
+    options:
+      - name: string with any valid time zone name
+        description: Same as above <code>standardization.defaultDateTimeZone.default</code>, but applies only for
+          the specific input raw format - then it takes precedence over
+          <code>standardization.defaultDateTimeZone.default</code>.
   - name: timezone
     options:
     - name: string with any valid time zone name
