@@ -396,11 +396,10 @@ class MappingTableDialog extends EntityDialog {
         console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
         sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
       } else {
-        console.log(`Updated filters count (should be 0/1) = ${updatedFilters.length}`);
         let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
 
         this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
-        console.log(`submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
+        console.debug(`Submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
       }
     } // do nothing on empty filter
 
@@ -626,7 +625,7 @@ class MappingTableDialog extends EntityDialog {
   }
 
   onFilterAddNot() {
-    this.onFilterAdd({_t: "NotFilter", inputFilter: null}) // deliberately [] as empty init (null -> could not add)
+    this.onFilterAdd({_t: "NotFilter", inputFilter: null})
   }
 
   onFilterAddEquals() {
