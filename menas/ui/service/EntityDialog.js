@@ -445,9 +445,33 @@ class MappingTableDialog extends EntityDialog {
     this.oController.byId("addMtSimplePath").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("addMtSimplePath").setValueStateText("");
 
-    // todo move tree validation reset here?
+    this.resetFilterValidation()
   }
 
+  /**
+   * This method resets validations on the UI
+   */
+  resetFilterValidation() {
+    const treeTable = this.oController.byId("filterTreeEdit");
+    const treeTableModel = treeTable.getBinding().getModel();
+
+    const filterData = treeTableModel.getProperty("/updatedFilters");
+    console.log(`filterTreeOData = ${JSON.stringify(filterData)}`);
+
+    // filter data can be [filter], [null] or null
+    if (filterData && filterData.map(x => x).length != 0) {
+      // resetting non-empty filter validations
+
+      const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
+      treeTableModel.setProperty("/updatedFilters", [resetValidatedFilter]);
+    }
+  }
+
+  /**
+   * This method operates on the data-object to immutably reset it (creates a copy with the reset validation fields)
+   * @param filterData
+   * @returns {copy} with reset validations
+   */
   resetFilterDataValidation(filterData) {
 
     // fn to add human readable text
@@ -490,7 +514,7 @@ class MappingTableDialog extends EntityDialog {
   }
 
   isValid(oMT) {
-    this.resetValueState();
+    this.resetValueState(); // includes reset of filter validation
 
     let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
       this.oController.byId("newMappingTableName"));
@@ -512,12 +536,11 @@ class MappingTableDialog extends EntityDialog {
       // validate filter tree
       const validateInUiFn = function (filterNode) {
         switch (filterNode._t) {
-          // todo simplify or redesign?
           case "AndJoinedFilters":
           case "OrJoinedFilters":
             if (filterNode.filterItems.map(x => x).length == 0) { // empty deleted ([null]) is not valid
               filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "No children!";
+              filterNode.filter_valueStateText = "Container filter must contain child filters!";
               hasValidFilter = false;
             }
             break;
@@ -525,7 +548,7 @@ class MappingTableDialog extends EntityDialog {
           case "NotFilter":
             if (!filterNode.inputFilter) {
               filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "No children!";
+              filterNode.filter_valueStateText = "Container filter must contain a child filter!";
               hasValidFilter = false;
             }
             break;
@@ -534,19 +557,19 @@ class MappingTableDialog extends EntityDialog {
            case "DiffersFilter":
              if (filterNode.columnName.length == 0) {
                filterNode.columnName_valueState = "Error";
-               filterNode.columnName_valueStateText = "Fill in column name.";
+               filterNode.columnName_valueStateText = "Fill in the column name.";
                hasValidFilter = false;
              }
 
              if (filterNode.value.length == 0) {
                filterNode.value_valueState = "Error";
-               filterNode.value_valueStateText = "Fill in value.";
+               filterNode.value_valueStateText = "Fill in the value.";
                hasValidFilter = false;
              }
 
              if (filterNode.valueType.length == 0) {
                filterNode.valueType_valueState = "Error";
-               filterNode.valueType_valueStateText = "Fill in value.";
+               filterNode.valueType_valueStateText = "Fill in value type.";
                hasValidFilter = false;
              }
              break;
@@ -563,10 +586,8 @@ class MappingTableDialog extends EntityDialog {
         }
       };
 
-      const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
-      const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(resetValidatedFilter, validateInUiFn);
+      const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(filterData[0], validateInUiFn);
       treeTableModel.setProperty("/updatedFilters", [validatedFilter]);
-
       treeTableModel.refresh();
     }
 
@@ -585,8 +606,6 @@ class MappingTableDialog extends EntityDialog {
 
       return hasValidName && hasValidSchema && hasValidSimplePath && hasValidFilter;
     }
-
-    // todo #1863 check that there is only one root filter containing the rest?
   }
 
   onNameChange() {
@@ -663,6 +682,7 @@ class MappingTableDialog extends EntityDialog {
   }
 
   onFilterAdd(blankFilter) {
+    // blank filter contains validation fields:
     const namedBlankFilter = this.resetFilterDataValidation(this.addNiceNamesToFilterData(blankFilter));
 
     const treeTable = this.oController.byId("filterTreeEdit");
