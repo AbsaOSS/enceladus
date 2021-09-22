@@ -472,9 +472,7 @@ class MappingTableDialog extends EntityDialog {
    * @returns {copy} with reset validations
    */
   resetFilterDataValidation(filterData) {
-
-    // fn to add human readable text
-    const applyFn = function (filterNode) {
+    const resetFn = function (filterNode) {
       switch (filterNode._t) {
         case "AndJoinedFilters":
         case "OrJoinedFilters":
@@ -509,17 +507,14 @@ class MappingTableDialog extends EntityDialog {
       }
     };
 
-    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, resetFn);
   }
 
-  isValid(oMT) {
-    this.resetValueState(); // includes reset of filter validation
-
-    let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
-      this.oController.byId("newMappingTableName"));
-    let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
-      this.oController.byId("schemaVersionSelect"));
-
+  /**
+   * Validates data in the filter TreeTable, sets their valueState|valueStateText (error+error descs)
+   * @returns {boolean} returns true if the filter content is valid, false when invalid
+   */
+  validateFilterData() {
     const treeTable = this.oController.byId("filterTreeEdit");
     const treeTableModel = treeTable.getBinding().getModel();
 
@@ -530,7 +525,7 @@ class MappingTableDialog extends EntityDialog {
     let hasValidFilter = true;
     // filter data can be [filter], [null] or null
     if (!filterData || filterData.map(x => x).length == 0) {
-       hasValidFilter = true;
+      hasValidFilter = true;
     } else {
       // validate filter tree
       const validateInUiFn = function (filterNode) {
@@ -552,26 +547,26 @@ class MappingTableDialog extends EntityDialog {
             }
             break;
 
-           case "EqualsFilter":
-           case "DiffersFilter":
-             if (filterNode.columnName.length == 0) {
-               filterNode.columnName_valueState = "Error";
-               filterNode.columnName_valueStateText = "Fill in the column name.";
-               hasValidFilter = false;
-             }
+          case "EqualsFilter":
+          case "DiffersFilter":
+            if (filterNode.columnName.length == 0) {
+              filterNode.columnName_valueState = "Error";
+              filterNode.columnName_valueStateText = "Fill in the column name.";
+              hasValidFilter = false;
+            }
 
-             if (filterNode.value.length == 0) {
-               filterNode.value_valueState = "Error";
-               filterNode.value_valueStateText = "Fill in the value.";
-               hasValidFilter = false;
-             }
+            if (filterNode.value.length == 0) {
+              filterNode.value_valueState = "Error";
+              filterNode.value_valueStateText = "Fill in the value.";
+              hasValidFilter = false;
+            }
 
-             if (filterNode.valueType.length == 0) {
-               filterNode.valueType_valueState = "Error";
-               filterNode.valueType_valueStateText = "Fill in value type.";
-               hasValidFilter = false;
-             }
-             break;
+            if (filterNode.valueType.length == 0) {
+              filterNode.valueType_valueState = "Error";
+              filterNode.valueType_valueStateText = "Fill in value type.";
+              hasValidFilter = false;
+            }
+            break;
 
           case "IsNullFilter":
             if (filterNode.columnName.length == 0) {
@@ -589,6 +584,18 @@ class MappingTableDialog extends EntityDialog {
       treeTableModel.setProperty("/updatedFilters", [validatedFilter]);
       treeTableModel.refresh();
     }
+
+    return hasValidFilter;
+  }
+
+  isValid(oMT) {
+    this.resetValueState(); // includes reset of filter validation
+
+    let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
+      this.oController.byId("newMappingTableName"));
+    let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
+      this.oController.byId("schemaVersionSelect"));
+    let hasValidFilter = this.validateFilterData();
 
     if (oMT.hdfsBrowserEnabled) {
       let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
