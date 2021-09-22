@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Schema}
 
@@ -38,7 +39,8 @@ object MappingTableFactory extends EntityFactory[Schema] {
                            disabled: Boolean = false,
                            dateDisabled: Option[ZonedDateTime] = None,
                            userDisabled: Option[String] = None,
-                           parent: Option[MenasReference] = None): MappingTable = {
+                           parent: Option[MenasReference] = None,
+                           filter: Option[DataFrameFilter] = None): MappingTable = {
 
     MappingTable(name,
       version,
@@ -54,7 +56,9 @@ object MappingTableFactory extends EntityFactory[Schema] {
       disabled,
       dateDisabled,
       userDisabled,
-      parent)
+      parent,
+      filter
+    )
   }
 
   def getDummyDefaultValue(columnName: String = "dummyColumnName",

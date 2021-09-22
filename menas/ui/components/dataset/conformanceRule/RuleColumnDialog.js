@@ -60,7 +60,9 @@ class RuleColumnDialog {
   }
 
   setSchema(schema) {
-    this.oDialog.setModel(new sap.ui.model.json.JSONModel(schema), "schema");
+    const model = new sap.ui.model.json.JSONModel(schema);
+    model.setSizeLimit(5000);
+    this.oDialog.setModel(model, "schema");
   }
 
   onColumnSubmit() {

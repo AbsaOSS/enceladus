@@ -16,10 +16,9 @@
 package za.co.absa.enceladus.utils.types
 
 import java.sql.{Date, Timestamp}
-import java.util.{Locale, TimeZone}
+import java.util.Locale
 
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.numeric.DecimalSymbols
 
 import scala.util.{Success, Try}
@@ -92,18 +91,8 @@ object GlobalDefaults extends Defaults {
 
   override def getDecimalSymbols: DecimalSymbols = decimalSymbols
 
-  private val defaultTimestampTimeZone: Option[String] = readTimezone("defaultTimestampTimeZone")
-  private val defaultDateTimeZone: Option[String] = readTimezone("defaultDateTimeZone")
+  private val defaultTimestampTimeZone: Option[String] = None
+  private val defaultDateTimeZone: Option[String] = None
   private val decimalSymbols = DecimalSymbols(Locale.US)
 
-  private def readTimezone(path: String): Option[String] = {
-    val result = new ConfigReader().readStringConfigIfExist(path)
-    result.foreach(tz =>
-      if (!TimeZone.getAvailableIDs().contains(tz )) {
-        throw new IllegalStateException(s"The setting '$tz' of '$path' is not recognized as known time zone")
-      }
-    )
-
-    result
-  }
 }
