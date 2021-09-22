@@ -116,3 +116,11 @@ class MappingTableMessageProvider extends MessageProvider {
   }
 
 }
+
+class PropertyProvider extends MessageProvider {
+
+  constructor() {
+    super("Property");
+  }
+
+}

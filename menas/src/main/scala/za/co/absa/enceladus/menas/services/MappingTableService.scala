@@ -92,11 +92,15 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
 
   private def validateDefaultValues(item: MappingTable, maybeSchema: Future[Option[Schema]]): Future[Validation] = {
     maybeSchema.map(schema => {
+      val fields = schema match {
+        case Some(s) => s.fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet
+        case None => Set.empty[String]
+      }
       item.defaultMappingValue.foldLeft(Validation()) { (accValidations, defaultValue) =>
         accValidations.withErrorIf(
-          schema.exists(s => !s.fields.exists(_.getAbsolutePath == defaultValue.columnName)),
+          !fields.contains(defaultValue.columnName),
           "item.defaultMappingValue",
-          s"Cannot fiend field ${defaultValue.columnName} in schema")
+          s"Cannot find field ${defaultValue.columnName} in schema")
       }
     })
   }
