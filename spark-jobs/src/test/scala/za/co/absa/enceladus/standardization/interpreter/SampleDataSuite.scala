@@ -20,9 +20,11 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.samples.{StdEmployee, TestSamples}
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class SampleDataSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+  private implicit val defaults: Defaults = GlobalDefaults
 
   test("Simple Example Test") {
     import spark.implicits._

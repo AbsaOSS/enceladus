@@ -15,7 +15,7 @@ A description of the requested feature.
 A simple example if applicable.
 
 ## Proposed Solution [Optional]
-Solution Ideas 
+Solution Ideas:
 1. 
 2. 
 3. 

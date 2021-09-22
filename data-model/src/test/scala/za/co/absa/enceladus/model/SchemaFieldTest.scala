@@ -21,7 +21,7 @@ class SchemaFieldTest extends AnyFunSuite {
   private val schemaFieldChildSecondLevel = SchemaField(
     name = "String",
     `type` = "string",
-    path = "",
+    path = "AnyStruct.AnyStruct2.String",
     elementType = None,
     containsNull = None,
     nullable = false,
@@ -32,7 +32,7 @@ class SchemaFieldTest extends AnyFunSuite {
   private val schemaFieldChildOne = SchemaField(
     name = "AnyStruct2",
     `type` = "struct",
-    path = "",
+    path = "AnyStruct.AnyStruct2",
     elementType = None,
     containsNull = None,
     nullable = true,
@@ -43,7 +43,7 @@ class SchemaFieldTest extends AnyFunSuite {
   private val schemaFieldChildTwo = SchemaField(
     name = "Number",
     `type` = "ling",
-    path = "AnyStruct",
+    path = "AnyStruct.Number",
     elementType = None,
     containsNull = None,
     nullable = true,
@@ -54,7 +54,7 @@ class SchemaFieldTest extends AnyFunSuite {
   private val schemaFieldRoot = SchemaField(
     name = "AnyStruct",
     `type` = "struct",
-    path = "",
+    path = "AnyStruct",
     elementType = None,
     containsNull = None,
     nullable = true,
@@ -63,8 +63,13 @@ class SchemaFieldTest extends AnyFunSuite {
   )
 
   test("testGetAllChildren") {
-    val expectedAllChildren = List("String", "AnyStruct2", "AnyStruct.Number")
+    val expectedAllChildren = List("AnyStruct.AnyStruct2.String.String", "AnyStruct.AnyStruct2.AnyStruct2", "AnyStruct.Number.Number")
     assert(schemaFieldRoot.getAllChildren == expectedAllChildren)
+  }
+
+  test("testGetAllChildrenBasePath") {
+    val expectedAllChildren = List("AnyStruct.AnyStruct2.String", "AnyStruct.AnyStruct2", "AnyStruct.Number")
+    assert(schemaFieldRoot.getAllChildrenBasePath == expectedAllChildren)
   }
 
 }

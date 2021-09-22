@@ -512,6 +512,27 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val expected = Seq(dataset3, dataset4).map(DatasetFactory.toSummary)
         assert(actual == expected)
       }
+
+      "search with missing properties" in {
+        val dataset1ver1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1)
+        val dataset1ver2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2,
+          properties = Some(Map("prop1"->"a")))
+        val dataset2ver1 = DatasetFactory.getDummyDataset(name = "dataset2", version = 1)
+        val dataset2ver2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 2)
+        val dataset3ver1 = DatasetFactory.getDummyDataset(name = "dataset3", version = 1)
+        val dataset4ver1 = DatasetFactory.getDummyDataset(name = "dataset4", version = 1,
+          properties = Some(Map("prop1"->"A")))
+
+        val abc1 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
+
+        datasetFixture.add(dataset1ver1, dataset1ver2, dataset2ver1, dataset2ver2, dataset3ver1, dataset4ver1, abc1)
+
+        val actual: Seq[Dataset] = await(datasetMongoRepository.getLatestVersions(Some("prop1")))
+          .sortBy(_.name)
+
+        val expected = Seq(abc1, dataset2ver2, dataset3ver1)
+        assert(actual == expected)
+      }
     }
 
     "return all datasets" when {
@@ -595,7 +616,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         assert(await(datasetMongoRepository.findByCoordId("SomeCoordId")) == Seq())
       }
     }
-    "return datasets witch matching coordinator ID" when {
+    "return datasets with matching coordinator ID" when {
       "such datasets exist" in {
         val schedule = OozieSchedule(scheduleTiming = ScheduleTiming(Seq(), Seq(), Seq(), Seq(), Seq()),
             runtimeParams = RuntimeConfig(sysUser = "user", menasKeytabFile = "/a/b/c"), datasetVersion = 0,

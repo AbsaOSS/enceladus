@@ -70,7 +70,12 @@ sap.ui.define([
               name: "mappingTables",
               pattern: "mapping/:id:/:version:",
               target: "mappingTable"
-            }
+            },
+            {
+              name: "properties",
+              pattern: "properties/:id:",
+              target: "property"
+            },
           ],
           targets: {
             login: {
@@ -102,6 +107,11 @@ sap.ui.define([
               viewName: "components.mappingTable.mappingTableDetail",
               viewLevel: 1,
               viewId: "mappingTableDetailView"
+            },
+            property: {
+              viewName: "components.property.datasetPropertyDetail",
+              viewLevel: 1,
+              viewId: "datasetPropertyDetailView"
             }
           }
         }

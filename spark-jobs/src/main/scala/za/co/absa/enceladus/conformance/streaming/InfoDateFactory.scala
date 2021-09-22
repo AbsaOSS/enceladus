@@ -35,36 +35,37 @@ sealed trait InfoDateFactory {
   def getInfoDateColumn(df: DataFrame): Column
 }
 
-class InfoDateLiteralFactory(infoDate: String) extends InfoDateFactory {
-  override def getInfoDateColumn(df: DataFrame): Column = {
-    PartitioningUtils.validateReportDate(infoDate)
-    to_date(lit(infoDate), ReportDateFormat)
-  }
-}
+object InfoDateFactory {
 
-class InfoDateFromColumnFactory(columnName: String, pattern: String) extends InfoDateFactory {
-  override def getInfoDateColumn(df: DataFrame): Column = {
-    val dt = SchemaUtils.getFieldType(columnName, df.schema)
-    dt match {
-      case Some(TimestampType) =>
-        col(columnName).cast(DateType)
-      case Some(DateType) =>
-        col(columnName)
-      case Some(StringType) =>
-        to_timestamp(col(columnName), pattern).cast(DateType)
-      case Some(_) =>
-        throw new IllegalArgumentException(s"The specified event time column $columnName has an incompatible type: $dt")
-      case None =>
-        throw new IllegalArgumentException(s"The specified event time column does not exist: $columnName")
+  private class InfoDateLiteralFactory(infoDate: String) extends InfoDateFactory {
+    override def getInfoDateColumn(df: DataFrame): Column = {
+      PartitioningUtils.validateReportDate(infoDate)
+      to_date(lit(infoDate), ReportDateFormat)
     }
   }
-}
 
-class InfoDateFromProcessingTimeFactory extends InfoDateFactory {
-  override def getInfoDateColumn(df: DataFrame): Column = current_timestamp().cast(DateType)
-}
+  private class InfoDateFromColumnFactory(columnName: String, pattern: String) extends InfoDateFactory {
+    override def getInfoDateColumn(df: DataFrame): Column = {
+      val dt = SchemaUtils.getFieldType(columnName, df.schema)
+      dt match {
+        case Some(TimestampType) =>
+          col(columnName).cast(DateType)
+        case Some(DateType) =>
+          col(columnName)
+        case Some(StringType) =>
+          to_timestamp(col(columnName), pattern).cast(DateType)
+        case Some(_) =>
+          throw new IllegalArgumentException(s"The specified event time column $columnName has an incompatible type: $dt")
+        case None =>
+          throw new IllegalArgumentException(s"The specified event time column does not exist: $columnName")
+      }
+    }
+  }
 
-object InfoDateFactory {
+  private class InfoDateFromProcessingTimeFactory extends InfoDateFactory {
+    override def getInfoDateColumn(df: DataFrame): Column = current_timestamp().cast(DateType)
+  }
+
   import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 
   private val defaultEventTimestampPattern = "yyyy-MM-dd'T'HH:mm'Z'"
@@ -73,6 +74,9 @@ object InfoDateFactory {
 
   def getFactoryFromConfig(conf: Configuration): InfoDateFactory = {
     if (conf.containsKey(reportDateKey)) {
+      if (conf.containsKey(eventTimestampColumnKey)) {
+        log.warn(s"Both $reportDateKey and $eventTimestampColumnKey specified, applying literal")
+      }
       val reportDate = conf.getString(reportDateKey)
       log.info(s"Information date: Explicit from the job configuration = $reportDate")
       new InfoDateLiteralFactory(reportDate)
