@@ -31,6 +31,8 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 
+import scala.reflect.ClassTag
+
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
@@ -287,6 +289,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
           assertCreated(response2)
           val headers2 = response2.getHeaders
           val body2 = response2.getBody
+          println(body2)
 
           assert(headers2.getFirst("Location").contains("/api/dataset/dataset/2"))
           assert(body2.version == 2)

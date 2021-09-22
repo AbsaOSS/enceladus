@@ -29,6 +29,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.util.{LinkedMultiValueMap, MultiValueMap}
 import za.co.absa.enceladus.rest_api.integration.repositories.BaseRepositoryTest
 
+import scala.language.reflectiveCalls
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 

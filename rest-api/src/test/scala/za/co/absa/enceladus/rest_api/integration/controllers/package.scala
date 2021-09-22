@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.integration
 
-import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
 package object controllers {
