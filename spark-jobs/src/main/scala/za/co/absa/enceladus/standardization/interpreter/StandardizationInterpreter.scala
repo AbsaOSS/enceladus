@@ -22,11 +22,11 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
-import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
+import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, TypeParser}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
 

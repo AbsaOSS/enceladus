@@ -24,7 +24,8 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-
+import za.co.absa.enceladus.model.properties.essentiality.{Mandatory, Recommended}
+import za.co.absa.enceladus.rest_api.services.StatisticsService
 import za.co.absa.enceladus.rest_api.models.LandingPageInformation
 import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.rest_api.repositories.LandingPageStatisticsMongoRepository

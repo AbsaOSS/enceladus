@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.rest_api.repositories.OozieRepository
-import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -28,6 +27,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import DatasetService._
+import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future
 import scala.language.reflectiveCalls
