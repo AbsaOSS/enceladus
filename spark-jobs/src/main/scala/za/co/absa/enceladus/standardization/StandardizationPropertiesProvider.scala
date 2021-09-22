@@ -134,7 +134,7 @@ class StandardizationPropertiesProvider {
       // For EBCDIC files --charset is converted into Cobrix "ebcdic_code_page" option
       HashMap(
         getCopybookOption(cobolOptions, dataset),
-        "is_xcom" -> isXcomOpt.map(BooleanParameter),
+        "is_record_sequence" -> isXcomOpt.map(BooleanParameter),
         "is_text" -> isTextOpt.map(BooleanParameter),
         "string_trimming_policy" -> cobolOptions.trimmingPolicy.map(StringParameter),
         "encoding" -> cobolOptions.encoding.map(StringParameter),
