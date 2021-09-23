@@ -34,8 +34,8 @@
                     <repository>${dockerfile.menas.repository}</repository>
                     <tag>${dockerfile.tag}</tag>
                     <buildArgs>
-                        <DOCKER_BASE_ARTIFACT>${dockerfile.base.artifact}</DOCKER_BASE_ARTIFACT>
-                        <DOCKER_BASE_TAG>${dockerfile.base.tag}</DOCKER_BASE_TAG>
+                        <DOCKER_BASE_ARTIFACT>${dockerfile.menas.repository}</DOCKER_BASE_ARTIFACT>
+                        <DOCKER_BASE_TAG>${dockerfile.tag}</DOCKER_BASE_TAG>
                     </buildArgs>
                 </configuration>
             </plugin>
