@@ -21,17 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
-
-import scala.reflect.ClassTag
+import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.rest_api.integration.fixtures._
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -289,11 +287,9 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
           assertCreated(response2)
           val headers2 = response2.getHeaders
           val body2 = response2.getBody
-          println(body2)
 
           assert(headers2.getFirst("Location").contains("/api/dataset/dataset/2"))
           assert(body2.version == 2)
-          assert(body2.properties == expectedPropertiesSet)
         }
       }
     }
