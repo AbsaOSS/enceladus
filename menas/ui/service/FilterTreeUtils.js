@@ -88,6 +88,46 @@ class FilterTreeUtils {
     return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
   }
 
+  static addNiceNamesToFilterData(filterData) {
+
+    // fn to add human readable text
+    const applyFn = function (filterNode) {
+      switch (filterNode._t) {
+        case "AndJoinedFilters":
+          filterNode.text = "AND";
+          break;
+        case "OrJoinedFilters":
+          filterNode.text = "OR";
+          break;
+        case "EqualsFilter":
+          filterNode.text = "Equals";
+          break;
+        case "DiffersFilter":
+          filterNode.text = `Differs`;
+          break;
+        case "NotFilter":
+          filterNode.text = "NOT";
+          break;
+        case "IsNullFilter":
+          filterNode.text = `is NULL`;
+          break;
+        default:
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
+  }
+
+  static removeNiceNamesFromFilterData(filterData) {
+
+    // fn to add human readable text
+    const applyFn = function (filterNode) {
+      filterNode.text = undefined;
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
+  }
+
   // simple spark-sql types for hinting, origin: https://spark.apache.org/docs/latest/sql-ref-datatypes.htm
   static columnTypeNames = [
     "boolean", "byte", "short", "integer", "long", "bigint", "float", "double", "decimal", "numeric",

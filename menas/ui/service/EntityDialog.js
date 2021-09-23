@@ -396,7 +396,7 @@ class MappingTableDialog extends EntityDialog {
         console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
         sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
       } else {
-        let updatedFilter = this.removeNiceNamesFromFilterData(updatedFilters[0]);
+        let updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(updatedFilters[0]);
 
         this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
         console.debug(`Submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
@@ -455,7 +455,6 @@ class MappingTableDialog extends EntityDialog {
     const treeTableModel = treeTable.getBinding().getModel();
 
     const filterData = treeTableModel.getProperty("/updatedFilters");
-    console.log(`filterTreeOData = ${JSON.stringify(filterData)}`);
 
     // filter data can be [filter], [null] or null
     if (filterData && filterData.map(x => x).length != 0) {
@@ -520,7 +519,6 @@ class MappingTableDialog extends EntityDialog {
 
     // todo move to "filterData validation fn?"
     const filterData = treeTableModel.getProperty("/updatedFilters");
-    console.log(`filterTreeOData = ${JSON.stringify(filterData)}`);
 
     let hasValidFilter = true;
     // filter data can be [filter], [null] or null
@@ -647,49 +645,11 @@ class MappingTableDialog extends EntityDialog {
     this.onFilterAdd({_t: "IsNullFilter", columnName: ""})
   }
 
-  addNiceNamesToFilterData(filterData) {
 
-    // fn to add human readable text
-    const applyFn = function (filterNode) {
-      switch (filterNode._t) {
-        case "AndJoinedFilters":
-          filterNode.text = "AND";
-          break;
-        case "OrJoinedFilters":
-          filterNode.text = "OR";
-          break;
-        case "EqualsFilter":
-          filterNode.text = "Equals";
-          break;
-        case "DiffersFilter":
-          filterNode.text = `Differs`;
-          break;
-        case "NotFilter":
-          filterNode.text = "NOT";
-          break;
-        case "IsNullFilter":
-          filterNode.text = `is NULL`;
-          break;
-        default:
-      }
-    };
-
-    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
-  }
-
-  removeNiceNamesFromFilterData(filterData) {
-
-    // fn to add human readable text
-    const applyFn = function (filterNode) {
-      filterNode.text = undefined;
-    };
-
-    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
-  }
 
   onFilterAdd(blankFilter) {
     // blank filter contains validation fields:
-    const namedBlankFilter = this.resetFilterDataValidation(this.addNiceNamesToFilterData(blankFilter));
+    const namedBlankFilter = this.resetFilterDataValidation(FilterTreeUtils.addNiceNamesToFilterData(blankFilter));
 
     const treeTable = this.oController.byId("filterTreeEdit");
     const selectedIndices = treeTable.getSelectedIndices();
@@ -791,7 +751,7 @@ class EditMappingTableDialog extends MappingTableDialog {
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
 
-      current.updatedFilters = [this.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
+      current.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
       console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
 
       current.isEdit = true;

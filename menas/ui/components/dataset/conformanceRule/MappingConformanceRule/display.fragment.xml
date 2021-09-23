@@ -51,7 +51,7 @@
                 <Label text="Debug Filter"/>
                 <Text text="{filterJson}"/>
                 <Label text="Filter" />
-                <Tree id="filterTree" items="{path: 'filterTree', parameters: {numberOfExpandedLevels: 1}}" >
+                <Tree id="filterTree" items="{path: 'filterViewTree', parameters: {numberOfExpandedLevels: 1}}" >
                     <StandardTreeItem title="{text}" icon="{icon}"/>
                 </Tree>
             </form:content>

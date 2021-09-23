@@ -401,6 +401,10 @@ sap.ui.define([
       let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
       if (oContext.getProperty("_t") === "MappingConformanceRule") {
 
+        // todo remove debug print
+        let conf = this._model.getProperty("/currentDataset/conformance")
+        console.log(`conformance: ${JSON.stringify(conf)}`);
+
         let oAttributeMappings = oContext.getProperty("attributeMappings");
         let aJoinConditions = [];
         for (let key in oAttributeMappings) {
@@ -430,8 +434,10 @@ sap.ui.define([
 
         let filterTreeData = oContext.getProperty("mappingTableFilter");
         oContext.getObject().filterJson = JSON.stringify(filterTreeData); // todo remove
+
+        // view filter with icons in a tree
         let treeDataWithIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(filterTreeData);
-        oContext.getObject().filterTree = [treeDataWithIcons]; // wrapping with [] to show the root filter in the tree, too.
+        oContext.getObject().filterViewTree = [treeDataWithIcons]; // wrapping with [] to show the root filter in the tree, too.
       }
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);

@@ -310,6 +310,12 @@ class ConformanceRuleDialog {
 
         newRule.newJoinConditions = aNewJoinConditions;
         newRule.newOutputColumns = aNewOutputColumns;
+
+        // todo add validation:
+        // newRule.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(newRule.mappingTableFilter))];
+        newRule.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(newRule.mappingTableFilter)];
+
+        console.log(`crEdit: newRule = ${JSON.stringify(newRule)} `);
       }
       this.mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("mappingTableVersionSelect"));
       this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
@@ -339,6 +345,17 @@ class ConformanceRuleDialog {
       });
       delete newRule.newOutputColumns;
       delete newRule.joinConditions;
+
+      const updatedFilters = newRule.updatedFilters;
+      if (updatedFilters) {
+        if (updatedFilters.length > 1) {
+          console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
+          sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
+        } else {
+          let updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(updatedFilters[0]);
+          newRule.mappingTableFilter = updatedFilter // reflect changes in filter the user did in UI
+        }
+      }
     }
   }
 
