@@ -106,7 +106,7 @@
                                         <Input type="Text" value="{entity>value}" placeholder="Enter value"
                                                valueState="{entity>value_valueState}" valueStateText="{entity>value_valueStateText}"
                                                visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"/>
-                                        <!-- todo use a formatter instead? -->
+                                        <!-- open: use a formatter instead? ^ -->
                                     </t:template>
                                 </t:Column>
                                 <t:Column label="ValueType">

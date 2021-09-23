@@ -293,51 +293,14 @@ sap.ui.define([
       })
     },
 
-    addIconsAndNiceNamesToFilterData: function(filterData){
-
-      // fn to add icon and human readable text
-      const applyFn = function(filterNode) {
-        switch (filterNode._t) {
-          case "AndJoinedFilters":
-            filterNode.text = "AND";
-            filterNode.icon = "sap-icon://combine";
-            break;
-          case "OrJoinedFilters":
-            filterNode.text = "OR";
-            filterNode.icon = "sap-icon://split";
-            break;
-          case "EqualsFilter":
-            filterNode.text = `Value of "${filterNode.columnName}" equals to "${filterNode.value}" (of type ${filterNode.valueType})`;
-            filterNode.icon = "sap-icon://filter";
-            break;
-          case "DiffersFilter":
-            filterNode.text = `Value of "${filterNode.columnName}" differs from "${filterNode.value}" (of type ${filterNode.valueType})`;
-            filterNode.icon = "sap-icon://clear-filter";
-            break;
-          case "NotFilter":
-            filterNode.text = "NOT";
-            filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
-            break;
-          case "IsNullFilter":
-            filterNode.text = `Value of "${filterNode.columnName}" is not null`;
-            filterNode.icon = "sap-icon://SAP-icons-TNT/marquee";
-            break;
-          default:
-        }
-      };
-
-      return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
-    },
-
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
 
+      // todo remove when "debug filter" gets removed from UI
       currentMT.filterJson = JSON.stringify(currentMT.filter);
 
-      let filterDataWithNamesAndIcons = this.addIconsAndNiceNamesToFilterData(currentMT.filter);
+      let filterDataWithNamesAndIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(currentMT.filter);
       currentMT.filterTree = [filterDataWithNamesAndIcons];
-
-      let tree = this.getView().byId("filterTree");
 
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
       if (currentMT) {
@@ -349,8 +312,6 @@ sap.ui.define([
         this._mtRestDAO.getLatestVersionByName(currentMT.name)
           .then(version => this._model.setProperty("/editingEnabled", currentMT.version === version));
       }
-
-      tree.expandToLevel(2);
     }
   });
 });

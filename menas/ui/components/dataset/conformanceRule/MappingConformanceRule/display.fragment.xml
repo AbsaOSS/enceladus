@@ -47,6 +47,13 @@
                         </CustomListItem>
                     </items>
                 </List>
+                <!-- todo remove debug filter -->
+                <Label text="Debug Filter"/>
+                <Text text="{filterJson}"/>
+                <Label text="Filter" />
+                <Tree id="filterTree" items="{path: 'filterTree', parameters: {numberOfExpandedLevels: 1}}" >
+                    <StandardTreeItem title="{text}" icon="{icon}"/>
+                </Tree>
             </form:content>
         </form:SimpleForm>
         <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>

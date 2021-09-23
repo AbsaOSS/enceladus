@@ -427,6 +427,11 @@ sap.ui.define([
 
         oContext.getObject().outputColumns = aOutputColumns;
         oContext.getObject().joinConditions = aJoinConditions;
+
+        let filterTreeData = oContext.getProperty("mappingTableFilter");
+        oContext.getObject().filterJson = JSON.stringify(filterTreeData); // todo remove
+        let treeDataWithIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(filterTreeData);
+        oContext.getObject().filterTree = [treeDataWithIcons]; // wrapping with [] to show the root filter in the tree, too.
       }
 
       return sap.ui.xmlfragment(sId, sFragmentName, this);

@@ -52,6 +52,42 @@ class FilterTreeUtils {
     return this.#applyToFilterData(filterData, applyFn, true)
   }
 
+  static addIconsAndNiceNamesToFilterData(filterData){
+
+    // fn to add icon and human readable text
+    const applyFn = function(filterNode) {
+      switch (filterNode._t) {
+        case "AndJoinedFilters":
+          filterNode.text = "AND";
+          filterNode.icon = "sap-icon://combine";
+          break;
+        case "OrJoinedFilters":
+          filterNode.text = "OR";
+          filterNode.icon = "sap-icon://split";
+          break;
+        case "EqualsFilter":
+          filterNode.text = `Value of "${filterNode.columnName}" equals to "${filterNode.value}" (of type ${filterNode.valueType})`;
+          filterNode.icon = "sap-icon://filter";
+          break;
+        case "DiffersFilter":
+          filterNode.text = `Value of "${filterNode.columnName}" differs from "${filterNode.value}" (of type ${filterNode.valueType})`;
+          filterNode.icon = "sap-icon://clear-filter";
+          break;
+        case "NotFilter":
+          filterNode.text = "NOT";
+          filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
+          break;
+        case "IsNullFilter":
+          filterNode.text = `Value of "${filterNode.columnName}" is not null`;
+          filterNode.icon = "sap-icon://SAP-icons-TNT/marquee";
+          break;
+        default:
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
+  }
+
   // simple spark-sql types for hinting, origin: https://spark.apache.org/docs/latest/sql-ref-datatypes.htm
   static columnTypeNames = [
     "boolean", "byte", "short", "integer", "long", "bigint", "float", "double", "decimal", "numeric",
