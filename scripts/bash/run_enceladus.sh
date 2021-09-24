@@ -81,6 +81,7 @@ CONF_SPARK_MEMORY_FRACTION=""
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
 MENAS_AUTH_KEYTAB=""
+CLIENT_MODE_RUN_KINIT="$DEFAULT_CLIENT_MODE_RUN_KINIT"
 
 # Parse command line (based on https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 OTHER_PARAMETERS=()
@@ -305,6 +306,10 @@ case $key in
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
+  --run-kinit)
+    CLIENT_MODE_RUN_KINIT="$2"
+    shift 2 # past argument and value
+    ;;
   --help)
     HELP_CALL="1"
     shift # past argument
@@ -515,8 +520,8 @@ if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
     TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
-    if [[ -n "$MENAS_AUTH_KEYTAB" ]]; then
-      # Get principle stored in the keyfile (Thanks @Zejnilovic)
+    if [[ -n "$MENAS_AUTH_KEYTAB" ]] && [[ "$CLIENT_MODE_RUN_KINIT" == "true" ]]; then
+      # Get principle stored in the keyfile
       PR=$(printf "read_kt %s\nlist" "$MENAS_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
       # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
