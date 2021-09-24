@@ -24,21 +24,23 @@ case class ConformedSchema(schema: List[StructField], dataset: Dataset) {
   def hasField(field: String): Boolean = {
     if (schema.exists(_.name == field)) true else {
       val ss = dataset.conformance.find {
-        case UppercaseConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case LiteralConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case NegationConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case CastingConformanceRule(_, outputColumn, _, _, _) => outputColumn == field
         case MappingConformanceRule(_, _, _, _, _, _, outputColumn, additionalColumns, _, _, _) =>
           outputColumn == field || additionalColumns.getOrElse(Map()).contains(field)
-        case SingleColumnConformanceRule(_, _, outputColumn, _, _) => outputColumn == field
-        case DropConformanceRule(_, _, outputColumn) => outputColumn != field
-        case ConcatenationConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case CoalesceConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case FillNullsConformanceRule(_, outputColumn, _, _, _) => outputColumn == field
-        case SparkSessionConfConformanceRule(_, outputColumn, _, _) => outputColumn == field
-        case _ => false
+        case SingleColumnConformanceRule(_, _, outputColumn, _, inputColumnAlias) =>
+          outputColumn == field || field == outputColumn + "." + inputColumnAlias
+        case DropConformanceRule(_, _, _) => false
+        case c: ConformanceRule => c.outputColumn == field
       }
-      ss.isDefined
+
+      ss match {
+        case None => false
+        case Some(matchedRule: ConformanceRule) =>
+          val maybeRule = dataset.conformance.find {
+            case DropConformanceRule(_, _, outputCol) => outputCol == matchedRule.outputColumn
+            case _ => false
+          }
+          maybeRule.isEmpty
+        }
     }
   }
 }
