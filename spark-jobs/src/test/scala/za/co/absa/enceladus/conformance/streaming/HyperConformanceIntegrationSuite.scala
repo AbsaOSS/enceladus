@@ -47,12 +47,28 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
     val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
       "result",
       nestedStructsDS,
-      reportDate = "2020-05-23" )
+      reportDate = "2020-05-23", "numerics.SmartObject.all_random" )
       .orderBy("ID")
 
     assertResult(df.count())(20)
     val conformed = spark.read
       .textFile("src/test/testData/nestedStructs/conformed_literal_info_col.json")
+      .collect().mkString("\n")
+    val returned = df.toJSON.collect().mkString("\n")
+
+    assertResult(returned)(conformed)
+  }
+
+  test("Test Hyperconformance from config, conformed column info") {
+    val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
+      "result",
+      nestedStructsDS,
+      reportDate = "2020-05-23", "strings.all_random_upper" )
+      .orderBy("ID")
+
+    assertResult(df.count())(20)
+    val conformed = spark.read
+      .textFile("src/test/testData/nestedStructs/conformed_literal_conf_info_col.json")
       .collect().mkString("\n")
     val returned = df.toJSON.collect().mkString("\n")
 
