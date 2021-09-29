@@ -73,12 +73,12 @@
                                     <MenuButton text="Add">
                                         <menu>
                                             <Menu>
-                                                <MenuItem id="addAndBtn" text="AND" icon="sap-icon://scissors" />
-                                                <MenuItem id="addOrBtn" text="OR" icon="sap-icon://paste" />
-                                                <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://scissors" />
-                                                <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://scissors" />
-                                                <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://scissors" />
-                                                <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://scissors" />
+                                                <MenuItem id="addAndBtn" text="AND" icon="sap-icon://combine" />
+                                                <MenuItem id="addOrBtn" text="OR" icon="sap-icon://split" />
+                                                <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://filter" />
+                                                <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://clear-filter" />
+                                                <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://SAP-icons-TNT/solution-not-licensed" />
+                                                <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://SAP-icons-TNT/marquee" />
                                             </Menu>
                                         </menu>
                                     </MenuButton>
