@@ -17,7 +17,6 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
-import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
@@ -56,8 +55,9 @@ trait CommonJobExecution extends ProjectMetadata {
   SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
-  protected val conf: Config = ConfigFactory.load()
+  protected val conf: ConfigReader = new ConfigReader()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  protected val menasUrlsTryCounts: List[Int] = conf.getIntListOption("menas.rest.uriTries").getOrElse(List.empty)
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
@@ -73,15 +73,14 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(conf.config)
   }
 
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
                               cmd: JobConfigParser[T],
                               spark: SparkSession): PreparationResult = {
-    val confReader: ConfigReader = new ConfigReader(conf)
-    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+    conf.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
     dao.authenticate()
 
     implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
@@ -164,7 +163,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
       sourcePhase, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
-    val postProcessingService = PostProcessingService(conf, params)
+    val postProcessingService = PostProcessingService(conf.config, params)
     postProcessingService.onSaveOutput(df)
 
     if (runId.isEmpty) {
@@ -247,7 +246,7 @@ trait CommonJobExecution extends ProjectMetadata {
     })
   }
 
-  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+  protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
     val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")

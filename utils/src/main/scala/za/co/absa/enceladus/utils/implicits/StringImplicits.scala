@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.utils.implicits
 
+import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager.Limit
+
 import java.security.InvalidParameterException
 import scala.annotation.tailrec
 
@@ -110,14 +112,6 @@ object StringImplicits {
       result
     }
 
-    private def checkInputsOverlap(charsToFind: Set[Char], quoteChars: Set[Char], escape: Char = '\\'):Unit = {
-      if (charsToFind.contains(escape) && quoteChars.contains(escape)) {
-        throw new InvalidParameterException(
-          s"Escape character '$escape 'is both between charsToFind and quoteChars. That's not allowed."
-        )
-      }
-    }
-
     /**
       * Investigates if the character in the relation to previous characters and charsToFind
       * @param char        character to examine, for easier matching and also supprot end of stirng, it's an Option
@@ -202,6 +196,48 @@ object StringImplicits {
 
     def coalesce(alternatives: String*): String = {
       alternatives.foldLeft(string)(_.nonEmpyOrElse(_))
+    }
+
+
+    /**
+      * Splits the string around the provided delimiter, unless it's inside quotes
+      * from https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
+      *
+      * @param delimiter the delimiting character
+      * @param limit the result threshold
+      * @return the sequence of strings computed by splitting this string around the provided delimiter
+      */
+    def splitWithQuotes(delimiter: Char = ',', limit: Int = 0): Seq[String] = {
+      if (string == "" && limit == 0) {
+        // the regex doesn't work as desired on empty string
+        Seq.empty
+      } else {
+        // make the separation
+        val separationRegex = "\\" + delimiter + "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"
+        string.split(separationRegex, limit)
+      }
+    }
+
+    def trimStartEndChar(start: Char, end: Char): String = {
+      val lastIndex = string.length - 1
+      lastIndex match {
+        case -1 => ""
+        case 0  => string
+        case x if string(0) == start && string(x) == end => string.substring(1, x)
+        case _ => string
+      }
+    }
+
+    def trimStartEndChar(startAndEnd: Char): String = {
+      trimStartEndChar(startAndEnd, startAndEnd)
+    }
+
+    private def checkInputsOverlap(charsToFind: Set[Char], quoteChars: Set[Char], escape: Char = '\\'):Unit = {
+      if (charsToFind.contains(escape) && quoteChars.contains(escape)) {
+        throw new InvalidParameterException(
+          s"Escape character '$escape 'is both between charsToFind and quoteChars. That's not allowed."
+        )
+      }
     }
   }
 }

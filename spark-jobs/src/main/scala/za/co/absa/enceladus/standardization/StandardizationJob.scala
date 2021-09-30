@@ -35,7 +35,7 @@ object StandardizationJob extends StandardizationExecution {
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsTryCounts)
 
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)

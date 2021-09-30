@@ -32,7 +32,8 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
 trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
-  implicit val menasBaseUrls: List[String] = List.empty
+  private val menasBaseUrls = List.empty[String]
+  private val menasUrlsTryCounts = List.empty[Int]
   implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1), reportDate = "2020-03-23")
 
   protected def testHyperConformanceFromConfig(input: DataFrame,
@@ -91,7 +92,7 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
       .setControlFrameworkEnabled(false)
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
-    val hyperConformance = new HyperConformance()
+    val hyperConformance = new HyperConformance(menasBaseUrls, menasUrlsTryCounts)
     val source: DataFrame = memoryStream.toDF()
     val conformed: DataFrame = hyperConformance.applyConformanceTransformations(source, dataset)
     val sink = conformed

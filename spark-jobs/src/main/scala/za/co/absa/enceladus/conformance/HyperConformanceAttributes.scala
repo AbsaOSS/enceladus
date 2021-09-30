@@ -21,6 +21,7 @@ object HyperConformanceAttributes {
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
   val menasUriKey = "menas.rest.uri"
+  val menasUriTriesKey = "menas.rest.uriTries"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"
   val datasetNameKey = "dataset.name"
@@ -42,6 +43,8 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   override def getProperties: Map[String, PropertyMetadata] = Map(
     menasUriKey ->
       PropertyMetadata("Menas API URL", Some("E.g. http://localhost:8080/menas"), required = true),
+    menasUriTriesKey ->
+      PropertyMetadata("How many times call to Menas API URL should be tried", Some("E.g. 3"), required = false),
     datasetNameKey ->
       PropertyMetadata("Dataset name", None, required = true),
     datasetVersionKey ->

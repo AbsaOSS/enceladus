@@ -42,7 +42,7 @@ object CustomRuleSample1 extends CustomRuleSampleFs {
     val menasBaseUrls = List("http://localhost:8080/menas")
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls, List.empty) // you may have to hard-code your own implementation here (if not working with menas)
 
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

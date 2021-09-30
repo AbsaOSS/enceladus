@@ -18,43 +18,99 @@ package za.co.absa.enceladus.dao.rest
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
+import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
 import za.co.absa.enceladus.dao.{DaoException, RetryableException}
 
+import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
 
 protected object CrossHostApiCaller {
 
-  def apply(apiBaseUrls: List[String]): CrossHostApiCaller = {
-    new CrossHostApiCaller(apiBaseUrls, Random.nextInt(apiBaseUrls.size))
+  private val logger  = LoggerFactory.getLogger(classOf[CrossHostApiCaller])
+
+  private def createInstance(apiBaseUrls: Seq[String],
+                             tryCounts: Seq[Int] = Vector.empty,
+                             startWith: Option[Int] = None): CrossHostApiCaller = {
+    def filterUrls(entry: (String, Int)): Boolean = {
+      entry match {
+        case ("", _)                          => false
+        case (url, tryCount) if tryCount <= 0 =>
+          logger.warn(s"Url $url doesn't have a positive try count ($tryCount). Ignoring.")
+          false
+        case _                                => true
+      }
+    }
+
+    val urls = apiBaseUrls.toVector
+    val tries = tryCounts.toVector
+    val triesExtendedToUrlsLength = tries ++ Vector.fill(urls.size - tries.size)(tries.lastOption.getOrElse(1))
+    val urlsWithTries = (urls zip triesExtendedToUrlsLength).filter(filterUrls)
+    val currentHostIndex = startWith.getOrElse(Random.nextInt(Math.max(urlsWithTries.size, 1)))
+    new CrossHostApiCaller(urlsWithTries, currentHostIndex)
+  }
+
+  def apply(apiBaseUrls: Seq[String]): CrossHostApiCaller = {
+    createInstance(apiBaseUrls)
+  }
+
+  def apply(apiBaseUrls: Seq[String], startWith: Int): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, Vector.empty, Option(startWith))
+  }
+
+  def apply(apiBaseUrls: Seq[String], tryCounts: Seq[Int]): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, tryCounts)
+  }
+
+  def apply(apiBaseUrls: Seq[String], tryCounts: Seq[Int], startWith: Int): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, tryCounts, Option(startWith))
   }
 
 }
 
-protected class CrossHostApiCaller(apiBaseUrls: List[String], var currentHostIndex: Int) extends ApiCaller {
-  private val logger  = LoggerFactory.getLogger(this.getClass)
+protected class CrossHostApiCaller private(private val baseUrlsWithTries: Vector[(String, Int)], private var currentHostIndex: Int)
+  extends ApiCaller {
 
-  private val maxAttempts = apiBaseUrls.size - 1
+  def baseUrlsCount: Int = baseUrlsWithTries.size
+
+  def currenBasetUrl: (String, Int) = baseUrlsWithTries(currentHostIndex)
+
+  def nextBaseUrl(): (String, Int) = {
+    currentHostIndex += 1
+    if (currentHostIndex >= baseUrlsCount) {
+      currentHostIndex = 0
+    }
+    currenBasetUrl
+  }
+
 
   def call[T](fn: String => T): T = {
+    def logFailure(error: Throwable, url: String, maxTryCount: Int, attemptNumber: Int, nextUrl: Option[String]): Unit = {
+      val rootCause = ExceptionUtils.getRootCauseMessage(error)
+      val switching = nextUrl.map(s => s", switching host to $s").getOrElse("")
+      logger.warn(s"Request failed on host $url (attemp $attemptNumber of $maxTryCount)$switching - $rootCause")
+    }
 
-    def attempt(index: Int, attemptCount: Int = 0): Try[T] = {
-      currentHostIndex = index
-      val currentBaseUrl = apiBaseUrls(index)
-      Try {
-        fn(currentBaseUrl)
+    @tailrec
+    def attempt(url: String, maxTryCount: Int, attemptNumber: Int, urlsTried: Int): Try[T] = {
+      val result =Try {
+        fn(url)
       }.recoverWith {
         case e @ (_: ResourceAccessException | _: RestClientException) => Failure(DaoException("Server non-responsive", e))
-      }.recoverWith {
-        case e: RetryableException if attemptCount < maxAttempts =>
-          val nextIndex = (index + 1) % apiBaseUrls.size
-          val nextBaseUrl = apiBaseUrls(nextIndex)
-          val rootCause = ExceptionUtils.getRootCauseMessage(e)
-          logger.warn(s"Request failed on host $currentBaseUrl, switching host to $nextBaseUrl - $rootCause")
-          attempt(nextIndex, attemptCount + 1)
+      }
+      //using match instead of recoverWith to make the function @tailrec
+      result match {
+        case Failure(e: RetryableException) if attemptNumber < maxTryCount =>
+          logFailure(e, url, maxTryCount, attemptNumber, None)
+          attempt(url, maxTryCount, attemptNumber + 1, urlsTried)
+        case Failure(e: RetryableException) if urlsTried < baseUrlsCount =>
+          val (nextUrl, nextMaxTryCount) = nextBaseUrl()
+          logFailure(e, url, maxTryCount, attemptNumber, Option(nextUrl))
+          attempt(nextUrl, nextMaxTryCount, 1, urlsTried + 1)
+        case _ => result
       }
     }
 
-    attempt(currentHostIndex).get
+    attempt(currenBasetUrl._1, currenBasetUrl._2, 1, 1).get
   }
 
 }

@@ -21,8 +21,8 @@ object RestDaoFactory {
 
   private val restTemplate = RestTemplateSingleton.instance
 
-  def getInstance(authCredentials: MenasCredentials, apiBaseUrls: List[String]): MenasRestDAO = {
-    val apiCaller = CrossHostApiCaller(apiBaseUrls)
+  def getInstance(authCredentials: MenasCredentials, apiBaseUrls: List[String], urlsTryCounts: List[Int]): MenasRestDAO = {
+    val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsTryCounts)
     val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
     new MenasRestDAO(apiCaller, restClient)
