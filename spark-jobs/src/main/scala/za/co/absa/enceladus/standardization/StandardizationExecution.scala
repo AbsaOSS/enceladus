@@ -51,7 +51,8 @@ trait StandardizationExecution extends CommonJobExecution {
                                           preparationResult: PreparationResult)
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
-                                          spark: SparkSession): StructType = {
+                                          spark: SparkSession,
+                                          defaults: Defaults): StructType = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val rawFsUtils = HadoopFsUtils.getOrCreate(rawFs)
 
@@ -59,7 +60,7 @@ trait StandardizationExecution extends CommonJobExecution {
     preparationResult.performance.startMeasurement(stdDirSize)
 
     // Enable Control Framework
-    spark.enableControlMeasuresTracking(sourceInfoFile = s"${preparationResult.pathCfg.raw.path}/_INFO")
+    spark.enableControlMeasuresTracking(Option(s"${preparationResult.pathCfg.raw.path}/_INFO"), None)
       .setControlMeasuresWorkflow(sourceId.toString)
 
     // Enable control framework performance optimization for pipeline-like jobs
@@ -79,6 +80,11 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+
+    val defaultTimeZoneForTimestamp = defaults.getDefaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    Atum.setAdditionalInfo("default_time_zone_for_timestamps"-> defaultTimeZoneForTimestamp)
+    val defaultTimeZoneForDate = defaults.getDefaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    Atum.setAdditionalInfo("default_time_zone_for_dates"-> defaultTimeZoneForDate)
 
     // Add Dataset properties marked with putIntoInfoFile=true
     val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
