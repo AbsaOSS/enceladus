@@ -14,10 +14,9 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table">
-    <Label text="Filter"/>
-    <!-- todo make this a fragment so it can be shared with addMappingTable.fragment? -->
+    <!-- filter editing has its own named model ("filterEdit") in order to be reused more easily -->
     <t:TreeTable id="filterTreeEdit" rows="{
-                            path:'/newRule/updatedFilters',
+                            path:'filterEdit>/editingFilters',
                             parameters: {
                                 numberOfExpandedLevels: 1
                             }
@@ -43,32 +42,31 @@
         <t:columns>
             <t:Column label="FilterName">
                 <t:template>
-                    <ObjectStatus text="{text}" state="{filter_valueState}"
-                                  icon="{= ${filter_valueState} === 'None' ? undefined : 'sap-icon://error' }"
-                                  tooltip="{filter_valueStateText}"/>
+                    <ObjectStatus text="{filterEdit>text}" state="{filterEdit>filter_valueState}"
+                                  icon="{= ${filterEdit>filter_valueState} === 'None' ? undefined : 'sap-icon://error' }"
+                                  tooltip="{filterEdit>filter_valueStateText}"/>
                 </t:template>
             </t:Column>
             <t:Column label="Column">
                 <t:template>
-                    <Input type="Text" value="{columnName}" placeholder="Enter col. name"
-                           valueState="{columnName_valueState}" valueStateText="{columnName_valueStateText}"
-                           visible="{= ${_t} === 'EqualsFilter' || ${_t} === 'DiffersFilter' || ${_t} === 'IsNullFilter' }" />
+                    <Input type="Text" value="{filterEdit>columnName}" placeholder="Enter col. name"
+                           valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}"
+                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' || ${filterEdit>_t} === 'IsNullFilter' }" />
                 </t:template>
             </t:Column>
             <t:Column label="Value">
                 <t:template>
-                    <Input type="Text" value="{value}" placeholder="Enter value"
-                           valueState="{value_valueState}" valueStateText="{value_valueStateText}"
-                           visible="{= ${_t} === 'EqualsFilter' || ${_t} === 'DiffersFilter' }"/>
-                    <!-- open: use a formatter instead? ^ -->
+                    <Input type="Text" value="{filterEdit>value}" placeholder="Enter value"
+                           valueState="{filterEdit>value_valueState}" valueStateText="{filterEdit>value_valueStateText}"
+                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' }"/>
                 </t:template>
             </t:Column>
             <t:Column label="ValueType">
                 <t:template>
-                    <Input type="Text" value="{valueType}"
+                    <Input type="Text" value="{filterEdit>valueType}"
                            placeholder="Enter type"
-                           visible="{= ${_t} === 'EqualsFilter' || ${_t} === 'DiffersFilter' }"
-                           valueState="{valueType_valueState}" valueStateText="{valueType_valueStateText}"
+                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' }"
+                           valueState="{filterEdit>valueType_valueState}" valueStateText="{filterEdit>valueType_valueStateText}"
                            showSuggestion="true"
                            suggestionItems="{path: 'suggestedColumnTypes>/', templateShareable:false}">
                         <suggestionItems>

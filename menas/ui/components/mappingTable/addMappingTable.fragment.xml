@@ -62,70 +62,8 @@
                         <Label text="Filter"/>
                         <Text text="{entity>/filterJson}"/>
                         <Label text="Filter Tree"/>
-                        <t:TreeTable id="filterTreeEdit" rows="{
-                            path:'entity>/updatedFilters',
-                            parameters: {
-                                numberOfExpandedLevels: 1
-                            }
-                        }">
-                            <t:extension>
-                                <OverflowToolbar style="Clear">
-                                    <MenuButton text="Add">
-                                        <menu>
-                                            <Menu>
-                                                <MenuItem id="addAndBtn" text="AND" icon="sap-icon://combine" />
-                                                <MenuItem id="addOrBtn" text="OR" icon="sap-icon://split" />
-                                                <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://filter" />
-                                                <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://clear-filter" />
-                                                <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://SAP-icons-TNT/solution-not-licensed" />
-                                                <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://SAP-icons-TNT/marquee" />
-                                            </Menu>
-                                        </menu>
-                                    </MenuButton>
-                                    <ToolbarSpacer/>
-                                    <Button id="removeSelectedBtn" text="Remove selected" icon="sap-icon://delete" />
-                                </OverflowToolbar>
-                            </t:extension>
-                            <t:columns>
-                                <t:Column label="FilterName">
-                                    <t:template>
-                                        <ObjectStatus text="{entity>text}" state="{entity>filter_valueState}"
-                                                      icon="{= ${entity>filter_valueState} === 'None' ? undefined : 'sap-icon://error' }"
-                                                      tooltip="{entity>filter_valueStateText}"/>
-                                    </t:template>
-                                </t:Column>
-                                <t:Column label="Column">
-                                    <t:template>
-                                        <Input type="Text" value="{entity>columnName}" placeholder="Enter col. name"
-                                               valueState="{entity>columnName_valueState}" valueStateText="{entity>columnName_valueStateText}"
-                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' || ${entity>_t} === 'IsNullFilter' }" />
-                                    </t:template>
-                                </t:Column>
-                                <t:Column label="Value">
-                                    <t:template>
-                                        <Input type="Text" value="{entity>value}" placeholder="Enter value"
-                                               valueState="{entity>value_valueState}" valueStateText="{entity>value_valueStateText}"
-                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"/>
-                                        <!-- open: use a formatter instead? ^ -->
-                                    </t:template>
-                                </t:Column>
-                                <t:Column label="ValueType">
-                                    <t:template>
-                                        <Input type="Text" value="{entity>valueType}"
-                                               placeholder="Enter type"
-                                               visible="{= ${entity>_t} === 'EqualsFilter' || ${entity>_t} === 'DiffersFilter' }"
-                                               valueState="{entity>valueType_valueState}" valueStateText="{entity>valueType_valueStateText}"
-                                               showSuggestion="true"
-                                               suggestionItems="{path: 'suggestedColumnTypes>/', templateShareable:false}">
-                                            <suggestionItems>
-                                                <core:Item key="{suggestedColumnTypes>name}" text="{suggestedColumnTypes>name}"/>
-                                            </suggestionItems>
-                                        </Input>
-
-                                    </t:template>
-                                </t:Column>
-                            </t:columns>
-                        </t:TreeTable>
+                        <!-- using common fragment for MT & Mapping CR for filter editing -->
+                        <core:Fragment type="XML" fragmentName="components.mappingTable.filterEdit.filterTreeEdit"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

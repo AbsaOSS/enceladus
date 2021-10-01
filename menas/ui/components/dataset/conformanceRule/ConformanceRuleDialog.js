@@ -285,6 +285,8 @@ class ConformanceRuleDialog {
     }
 
     if (currentRule._t === "MappingConformanceRule") {
+      const filterModel = new sap.ui.model.json.JSONModel();
+
       if (!currentRule.isEdit) {
         newRule.newJoinConditions = [];
         newRule.newOutputColumns = [];
@@ -311,14 +313,16 @@ class ConformanceRuleDialog {
         newRule.newJoinConditions = aNewJoinConditions;
         newRule.newOutputColumns = aNewOutputColumns;
 
-        // todo add validation:
-        // newRule.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(newRule.mappingTableFilter))];
-        newRule.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(newRule.mappingTableFilter)];
+        // todo add validation like:
+        // filters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(newRule.mappingTableFilter))];
+        const filters = [FilterTreeUtils.addNiceNamesToFilterData(newRule.mappingTableFilter)];
+        filterModel.setProperty("/editingFilters", filters);
 
-        console.log(`crEdit: newRule = ${JSON.stringify(newRule)} `);
       }
       this.mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("mappingTableVersionSelect"));
       this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
+
+      this._dialog.setModel(filterModel, "filterEdit"); // filter editing has its own named model ("filterEdit")
     }
 
     if (!newRule.isEdit && newRule.order === undefined) {
@@ -346,7 +350,7 @@ class ConformanceRuleDialog {
       delete newRule.newOutputColumns;
       delete newRule.joinConditions;
 
-      const updatedFilters = newRule.updatedFilters;
+      const updatedFilters = this._dialog.getModel("filterEdit").getProperty("/editingFilters");
       if (updatedFilters) {
         if (updatedFilters.length > 1) {
           console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);

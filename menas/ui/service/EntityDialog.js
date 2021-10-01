@@ -388,8 +388,8 @@ class MappingTableDialog extends EntityDialog {
   static hdfsPropertyNames = ["/hdfsPath"];
 
   submit() {
-    let newEntity = this.oDialog.getModel("entity").oData;
-    const updatedFilters = newEntity.updatedFilters;
+    let updatedFilters = this.oDialog.getModel("filterEdit").getProperty("/editingFilters");
+    console.debug(`MappingTableDialog submit: updatedFilters:${JSON.stringify(updatedFilters)} `);
 
     if (updatedFilters) {
       if (updatedFilters.length > 1) {
@@ -454,14 +454,14 @@ class MappingTableDialog extends EntityDialog {
     const treeTable = this.oController.byId("filterTreeEdit");
     const treeTableModel = treeTable.getBinding().getModel();
 
-    const filterData = treeTableModel.getProperty("/updatedFilters");
+    const filterData = treeTableModel.getProperty("/editingFilters");
 
     // filter data can be [filter], [null] or null
     if (filterData && filterData.map(x => x).length != 0) {
       // resetting non-empty filter validations
 
       const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
-      treeTableModel.setProperty("/updatedFilters", [resetValidatedFilter]);
+      treeTableModel.setProperty("/editingFilters", [resetValidatedFilter]);
     }
   }
 
@@ -518,7 +518,7 @@ class MappingTableDialog extends EntityDialog {
     const treeTableModel = treeTable.getBinding().getModel();
 
     // todo move to "filterData validation fn?"
-    const filterData = treeTableModel.getProperty("/updatedFilters");
+    const filterData = treeTableModel.getProperty("/editingFilters");
 
     let hasValidFilter = true;
     // filter data can be [filter], [null] or null
@@ -579,7 +579,7 @@ class MappingTableDialog extends EntityDialog {
       };
 
       const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(filterData[0], validateInUiFn);
-      treeTableModel.setProperty("/updatedFilters", [validatedFilter]);
+      treeTableModel.setProperty("/editingFilters", [validatedFilter]);
       treeTableModel.refresh();
     }
 
@@ -655,11 +655,11 @@ class MappingTableDialog extends EntityDialog {
     const selectedIndices = treeTable.getSelectedIndices();
     const treeTableModel = treeTable.getBinding().getModel();
 
-    const currentFilters = this.oDialog.getModel("entity").getProperty("/updatedFilters");
+    const currentFilters = this.oDialog.getModel("filterEdit").getProperty("/editingFilters");
     const filtersEmpty = !currentFilters || currentFilters.filter(x => x).length == 0; // after removal of previous, there can be [null]
 
     if (filtersEmpty) {
-      treeTableModel.setProperty("/updatedFilters", [namedBlankFilter]); // add first filter by replacing the empty model
+      treeTableModel.setProperty("/editingFilters", [namedBlankFilter]); // add first filter by replacing the empty model
 
     } else if (selectedIndices.length == 1) {
       const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
@@ -751,8 +751,8 @@ class EditMappingTableDialog extends MappingTableDialog {
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
 
-      current.updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
-      console.log(`current filters: ${JSON.stringify(current.updatedFilters)}`);
+      const updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
+      console.log(`current filters: ${JSON.stringify(updatedFilters)}`);
 
       current.isEdit = true;
       current.title = "Edit";
@@ -761,6 +761,11 @@ class EditMappingTableDialog extends MappingTableDialog {
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");
+
+      // "filterEdit>/editingFilters" holds user-changing filter
+      const filterModel = new sap.ui.model.json.JSONModel();
+      filterModel.setProperty("/editingFilters", updatedFilters);
+      this.oDialog.setModel(filterModel, "filterEdit");
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });

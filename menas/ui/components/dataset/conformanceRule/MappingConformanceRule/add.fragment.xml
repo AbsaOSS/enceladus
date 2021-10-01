@@ -17,5 +17,6 @@
     <core:Fragment type="XML" fragmentName="components.mappingTableSelector"/>
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.joinConditions"/>
     <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.outputColumns"/>
-    <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.MappingConformanceRule.filterTreeEdit"/>
+    <Label text="Filter"/>
+    <core:Fragment type="XML" fragmentName="components.mappingTable.filterEdit.filterTreeEdit"/>
 </core:FragmentDefinition>
