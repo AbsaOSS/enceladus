@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.utils.implicits
 
-import com.sun.org.apache.xerces.internal.utils.XMLSecurityManager.Limit
-
 import java.security.InvalidParameterException
 import scala.annotation.tailrec
 
