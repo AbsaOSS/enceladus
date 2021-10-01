@@ -82,18 +82,18 @@ LOG_DIR="/tmp"
 APPLICATION_PROPERTIES_CLIENT="-Dconfig.file=/absolute/path/application.conf"
 APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
 
-KRB5_CONF_CLIENT="-Djava.security.krb5.conf=/absolute/path/krb5.conf"
-KRB5_CONF_CLUSTER="-Djava.security.krb5.conf=krb5.conf"
+#KRB5_CONF_CLIENT="-Djava.security.krb5.conf=/absolute/path/krb5.conf"
+#KRB5_CONF_CLUSTER="-Djava.security.krb5.conf=krb5.conf"
 
-TRUST_STORE_CLIENT="-Djavax.net.ssl.trustStore=/absolute/path/trustStore.jks"
-TRUST_STORE_CLUSTER="-Djavax.net.ssl.trustStore=trustStore.jks"
-TRUST_STORE_PASSWORD="-Djavax.net.ssl.trustStorePassword=password"
+#TRUST_STORE_CLIENT="-Djavax.net.ssl.trustStore=/absolute/path/trustStore.jks"
+#TRUST_STORE_CLUSTER="-Djavax.net.ssl.trustStore=trustStore.jks"
+#TRUST_STORE_PASSWORD="-Djavax.net.ssl.trustStorePassword=password"
 
 # Files to send when running in cluster mode (comma separated)
 # Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
 ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
-ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/krb5.conf#krb5.conf"
-ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/emr_cacerts.jks#emr_cacerts.jks"
+#ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/krb5.conf#krb5.conf"
+#ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/emr_cacerts.jks#emr_cacerts.jks"
 
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
 # To specify several configuration options prepend '--conf' to each config key.
