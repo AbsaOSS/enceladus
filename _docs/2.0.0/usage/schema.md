@@ -52,6 +52,7 @@ categories:
   - [Explicit default](#explicit-default)
   - [Global default values](#global-default-values)
   - [Explicit default values restrictions](#explicit-default-values-restrictions)
+- [Notes](#notes)  
 <!-- tocstop -->
 
 ## Intro
@@ -263,31 +264,24 @@ The type is specified as struct of following properties:
 *Standardization* can be influenced by `metadata` in the schema of the data. The `metadata` are optional properties.
 Here are the recognized ones with the description of their purpose (with detailed description below):
 
-| Property                                  | Target data type            | Description                                                                                                                                           | Example         | Default[\*](#metadata-star)                  |
+| Property                                  | Target data type            | Description                                                                                                                                           | Example         | Default[^1]                                  |
 |-------------------------------------------|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|----------------------------------------------|
-| [sourcecolumn](#sourcecolumn)             | any                         | The source column to provide data of the described column                                                                                             | *id*            | `-`[\*\*](#metadata-star-star)               |
-| [default](#default)                       | any atomic type             | Default value to use in case data are missing                                                                                                         | *0*             | `-`[\*\*](#metadata-star-star)               |
+| [sourcecolumn](#sourcecolumn)             | any                         | The source column to provide data of the described column                                                                                             | *id*            | `-`[^2]                                      |
+| [default](#default)                       | any atomic type             | Default value to use in case data are missing                                                                                                         | *0*             | `-`[^2]                                      |
 | [pattern](#pattern)                       | timestamp & date            | Pattern for the timestamp or date representation                                                                                                      | *dd.MM.yy*      | *yyyy-MM-dd HH:mm:ss* **/** *yyyy-MM-dd*     |
-| [timezone](#timezone)                     | timestamp (also date)       | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                   | *US/Pacific*    | *UTC*[\*\*\*](#metadata-star-star-star)      |
-| [pattern](#pattern)                       | any numeric type            | Pattern for the number representation                                                                                                                 | \#,\#\#0.\#     | `-`[\*\*](#metadata-star-star)               |
+| [timezone](#timezone)                     | timestamp (also date)       | The time zone of the timestamp when that is not part of the pattern (NB! for date it can return unexpected results)                                   | *US/Pacific*    | *UTC*[^3]      |
+| [pattern](#pattern)                       | any numeric type            | Pattern for the number representation                                                                                                                 | \#,\#\#0.\#     | `-`[^2]                                      |
 | [decimal_separator](#decimal_separator)   | any numeric type            | The character separating the integer and the fractional parts of the number                                                                           | *,*             | *.*                                          |
 | [grouping_separator](#grouping_separator) | any numeric type            | Character to mark boundaries between orders of magnitude, usually to mark thousands, millions etc.                                                    | *\_*            | *,*                                          |
 | [minus_sign](#minus_sign)                 | any numeric type            | Character to mark the number is negative.                                                                                                             | *N*             | *-*                                          |
 | [allow_infinity](#allow_infinity)         | float & double              | Flag indicating if the column accepts infinity as a value (and positive/negative numbers which are too large are converted to *infinity*/*-infinity*) | *true*          | *false*                                      |
-| [strict_parsing](#strict_parsing)         | decimal                     | Flag indicating if strict parsing should be done on the input value. Strict parsing rejects a value with more decimal places than the defined scale     | *true*          | *false*                                      |
+| [strict_parsing](#strict_parsing)         | decimal                     | Flag indicating if strict parsing should be done on the input value. Strict parsing rejects a value with more decimal places than the defined scale   | *true*          | *false*                                      |
 | [radix](#radix)                           | long, integer, short, byte  | The base of the numbers provided                                                                                                                      | *hex*           | *10*                                         |
 | [encoding](#encoding)                     | binary                      | Encoding is used for string to binary conversion                                                                                                      | *base64*,*none* | `-` (explained in [encoding](#encoding))     |
 | [width](#width) | any atomic type | Specifies the width of a column for a fixed-width formats | "10" | - |
 
 **NB!** All values in _metadata_ have to be entered as *string*. Even if they would conform to other types, like number
 or boolean.
-
-<a id="metadata-star" />\* Value used if nothing is specified in _metadata_
-
-<a id="metadata-star-star" />\*\* No default exists (as not needed)
-
-<a id="metadata-star-star-star" />\*\*\* Unless a different default time zone is specified via
-`defaultTimestampTimeZone` and `defaultDateTimeZone` application settings
 
 ### sourcecolumn
 
@@ -476,12 +470,9 @@ Summary:
 | `epoch`                                    | Seconds since 1970/01/01 00:00:00                | 1557136493, 1557136493.136             |
 | `epochmilli`                               | Milliseconds since 1970/01/01 00:00:00.0000      | 1557136493128, 1557136493128.001       |
 | `epochmicro`                               | Microseconds since 1970/01/01 00:00:00.0000      | 1557136493128789, 1557136493128789.999 |
-| `epochnano`<sup>[*](#parsing-star)</sup>   | Nanoseconds since 1970/01/01 00:00:00.0000       | 1557136493128789101                    |
+| `epochnano`[^4]   | Nanoseconds since 1970/01/01 00:00:00.0000       | 1557136493128789101                    |
 | `i`                                        | Microsecond                                      | 111, 321001                            |
 | `n`<sup>[*](#parsing-star)</sup>           | Nanosecond                                       | 999, 542113879                         |
-
-<a id="parsing-star" />\* While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any
-   value behind microseconds precision will be truncated.
 
 **NB!** Spark uses US Locale and because on-the-fly conversion would be complicated, at the moment we stick to this
 hardcoded locale as well. E.g. `am/pm` for `a` placeholder, English names of days and months etc.
@@ -544,18 +535,15 @@ be distinct characters, or parsing will be impossible.
 |--------|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | `0`    | Number                | Digit                                                                                                                                                                                                               |                                                                                    |
 | `#`    | Number                | Digit, zero shows as absent                                                                                                                                                                                         |                                                                                    |
-| `.`    | Number                | Decimal separator                                                                                                                                                                                                   | [Decimal separator](#decimal_separator) NB!<sup>[*](#pattern-parsing-star)</sup>   |
-| `-`    | Number                | Minus sign                                                                                                                                                                                                          | [Minus sign](#minus_sign) NB!<sup>[*](#pattern-parsing-star)</sup>                 |
-| `,`    | Number                | Grouping separator                                                                                                                                                                                                  | [Grouping separator](#grouping_separator) NB!<sup>[*](#pattern-parsing-star)</sup> |
+| `.`    | Number                | Decimal separator                                                                                                                                                                                                   | [Decimal separator](#decimal_separator)[^5] NB!                                    |
+| `-`    | Number                | Minus sign                                                                                                                                                                                                          | [Minus sign](#minus_sign)[^5] NB!</sup>                                            |
+| `,`    | Number                | Grouping separator                                                                                                                                                                                                  | [Grouping separator](#grouping_separator)[^5] NB!<sup>                             |
 | `E`    | Number                | Separates mantissa and exponent in scientific notation. Need not be quoted in prefix or suffix.                                                                                                                     |                                                                                    |
 | `;`    | Subpattern boundary   | Separates positive and negative subpatterns                                                                                                                                                                         |                                                                                    |
 | `%`    | Prefix or suffix      | Divide by 100 on parsing                                                                                                                                                                                            |                                                                                    |
 | `‰`    | Prefix or suffix      | Divide by 1000 on parsing                                                                                                                                                                                           |                                                                                    |
 | `'`    | Prefix or suffix      | Used to quote special characters in a prefix or suffix, for example, the "'#'#" pattern allows the value `#123` to be read in as the number `123`. To create a single quote itself, use two in a row: "# o''clock". |                                                                                    |
 | `∞`    | *not part of pattern* | String to represent infinity                                                                                                                                                                                        |                                                                                    |
-
-<a id="pattern-parsing-star"/>\* while these can be changed, in the [`pattern`]($pattern) the default value *must* be 
-used. E.g. *"."*, *"."* and *"-"*.
 
 **NB!** If there's no special format of the input, it's advised to avoid the usage of patterns due to the added
 performance hit (parsing using a pattern adds computational overhead). It's still possible to redefine the special
@@ -613,9 +601,22 @@ cannot be a `default` for the type [`Short`](#short), or _"∞"_ if `allow_infin
 - If it's a type supporting [`pattern`](#pattern) and it is defined, the default value has to adhere to the `pattern`
 - If 'strict_parsing' is enabled for [`Decimal`](#decimal), the number of decimal places has to fit into the type's scale
 
+## Notes
+
+[^1]: Value used if nothing is specified in _metadata_
+
+[^2]: No default exists (as not needed)
+
+[^3]: Unless a different default time zone is specified via`defaultTimestampTimeZone` and `defaultDateTimeZone` application settings
+
+[^4]: While _nanoseconds_ designation is supported on input, it's not supported in storage or further usage. So any value behind microseconds precision will be truncated.
+
+[^5]: While the decimal and grouping separators and minus sign symbols can be changed, in the [`pattern`]($pattern) the default value *must* be used. E.g. *"."*, *"."* and *"-"*.
+
 [test-samples]: https://github.com/AbsaOSS/enceladus/blob/master/spark-jobs/src/test/scala/za/co/absa/enceladus/standardization/samples/TestSamples.scala
 [oracle-tz-ids]: https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html#getAvailableIDs--
 [timestamp-types]: https://docs.google.com/document/d/1gNRww9mZJcHvUDCXklzjFEQGpefsuR_akCDfWsdE35Q/edit#heading=h.n699ftkvhjlo
 [oracle-simple-date-format]: https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html
 [oracle-decimal-format]: https://docs.oracle.com/javase/7/docs/api/java/text/DecimalFormat.html
 [errcol]: {{ docs_path }}/usage/errcol
+
