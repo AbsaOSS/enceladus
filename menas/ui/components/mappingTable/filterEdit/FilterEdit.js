@@ -78,9 +78,7 @@ class FilterEdit {
 
   onFilterAdd(blankFilter) {
     // blank filter contains validation fields:
-    // todo add validation
-    //const namedBlankFilter = this.resetFilterDataValidation(FilterTreeUtils.addNiceNamesToFilterData(blankFilter));
-    const namedBlankFilter = FilterTreeUtils.addNiceNamesToFilterData(blankFilter);
+    const namedBlankFilter = this.resetFilterDataValidation(FilterTreeUtils.addNiceNamesToFilterData(blankFilter));
 
     const treeTable = this.#getById("filterTreeEdit");
     const selectedIndices = treeTable.getSelectedIndices();

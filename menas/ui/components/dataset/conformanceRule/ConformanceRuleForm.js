@@ -382,7 +382,8 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
   isCorrectlyConfigured(rule) {
     return this.hasValidInputColumn(rule.targetAttribute)
       & this.hasValidOutputColumns(rule)
-      & this.hasValidJoinConditions(rule.newJoinConditions);
+      & this.hasValidJoinConditions(rule.newJoinConditions)
+      & rule.hasValidFilter;
   }
 
   hasValidJoinConditions(fieldValue = []) {

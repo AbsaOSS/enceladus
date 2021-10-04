@@ -109,6 +109,13 @@ class ConformanceRuleDialog {
     let newRule = $.extend(true, {}, this.model.getProperty("/newRule"));
     this.beforeSubmitChanges(newRule);
     this.resetRuleValidation();
+
+    newRule.hasValidFilter = true; // default for non-MappingConformanceRules
+    if (newRule._t === "MappingConformanceRule") {
+      const validFilter = this.filterEdit.validateFilterData();
+      newRule.hasValidFilter = validFilter;
+    }
+
     if (this.ruleForms.byType(newRule._t).isValid(newRule, this.controller._transitiveSchemas, currentDataset.conformance)) {
       if (this.model.getProperty("/newRule/isEdit")) {
         this.updateRule(currentDataset, newRule);
@@ -397,6 +404,11 @@ class ConformanceRuleDialog {
   resetRuleValidation() {
     const newRule = this.model.getProperty("/newRule");
     this.ruleForms.byType(newRule._t).reset();
+
+    if (newRule._t === "MappingConformanceRule") {
+      this.filterEdit.resetFilterValidation();
+    }
+
   }
 
 }
