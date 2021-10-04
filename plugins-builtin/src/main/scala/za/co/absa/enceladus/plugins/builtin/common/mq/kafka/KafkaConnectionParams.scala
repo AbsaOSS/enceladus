@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
-import com.typesafe.config.Config
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
  * This case class contains parameters required to create a Kafka Producer.
@@ -45,7 +45,7 @@ object KafkaConnectionParams {
    * @return An instance of Kafka connection parameters.
    */
   @throws[IllegalArgumentException]
-  def fromConfig(conf: Config, clientIdKey: String, topicNameKey: String): KafkaConnectionParams = {
+  def fromConfig(conf: ConfigReader, clientIdKey: String, topicNameKey: String): KafkaConnectionParams = {
     validate(conf, clientIdKey, topicNameKey)
 
     KafkaConnectionParams(conf.getString(BootstrapServersKey),
@@ -57,7 +57,7 @@ object KafkaConnectionParams {
   }
 
   @throws[IllegalArgumentException]
-  private def validate(conf: Config, clientIdKey: String, topicNameKey: String): Unit = {
+  private def validate(conf: ConfigReader, clientIdKey: String, topicNameKey: String): Unit = {
     val requiredFields = BootstrapServersKey :: SchemaRegistryUrlKey :: clientIdKey :: topicNameKey :: Nil
 
     val missingKeys = requiredFields.filterNot(conf.hasPath)

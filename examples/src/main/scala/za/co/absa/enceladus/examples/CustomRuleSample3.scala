@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.examples
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -24,6 +23,7 @@ import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object CustomRuleSample3 extends CustomRuleSampleFs {
@@ -35,7 +35,7 @@ object CustomRuleSample3 extends CustomRuleSampleFs {
   TimeZoneNormalizer.normalizeAll(spark) //normalize the timezone of JVM and the spark session
 
   def main(args: Array[String]): Unit = {
-    val conf = ConfigFactory.load()
+    val conf = ConfigReader()
     val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)

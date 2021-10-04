@@ -15,14 +15,12 @@
 
 package za.co.absa.enceladus.plugins.buildin.kafka
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.plugins.buildin.factories.DceControlInfoFactory
 import za.co.absa.enceladus.plugins.buildin.kafka.dummy.DummyControlInfoProducer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
 import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
-
-import scala.collection.JavaConverters._
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 class KafkaPluginSuite extends AnyFunSuite {
   test("Test Kafka info plugin sends control measurements") {
@@ -42,11 +40,12 @@ class KafkaPluginSuite extends AnyFunSuite {
   }
 
   test("Test Kafka connection parameters are parsed from a config") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String](KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
-        KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092",
-        "my.client.id" -> "dummyClientId",
-        "my.topic.name" -> "dummyTopicName").asJava)
+    val conf = ConfigReader(Map(
+      KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
+      KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092",
+      "my.client.id" -> "dummyClientId",
+      "my.topic.name" -> "dummyTopicName"
+    ))
 
     val kafkaConnection = KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")
 
@@ -58,14 +57,14 @@ class KafkaPluginSuite extends AnyFunSuite {
   }
 
   {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String](KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
-        KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092",
-        "my.client.id" -> "dummyClientId",
-        "my.topic.name" -> "dummyTopicName",
-        KafkaSecurityParams.SecurityProtocolKey -> "SASL_SSL",
-        KafkaSecurityParams.SaslMechanismKey -> "GSSAPI"
-      ).asJava)
+    val conf = ConfigReader(Map(
+      KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
+      KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092",
+      "my.client.id" -> "dummyClientId",
+      "my.topic.name" -> "dummyTopicName",
+      KafkaSecurityParams.SecurityProtocolKey -> "SASL_SSL",
+      KafkaSecurityParams.SaslMechanismKey -> "GSSAPI"
+    ))
     def testCreateKafkaConnection = KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")
 
     test("Test Kafka config parser recognizes security parameters") {
@@ -94,10 +93,10 @@ class KafkaPluginSuite extends AnyFunSuite {
   }
 
   test("Test Kafka config parser throws an exception if required properties are missing") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String](KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
-        KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092"
-      ).asJava)
+    val conf = ConfigReader(Map(
+      KafkaConnectionParams.BootstrapServersKey -> "127.0.0.1:8081",
+      KafkaConnectionParams.SchemaRegistryUrlKey -> "localhost:9092"
+    ))
 
     intercept[IllegalArgumentException] {
       KafkaConnectionParams.fromConfig(conf, "my.client.id", "my.topic.name")

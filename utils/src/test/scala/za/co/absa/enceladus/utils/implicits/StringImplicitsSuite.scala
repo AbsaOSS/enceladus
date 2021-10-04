@@ -16,9 +16,9 @@
 package za.co.absa.enceladus.utils.implicits
 
 import java.security.InvalidParameterException
-
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
 
 class StringImplicitsSuite extends AnyFunSuite with Matchers {
@@ -306,4 +306,57 @@ class StringImplicitsSuite extends AnyFunSuite with Matchers {
     "X".coalesce("Y", "Z") shouldBe "X"
     "X".coalesce("") shouldBe "X"
   }
+
+
 }
+
+class StringImplicitsSuite_Extra extends AnyWordSpec with Matchers {
+
+   "splitWithQuotes()" should {
+     "consider an empty string to be" when {
+       "an empty sequence when limit is 0" in {
+         "".splitWithQuotes() shouldBe Seq()
+       }
+       "a sequence of one empty string when limit is non-zero" in {
+         "".splitWithQuotes(limit = -1) shouldBe Seq("")
+       }
+     }
+     "ignore delimiters in quotes" in {
+       val expected = Seq(
+         "foo",
+         "bar",
+         """c;qual="baz,blurb"""",
+         """d;junk="quux,syzygy"""",
+         ""
+       )
+       """foo,bar,c;qual="baz,blurb",d;junk="quux,syzygy",""".splitWithQuotes(limit = -1) shouldBe expected
+     }
+     "handle other delimiter" in {
+       """just."an.other".test""".splitWithQuotes('.') shouldBe Seq("just", "\"an.other\"", "test")
+     }
+   }
+
+  "trimStartEndChar()" should {
+    "keep the empty string empty" in {
+      "".trimStartEndChar('<','>') shouldBe ""
+    }
+    "remove quotes" in {
+      "'Hello world!'".trimStartEndChar(''') shouldBe "Hello world!"
+    }
+    "remove brackets" in {
+      "[a, b, c]".trimStartEndChar('[', ']') shouldBe "a, b, c"
+    }
+    "keep the string as is" when {
+      "start and end characters differ" in {
+        "[a, b, c]".trimStartEndChar('{', '}') shouldBe "[a, b, c]"
+      }
+      "only the start character matches" in {
+        "(aaaa...".trimStartEndChar('(', ')') shouldBe "(aaaa..."
+      }
+      "only the end character matches" in {
+        "Wha`".trimStartEndChar('`') shouldBe "Wha`"
+      }
+    }
+  }
+}
+

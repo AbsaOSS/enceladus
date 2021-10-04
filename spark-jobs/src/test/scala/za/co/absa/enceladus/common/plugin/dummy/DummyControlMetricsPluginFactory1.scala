@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.common.plugin.dummy
 
-import com.typesafe.config.Config
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 object DummyControlMetricsPluginFactory1 extends ControlMetricsPluginFactory {
-  override def apply(config: Config): ControlMetricsPlugin = new DummyControlMetricsPlugin1
+  override def apply(config: ConfigReader): ControlMetricsPlugin = new DummyControlMetricsPlugin1
 }

@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.common.plugin.menas
 
-import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import za.co.absa.atum.core.Atum
 import za.co.absa.atum.model._
@@ -25,13 +24,14 @@ import za.co.absa.enceladus.common.plugin.PluginLoader
 import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 import scala.util.control.NonFatal
 
 /**
   * This is Menas plugin. The plugin listens to Control Framework events and sends information to Menas using REST API.
   */
-class EventListenerMenas(config: Config,
+class EventListenerMenas(config: ConfigReader,
                          dao: MenasDAO,
                          datasetName: String,
                          datasetVersion: Int,

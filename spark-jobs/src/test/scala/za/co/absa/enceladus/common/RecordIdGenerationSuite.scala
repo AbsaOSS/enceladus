@@ -16,14 +16,14 @@
 package za.co.absa.enceladus.common
 
 import java.util.UUID
-
-import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import RecordIdGeneration._
 import IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.enceladus.utils.config.ConfigReader
+import za.co.absa.enceladus.utils.config.ConfigReader.ConfigExceptionBadValue
 
 class RecordIdGenerationSuite extends AnyFlatSpec with Matchers with SparkTestBase {
   import spark.implicits._
@@ -72,14 +72,16 @@ class RecordIdGenerationSuite extends AnyFlatSpec with Matchers with SparkTestBa
 
   "RecordIdGenerationStrategyFromConfig" should "correctly load uuidType from config (case insensitive)" in {
 
-    def configWithStrategyValue(value: String): Config =
-      ConfigFactory.empty().withValue("enceladus.recordId.generation.strategy", ConfigValueFactory.fromAnyRef(value))
+    def configWithStrategyValue(value: String): ConfigReader = {
+      ConfigReader(Map.empty[String, String])
+        .withAnyRefValue("enceladus.recordId.generation.strategy", value)
+    }
 
     getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("UUiD")) shouldBe TrueUuids
     getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("StaBleHASHiD")) shouldBe StableHashId
     getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("nOnE")) shouldBe NoId
 
-    val caughtException = the[ConfigException.BadValue] thrownBy {
+    val caughtException = the[ConfigExceptionBadValue] thrownBy {
       getRecordIdGenerationStrategyFromConfig(configWithStrategyValue("InVaLiD"))
     }
     caughtException.getMessage should include("Invalid value at 'enceladus.recordId.generation.strategy'")

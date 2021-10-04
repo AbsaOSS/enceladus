@@ -15,12 +15,11 @@
 
 package za.co.absa.enceladus.conformance
 
-import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.conformance.interpreter.{FeatureSwitches, ThreeStateSwitch}
 import ConformancePropertiesProvider._
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
   * Reads conformance properties from the configuration file
@@ -28,7 +27,7 @@ import ConformancePropertiesProvider._
 class ConformancePropertiesProvider {
   private val enableCF: Boolean = true
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
-  private implicit val conf: Config = ConfigFactory.load()
+  private implicit val conf: ConfigReader = ConfigReader()
 
   def isAutocleanStdFolderEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
     val enabled = getCmdOrConfigBoolean(cmd.autocleanStandardizedFolder, standardizedHdfsFolderKey, defaultValue = false)
@@ -57,7 +56,7 @@ class ConformancePropertiesProvider {
   }
 
   private def isOriginalColumnsMutabilityEnabled[T]()(implicit cmd: ConformanceConfigParser[T]): Boolean = {
-    val enabled = conf.getOptionBoolean(allowOriginalColumnsMutabilityKey).getOrElse(false)
+    val enabled = conf.getBooleanOption(allowOriginalColumnsMutabilityKey).getOrElse(false)
     log.info(s"Original column mutability enabled = $enabled")
     enabled
   }
@@ -82,10 +81,10 @@ class ConformancePropertiesProvider {
    * @return The effective value of the parameter
    */
   private def getCmdOrConfigBoolean(cmdParameterOpt: Option[Boolean], configKey: String, defaultValue: Boolean)
-                                   (implicit conf: Config): Boolean = {
+                                   (implicit conf: ConfigReader): Boolean = {
     val enabled = cmdParameterOpt match {
       case Some(b) => b
-      case None => conf.getOptionBoolean(configKey).getOrElse(defaultValue)
+      case None => conf.getBooleanOption(configKey).getOrElse(defaultValue)
     }
     enabled
   }

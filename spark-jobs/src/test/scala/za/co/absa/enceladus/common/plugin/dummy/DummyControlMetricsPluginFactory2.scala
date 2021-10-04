@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.common.plugin.dummy
 
-import com.typesafe.config.Config
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 object DummyControlMetricsPluginFactory2 extends ControlMetricsPluginFactory {
-  override def apply(config: Config): ControlMetricsPlugin = {
+  override def apply(config: ConfigReader): ControlMetricsPlugin = {
     if (config.hasPath("dummy.param")) {
       new DummyControlMetricsPlugin2(config.getString("dummy.param"))
     } else {

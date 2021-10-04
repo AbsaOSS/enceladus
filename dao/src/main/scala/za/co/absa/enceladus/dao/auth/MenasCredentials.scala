@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.dao.auth
 
-import com.typesafe.config.ConfigFactory
 import org.apache.spark.sql.SparkSession
 import sun.security.krb5.internal.ktab.KeyTab
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 
 sealed abstract class MenasCredentials {
@@ -42,7 +42,7 @@ object MenasPlainCredentials {
   def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
-    val conf = ConfigFactory.parseString(HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path))
+    val conf = ConfigReader.parseString(HadoopFsUtils.getOrCreate(fs).getLocalOrDistributedFileContent(path))
     MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }

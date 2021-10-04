@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import com.typesafe.config.Config
 import org.apache.log4j.{LogManager, Logger}
 import za.co.absa.enceladus.plugins.api.{Plugin, PluginFactory}
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.general.ClassLoaderUtils
 
 import scala.collection.mutable.ListBuffer
@@ -38,7 +38,7 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
    */
   @throws[IllegalStateException]
   @throws[IllegalArgumentException]
-  def loadPlugins(config: Config, configKeyPrefix: String): Seq[A] = {
+  def loadPlugins(config: ConfigReader, configKeyPrefix: String): Seq[A] = {
     val plugins = new ListBuffer[A]
     var i = 1
 
@@ -57,7 +57,7 @@ class PluginLoader[+A <: Plugin:ClassTag:universe.TypeTag] {
 
   @throws[IllegalStateException]
   @throws[IllegalArgumentException]
-  private def buildPlugin(factoryName: String, config: Config): Option[A] = {
+  private def buildPlugin(factoryName: String, config: ConfigReader): Option[A] = {
     val factory = ClassLoaderUtils.loadSingletonClassOfType[PluginFactory[A]](factoryName)
     try {
       Option(factory.apply(config))

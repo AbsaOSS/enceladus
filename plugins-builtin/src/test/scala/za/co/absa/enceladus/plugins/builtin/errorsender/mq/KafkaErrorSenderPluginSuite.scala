@@ -16,11 +16,9 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import java.time.Instant
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.apache.spark.sql.DataFrame
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -31,6 +29,7 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 
@@ -103,11 +102,11 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
   val testKafkaUrl = "http://example.com:9092"
   val testSchemaRegUrl = "http://example.com:8081"
 
-  private val testConfig = ConfigFactory.empty()
-    .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef(testClientId))
-    .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
-    .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
-    .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
+  private val testConfig = ConfigReader(Map.empty[String, String])
+    .withAnyRefValue("kafka.error.client.id", testClientId)
+    .withAnyRefValue("kafka.error.topic.name", testTopicName)
+    .withAnyRefValue("kafka.bootstrap.servers", testKafkaUrl)
+    .withAnyRefValue("kafka.schema.registry.url", testSchemaRegUrl)
 
   it should "correctly create the error plugin from config" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
@@ -147,7 +146,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
     val onlyConformanceErrorsDataDf =  Seq(testData(1)).toDF
     errorKafkaPlugin.onDataReady(onlyConformanceErrorsDataDf, defaultPluginParams.copy(sourceId = SourcePhase.Standardization).toMap)
 
-    assert(sendErrorsToKafkaWasCalled == false, "KafkaErrorSenderPluginImpl.sentErrorToKafka should not be called for 0 errors")
+    assert(!sendErrorsToKafkaWasCalled, "KafkaErrorSenderPluginImpl.sentErrorToKafka should not be called for 0 errors")
   }
 
   it should "fail on incompatible parameters map" in {
@@ -173,11 +172,11 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
   ).foreach { case (source, specificErrorParts) =>
     it should s"send $source errors to kafka as confluent_avro" in {
 
-      val configWithMockedRegistry = ConfigFactory.empty()
-        .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef("errorId1"))
-        .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef("errorTopicId1"))
-        .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef("http://bogus-kafka:9092"))
-        .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(s"http://localhost:$port"))
+      val configWithMockedRegistry = ConfigReader(Map.empty[String, String])
+        .withAnyRefValue("kafka.error.client.id", "errorId1")
+        .withAnyRefValue("kafka.error.topic.name", "errorTopicId1")
+        .withAnyRefValue("kafka.bootstrap.servers", "http://bogus-kafka:9092")
+        .withAnyRefValue("kafka.schema.registry.url", s"http://localhost:$port")
 
       object expected {
         val keySchema = """{"schema":"{\"type\":\"record\",\"name\":\"dataErrorKey\",\"namespace\":\"za.co.absa.dataquality.errors.avro.key.schema\",\"fields\":[{\"name\":\"sourceSystem\",\"type\":\"string\"}]}"}"""

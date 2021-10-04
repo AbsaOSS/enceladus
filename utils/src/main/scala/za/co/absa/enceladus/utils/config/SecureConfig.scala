@@ -15,9 +15,6 @@
 
 package za.co.absa.enceladus.utils.config
 
-import com.typesafe.config.Config
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
-
 object SecureConfig {
   object Keys {
     val javaSecurityAuthLoginConfig = "java.security.auth.login.config"
@@ -37,7 +34,7 @@ object SecureConfig {
    *
    * @param conf A configuration.
    */
-  def setSecureKafkaProperties(conf: Config): Unit = {
+  def setSecureKafkaProperties(conf: ConfigReader): Unit = {
     setTrustStoreProperties(conf)
     setKeyStoreProperties(conf)
     ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaSecurityAuthLoginConfig)
@@ -48,12 +45,12 @@ object SecureConfig {
    * in the `conf`
    * @param conf config to lookup values form
    */
-  def setTrustStoreProperties(conf: Config): Unit = {
+  def setTrustStoreProperties(conf: ConfigReader): Unit = {
     ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslTrustStore)
     ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslTrustStorePassword)
   }
 
-  def hasTrustStoreProperties(conf: Config): Boolean = {
+  def hasTrustStoreProperties(conf: ConfigReader): Boolean = {
     conf.hasPath(Keys.javaxNetSslTrustStore) &&
       conf.hasPath(Keys.javaxNetSslTrustStorePassword)
   }
@@ -63,20 +60,20 @@ object SecureConfig {
    * in the `conf`
    * @param conf config to lookup values form
    */
-  def setKeyStoreProperties(conf: Config): Unit = {
+  def setKeyStoreProperties(conf: ConfigReader): Unit = {
     ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslKeyStore)
     ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslKeyStorePassword)
   }
 
-  def hasKeyStoreProperties(conf: Config): Boolean = {
+  def hasKeyStoreProperties(conf: ConfigReader): Boolean = {
     conf.hasPath(Keys.javaxNetSslKeyStore) &&
       conf.hasPath(Keys.javaxNetSslKeyStorePassword)
   }
 
   /** Common logic to retrieve any store path with its optional password */
-  private def getStoreProperties(conf: Config, storePathKey: String, storePasswordKey: String): Option[StoreDef] = {
-    conf.getOptionString(storePathKey).map { storePath: String =>
-      val optPassword = conf.getOptionString(storePasswordKey)
+  private def getStoreProperties(conf: ConfigReader, storePathKey: String, storePasswordKey: String): Option[StoreDef] = {
+    conf.getStringOption(storePathKey).map { storePath: String =>
+      val optPassword = conf.getStringOption(storePasswordKey)
 
       StoreDef(storePath, optPassword)
     }
@@ -88,7 +85,7 @@ object SecureConfig {
    * @param conf config
    * @return Defined KeyStore definition if `Keys.javaxNetSslKeyStore` exists
    */
-  def getKeyStoreProperties(conf: Config): Option[StoreDef] =
+  def getKeyStoreProperties(conf: ConfigReader): Option[StoreDef] =
     getStoreProperties(conf, Keys.javaxNetSslKeyStore, Keys.javaxNetSslKeyStorePassword)
 
   /**
@@ -97,7 +94,7 @@ object SecureConfig {
    * @param conf config
    * @return Defined TrustStore definition if `Keys.javaxNetSslKeyStore` exists
    */
-  def getTrustStoreProperties(conf: Config): Option[StoreDef] =
+  def getTrustStoreProperties(conf: ConfigReader): Option[StoreDef] =
     getStoreProperties(conf, Keys.javaxNetSslTrustStore, Keys.javaxNetSslTrustStorePassword)
 
 }

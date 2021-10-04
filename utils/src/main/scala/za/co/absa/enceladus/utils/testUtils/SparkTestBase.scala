@@ -15,21 +15,22 @@
 
 package za.co.absa.enceladus.utils.testUtils
 
+import com.typesafe.config.ConfigFactory
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkConf
-import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+
 import scala.collection.JavaConversions._
 import java.io.File
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
-import com.typesafe.config.Config
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 trait SparkTestBase extends HasSparkSession { self =>
   TimeZoneNormalizer.normalizeJVMTimeZone()
 
-  val config: Config = ConfigFactory.load()
+  val config: ConfigReader = ConfigReader()
   val sparkMaster: String = config.getString("enceladus.utils.testUtils.sparkTestBaseMaster")
 
   val sparkBuilder: SparkSession.Builder = SparkSession.builder()

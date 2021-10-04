@@ -15,12 +15,12 @@
 
 package za.co.absa.enceladus.plugins.api.postprocessor
 
-import com.typesafe.config.Config
 import za.co.absa.enceladus.plugins.api.PluginFactory
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
  * Base class for Enceladus plugin factories.
  */
 trait PostProcessorFactory extends PluginFactory[PostProcessor] {
-  def apply(config: Config): PostProcessor
+  def apply(config: ConfigReader): PostProcessor
 }

@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka
 
-import com.typesafe.config.Config
 import org.apache.avro.{Schema => AvroSchema}
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.avro.SchemaConverters
@@ -24,6 +23,7 @@ import za.co.absa.abris.avro.read.confluent.SchemaManager
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessorFactory
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
  * Implementation of a plugin factory that creates the above plugin based on configuration passed from
@@ -49,7 +49,7 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
     val namespaceName = "za.co.absa.dataquality.errors.avro.schema"
   }
 
-  override def apply(config: Config): KafkaErrorSenderPluginImpl = {
+  override def apply(config: ConfigReader): KafkaErrorSenderPluginImpl = {
     val connectionParams = kafkaConnectionParamsFromConfig(config)
     val valueSchemaRegistryConfig = avroValueSchemaRegistryConfig(connectionParams)
     val keySchemaRegistryConfig = avroKeySchemaRegistryConfig(connectionParams)
@@ -57,7 +57,7 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
     KafkaErrorSenderPluginImpl(connectionParams, keySchemaRegistryConfig, valueSchemaRegistryConfig)
   }
 
-  def kafkaConnectionParamsFromConfig(config: Config): KafkaConnectionParams = {
+  def kafkaConnectionParamsFromConfig(config: ConfigReader): KafkaConnectionParams = {
     KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorKafkaTopicKey)
   }
 

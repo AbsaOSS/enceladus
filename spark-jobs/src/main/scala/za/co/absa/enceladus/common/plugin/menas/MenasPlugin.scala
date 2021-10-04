@@ -15,9 +15,9 @@
 
 package za.co.absa.enceladus.common.plugin.menas
 
-import com.typesafe.config.Config
 import za.co.absa.atum.plugins.PluginManager
 import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
   * This is Menas plugin for Conformance Framework
@@ -35,7 +35,7 @@ object MenasPlugin {
     * @param isJobStageOnly true if the Spark job is only a stage of some job chain
     * @param generateNewRun true if a new run needs to be generated for the Spark job
     */
-  def enableMenas(config: Config,
+  def enableMenas(config: ConfigReader,
                   datasetName: String,
                   datasetVersion: Int,
                   reportDate: String,

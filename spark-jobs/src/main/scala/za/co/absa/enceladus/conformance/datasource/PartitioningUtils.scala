@@ -16,13 +16,12 @@
 package za.co.absa.enceladus.conformance.datasource
 
 import java.text.MessageFormat
-
-import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.fs.Path
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 object PartitioningUtils {
 
-  private val conf = ConfigFactory.load()
+  private val conf = ConfigReader()
 
   // Pattern representing the date partitioning where {0} stands for year, {1} for month, {2} for day
   lazy val mappingTablePattern: String = conf.getString("conformance.mappingtable.pattern")

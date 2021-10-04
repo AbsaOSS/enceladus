@@ -26,7 +26,7 @@ import za.co.absa.enceladus.utils.config.ConfigReader
    */
 object TimeZoneNormalizer {
   private val log: Logger = LogManager.getLogger(this.getClass)
-  val timeZone: String = new ConfigReader().readStringConfigIfExist("timezone").getOrElse {
+  val timeZone: String = ConfigReader().getStringOption("timezone").getOrElse {
     val default = "UTC"
     log.warn(s"No time zone (timezone) setting found. Setting to default, which is $default.")
     default

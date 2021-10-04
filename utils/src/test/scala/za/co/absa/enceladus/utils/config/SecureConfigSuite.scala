@@ -15,15 +15,13 @@
 
 package za.co.absa.enceladus.utils.config
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
 import za.co.absa.enceladus.utils.config.SecureConfig.StoreDef
 
 class SecureConfigSuite extends AnyFlatSpec with Matchers {
 
-  private val emptyConfig = ConfigFactory.empty()
+  private val emptyConfig = ConfigReader(Map.empty[String, String])
   private val keyStoreNoPassConfig = emptyConfig.withAnyRefValue("javax.net.ssl.keyStore", "/path/to/keystore")
   private val keyStoreConfig = keyStoreNoPassConfig.withAnyRefValue("javax.net.ssl.keyStorePassword", "ksPwd1")
 

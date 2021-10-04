@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import com.typesafe.config.Config
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
+import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase._
 
-case class PostProcessingService private(config: Config, additionalParams: ErrorSenderPluginParams) {
+case class PostProcessingService private(config: ConfigReader, additionalParams: ErrorSenderPluginParams) {
 
   private val log = LogManager.getLogger(classOf[PostProcessingService])
 

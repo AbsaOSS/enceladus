@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.plugins.builtin.controlinfo.mq.kafka
 
-import com.typesafe.config.Config
 import za.co.absa.enceladus.plugins.api.control.{ControlMetricsPlugin, ControlMetricsPluginFactory}
+import za.co.absa.enceladus.plugins.builtin.common.mq.InfoAvroSerializer
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{InfoProducerKafka, KafkaConnectionParams}
-import za.co.absa.enceladus.plugins.builtin.controlinfo.ControlInfoAvroSerializer
+import za.co.absa.enceladus.plugins.builtin.controlinfo.{ControlInfoAvroSerializer, DceControlInfo}
 import za.co.absa.enceladus.plugins.builtin.controlinfo.mq.ControlInfoSenderPlugin
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
  * Implementation of a plugin factory that creates the above plugin based on configuration passed from
@@ -29,9 +30,9 @@ object KafkaInfoPlugin extends ControlMetricsPluginFactory {
   val ClientIdKey = "kafka.info.metrics.client.id"
   val ControlMetricsKafkaTopicKey = "kafka.info.metrics.topic.name"
 
-  implicit val serializer = ControlInfoAvroSerializer
+  implicit val serializer: InfoAvroSerializer[DceControlInfo] = ControlInfoAvroSerializer
 
-  override def apply(config: Config): ControlMetricsPlugin = {
+  override def apply(config: ConfigReader): ControlMetricsPlugin = {
     val connectionParams = KafkaConnectionParams.fromConfig(config, ClientIdKey, ControlMetricsKafkaTopicKey)
     val producer = new InfoProducerKafka(connectionParams)
     new ControlInfoSenderPlugin(producer)

@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.utils.config
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigException, ConfigFactory}
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
-class ConfigReaderSuite extends AnyWordSpec {
+class ConfigReaderSuite extends AnyWordSpec with Matchers{
   private val config = ConfigFactory.parseString(
     """
       |top = default
@@ -29,37 +30,149 @@ class ConfigReaderSuite extends AnyWordSpec {
       |  string = "str"
       |  redacted = "67890"
       |}
+      |nothing=null
+      |booleans {
+      |  yes = "true"
+      |  str = "xxx"
+      |}
+      |list = [1,2,3]
+      |list2=["10", "20", "30"]
+      |list3="1, 1, 2, 3 , 5"
+      |list4=["0", "A", "BB"]
       |""".stripMargin)
 
   private val keysToRedact = Set("redacted", "nested.redacted", "redundant.key")
 
-  private val configReader = new ConfigReader(config)
+  private val configReader = ConfigReader(config)
 
-  "readStringConfigIfExist()" should {
-    "return Some(value) if the key exists" in {
-      assert(configReader.readStringConfigIfExist("nested.redacted").contains("67890"))
+  "hasPath" should {
+    "return true if the key exists" in {
+      assert(configReader.hasPath("nested.value.num"))
     }
-
-    "return None if the key does not exist" in {
-      assert(configReader.readStringConfigIfExist("redundant.key").isEmpty)
+    "return true if key exists even as parent" in {
+      assert(configReader.hasPath("nested"))
     }
-
-    "return a value converted to string if the value is not a string" in {
-      assert(configReader.readStringConfigIfExist("nested.value.num").contains("100"))
+    "return false if the key exists" in {
+      assert(!configReader.hasPath("does.not.exists"))
     }
   }
 
-  "readStringConfig()" should {
+  "getString()" should {
     "return the value if the key exists" in {
-      assert(configReader.readStringConfig("nested.redacted", "def") == "67890")
+      configReader.getString("nested.redacted") shouldBe "67890"
     }
-
-    "return the default value if the key does not exist" in {
-      assert(configReader.readStringConfig("redundant.key", "def") == "def")
+    "throw if the key does not exist" in {
+      intercept[ConfigException.Missing] {
+        configReader.getString("redundant.key")
+      }
     }
-
     "return a value converted to string if the value is not a string" in {
-      assert(configReader.readStringConfig("nested.value.num", "def") == "100")
+      configReader.getString("nested.value.num") shouldBe "100"
+    }
+    "throws if the value is null" in {
+      intercept[ConfigException.Null] {
+        configReader.getString("nothing")
+      }
+    }
+  }
+
+  "getInt()" should {
+    "return the value if the key exists and" when {
+      "is an integer" in {
+        configReader.getInt("nested.value.num") shouldBe 100
+      }
+      "and the value cane be converted to int" in {
+        configReader.getInt("nested.redacted") shouldBe 67890
+      }
+    }
+    "throw if the key does not exist" in {
+      intercept[ConfigException.Missing] {
+        configReader.getInt("redundant.key")
+      }
+    }
+    "throws if the value is not an integer" in {
+      intercept[ConfigException.WrongType] {
+        configReader.getInt("top")
+      }
+    }
+  }
+
+  "getBoolean()" should {
+    "return the value if the key exists and is a boolean" in {
+      assert(configReader.getBoolean("booleans.yes"))
+    }
+    "throw if the key does not exist" in {
+      intercept[ConfigException.Missing] {
+        configReader.getBoolean("booleans.not.exists")
+      }
+    }
+    "throws if the value is not a boolean" in {
+      intercept[ConfigException.WrongType] {
+        configReader.getBoolean("booleans.str")
+      }
+    }
+  }
+
+  "getIntList()" should {
+    "return list of integers" when {
+      "when the path exists and they are integers in brackets" in {
+        configReader.getIntList("list") shouldBe List(1, 2, 3)
+      }
+      "when values can be converted to int" in {
+        configReader.getIntList("list2") shouldBe List(10, 20, 30)
+      }
+      "when the values are a string not in brackets" in {
+        configReader.getIntList("list3") shouldBe List(1, 1, 2, 3, 5)
+      }
+      "even when the value is a single integer" in {
+        configReader.getIntList("nested.redacted") shouldBe List(67890)
+      }
+    }
+    "throws and exception" when {
+      "if the key does not exist" in {
+        intercept[ConfigException.Missing] {
+          configReader.getIntList("redundant.key")
+        }
+      }
+      "if the value is not a list of integers" in {
+        intercept[ConfigException.WrongType] {
+          configReader.getIntList("top")
+        }
+      }
+      "if the value is a list of strings" in {
+        intercept[ConfigException.WrongType] {
+          configReader.getIntList("list4")
+        }
+      }
+      "the value is null" in {
+        intercept[ConfigException.Null] {
+          configReader.getIntList("nothing")
+        }
+      }
+    }
+  }
+
+  "getStringOption()" should {
+    "return Some(value) if the key exists" in {
+      assert(configReader.getStringOption("nested.redacted").contains("67890"))
+    }
+    "return None if the key does not exist" in {
+      assert(configReader.getStringOption("redundant.key").isEmpty)
+    }
+    "return None if the key is Null" in {
+      assert(configReader.getStringOption("nothing").isEmpty)
+    }
+  }
+
+  "getIntListOption()" should {
+    "return Some(value) if the key exists" in {
+      assert(configReader.getIntListOption("list").contains(List(1, 2, 3)))
+    }
+    "return None if the key does not exist" in {
+      assert(configReader.getIntListOption("redundant.key").isEmpty)
+    }
+    "return None if the key is Null" in {
+      assert(configReader.getIntListOption("nothing").isEmpty)
     }
   }
 
@@ -67,24 +180,24 @@ class ConfigReaderSuite extends AnyWordSpec {
     "return the same config if there are no keys to redact" in {
       val redactedConfig = configReader.getFlatConfig(Set())
 
-      assert(redactedConfig("top") == "default")
-      assert(redactedConfig("quoted") == "text")
-      assert(redactedConfig("nested.value.num").toString == "100")
-      assert(redactedConfig("nested.string") == "str")
-      assert(redactedConfig("redacted") == "12345")
-      assert(redactedConfig("nested.redacted") == "67890")
-      assert(!redactedConfig.contains("redundant.key"))
+      redactedConfig("top") shouldBe "default"
+      redactedConfig("quoted") shouldBe "text"
+      redactedConfig("nested.value.num").toString shouldBe "100"
+      redactedConfig("nested.string") shouldBe "str"
+      redactedConfig("redacted") shouldBe "12345"
+      redactedConfig("nested.redacted") shouldBe "67890"
+      !redactedConfig.contains("redundant.key")
     }
 
     "redact an input config when given a set of keys to redact" in {
       val redactedConfig = configReader.getFlatConfig(keysToRedact)
 
-      assert(redactedConfig("top") == "default")
-      assert(redactedConfig("quoted") == "text")
-      assert(redactedConfig("nested.value.num").toString == "100")
-      assert(redactedConfig("nested.string") == "str")
-      assert(redactedConfig("redacted") == ConfigReader.redactedReplacement)
-      assert(redactedConfig("nested.redacted") == ConfigReader.redactedReplacement)
+      redactedConfig("top") shouldBe "default"
+      redactedConfig("quoted") shouldBe "text"
+      redactedConfig("nested.value.num").toString shouldBe "100"
+      redactedConfig("nested.string") shouldBe "str"
+      redactedConfig("redacted") shouldBe ConfigReader.redactedReplacement
+      redactedConfig("nested.redacted") shouldBe ConfigReader.redactedReplacement
       assert(!redactedConfig.contains("redundant.key"))
     }
   }
@@ -93,19 +206,19 @@ class ConfigReaderSuite extends AnyWordSpec {
     "return the same config if there are no keys to redact" in {
       val redactedConfig = configReader.getRedactedConfig(Set())
 
-      assertResult(config)(redactedConfig)
+      assertResult(config)(redactedConfig.config)
     }
 
     "redact an input config when given a set of keys to redact" in {
       val redactedConfig = configReader.getRedactedConfig(keysToRedact)
 
-      assert(redactedConfig.getString("top") == "default")
-      assert(redactedConfig.getString("quoted") == "text")
-      assert(redactedConfig.getInt("nested.value.num") == 100)
-      assert(redactedConfig.getString("nested.string") == "str")
-      assert(redactedConfig.getString("redacted") == ConfigReader.redactedReplacement)
-      assert(redactedConfig.getString("nested.redacted") == ConfigReader.redactedReplacement)
-      assert(!redactedConfig.hasPath("redundant.key"))
+      redactedConfig.getString("top") shouldBe "default"
+      redactedConfig.getString("quoted") shouldBe "text"
+      redactedConfig.getInt("nested.value.num") shouldBe 100
+      redactedConfig.getString("nested.string") shouldBe "str"
+      redactedConfig.getString("redacted") shouldBe ConfigReader.redactedReplacement
+      redactedConfig.getString("nested.redacted") shouldBe ConfigReader.redactedReplacement
+      !redactedConfig.hasPath("redundant.key")
     }
   }
 

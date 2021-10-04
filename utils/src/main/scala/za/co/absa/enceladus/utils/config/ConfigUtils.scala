@@ -17,7 +17,6 @@ package za.co.absa.enceladus.utils.config
 
 import java.nio.file.{Files, Paths}
 
-import com.typesafe.config.{Config, ConfigValueFactory}
 import org.slf4j.LoggerFactory
 
 object ConfigUtils {
@@ -30,7 +29,7 @@ object ConfigUtils {
    * @param conf  A configuration.
    * @param key   Configuration key.
    */
-  def setSystemPropertyStringFallback(conf: Config, key: String): Unit = {
+  def setSystemPropertyStringFallback(conf: ConfigReader, key: String): Unit = {
     if (System.getProperty(key) == null && conf.hasPath(key)) {
       System.setProperty(key, conf.getString(key))
     }
@@ -48,7 +47,7 @@ object ConfigUtils {
    * @param conf  A configuration.
    * @param key   Configuration key.
    */
-  def setSystemPropertyFileFallback(conf: Config, key: String): Unit = {
+  def setSystemPropertyFileFallback(conf: ConfigReader, key: String): Unit = {
     if (System.getProperty(key) == null && conf.hasPath(key)) {
       val pathFileName = conf.getString(key)
       if (Files.exists(Paths.get(pathFileName))) {
@@ -65,42 +64,6 @@ object ConfigUtils {
         }
       }
     }
-  }
-
-  implicit class ConfigImplicits(config: Config) {
-    /**
-     * Inspects the config for the presence of the `key` and returns an optional result.
-     *
-     * @param key path to look for, e.g. "group1.subgroup2.value3
-     * @return None if not found or defined Option[String]
-     */
-    def getOptionString(key: String): Option[String] = {
-      if (config.hasPath(key)) {
-        Some(config.getString(key))
-      } else {
-        None
-      }
-    }
-
-    /**
-     * Inspects the config for the presence of the `key` and returns an optional result.
-     *
-     * @param key path to look for, e.g. "group1.subgroup2.value3
-     * @return None if not found or defined Option[Boolean]
-     */
-    def getOptionBoolean(key: String): Option[Boolean] = {
-      if (config.hasPath(key)) {
-        Some(config.getBoolean(key))
-      } else {
-        None
-      }
-    }
-
-    /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
-    def withAnyRefValue(key: String, value: AnyRef) : Config = {
-      config.withValue(key, ConfigValueFactory.fromAnyRef(value))
-    }
-
   }
 
 }

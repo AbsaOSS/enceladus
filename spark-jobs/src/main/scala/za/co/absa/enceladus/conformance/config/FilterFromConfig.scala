@@ -28,7 +28,7 @@ import scala.util.{Failure, Success, Try}
   * Until then, the filters can be set via configuration.
   */
 object FilterFromConfig {
-  private val configReader = new ConfigReader()
+  private val configReader = ConfigReader()
 
   private def dataFrameId(dataFrameName: String): String = {
     s"dataframefilter.$dataFrameName"
@@ -44,7 +44,7 @@ object FilterFromConfig {
   }
 
   private def readJson(configKey: String): Option[String] = {
-    configReader.readStringConfigIfExist(configKey).filter(_.nonEmpty).map(_.replaceAllLiterally("'","\""))
+    configReader.getStringOption(configKey).filter(_.nonEmpty).map(_.replaceAllLiterally("'","\""))
   }
 
   def loadFilter(dataFrameName: String): Option[DataFrameFilter] = {

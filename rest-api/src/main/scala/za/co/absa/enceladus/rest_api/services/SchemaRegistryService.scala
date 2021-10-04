@@ -19,7 +19,6 @@ import java.io.FileInputStream
 import java.net.URL
 import java.security.KeyStore
 
-import com.typesafe.config.ConfigFactory
 import javax.net.ssl.{HttpsURLConnection, KeyManagerFactory, SSLContext, TrustManagerFactory}
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,8 +27,7 @@ import za.co.absa.enceladus.rest_api.controllers.SchemaController
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.RemoteSchemaRetrievalException
 import za.co.absa.enceladus.rest_api.services.SchemaRegistryService._
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
-import za.co.absa.enceladus.utils.config.SecureConfig
+import za.co.absa.enceladus.utils.config.{ConfigReader, SecureConfig}
 
 import scala.io.Source
 import scala.util.control.NonFatal
@@ -38,10 +36,10 @@ import scala.util.control.NonFatal
 class SchemaRegistryService @Autowired()() {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
-  private val config = ConfigFactory.load()
+  private val config = ConfigReader()
 
-  private val warnUnsecured = config.getOptionBoolean(SchemaRegsitryWarnUnsecureKey).getOrElse(true)
-  val schemaRegistryBaseUrl: Option[String] = config.getOptionString(SchemaRegistryUrlConfigKey)
+  private val warnUnsecured = config.getBooleanOption(SchemaRegsitryWarnUnsecureKey).getOrElse(true)
+  val schemaRegistryBaseUrl: Option[String] = config.getStringOption(SchemaRegistryUrlConfigKey)
 
   /**
    * Loading the latest schema by a subject name (e.g. topic1-value), the url is constructed based on the [[schemaRegistryBaseUrl]]

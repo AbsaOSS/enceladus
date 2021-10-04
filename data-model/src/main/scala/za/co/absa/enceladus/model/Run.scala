@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.model
 
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
-import com.typesafe.config.{Config, ConfigFactory}
 
 case class Run
 (

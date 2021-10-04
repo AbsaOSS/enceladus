@@ -15,26 +15,24 @@
 
 package za.co.absa.enceladus.common.plugin
 
-import com.typesafe.config.ConfigFactory
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.common.plugin.dummy.{DummyPostProcessor1, DummyPostProcessor2}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-
-import scala.collection.JavaConverters._
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 class PostProcessorPluginSuite extends AnyFunSuite {
 
   test("Test the postprocessor loader loads nothing if no class is specified") {
-    val conf = ConfigFactory.parseMap(Map[String, String]().asJava)
+    val conf = ConfigReader(Map.empty[String, String])
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.isEmpty)
   }
 
   test("Test the postprocessor loader loads a plugin if it is specified") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1"
+    ))
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
@@ -42,10 +40,10 @@ class PostProcessorPluginSuite extends AnyFunSuite {
   }
 
   test("Test configuration parameters are passed to the plugin") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2",
-        "dummy.param" -> "Hello")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2",
+      "dummy.param" -> "Hello"
+    ))
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
@@ -54,10 +52,10 @@ class PostProcessorPluginSuite extends AnyFunSuite {
   }
 
   test("Test the postprocessor loader loads multiple plugins") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
-        "dummy.2" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
+      "dummy.2" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2"
+    ))
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 2)
@@ -66,10 +64,10 @@ class PostProcessorPluginSuite extends AnyFunSuite {
   }
 
   test("Test the postprocessor loader skips plugins if there is a gap multiple plugins") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
-        "dummy.3" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory1",
+      "dummy.3" -> "za.co.absa.enceladus.common.plugin.dummy.DummyPostProcessorFactory2"
+    ))
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.size == 1)
@@ -77,18 +75,18 @@ class PostProcessorPluginSuite extends AnyFunSuite {
   }
 
   test("Test the postprocessor loader skips plugins if the factory returns null") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.StubPostProcessorFactory")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.enceladus.common.plugin.dummy.StubPostProcessorFactory"
+    ))
     val plugins = new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
 
     assert(plugins.isEmpty)
   }
 
   test("Test the postprocessor loader throws if no plugin class found") {
-    val conf = ConfigFactory.parseMap(
-      Map[String, String]("dummy.1" -> "za.co.absa.NoSuchClass")
-        .asJava)
+    val conf = ConfigReader(Map(
+      "dummy.1" -> "za.co.absa.NoSuchClass"
+    ))
 
     intercept[IllegalArgumentException] {
       new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")

@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.common
 
-import com.typesafe.config.{Config, ConfigException}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, hash, expr}
+import org.apache.spark.sql.functions.{col, expr, hash}
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.enceladus.utils.config.ConfigReader
+import za.co.absa.enceladus.utils.config.ConfigReader.ConfigExceptionBadValue
 
 object RecordIdGeneration {
 
@@ -32,14 +33,14 @@ object RecordIdGeneration {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  def getRecordIdGenerationStrategyFromConfig(conf: Config): IdType = {
+  def getRecordIdGenerationStrategyFromConfig(conf: ConfigReader): IdType = {
     val strategyValue = conf.getString("enceladus.recordId.generation.strategy")
 
     strategyValue.toLowerCase match {
       case "uuid" => IdType.TrueUuids
       case "stablehashid" => IdType.StableHashId
       case "none" => IdType.NoId
-      case _ => throw new ConfigException.BadValue("enceladus.recordId.generation.strategy",
+      case _ => throw new ConfigExceptionBadValue("enceladus.recordId.generation.strategy",
         s"Invalid value '$strategyValue' was encountered for id generation strategy, use one of: uuid, stableHashId, none.")
     }
   }

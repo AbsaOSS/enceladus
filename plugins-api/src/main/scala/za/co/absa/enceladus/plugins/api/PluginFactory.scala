@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.plugins.api
 
-import com.typesafe.config.Config
+import za.co.absa.enceladus.utils.config.ConfigReader
 
 /**
  * Base interface for all Enceladus plugin factories.
  */
 trait PluginFactory[+A <: Plugin] {
-  def apply(conf: Config): A
+  def apply(conf: ConfigReader): A
 }
