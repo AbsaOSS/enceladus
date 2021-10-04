@@ -23,12 +23,10 @@ This page describes the configuration values stored in `menas`'s `application.pr
 
 {% include config_options.html file="menas-configuration_2_0_0" %}
 
-Note, that
-  - `menas.schemaRegistry.baseUrl` may not be present (in that case, the option to load schema from a schema registry
-  by subject name will disappear in the Menas UI)
-  - specifying `javax.net.ssl.{trustStore|keyStore}` (and the passwords) is usually both necessary to successfully load
-  a schema file from a secure schema registry, but this setting will be used by the by-URL loading as well 
-  (if supported by webserver reached)
+## Note, that
+<sup>*</sup> <a id="note1"></a>   `menas.schemaRegistry.baseUrl` may not be present (in that case, the option to load schema from a schema registry by subject name will disappear in the Menas UI)
+  
+<sup>*</sup> <a id="note2"></a>  specifying `javax.net.ssl.{trustStore|keyStore}` (and the passwords) is usually both necessary to successfully load a schema file from a secure schema registry, but this setting will be used by the by-URL loading as well (if supported by webserver reached)
   
 
 [readme]: https://github.com/AbsaOSS/enceladus/blob/master/README.md

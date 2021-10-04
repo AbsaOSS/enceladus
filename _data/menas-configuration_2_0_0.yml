@@ -13,7 +13,7 @@
     options:
       - name: string path to JKS file
         description: 'TrustStore file containing records of trusted certificates to connect to a secure schema registry.
-        E.g.: <code>/path/to/truststore.jks</code>'
+        E.g.: <code>/path/to/truststore.jks</code> <sup><a href="#note2">*</a></sup>'
   - name: javax.net.ssl.trustStorePassword
     options:
       - name: string
@@ -32,7 +32,7 @@
     options:
       - name: string with URL
         description: 'Base Url to (secure) schema registry. E.g.:
-        <code>https://localhost:8081</code>'
+        <code>https://localhost:8081</code> <sup><a href="#note1">*</a></sup>'
   - name: menas.schemaRegistry.warnUnsecured
     options:
       - name: boolean

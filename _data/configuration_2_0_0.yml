@@ -6,7 +6,7 @@
   - name: conformance.autoclean.standardized.hdfs.folder
     options:
       - name: boolean
-        description: "Automatically delete standardized data folder after successful run of a Conformance job"
+        description: 'Automatically delete standardized data folder after successful run of a Conformance job <sup><a href="#note1">*</a></sup>'
   - name: control.info.validation
     options:
     - name: <i>strict</i>
