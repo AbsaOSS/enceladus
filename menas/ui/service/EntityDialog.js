@@ -413,14 +413,8 @@ class MappingTableDialog extends EntityDialog {
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
 
-    // filter toolbar:
-    oController.byId("addAndBtn").attachPress(this.onFilterAddAnd, this);
-    oController.byId("addOrBtn").attachPress(this.onFilterAddOr, this);
-    oController.byId("addNotBtn").attachPress(this.onFilterAddNot, this);
-    oController.byId("addEqualsBtn").attachPress(this.onFilterAddEquals, this);
-    oController.byId("addDiffersBtn").attachPress(this.onFilterAddDiffers, this);
-    oController.byId("addIsNullBtn").attachPress(this.onFilterAddIsNull, this);
-    oController.byId("removeSelectedBtn").attachPress(this.onRemoveSelected, this);
+    this.filterEdit = new FilterEdit(this.oController);
+    this.filterEdit.bindFilterEditControls(this.oDialog);
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
   }
@@ -444,146 +438,7 @@ class MappingTableDialog extends EntityDialog {
     this.oController.byId("addMtSimplePath").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("addMtSimplePath").setValueStateText("");
 
-    this.resetFilterValidation()
-  }
-
-  /**
-   * This method resets validations on the UI
-   */
-  resetFilterValidation() {
-    const treeTable = this.oController.byId("filterTreeEdit");
-    const treeTableModel = treeTable.getBinding().getModel();
-
-    const filterData = treeTableModel.getProperty("/editingFilters");
-
-    // filter data can be [filter], [null] or null
-    if (filterData && filterData.map(x => x).length != 0) {
-      // resetting non-empty filter validations
-
-      const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
-      treeTableModel.setProperty("/editingFilters", [resetValidatedFilter]);
-    }
-  }
-
-  /**
-   * This method operates on the data-object to immutably reset it (creates a copy with the reset validation fields)
-   * @param filterData
-   * @returns {copy} with reset validations
-   */
-  resetFilterDataValidation(filterData) {
-    const resetFn = function (filterNode) {
-      switch (filterNode._t) {
-        case "AndJoinedFilters":
-        case "OrJoinedFilters":
-        case "NotFilter":
-          filterNode.filter_valueState = "None";
-          filterNode.filter_valueStateText = "";
-
-          break;
-        case "IsNullFilter":
-          filterNode.filter_valueState = "None";
-          filterNode.filter_valueStateText = "";
-
-          filterNode.columnName_valueState = "None";
-          filterNode.columnName_valueStateText = "";
-          break;
-
-        case "EqualsFilter":
-        case "DiffersFilter":
-          filterNode.filter_valueState = "None";
-          filterNode.filter_valueStateText = "";
-
-          filterNode.columnName_valueState = "None";
-          filterNode.columnName_valueStateText = "";
-
-          filterNode.value_valueState = "None";
-          filterNode.value_valueStateText = "";
-
-          filterNode.valueType_valueState = "None";
-          filterNode.valueType_valueStateText = "";
-          break;
-        default:
-      }
-    };
-
-    return FilterTreeUtils.applyToFilterDataImmutably(filterData, resetFn);
-  }
-
-  /**
-   * Validates data in the filter TreeTable, sets their valueState|valueStateText (error+error descs)
-   * @returns {boolean} returns true if the filter content is valid, false when invalid
-   */
-  validateFilterData() {
-    const treeTable = this.oController.byId("filterTreeEdit");
-    const treeTableModel = treeTable.getBinding().getModel();
-
-    // todo move to "filterData validation fn?"
-    const filterData = treeTableModel.getProperty("/editingFilters");
-
-    let hasValidFilter = true;
-    // filter data can be [filter], [null] or null
-    if (!filterData || filterData.map(x => x).length == 0) {
-      hasValidFilter = true;
-    } else {
-      // validate filter tree
-      const validateInUiFn = function (filterNode) {
-        switch (filterNode._t) {
-          case "AndJoinedFilters":
-          case "OrJoinedFilters":
-            if (filterNode.filterItems.map(x => x).length == 0) { // empty deleted ([null]) is not valid
-              filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "Container filter must contain child filters!";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "NotFilter":
-            if (!filterNode.inputFilter) {
-              filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "Container filter must contain a child filter!";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "EqualsFilter":
-          case "DiffersFilter":
-            if (filterNode.columnName.length == 0) {
-              filterNode.columnName_valueState = "Error";
-              filterNode.columnName_valueStateText = "Fill in the column name.";
-              hasValidFilter = false;
-            }
-
-            if (filterNode.value.length == 0) {
-              filterNode.value_valueState = "Error";
-              filterNode.value_valueStateText = "Fill in the value.";
-              hasValidFilter = false;
-            }
-
-            if (filterNode.valueType.length == 0) {
-              filterNode.valueType_valueState = "Error";
-              filterNode.valueType_valueStateText = "Fill in value type.";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "IsNullFilter":
-            if (filterNode.columnName.length == 0) {
-              filterNode.columnName_valueState = "Error";
-              filterNode.columnName_valueStateText = "Fill in column name.";
-              hasValidFilter = false;
-            }
-            break;
-
-          default:
-        }
-      };
-
-      const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(filterData[0], validateInUiFn);
-      treeTableModel.setProperty("/editingFilters", [validatedFilter]);
-      treeTableModel.refresh();
-    }
-
-    return hasValidFilter;
+    this.filterEdit.resetFilterValidation();
   }
 
   isValid(oMT) {
@@ -593,7 +448,7 @@ class MappingTableDialog extends EntityDialog {
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
-    let hasValidFilter = this.validateFilterData();
+    let hasValidFilter = this.filterEdit.validateFilterData();
 
     if (oMT.hdfsBrowserEnabled) {
       let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
@@ -621,93 +476,7 @@ class MappingTableDialog extends EntityDialog {
     }
   }
 
-  onFilterAddAnd() {
-    this.onFilterAdd({_t: "AndJoinedFilters", filterItems: []})
-  }
 
-  onFilterAddOr() {
-    this.onFilterAdd({_t: "OrJoinedFilters", filterItems: []})
-  }
-
-  onFilterAddNot() {
-    this.onFilterAdd({_t: "NotFilter", inputFilter: null})
-  }
-
-  onFilterAddEquals() {
-    this.onFilterAdd({_t: "EqualsFilter", columnName: "", value: "", valueType: ""})
-  }
-
-  onFilterAddDiffers() {
-    this.onFilterAdd({_t: "DiffersFilter", columnName: "", value: "", valueType: ""})
-  }
-
-  onFilterAddIsNull() {
-    this.onFilterAdd({_t: "IsNullFilter", columnName: ""})
-  }
-
-
-
-  onFilterAdd(blankFilter) {
-    // blank filter contains validation fields:
-    const namedBlankFilter = this.resetFilterDataValidation(FilterTreeUtils.addNiceNamesToFilterData(blankFilter));
-
-    const treeTable = this.oController.byId("filterTreeEdit");
-    const selectedIndices = treeTable.getSelectedIndices();
-    const treeTableModel = treeTable.getBinding().getModel();
-
-    const currentFilters = this.oDialog.getModel("filterEdit").getProperty("/editingFilters");
-    const filtersEmpty = !currentFilters || currentFilters.filter(x => x).length == 0; // after removal of previous, there can be [null]
-
-    if (filtersEmpty) {
-      treeTableModel.setProperty("/editingFilters", [namedBlankFilter]); // add first filter by replacing the empty model
-
-    } else if (selectedIndices.length == 1) {
-      const newParentContext = treeTable.getContextByIndex(selectedIndices[0]);
-      const newParent = newParentContext.getProperty();
-
-      // based on what type of filter is selected, attach the new filter to it
-      if (newParent._t == 'AndJoinedFilters' || newParent._t == 'OrJoinedFilters' ) { //and / or -> add
-        newParent.filterItems = newParent.filterItems.concat(namedBlankFilter)
-      } else if (newParent._t == 'NotFilter') {
-        newParent.inputFilter = namedBlankFilter // not -> replace
-      } else {
-        sap.m.MessageToast.show("Could not add filter. Select AND, OR or NOT can have child filter added to. ");
-        return;
-      }
-    } else {
-
-      sap.m.MessageToast.show("Select exactly one item to add a child to!");
-      return;
-    }
-
-    treeTableModel.refresh();
-    if (selectedIndices) {
-      treeTable.expand(selectedIndices[0]); // nice of the user to directly see the child among the expanded parent
-    }
-  }
-
-  onRemoveSelected() {
-    const treeTable = this.oController.byId("filterTreeEdit");
-    const selectedIndices = treeTable.getSelectedIndices();
-    const treeTableModel = treeTable.getBinding().getModel();
-
-    if (selectedIndices.length === 0) {
-      sap.m.MessageToast.show("Select one or more items to remove.");
-      return;
-    }
-
-    // delete the data.
-    selectedIndices.forEach(idx => {
-        const context = treeTable.getContextByIndex(idx);
-        const data = context.getProperty();
-
-        if (data) {
-          // The property is simply set to undefined to preserve the tree state (expand/collapse states of nodes).
-          treeTableModel.setProperty(context.getPath(), undefined, context, true);
-        }
-      }
-    );
-  }
 
   // on MTDialog open - base
   onPress() {
@@ -751,7 +520,7 @@ class EditMappingTableDialog extends MappingTableDialog {
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
 
-      const updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(current.filter))];
+      const updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.filterEdit.resetFilterDataValidation(current.filter))];
       console.log(`current filters: ${JSON.stringify(updatedFilters)}`);
 
       current.isEdit = true;

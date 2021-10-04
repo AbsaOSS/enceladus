@@ -29,6 +29,8 @@ class ConformanceRuleDialog {
     this._ruleForms = new ConformanceRuleFormRepository(this);
     this._rules = this._ruleForms.all;
 
+    this.filterEdit = new FilterEdit(sap.ui.getCore(), "MappingConformanceRule--");
+
     this.model.setProperty("/rules", this.rules);
     this.model.setProperty("/dataTypes", this._ruleForms.byType("CastingConformanceRule").dataTypes);
   }
@@ -86,6 +88,8 @@ class ConformanceRuleDialog {
     }
     this._dialog.setEscapeHandler(() => this.onClosePress());
     this.resetRuleValidation();
+
+    this.filterEdit.bindFilterEditControls(this._dialog);
   }
 
   onAfterOpen() {
