@@ -296,9 +296,6 @@ sap.ui.define([
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
 
-      // todo remove when "debug filter" gets removed from UI
-      currentMT.filterJson = JSON.stringify(currentMT.filter);
-
       let filterDataWithNamesAndIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(currentMT.filter);
       currentMT.filterTree = [filterDataWithNamesAndIcons];
 

@@ -47,9 +47,6 @@
                         </CustomListItem>
                     </items>
                 </List>
-                <!-- todo remove debug filter -->
-                <Label text="Debug Filter"/>
-                <Text text="{filterJson}"/>
                 <Label text="Filter" />
                 <Tree id="filterTree" items="{path: 'filterViewTree', parameters: {numberOfExpandedLevels: 1}}" noDataText="No filter set.">
                     <StandardTreeItem title="{text}" icon="{icon}"/>

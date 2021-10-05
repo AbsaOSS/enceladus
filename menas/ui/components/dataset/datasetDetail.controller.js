@@ -428,7 +428,6 @@ sap.ui.define([
         oContext.getObject().joinConditions = aJoinConditions;
 
         let filterTreeData = oContext.getProperty("mappingTableFilter");
-        oContext.getObject().filterJson = JSON.stringify(filterTreeData); // todo remove
 
         // view filter with icons in a tree
         let treeDataWithIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(filterTreeData);
