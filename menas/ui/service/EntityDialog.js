@@ -476,15 +476,9 @@ class MappingTableDialog extends EntityDialog {
     }
   }
 
-
-
   // on MTDialog open - base
   onPress() {
-    const suggestedColumnTypes = FilterTreeUtils.columnTypeNames.map(function (val) {
-      return {name: val}
-    }); // [ {name: string}, ...]
-
-    const typeModel = new sap.ui.model.json.JSONModel(suggestedColumnTypes);
+    const typeModel = new sap.ui.model.json.JSONModel(DataTypeUtils.dataTypesAsTypes);
     this.oDialog.setModel(typeModel, "suggestedColumnTypes");
   }
 }

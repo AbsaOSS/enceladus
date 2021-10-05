@@ -70,7 +70,7 @@
                            showSuggestion="true"
                            suggestionItems="{path: 'suggestedColumnTypes>/', templateShareable:false}">
                         <suggestionItems>
-                            <core:Item key="{suggestedColumnTypes>name}" text="{suggestedColumnTypes>name}"/>
+                            <core:Item key="{suggestedColumnTypes>type}" text="{suggestedColumnTypes>type}"/>
                         </suggestionItems>
                     </Input>
 

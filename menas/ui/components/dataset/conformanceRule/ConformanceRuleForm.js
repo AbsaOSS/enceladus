@@ -162,20 +162,7 @@ class CastingConformanceRuleForm extends ConformanceRuleForm {
   }
 
   get dataTypes() {
-    return [
-      {type: "boolean"},
-      {type: "byte"},
-      {type: "short"},
-      {type: "integer"},
-      {type: "long"},
-      {type: "float"},
-      {type: "double"},
-      {type: "decimal(38,18)"},
-      {type: "string"},
-      {type: "date"},
-      {type: "timestamp"},
-      {type: "binary"}
-    ]
+    return DataTypeUtils.dataTypesAsTypes;
   }
 
   get outputDataTypeControl() {

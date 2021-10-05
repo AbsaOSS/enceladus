@@ -324,8 +324,6 @@ class ConformanceRuleDialog {
         newRule.newJoinConditions = aNewJoinConditions;
         newRule.newOutputColumns = aNewOutputColumns;
 
-        // todo add validation like:
-        // filters = [FilterTreeUtils.addNiceNamesToFilterData(this.resetFilterDataValidation(newRule.mappingTableFilter))];
         const filters = [FilterTreeUtils.addNiceNamesToFilterData(newRule.mappingTableFilter)];
         filterModel.setProperty("/editingFilters", filters);
 
@@ -334,6 +332,10 @@ class ConformanceRuleDialog {
       this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
 
       this._dialog.setModel(filterModel, "filterEdit"); // filter editing has its own named model ("filterEdit")
+
+      // hinting model for equals/differs column dataTypes
+      const typeModel = new sap.ui.model.json.JSONModel(DataTypeUtils.dataTypesAsTypes);
+      this._dialog.setModel(typeModel, "suggestedColumnTypes");
     }
 
     if (!newRule.isEdit && newRule.order === undefined) {
