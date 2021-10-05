@@ -35,7 +35,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -134,7 +134,8 @@ trait ConformanceExecution extends CommonJobExecution {
                                             preparationResult: PreparationResult,
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
-                                            cmd: ConformanceConfigParser[T]): Unit = {
+                                            cmd: ConformanceConfigParser[T],
+                                            configReader: ConfigReader): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
     val publishFs = preparationResult.pathCfg.publish.fileSystem
@@ -159,7 +160,11 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    withPartCols.write.parquet(preparationResult.pathCfg.publish.path)
+    val minBlockSize = configReader.readStringConfigIfExist("minFileOutputSize").map(_.toLong)
+    val maxBlockSize = configReader.readStringConfigIfExist("maxFileOutputSize").map(_.toLong)
+    val withRepartitioning = applyRepartitioning(result, minBlockSize, maxBlockSize)
+
+    withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
     val publishDirSize = HadoopFsUtils.getOrCreate(publishFs).getDirectorySize(preparationResult.pathCfg.publish.path)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)

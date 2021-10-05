@@ -17,6 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -32,7 +33,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
@@ -174,7 +175,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
-                                               (implicit spark: SparkSession): DataFrame = {
+                                               (implicit spark: SparkSession, configReader: ConfigReader): DataFrame = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
@@ -195,7 +196,16 @@ trait StandardizationExecution extends CommonJobExecution {
     }
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
-    standardizedDF.write.parquet(preparationResult.pathCfg.standardization.path)
+
+    val minBlockSize = configReader.readStringConfigIfExist("minFileOutputSize").map(_.toLong)
+    val maxBlockSize = configReader.readStringConfigIfExist("maxFileOutputSize").map(_.toLong)
+
+    val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
+        applyRepartitioning(standardizedDF, minBlockSize, maxBlockSize)
+      } else {
+      standardizedDF
+    }
+    withRepartitioning.write.parquet(preparationResult.pathCfg.standardization.path)
 
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)

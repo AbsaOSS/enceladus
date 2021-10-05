@@ -21,7 +21,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
@@ -169,6 +169,33 @@ trait CommonJobExecution extends ProjectMetadata {
 
     if (runId.isEmpty) {
       log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+  }
+
+  protected def applyRepartitioning(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                   (implicit spark: SparkSession): DataFrame = {
+    val catalystPlan = df.queryExecution.logical
+    val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
+
+    def computeBlocks(desiredBlockSize: Long): Int =
+      ((sizeInBytes / desiredBlockSize) + BigInt(if (sizeInBytes % desiredBlockSize != 0) 1 else 0) ).toInt
+
+    (minBlockSize, maxBlockSize) match {
+      case (None, None) => df
+      case (Some(min), None) =>
+        val outputDf = df.coalesce(computeBlocks(min)) // reduce number of partitions, increase the block size, faster running
+        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+        outputDf
+
+      case (None, Some(max)) =>
+        val outputDf = df.repartition(computeBlocks(max)) // increase number of partitions, reduce the block size
+        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+        outputDf
+
+      case (Some(_), Some(max)) =>
+        val outputDf = df.repartition(computeBlocks(max))
+        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+        outputDf
     }
   }
 
