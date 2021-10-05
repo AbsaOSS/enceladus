@@ -25,7 +25,7 @@ import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
@@ -160,8 +160,8 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    val minBlockSize = configReader.readStringConfigIfExist("minFileOutputSize").map(_.toLong)
-    val maxBlockSize = configReader.readStringConfigIfExist("maxFileOutputSize").map(_.toLong)
+    val minBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.minBlockSizeKey).map(_.toLong)
+    val maxBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.maxBlockSizeKey).map(_.toLong)
     val withRepartitioning = applyRepartitioning(result, minBlockSize, maxBlockSize)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)

@@ -24,7 +24,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -197,8 +197,8 @@ trait StandardizationExecution extends CommonJobExecution {
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
-    val minBlockSize = configReader.readStringConfigIfExist("minFileOutputSize").map(_.toLong)
-    val maxBlockSize = configReader.readStringConfigIfExist("maxFileOutputSize").map(_.toLong)
+    val minBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.minBlockSizeKey).map(_.toLong)
+    val maxBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.maxBlockSizeKey).map(_.toLong)
 
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
         applyRepartitioning(standardizedDF, minBlockSize, maxBlockSize)
