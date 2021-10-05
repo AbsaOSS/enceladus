@@ -45,7 +45,7 @@
             <Label text="Debug Filter"/>
             <Text text="{mappingTable>/filterJson}"/>
             <Label text="Filter" />
-            <Tree id="filterTree" items="{path: 'mappingTable>/filterTree', parameters: {numberOfExpandedLevels: 1}}" >
+            <Tree id="filterTree" items="{path: 'mappingTable>/filterTree', parameters: {numberOfExpandedLevels: 1}}" noDataText="No filter set.">
                 <StandardTreeItem title="{mappingTable>text}" icon="{mappingTable>icon}"/>
             </Tree>
 
