@@ -400,11 +400,6 @@ sap.ui.define([
 
       let sFragmentName = "components.dataset.conformanceRule." + oContext.getProperty("_t") + ".display";
       if (oContext.getProperty("_t") === "MappingConformanceRule") {
-
-        // todo remove debug print
-        let conf = this._model.getProperty("/currentDataset/conformance")
-        console.log(`conformance: ${JSON.stringify(conf)}`);
-
         let oAttributeMappings = oContext.getProperty("attributeMappings");
         let aJoinConditions = [];
         for (let key in oAttributeMappings) {
@@ -454,7 +449,7 @@ sap.ui.define([
         return {
           menasRef: e.menasRef
         };
-      })
+      });
       aAuditEntries.unshift({
         menasRef: {
           name: oCurrentDataset.name,

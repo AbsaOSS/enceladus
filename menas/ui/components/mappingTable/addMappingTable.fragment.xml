@@ -17,7 +17,7 @@
                          xmlns:t="sap.ui.table"
                          xmlns:hdfs="components.hdfs">
     <Dialog id="addMappingTableDialog" title="{entity>/title} Mapping Table" resizable="true" draggable="true"
-            class="minW40rem">
+            contentWidth="950px">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">

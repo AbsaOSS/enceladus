@@ -109,7 +109,7 @@ var Formatters = new function() {
     if (!oDate)
       return "";
     return this.infoDateFormat.format(oDate)
-  }
+  };
 
   this.toStringInfoDate = function(oDate) {
     return this.infoDateFormat.format(oDate);

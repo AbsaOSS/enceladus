@@ -36,8 +36,6 @@ class EntityDialog {
 
   submit() {
     let newEntity = this.oDialog.getModel("entity").oData;
-    console.log(`submitted entity: ${JSON.stringify(newEntity)}`);
-
     if (!newEntity.isEdit && newEntity.name && typeof (newEntity.nameUnique) === "undefined") {
       // need to wait for the service call
       setTimeout(this.submit.bind(this), 500);
@@ -515,7 +513,6 @@ class EditMappingTableDialog extends MappingTableDialog {
       const current = this.oController._model.getProperty("/currentMappingTable");
 
       const updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.filterEdit.resetFilterDataValidation(current.filter))];
-      console.log(`current filters: ${JSON.stringify(updatedFilters)}`);
 
       current.isEdit = true;
       current.title = "Edit";
