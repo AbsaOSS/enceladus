@@ -477,6 +477,13 @@ class MappingTableDialog extends EntityDialog {
     const typeModel = new sap.ui.model.json.JSONModel(DataTypeUtils.dataTypesAsTypes);
     this.oDialog.setModel(typeModel, "suggestedColumnTypes");
   }
+
+  setFilterEditModel(filterData) {
+    // "filterEdit>/editingFilters" holds user-changing filter
+    const filterModel = new sap.ui.model.json.JSONModel();
+    filterModel.setProperty("/editingFilters", filterData);
+    this.oDialog.setModel(filterModel, "filterEdit");
+  }
 }
 
 class AddMappingTableDialog extends MappingTableDialog {
@@ -496,6 +503,7 @@ class AddMappingTableDialog extends MappingTableDialog {
         hdfsBrowserEnabled: true
       }), "entity");
 
+      this.setFilterEditModel([]); // empty filter data for new MT
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
@@ -519,11 +527,7 @@ class EditMappingTableDialog extends MappingTableDialog {
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");
-
-      // "filterEdit>/editingFilters" holds user-changing filter
-      const filterModel = new sap.ui.model.json.JSONModel();
-      filterModel.setProperty("/editingFilters", updatedFilters);
-      this.oDialog.setModel(filterModel, "filterEdit");
+      this.setFilterEditModel(updatedFilters);
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
