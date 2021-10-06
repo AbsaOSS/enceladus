@@ -26,8 +26,8 @@ class FilterTreeUtils {
 
       // recursively do the same:
       // AndJoinedFilters, OrJoinedFilters have field `filterItems` defined; NotFilter has field `inputFilter` defined.
-      if(filterNode.filterItems) filterNode.filterItems.forEach(recursiveFnWrapper);
-      if(filterNode.inputFilter) recursiveFnWrapper(filterNode.inputFilter);
+      if (filterNode.filterItems) filterNode.filterItems.forEach(recursiveFnWrapper);
+      if (filterNode.inputFilter) recursiveFnWrapper(filterNode.inputFilter);
     };
 
     // if the method is to be pure from the outside: making a deep copy to do the changes on at first:
@@ -46,10 +46,6 @@ class FilterTreeUtils {
    */
   static applyToFilterDataImmutably(filterData, applyFn) {
     return this.#applyToFilterData(filterData, applyFn, false)
-  }
-
-  static applyToFilterDataMutably(filterData, applyFn) {
-    return this.#applyToFilterData(filterData, applyFn, true)
   }
 
   static addIconsAndNiceNamesToFilterData(filterData){

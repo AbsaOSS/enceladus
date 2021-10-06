@@ -20,7 +20,7 @@ class FilterEdit {
   /**
    *
    * @param idBase oController, or core
-   * @param idPrefix prefix for ID, e.g. "MappingConformanceRule--". Default: empty
+   * @param idPrefix prefix for ID, e.g. "MappingConformanceRule--". Default: empty string
    */
   constructor(idBase, idPrefix = "") {
     this.idBase = idBase;
@@ -111,7 +111,7 @@ class FilterEdit {
 
     treeTableModel.refresh();
     if (selectedIndices) {
-      treeTable.expand(selectedIndices[0]); // nice of the user to directly see the child among the expanded parent
+      treeTable.expand(selectedIndices[0]); // nice for the user to directly see the child among the expanded parent
     }
   }
 
@@ -125,13 +125,13 @@ class FilterEdit {
       return;
     }
 
-    // delete the data.
+    // delete the data
     selectedIndices.forEach(idx => {
         const context = treeTable.getContextByIndex(idx);
         const data = context.getProperty();
 
         if (data) {
-          // The property is simply set to undefined to preserve the tree state (expand/collapse states of nodes).
+          // The property is set to undefined to preserve the tree state (expand/collapse states of nodes).
           treeTableModel.setProperty(context.getPath(), undefined, context, true);
         }
       }
@@ -150,7 +150,6 @@ class FilterEdit {
     // filter data can be [filter], [null] or null
     if (filterData && filterData.map(x => x).length != 0) {
       // resetting non-empty filter validations
-
       const resetValidatedFilter = this.resetFilterDataValidation(filterData[0]);
       treeTableModel.setProperty("/editingFilters", [resetValidatedFilter]);
     }

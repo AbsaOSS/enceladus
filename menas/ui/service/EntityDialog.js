@@ -387,7 +387,6 @@ class MappingTableDialog extends EntityDialog {
 
   submit() {
     let updatedFilters = this.oDialog.getModel("filterEdit").getProperty("/editingFilters");
-    console.debug(`MappingTableDialog submit: updatedFilters:${JSON.stringify(updatedFilters)} `);
 
     if (updatedFilters) {
       if (updatedFilters.length > 1) {
@@ -397,7 +396,6 @@ class MappingTableDialog extends EntityDialog {
         let updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(updatedFilters[0]);
 
         this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
-        console.debug(`Submitted MT entity after filters replace: ${JSON.stringify(this.oDialog.getModel("entity").oData)}`);
       }
     } // do nothing on empty filter
 
