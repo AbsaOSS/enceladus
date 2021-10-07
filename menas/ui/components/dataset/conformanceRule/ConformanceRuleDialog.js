@@ -88,8 +88,6 @@ class ConformanceRuleDialog {
     }
     this._dialog.setEscapeHandler(() => this.onClosePress());
     this.resetRuleValidation();
-
-    this.filterEdit.bindFilterEditControls(this._dialog);
   }
 
   onAfterOpen() {
@@ -336,6 +334,9 @@ class ConformanceRuleDialog {
       // hinting model for equals/differs column dataTypes
       const typeModel = new sap.ui.model.json.JSONModel(DataTypeUtils.dataTypesAsTypes);
       this._dialog.setModel(typeModel, "suggestedColumnTypes");
+
+
+      this.filterEdit.bindFilterEditControls(this._dialog);
     }
 
     if (!newRule.isEdit && newRule.order === undefined) {
