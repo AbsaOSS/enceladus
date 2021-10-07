@@ -74,6 +74,8 @@ DEFAULT_DEPLOY_MODE="client"
 
 LOG_DIR="/tmp"
 
+DEFAULT_CLIENT_MODE_RUN_KINIT="true"
+
 # Kafka security
 # Path to jaas.config
 #JAAS_CLIENT="-Djava.security.auth.login.config=/path/jaas.config"
