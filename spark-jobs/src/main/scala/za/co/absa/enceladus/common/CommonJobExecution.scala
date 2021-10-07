@@ -93,7 +93,7 @@ trait CommonJobExecution extends ProjectMetadata {
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
       case Some(validation) if validation.nonEmpty =>
-        val warning = validation.warnings.map {case (field, warnMsg) =>
+        val warning = validation.warnings.map { case (field, warnMsg) =>
           val header = s" - '$field': "
           s"$header${warnMsg.mkString(s"\n$header")}"
         }.mkString("\n")
@@ -177,25 +177,42 @@ trait CommonJobExecution extends ProjectMetadata {
     val catalystPlan = df.queryExecution.logical
     val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 
+    val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
+
     def computeBlocks(desiredBlockSize: Long): Int =
-      ((sizeInBytes / desiredBlockSize) + BigInt(if (sizeInBytes % desiredBlockSize != 0) 1 else 0) ).toInt
+      ((sizeInBytes / desiredBlockSize) + BigInt(if (sizeInBytes % desiredBlockSize != 0) 1 else 0)).toInt
+
+    def applyRepartition(max: Long) = {
+      val outputDf = df.repartition(computeBlocks(max)) // increase number of partitions, reduce the block size
+      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+      outputDf
+    }
+
+    def applyCoalesce(min: Long) = {
+      val outputDf = df.coalesce(computeBlocks(min)) // reduce number of partitions, increase the block size, faster running
+      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+      outputDf
+    }
 
     (minBlockSize, maxBlockSize) match {
       case (None, None) => df
-      case (Some(min), None) =>
-        val outputDf = df.coalesce(computeBlocks(min)) // reduce number of partitions, increase the block size, faster running
-        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
-        outputDf
-
-      case (None, Some(max)) =>
-        val outputDf = df.repartition(computeBlocks(max)) // increase number of partitions, reduce the block size
-        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
-        outputDf
-
-      case (Some(_), Some(max)) =>
-        val outputDf = df.repartition(computeBlocks(max))
-        log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
-        outputDf
+      case (Some(min), None) => if (currentBlockSize < min) {
+        applyCoalesce(min)
+      } else {
+        df
+      }
+      case (None, Some(max)) => if (currentBlockSize > max) {
+        applyRepartition(max)
+      } else {
+        df
+      }
+      case (Some(min), Some(max)) => if (currentBlockSize < min) {
+        applyCoalesce(min)
+      } else if (currentBlockSize > max) {
+        applyRepartition(max)
+      } else {
+        df
+      }
     }
   }
 
