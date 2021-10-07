@@ -476,11 +476,17 @@ add_spark_conf_cmd "spark.memory.fraction" "${CONF_SPARK_MEMORY_FRACTION}"
 # Adding JVM configuration, entry point class name and the jar file
 if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
+  ADDITIONAL_JVM_EXECUTOR_CONF="$ADDITIONAL_JVM_EXECUTOR_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+  ADDITIONAL_JVM_EXECUTOR_CONF="$ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER"
   add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
-CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
+
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF}"
+CMD_LINE="${CMD_LINE} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\""
+CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_EXECUTOR_CONF}\""
+CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" "${MENAS_AUTH_KEYTAB}"

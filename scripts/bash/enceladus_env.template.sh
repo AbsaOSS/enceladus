@@ -84,9 +84,18 @@ DEFAULT_CLIENT_MODE_RUN_KINIT="true"
 APPLICATION_PROPERTIES_CLIENT="-Dconfig.file=/absolute/path/application.conf"
 APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
 
+#KRB5_CONF_CLIENT="-Djava.security.krb5.conf=/absolute/path/krb5.conf"
+#KRB5_CONF_CLUSTER="-Djava.security.krb5.conf=krb5.conf"
+
+#TRUST_STORE_CLIENT="-Djavax.net.ssl.trustStore=/absolute/path/trustStore.jks"
+#TRUST_STORE_CLUSTER="-Djavax.net.ssl.trustStore=trustStore.jks"
+#TRUST_STORE_PASSWORD="-Djavax.net.ssl.trustStorePassword=password"
+
 # Files to send when running in cluster mode (comma separated)
 # Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
 ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
+#ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/krb5.conf#krb5.conf"
+#ENCELADUS_FILES="${ENCELADUS_FILES},/absolute/path/emr_cacerts.jks#emr_cacerts.jks"
 
 # Additional environment-specific Spark options, e.g. "--conf spark.driver.host=myhost"
 # To specify several configuration options prepend '--conf' to each config key.
@@ -98,13 +107,15 @@ ADDITIONAL_SPARK_CONF=""
 # Additional JVM options
 # Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
 # for deployment mode: client
-ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $JAAS_CLIENT"
+ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $KRB5_CONF_CLIENT $TRUST_STORE_CLIENT $TRUST_STORE_PASSWORD $JAAS_CLIENT"
+ADDITIONAL_JVM_EXECUTOR_CONF_CLIENT="$KRB5_CONF_CLIENT $TRUST_STORE_CLIENT $TRUST_STORE_PASSWORD"
 
 # for deployment mode: cluster
 # Warning!
 # Avoid suppression of Info level logger. This will lead to the fact that, we are not able to get application_id
 # and thus the scripts will not be able to continue properly, not giving the status update or kill option on interrupt
-ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $JAAS_CLUSTER"
+ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $TRUST_STORE_PASSWORD $JAAS_CLUSTER"
+ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER="$KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $TRUST_STORE_PASSWORD"
 
 # Switch that tells the script if it should exit if it encounters unrecognized.
 # On true it prints an Error and exits with 127, on false it only prints a warning
