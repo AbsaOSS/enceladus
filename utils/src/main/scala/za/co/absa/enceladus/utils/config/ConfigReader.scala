@@ -22,7 +22,22 @@ import scala.collection.JavaConverters._
 import scala.util.{Failure, Try}
 
 object ConfigReader {
+  type ConfigExceptionBadValue = ConfigException.BadValue
+
   val redactedReplacement: String = "*****"
+  private val defaultConfig: ConfigReader = new ConfigReader(ConfigFactory.load())
+
+  def apply(): ConfigReader = defaultConfig
+  def apply(config: Config): ConfigReader = new ConfigReader(config)
+  def apply(configMap: Map[String, String]): ConfigReader = {
+    val config = ConfigFactory.parseMap(configMap.asJava)
+    apply(config)
+  }
+
+  def parseString(configLine: String): ConfigReader = {
+    val config = ConfigFactory.parseString(configLine)
+    apply(config)
+  }
 }
 
 class ConfigReader(val config: Config = ConfigFactory.load()) {
@@ -45,18 +60,6 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     config.getBoolean(path)
   }
 
-  def getIntList(path: String): List[Int] = {
-    Try(config
-      .getIntList(path)
-      .asScala
-      .map(_.toInt)
-      .toList
-    ).recoverWith {
-      // if it fails try to decode it as a simple string, but if that fails too, throw the original exception
-      case e: ConfigException.WrongType => Try(getListFromString(path){_.toInt}).recoverWith{case _ => Failure(e)}
-    }.get
-  }
-
   /**
     * Inspects the config for the presence of the `path` and returns an optional result.
     *
@@ -65,6 +68,10 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     */
   def getStringOption(path: String): Option[String] = {
     getIfExists(path)(getString)
+  }
+
+  def getIntOption(path: String): Option[Int] = {
+    getIfExists(path)(getInt)
   }
 
   /**
@@ -77,19 +84,9 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     getIfExists(path)(getBoolean)
   }
 
-  /**
-    * Inspects the config for the presence of the `key` and returns an optional result.
-    *
-    * @param path path to look for, e.g. "group1.subgroup2.value3
-    * @return None if not found or defined Option[Boolean]
-    */
-  def getIntListOption(path: String): Option[List[Int]] = {
-    getIfExists(path)(getIntList)
-  }
-
   /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
   def withAnyRefValue(key: String, value: AnyRef) : ConfigReader = {
-    new ConfigReader(config.withValue(key, ConfigValueFactory.fromAnyRef(value)))
+    ConfigReader(config.withValue(key, ConfigValueFactory.fromAnyRef(value)))
   }
 
   /**
@@ -108,7 +105,7 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
 
     val redactingConfig = keysToRedact.foldLeft(ConfigFactory.empty)(withAddedKey)
 
-    new ConfigReader(redactingConfig.withFallback(config))
+    ConfigReader(redactingConfig.withFallback(config))
   }
 
   /**
@@ -171,15 +168,6 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     } else {
       None
     }
-  }
-
-  private def getListFromString[T](path: String)(converFnc: String => T): List[T] = {
-    import za.co.absa.enceladus.utils.implicits.StringImplicits._
-
-    val delimiter = ','
-    val source = getString(path).trimStartEndChar('[',']')
-    val listDirty = source.splitWithQuotes(delimiter)
-    listDirty.map(item => converFnc(item.trim.trimStartEndChar('"'))).toList
   }
 
 }

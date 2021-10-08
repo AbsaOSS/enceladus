@@ -16,8 +16,10 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.conformance.DynamicConformanceJob.{menasBaseUrls, menasSetup, menasUrlsRetryCount}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.MenasSetup
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
@@ -35,7 +37,8 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsTryCounts)
+    val menasSetupValue = menasSetup.map(MenasSetup.withName)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, menasCredentials, preparationResult)

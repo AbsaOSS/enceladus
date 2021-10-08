@@ -28,45 +28,13 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
   }
 
   "CrossHostApiCaller" should {
-    "hold correct url and try count pairs" when {
-      "the url and try counts are fo same size" in {
-        val crossHostApiCaller = CrossHostApiCaller(Vector("a", "b", "c", "d"), Vector(1, 2, 3, 4), 3)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-        crossHostApiCaller.nextBaseUrl() should be("b", 2)
-        crossHostApiCaller.nextBaseUrl() should be("c", 3)
-        crossHostApiCaller.nextBaseUrl() should be("d", 4)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-      }
-      "fill in the try counts if there is less of them than urls " in {
-        val crossHostApiCaller = CrossHostApiCaller(Vector("a", "b", "c", "d"), Vector(1, 10), 3)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-        crossHostApiCaller.nextBaseUrl() should be("b", 10)
-        crossHostApiCaller.nextBaseUrl() should be("c", 10)
-        crossHostApiCaller.nextBaseUrl() should be("d", 10)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-      }
-      "no try counts are provided" in {
-        val crossHostApiCaller = CrossHostApiCaller(Vector("a", "b", "c"), 2)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-        crossHostApiCaller.nextBaseUrl() should be("b", 1)
-        crossHostApiCaller.nextBaseUrl() should be("c", 1)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-      }
-    }
-    "ignore exceeding try counts" when {
-      "there are more of them then urls" in {
-        val crossHostApiCaller = CrossHostApiCaller(Vector("a", "b", "c", "d"), Vector(1, 2, 3, 4, 5, 6), 3)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)
-        crossHostApiCaller.nextBaseUrl() should be("b", 2)
-        crossHostApiCaller.nextBaseUrl() should be("c", 3)
-        crossHostApiCaller.nextBaseUrl() should be("d", 4)
-        crossHostApiCaller.nextBaseUrl() should be("a", 1)      }
-    }
-    "filer out empty urls and non-positive try counts" in {
-      val crossHostApiCaller = CrossHostApiCaller(Vector("a", "", "c", "d", "e"), Vector(1, 2, -3, 0, 5), 1)
-      crossHostApiCaller.nextBaseUrl() should be("a", 1)
-      crossHostApiCaller.nextBaseUrl() should be("e", 5)
-      crossHostApiCaller.nextBaseUrl() should be("a", 1)
+    "cycle through urls" in {
+      val crossHostApiCaller = CrossHostApiCaller(Vector("a", "b", "c", "d"), None, Some(1))
+      crossHostApiCaller.nextBaseUrl() should be("c")
+      crossHostApiCaller.nextBaseUrl() should be("d")
+      crossHostApiCaller.nextBaseUrl() should be("a")
+      crossHostApiCaller.nextBaseUrl() should be("b")
+      crossHostApiCaller.nextBaseUrl() should be("c")
     }
   }
 
@@ -75,7 +43,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
       "there are no failures" in {
         Mockito.when(restClient.sendGet[String]("a")).thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), 0).call { str =>
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), 0, 0).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -89,7 +57,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(DaoException("Something went wrong B"))
           .thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), Vector(3, 4), 0).call { str =>
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, 0).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -99,18 +67,18 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.verify(restClient, Mockito.never()).sendGet[String]("c")
       }
 
-      "despite some urls have non-positive try counts" in {
+      "despite retry count is negative" in {
         Mockito.when(restClient.sendGet[String]("a")).thenThrow(DaoException("Something went wrong A"))
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), Vector(-1, 0, 3, 12), 0).call { str =>
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, 0).call { str =>
           restClient.sendGet[String](str)
         }
 
         result should be("success")
-        Mockito.verify(restClient, Mockito.never()).sendGet[String]("a")
-        Mockito.verify(restClient, Mockito.never()).sendGet[String]("b")
+        Mockito.verify(restClient, Mockito.times(1)).sendGet[String]("a")
+        Mockito.verify(restClient, Mockito.times(1)).sendGet[String]("b")
         Mockito.verify(restClient, Mockito.times(1)).sendGet[String]("c")
       }
     }
@@ -122,7 +90,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
         val exception = intercept[DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 0, 0).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -139,14 +107,14 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
         val exception = intercept[DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), Vector(3, 1, 2), 0).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 1, 0).call { str =>
             restClient.sendGet[String](str)
           }
         }
 
         exception.getMessage should be("Something went wrong C")
-        Mockito.verify(restClient, Mockito.times(3)).sendGet[String]("a")
-        Mockito.verify(restClient, Mockito.times(1)).sendGet[String]("b")
+        Mockito.verify(restClient, Mockito.times(2)).sendGet[String]("a")
+        Mockito.verify(restClient, Mockito.times(2)).sendGet[String]("b")
         Mockito.verify(restClient, Mockito.times(2)).sendGet[String]("c")
       }
 
@@ -155,7 +123,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(UnauthorizedException("Wrong credentials"))
 
         val exception = intercept[UnauthorizedException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 0, 0).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -175,14 +143,6 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           }
         }
         exception.getMessage should be ("0")
-      }
-      "all are filtered out" in {
-        val exception = intercept[IndexOutOfBoundsException] {
-          CrossHostApiCaller(Vector("", "a", "b"), Vector(3, 0, -1), 1)call { str =>
-            restClient.sendGet[String](str)
-          }
-        }
-        exception.getMessage should be ("1")
       }
     }
   }

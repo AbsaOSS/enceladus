@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance
 
-import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
+//import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -32,6 +32,7 @@ import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter,
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.MenasSetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.config.ConfigReader
@@ -40,7 +41,9 @@ import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
 class HyperConformance (menasBaseUrls: List[String],
-                        menasUrlsTryCounts: List[Int])
+                        urlsRetryCount: Option[Int],
+                        menasSetup: Option[String]
+                       )
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -52,7 +55,8 @@ class HyperConformance (menasBaseUrls: List[String],
     implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsTryCounts)
+    val menasSetupValue = menasSetup.map(MenasSetup.withName)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue)
     dao.authenticate()
 
     logPreConformanceInfo(rawDf)
@@ -150,16 +154,17 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
     val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
-    val menasBaseUrlsTryCounts: List[Int] = if (conf.containsKey(menasUriTriesKey)) {
-      val value = conf.getString(menasUriTriesKey)
-      val configReader = new ConfigReader(ConfigFactory.empty()
-        .withValue(menasUriTriesKey, ConfigValueFactory.fromAnyRef(value)
-        ))
-      configReader.getIntList(menasUriTriesKey)
+    val menasUrlsRetryCount: Option[Int] = if (conf.containsKey(menasUriRetryCountKey)) {
+      Option(conf.getInt(menasUriRetryCountKey))
     } else {
-      List.empty
+      None
     }
-    new HyperConformance(menasBaseUrls, menasBaseUrlsTryCounts)
+    val menasSetup: Option[String] = if (conf.containsKey(menasSetupKey)) {
+      Option(conf.getString(menasSetupKey))
+    } else {
+      None
+    }
+    new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup)
   }
 
   private def getReportVersion(conf: Configuration): Int = {

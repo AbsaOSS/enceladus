@@ -43,7 +43,7 @@ class ConfigReaderSuite extends AnyWordSpec with Matchers{
 
   private val keysToRedact = Set("redacted", "nested.redacted", "redundant.key")
 
-  private val configReader = new ConfigReader(config)
+  private val configReader = ConfigReader(config)
 
   "hasPath" should {
     "return true if the key exists" in {
@@ -113,45 +113,6 @@ class ConfigReaderSuite extends AnyWordSpec with Matchers{
     }
   }
 
-  "getIntList()" should {
-    "return list of integers" when {
-      "when the path exists and they are integers in brackets" in {
-        configReader.getIntList("list") shouldBe List(1, 2, 3)
-      }
-      "when values can be converted to int" in {
-        configReader.getIntList("list2") shouldBe List(10, 20, 30)
-      }
-      "when the values are a string not in brackets" in {
-        configReader.getIntList("list3") shouldBe List(1, 1, 2, 3, 5)
-      }
-      "even when the value is a single integer" in {
-        configReader.getIntList("nested.redacted") shouldBe List(67890)
-      }
-    }
-    "throws and exception" when {
-      "if the key does not exist" in {
-        intercept[ConfigException.Missing] {
-          configReader.getIntList("redundant.key")
-        }
-      }
-      "if the value is not a list of integers" in {
-        intercept[ConfigException.WrongType] {
-          configReader.getIntList("top")
-        }
-      }
-      "if the value is a list of strings" in {
-        intercept[ConfigException.WrongType] {
-          configReader.getIntList("list4")
-        }
-      }
-      "the value is null" in {
-        intercept[ConfigException.Null] {
-          configReader.getIntList("nothing")
-        }
-      }
-    }
-  }
-
   "getStringOption()" should {
     "return Some(value) if the key exists" in {
       assert(configReader.getStringOption("nested.redacted").contains("67890"))
@@ -163,19 +124,7 @@ class ConfigReaderSuite extends AnyWordSpec with Matchers{
       assert(configReader.getStringOption("nothing").isEmpty)
     }
   }
-
-  "getIntListOption()" should {
-    "return Some(value) if the key exists" in {
-      assert(configReader.getIntListOption("list").contains(List(1, 2, 3)))
-    }
-    "return None if the key does not exist" in {
-      assert(configReader.getIntListOption("redundant.key").isEmpty)
-    }
-    "return None if the key is Null" in {
-      assert(configReader.getIntListOption("nothing").isEmpty)
-    }
-  }
-
+  
   "getFlatConfig()" should {
     "return the same config if there are no keys to redact" in {
       val redactedConfig = configReader.getFlatConfig(Set())

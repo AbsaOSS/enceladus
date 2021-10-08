@@ -24,74 +24,59 @@ import za.co.absa.enceladus.dao.{DaoException, RetryableException}
 import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
 
-protected object CrossHostApiCaller {
+object CrossHostApiCaller {
 
   private val logger  = LoggerFactory.getLogger(classOf[CrossHostApiCaller])
 
-  private def createInstance(apiBaseUrls: Seq[String],
-                             tryCounts: Seq[Int] = Vector.empty,
-                             startWith: Option[Int] = None): CrossHostApiCaller = {
-    def filterUrls(entry: (String, Int)): Boolean = {
-      entry match {
-        case ("", _)                          => false
-        case (url, tryCount) if tryCount <= 0 =>
-          logger.warn(s"Url $url doesn't have a positive try count ($tryCount). Ignoring.")
-          false
-        case _                                => true
-      }
-    }
+  final val DefaultUrlsRetryCount: Int = 0
 
-    val urls = apiBaseUrls.toVector
-    val tries = tryCounts.toVector
-    val triesExtendedToUrlsLength = tries ++ Vector.fill(urls.size - tries.size)(tries.lastOption.getOrElse(1))
-    val urlsWithTries = (urls zip triesExtendedToUrlsLength).filter(filterUrls)
-    val currentHostIndex = startWith.getOrElse(Random.nextInt(Math.max(urlsWithTries.size, 1)))
-    new CrossHostApiCaller(urlsWithTries, currentHostIndex)
+  private def createInstance(apiBaseUrls: Seq[String], urlsRetryCount: Option[Int], startWith: Option[Int]): CrossHostApiCaller = {
+    val maxTryCount: Int = (urlsRetryCount match {
+      case None => DefaultUrlsRetryCount
+      case Some(x) if x < 0 =>
+        logger.warn(s"Urls retry count cannot be negative ($x). Using default number of retries instead ($DefaultUrlsRetryCount).")
+        DefaultUrlsRetryCount
+      case Some(x) => x
+    }) + 1
+    val currentHostIndex = startWith.getOrElse(Random.nextInt(Math.max(apiBaseUrls.size, 1)))
+    new CrossHostApiCaller(apiBaseUrls.toVector, maxTryCount, currentHostIndex)
   }
 
   def apply(apiBaseUrls: Seq[String]): CrossHostApiCaller = {
-    createInstance(apiBaseUrls)
+    createInstance(apiBaseUrls, None, None)
   }
 
-  def apply(apiBaseUrls: Seq[String], startWith: Int): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, Vector.empty, Option(startWith))
+  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Option[Int], startWith: Option[Int]): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, urlsRetryCount, startWith)
   }
 
-  def apply(apiBaseUrls: Seq[String], tryCounts: Seq[Int]): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, tryCounts)
+  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Int, startWith: Int): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, Option(urlsRetryCount), Option(startWith))
   }
-
-  def apply(apiBaseUrls: Seq[String], tryCounts: Seq[Int], startWith: Int): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, tryCounts, Option(startWith))
-  }
-
 }
 
-protected class CrossHostApiCaller private(private val baseUrlsWithTries: Vector[(String, Int)], private var currentHostIndex: Int)
+protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCount: Int, private var currentHostIndex: Int)
   extends ApiCaller {
 
-  def baseUrlsCount: Int = baseUrlsWithTries.size
+  def baseUrlsCount: Int = apiBaseUrls.size
 
-  def currenBasetUrl: (String, Int) = baseUrlsWithTries(currentHostIndex)
+  def currentBasetUrl: String = apiBaseUrls(currentHostIndex)
 
-  def nextBaseUrl(): (String, Int) = {
-    currentHostIndex += 1
-    if (currentHostIndex >= baseUrlsCount) {
-      currentHostIndex = 0
-    }
-    currenBasetUrl
+  def nextBaseUrl(): String = {
+    currentHostIndex = (currentHostIndex + 1) % baseUrlsCount
+    currentBasetUrl
   }
 
 
   def call[T](fn: String => T): T = {
-    def logFailure(error: Throwable, url: String, maxTryCount: Int, attemptNumber: Int, nextUrl: Option[String]): Unit = {
+    def logFailure(error: Throwable, url: String, attemptNumber: Int, nextUrl: Option[String]): Unit = {
       val rootCause = ExceptionUtils.getRootCauseMessage(error)
       val switching = nextUrl.map(s => s", switching host to $s").getOrElse("")
-      logger.warn(s"Request failed on host $url (attemp $attemptNumber of $maxTryCount)$switching - $rootCause")
+      logger.warn(s"Request failed on host $url (attempt $attemptNumber of $maxTryCount)$switching - $rootCause")
     }
 
     @tailrec
-    def attempt(url: String, maxTryCount: Int, attemptNumber: Int, urlsTried: Int): Try[T] = {
+    def attempt(url: String, attemptNumber: Int, urlsTried: Int): Try[T] = {
       val result =Try {
         fn(url)
       }.recoverWith {
@@ -100,17 +85,17 @@ protected class CrossHostApiCaller private(private val baseUrlsWithTries: Vector
       //using match instead of recoverWith to make the function @tailrec
       result match {
         case Failure(e: RetryableException) if attemptNumber < maxTryCount =>
-          logFailure(e, url, maxTryCount, attemptNumber, None)
-          attempt(url, maxTryCount, attemptNumber + 1, urlsTried)
+          logFailure(e, url, attemptNumber, None)
+          attempt(url, attemptNumber + 1, urlsTried)
         case Failure(e: RetryableException) if urlsTried < baseUrlsCount =>
-          val (nextUrl, nextMaxTryCount) = nextBaseUrl()
-          logFailure(e, url, maxTryCount, attemptNumber, Option(nextUrl))
-          attempt(nextUrl, nextMaxTryCount, 1, urlsTried + 1)
+          val nextUrl = nextBaseUrl()
+          logFailure(e, url, attemptNumber, Option(nextUrl))
+          attempt(nextUrl, 1, urlsTried + 1)
         case _ => result
       }
     }
 
-    attempt(currenBasetUrl._1, currenBasetUrl._2, 1, 1).get
+    attempt(currentBasetUrl,1, 1).get
   }
 
 }

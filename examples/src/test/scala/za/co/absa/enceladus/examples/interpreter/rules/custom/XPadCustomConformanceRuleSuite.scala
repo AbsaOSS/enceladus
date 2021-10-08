@@ -186,10 +186,9 @@ class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with
 
   private val conf = new ConfigReader()
   private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
-  private val menasUrlsTryCounts = conf.getIntListOption("menas.rest.uriTries").getOrElse(List.empty)
   private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls, menasUrlsTryCounts) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls, None, None) // you may have to hard-code your own implementation here (if not working with menas)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
