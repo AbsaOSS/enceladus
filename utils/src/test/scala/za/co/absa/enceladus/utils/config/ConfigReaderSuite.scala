@@ -35,10 +35,6 @@ class ConfigReaderSuite extends AnyWordSpec with Matchers{
       |  yes = "true"
       |  str = "xxx"
       |}
-      |list = [1,2,3]
-      |list2=["10", "20", "30"]
-      |list3="1, 1, 2, 3 , 5"
-      |list4=["0", "A", "BB"]
       |""".stripMargin)
 
   private val keysToRedact = Set("redacted", "nested.redacted", "redundant.key")
@@ -124,7 +120,7 @@ class ConfigReaderSuite extends AnyWordSpec with Matchers{
       assert(configReader.getStringOption("nothing").isEmpty)
     }
   }
-  
+
   "getFlatConfig()" should {
     "return the same config if there are no keys to redact" in {
       val redactedConfig = configReader.getFlatConfig(Set())

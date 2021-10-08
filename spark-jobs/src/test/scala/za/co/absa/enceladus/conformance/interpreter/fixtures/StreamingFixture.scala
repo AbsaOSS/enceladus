@@ -91,7 +91,7 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
       .setControlFrameworkEnabled(false)
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
-    val hyperConformance = new HyperConformance(menasBaseUrls, None, None)
+    val hyperConformance = new HyperConformance(menasBaseUrls)
     val source: DataFrame = memoryStream.toDF()
     val conformed: DataFrame = hyperConformance.applyConformanceTransformations(source, dataset)
     val sink = conformed

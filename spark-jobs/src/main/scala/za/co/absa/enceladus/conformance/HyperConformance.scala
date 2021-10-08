@@ -41,8 +41,8 @@ import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
 class HyperConformance (menasBaseUrls: List[String],
-                        urlsRetryCount: Option[Int],
-                        menasSetup: Option[String]
+                        urlsRetryCount: Option[Int] = None,
+                        menasSetup: Option[String] = None
                        )
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
