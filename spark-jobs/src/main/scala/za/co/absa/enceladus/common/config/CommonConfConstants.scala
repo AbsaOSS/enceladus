@@ -16,6 +16,6 @@
 package za.co.absa.enceladus.common.config
 
 object CommonConfConstants {
-  val minBlockSizeKey = "min.file.output.size"
-  val maxBlockSizeKey = "max.file.output.size"
+  val minBlockSizeKey = "min.processing.block.size"
+  val maxBlockSizeKey = "max.processing.block.size"
 }

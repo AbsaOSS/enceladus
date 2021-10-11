@@ -206,9 +206,7 @@ trait CommonJobExecution extends ProjectMetadata {
       } else {
         df
       }
-      case (Some(min), Some(max)) => if (currentBlockSize < min) {
-        applyCoalesce(min)
-      } else if (currentBlockSize > max) {
+      case (Some(min), Some(max)) => if (currentBlockSize < min || currentBlockSize > max) {
         applyRepartition(max)
       } else {
         df
