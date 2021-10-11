@@ -106,7 +106,7 @@ trait ConformanceExecution extends CommonJobExecution {
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
-    implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem
+    implicit val stdFs: FileSystem = preparationResult.pathCfg.publish.fileSystem
 
     Try {
       handleControlInfoValidation()
