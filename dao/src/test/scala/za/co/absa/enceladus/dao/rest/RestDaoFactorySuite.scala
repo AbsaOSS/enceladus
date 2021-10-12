@@ -55,35 +55,35 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       val plainCredentials = MenasPlainCredentials("user", "changeme")
       "when it's round-robin" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Option[Int]], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, Option(MenasSetup.RoundRobin))
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
-            None,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
             None)
         }
       }
       "when it's fallback" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Option[Int]], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, Option(MenasSetup.Fallback))
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, MenasSetup.Fallback)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
-            None,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
             Option(0))
         }
       }
       "when the setup type is not specified" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Option[Int]], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, None)
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
-            None,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
             None)
         }
       }

@@ -58,7 +58,7 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val configReader: ConfigReader = new ConfigReader()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
-  protected val menasSetup: Option[String] = configReader.getStringOption("menas.rest.setup")
+  protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion

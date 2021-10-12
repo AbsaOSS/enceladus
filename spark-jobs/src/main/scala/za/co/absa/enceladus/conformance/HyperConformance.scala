@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.conformance
 
-//import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
-
 import java.text.SimpleDateFormat
 import java.util.Date
 import org.apache.commons.configuration2.Configuration
@@ -35,7 +33,6 @@ import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCred
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.MenasSetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
@@ -55,7 +52,7 @@ class HyperConformance (menasBaseUrls: List[String],
     implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
-    val menasSetupValue = menasSetup.map(MenasSetup.withName)
+    val menasSetupValue = menasSetup.map(MenasSetup.withName).getOrElse(RestDaoFactory.DefaultMenasSetup)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue)
     dao.authenticate()
 

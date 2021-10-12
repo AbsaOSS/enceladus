@@ -20,24 +20,27 @@ import za.co.absa.enceladus.dao.rest.RestDaoFactory.MenasSetup.{Fallback, MenasS
 
 object RestDaoFactory {
 
-object MenasSetup extends Enumeration {
-  final type MenasSetup = Value
+  object MenasSetup extends Enumeration {
+    final type MenasSetup = Value
 
-  final val RoundRobin = Value("roundrobin")
-  final val Fallback = Value("fallback")
-}
+    final val RoundRobin = Value("roundrobin")
+    final val Fallback = Value("fallback")
+  }
+
+  final val DefaultMenasSetup: MenasSetup = RoundRobin
+
   private val restTemplate = RestTemplateSingleton.instance
 
   def getInstance(authCredentials: MenasCredentials,
                   apiBaseUrls: List[String],
-                  urlsRetryCount: Int,
-                  menasSetup: MenasSetup): MenasRestDAO = {
-    val startsWith = if (menasSetup.contains(Fallback)) {
+                  urlsRetryCount: Option[Int] = None,
+                  menasSetup: MenasSetup = DefaultMenasSetup): MenasRestDAO = {
+    val startsWith = if (menasSetup == Fallback) {
       Option(0)
     } else {
       None
-    }
-    val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsRetryCount, startsWith)
+     }
+    val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount), startsWith)
     val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
     new MenasRestDAO(apiCaller, restClient)

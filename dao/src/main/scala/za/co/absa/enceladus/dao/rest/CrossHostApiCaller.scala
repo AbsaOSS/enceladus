@@ -30,28 +30,19 @@ object CrossHostApiCaller {
 
   final val DefaultUrlsRetryCount: Int = 0
 
-  private def createInstance(apiBaseUrls: Seq[String], urlsRetryCount: Option[Int], startWith: Option[Int]): CrossHostApiCaller = {
-    val maxTryCount: Int = (urlsRetryCount match {
-      case None => DefaultUrlsRetryCount
-      case Some(x) if x < 0 =>
-        logger.warn(s"Urls retry count cannot be negative ($x). Using default number of retries instead ($DefaultUrlsRetryCount).")
-        DefaultUrlsRetryCount
-      case Some(x) => x
+  private def createInstance(apiBaseUrls: Seq[String], urlsRetryCount: Int, startWith: Option[Int]): CrossHostApiCaller = {
+    val maxTryCount: Int = (if (urlsRetryCount < 0) {
+      logger.warn(s"Urls retry count cannot be negative ($urlsRetryCount). Using default number of retries instead ($DefaultUrlsRetryCount).") //scalastyle:ignore maxLineLength
+      DefaultUrlsRetryCount
+    } else {
+      urlsRetryCount
     }) + 1
     val currentHostIndex = startWith.getOrElse(Random.nextInt(Math.max(apiBaseUrls.size, 1)))
     new CrossHostApiCaller(apiBaseUrls.toVector, maxTryCount, currentHostIndex)
   }
 
-  def apply(apiBaseUrls: Seq[String]): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, None, None)
-  }
-
-  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Option[Int], startWith: Option[Int]): CrossHostApiCaller = {
+  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Int = DefaultUrlsRetryCount, startWith: Option[Int] = None): CrossHostApiCaller = {
     createInstance(apiBaseUrls, urlsRetryCount, startWith)
-  }
-
-  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Int, startWith: Int): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, Option(urlsRetryCount), Option(startWith))
   }
 }
 
