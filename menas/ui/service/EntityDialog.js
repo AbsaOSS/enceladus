@@ -409,7 +409,7 @@ class MappingTableDialog extends EntityDialog {
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
 
-    this.filterEdit = new FilterEdit(this.oController);
+    this.filterEdit = new FilterEdit(this.oController, "", this._schemaService);
     this.filterEdit.bindFilterEditControls(this.oDialog);
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
@@ -483,6 +483,9 @@ class MappingTableDialog extends EntityDialog {
     const filterModel = new sap.ui.model.json.JSONModel();
     filterModel.setProperty("/editingFilters", filterData);
     this.oDialog.setModel(filterModel, "filterEdit");
+
+    const suggestedSchemaColumnsModel = new sap.ui.model.json.JSONModel();
+    this.oDialog.setModel(suggestedSchemaColumnsModel, "suggestedColumns");
   }
 }
 
@@ -528,6 +531,23 @@ class EditMappingTableDialog extends MappingTableDialog {
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");
       this.setFilterEditModel(updatedFilters);
+
+      // todo do for mCR, too.
+      // todo move & make for adding, too.
+      // set binding from entity model to filterModel:
+      // binding to /schemaVersion change - it is set after /schemaName, otherwise risking an inconsistent pair ("newSchema1", "versionOfThePreviousSchema")
+      // const schemaService = this.schemaService;
+      const filterEdit = this.filterEdit;
+
+      const binding = new sap.ui.model.Binding(model, "/schemaVersion", model.getContext("/"));
+      binding.attachChange(function() {
+        const updatedSchemaName = model.getProperty("/schemaName");
+        const updatedSchemaVersion = model.getProperty("/schemaVersion");
+
+        console.log(`entity schema change: ${updatedSchemaName}, version ${updatedSchemaVersion}`);
+        filterEdit.onUpdatedSchema(updatedSchemaName, updatedSchemaVersion);
+
+      });
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });

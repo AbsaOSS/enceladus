@@ -29,7 +29,8 @@ class ConformanceRuleDialog {
     this._ruleForms = new ConformanceRuleFormRepository(this);
     this._rules = this._ruleForms.all;
 
-    this.filterEdit = new FilterEdit(sap.ui.getCore(), "MappingConformanceRule--");
+    this._schemaService = new SchemaService(this.model, eventBus);
+    this.filterEdit = new FilterEdit(sap.ui.getCore(), "MappingConformanceRule--", this._schemaService);
 
     this.model.setProperty("/rules", this.rules);
     this.model.setProperty("/dataTypes", this._ruleForms.byType("CastingConformanceRule").dataTypes);

@@ -49,9 +49,12 @@
             </t:Column>
             <t:Column label="Column">
                 <t:template>
-                    <Input type="Text" value="{filterEdit>columnName}" placeholder="Enter col. name"
-                           valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}"
-                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' || ${filterEdit>_t} === 'IsNullFilter' }" />
+                    <Select selectedKey="{filterEdit>columnName}" items="{path: 'suggestedColumns>/columnNames', templateShareable:false}"
+                            forceSelection="false"
+                            visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' || ${filterEdit>_t} === 'IsNullFilter' }"
+                            valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}" >
+                        <core:ListItem key="{suggestedColumns>name}" text="{suggestedColumns>name}"/>
+                    </Select>
                 </t:template>
             </t:Column>
             <t:Column label="Value">
@@ -73,7 +76,6 @@
                             <core:Item key="{suggestedColumnTypes>type}" text="{suggestedColumnTypes>type}"/>
                         </suggestionItems>
                     </Input>
-
                 </t:template>
             </t:Column>
         </t:columns>

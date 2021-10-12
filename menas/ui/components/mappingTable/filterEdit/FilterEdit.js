@@ -22,9 +22,10 @@ class FilterEdit {
    * @param idBase oController, or core
    * @param idPrefix prefix for ID, e.g. "MappingConformanceRule--". Default: empty string
    */
-  constructor(idBase, idPrefix = "") {
+  constructor(idBase, idPrefix = "", schemaService) {
     this.idBase = idBase;
     this.idPrefix = idPrefix;
+    this.schemaService = schemaService;
 
     this.#controlsInitd = false;
   }
@@ -237,7 +238,7 @@ class FilterEdit {
           case "DiffersFilter":
             if (filterNode.columnName.length == 0) {
               filterNode.columnName_valueState = "Error";
-              filterNode.columnName_valueStateText = "Fill in the column name.";
+              filterNode.columnName_valueStateText = "Select the column.";
               hasValidFilter = false;
             }
 
@@ -274,4 +275,48 @@ class FilterEdit {
     return hasValidFilter;
   }
 
+  /**
+   * Extract dot-separated schema names from schema **fields** tree with types (struct/arrays = treenodes), e.g.:
+   * {{{
+   *   [
+   *     {name: root.subfield1.subsubfieldA, type: string},
+   *     {name: root.subfield1.subsubfieldB, type: boolean},
+   *     {name: root.subfieldB, type: integer},
+   *   ]
+   * }}}
+   */
+  static extractFieldNamesInDepth(schemaFields) {
+    const extractedFields = schemaFields.map(field => {
+      switch (field.type) {
+        case "struct":
+        case "array":
+            const children = FilterEdit.extractFieldNamesInDepth(field.children);
+            const prefix = field.name;
+            // add prefix to all
+          const prefixedChildren = children.map(child => {
+
+            let childCopy = $.extend(true, {}, child); // being immutable
+            childCopy.name = `${prefix}.${child.name}`; // prepending "parentName." for this recursion level
+            return childCopy;
+          });
+
+            return prefixedChildren;
+          break;
+
+        default:
+          return [{name: field.name, type: field.type}]; // leaf field
+      }
+    });
+
+    return extractedFields.flat(); // flat each recursive level
+  }
+
+  onUpdatedSchema(updatedSchemaName, updatedSchemaVersion) {
+    this.schemaService.getByNameAndVersion(updatedSchemaName, updatedSchemaVersion, "/updatedSchema").then((schema) => {
+
+      const allColumnNames = FilterEdit.extractFieldNamesInDepth(schema.fields);
+      this.dialog.getModel("suggestedColumns").setProperty("/columnNames", allColumnNames);
+    });
+
+  }
 }
