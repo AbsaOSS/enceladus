@@ -25,8 +25,8 @@ spline.persistence.composition.factories=za.co.absa.spline.persistence.mongo.Mon
 spline.mongodb.url=mongodb://localhost:27017
 spline.mongodb.name=spline
 
-# Set your desired PS permissions for _LINEAGE file if you want it differ from the default (default is derived from hadoop conf)
-# spline.hdfs.file.permissions=733#
+# Set your desired PS permissions for _LINEAGE file if you want it differ from the default (default is derived from hadoop conf), e.g.
+# spline.hdfs.file.permissions=733
 
 #
 # A property for setting up persistence to Apache Atlas. Additional properties defining connectivity to Atlas are required to be part of this configuration file. (see Atlas configuration file)
