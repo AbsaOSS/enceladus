@@ -21,7 +21,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.UnauthorizedException
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
-import za.co.absa.enceladus.dao.rest.RestDaoFactory.MenasSetup
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 
 class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatchersSugar {
 
@@ -68,7 +68,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, MenasSetup.Fallback)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, AvailabilitySetup.Fallback)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,

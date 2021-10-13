@@ -19,7 +19,7 @@ import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.dao.rest.RestDaoFactory.{DefaultMenasSetup, MenasSetup}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.{DefaultAvailabilitySetup, AvailabilitySetup}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 
 object DynamicConformanceJob extends ConformanceExecution {
@@ -33,7 +33,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = MenasSetup.withName(menasSetup)
+    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
 
     val preparationResult = prepareJob()
