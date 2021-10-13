@@ -172,8 +172,8 @@ trait CommonJobExecution extends ProjectMetadata {
     }
   }
 
-  protected def applyRepartitioning(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
-                                   (implicit spark: SparkSession): DataFrame = {
+  protected def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                    (implicit spark: SparkSession): DataFrame = {
     val catalystPlan = df.queryExecution.logical
     val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 

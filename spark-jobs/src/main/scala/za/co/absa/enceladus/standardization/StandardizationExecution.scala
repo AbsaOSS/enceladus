@@ -197,11 +197,11 @@ trait StandardizationExecution extends CommonJobExecution {
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
-    val minBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.minBlockSizeKey).map(_.toLong)
-    val maxBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.maxBlockSizeKey).map(_.toLong)
+    val minBlockSize = configReader.getLongOption(CommonConfConstants.minBlockSizeKey)
+    val maxBlockSize = configReader.getLongOption(CommonConfConstants.maxBlockSizeKey)
 
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-        applyRepartitioning(standardizedDF, minBlockSize, maxBlockSize)
+        repartitionDataFrame(standardizedDF, minBlockSize, maxBlockSize)
       } else {
       standardizedDF
     }

@@ -162,7 +162,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
     val minBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.minBlockSizeKey).map(_.toLong)
     val maxBlockSize = configReader.readStringConfigIfExist(CommonConfConstants.maxBlockSizeKey).map(_.toLong)
-    val withRepartitioning = applyRepartitioning(result, minBlockSize, maxBlockSize)
+    val withRepartitioning = repartitionDataFrame(result, minBlockSize, maxBlockSize)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
