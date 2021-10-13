@@ -16,13 +16,13 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Label text="Schema Name"/>
-    <Button id="schemaSelectButton" text="{= ${entity>/schemaName} ? ${entity>/schemaName} : 'Click to select a schema'}" icon="sap-icon://value-help"
-        press="components.schema.selector.SchemaSelectorUtils.onOpenSelectDialog" type="{= ${entity>/schemaName} ? 'Default' : 'Reject'}" tooltip="Click to select schema" />
+    <Button id="schemaSelectButton" text="{= ${entity>/selectedSchema/name} ? ${entity>/selectedSchema/name} : 'Click to select a schema'}" icon="sap-icon://value-help"
+        press="components.schema.selector.SchemaSelectorUtils.onOpenSelectDialog" type="{= ${entity>/selectedSchema/name} ? 'Default' : 'Reject'}" tooltip="Click to select schema" />
     <Label text="Schema Version"/>
     <Select id="schemaVersionSelect" class="menasAddMappingSelect"
       items="{path: '/currentSchemaVersions', sorter: {path: 'version', descending: true}}"
       showSecondaryValues="true" width="auto"
-      selectedKey="{entity>/schemaVersion}">
+      selectedKey="{entity>/selectedSchema/version}">
       <core:ListItem key="{version}" text="{version}"
         additionalText="updated: {path: 'lastUpdated', formatter: 'Formatters.stringDateShortFormatter'}" />
     </Select>

@@ -66,11 +66,11 @@ class FilterEdit {
   }
 
   onFilterAddEquals() {
-    this.onFilterAdd({_t: "EqualsFilter", columnName: "", value: "", valueType: ""})
+    this.onFilterAdd({_t: "EqualsFilter", columnName: "", value: ""})
   }
 
   onFilterAddDiffers() {
-    this.onFilterAdd({_t: "DiffersFilter", columnName: "", value: "", valueType: ""})
+    this.onFilterAdd({_t: "DiffersFilter", columnName: "", value: ""})
   }
 
   onFilterAddIsNull() {
@@ -189,9 +189,6 @@ class FilterEdit {
 
           filterNode.value_valueState = "None";
           filterNode.value_valueStateText = "";
-
-          filterNode.valueType_valueState = "None";
-          filterNode.valueType_valueStateText = "";
           break;
         default:
       }
@@ -245,12 +242,6 @@ class FilterEdit {
             if (filterNode.value.length == 0) {
               filterNode.value_valueState = "Error";
               filterNode.value_valueStateText = "Fill in the value.";
-              hasValidFilter = false;
-            }
-
-            if (filterNode.valueType.length == 0) {
-              filterNode.valueType_valueState = "Error";
-              filterNode.valueType_valueStateText = "Fill in value type.";
               hasValidFilter = false;
             }
             break;
@@ -311,12 +302,50 @@ class FilterEdit {
     return extractedFields.flat(); // flat each recursive level
   }
 
-  onUpdatedSchema(updatedSchemaName, updatedSchemaVersion) {
-    this.schemaService.getByNameAndVersion(updatedSchemaName, updatedSchemaVersion, "/updatedSchema").then((schema) => {
+  bindModelToSchemaChange(model) {
+    const filterEdit = this;
+    // setting binding from entity model to filterModel:
+    // binding /selectedSchema (for both name and version) to avoid risking an inconsistent pair ("newSchema1", "versionOfThePreviousSchema")
+    const binding = new sap.ui.model.Binding(model, "/selectedSchema", model.getContext("/"));
+    binding.attachChange(function() {
+      const selectedSchema = model.getProperty("/selectedSchema");
+
+      console.trace(`entity schema change: ${selectedSchema.name}, version ${selectedSchema.version}`);
+      filterEdit.#onUpdatedSchema(selectedSchema);
+    });
+  }
+
+  #onUpdatedSchema(updatedSchema) {
+    this.schemaService.getByNameAndVersion(updatedSchema.name, updatedSchema.version).then((schema) => {
 
       const allColumnNames = FilterEdit.extractFieldNamesInDepth(schema.fields);
       this.dialog.getModel("suggestedColumns").setProperty("/columnNames", allColumnNames);
     });
 
+  }
+
+  applyValueTypesFromSchema(filterData) {
+    const allColsList = this.dialog.getModel("suggestedColumns").getProperty("/columnNames");
+    console.log(`applyValueTypesFromSchema: allColsList = ${JSON.stringify(allColsList)}`);
+
+    const allColsKv = allColsList.map(x => [x.name, x.type]); // [{name1, type1}, ...] => [[name1, type1], ...]
+    const allColsMap = new Map(allColsKv);
+
+    const schemaFillFn = function (filterNode) {
+      switch (filterNode._t) {
+        case "EqualsFilter":
+        case "DiffersFilter":
+          const type = allColsMap.get(filterNode.columnName);
+          if (type == undefined) {
+            console.warn(`Could not determine type for column "${filterNode.columnName}"!`)
+          } else {
+            filterNode.valueType = type;
+          }
+          break;
+        default:
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, schemaFillFn);
   }
 }

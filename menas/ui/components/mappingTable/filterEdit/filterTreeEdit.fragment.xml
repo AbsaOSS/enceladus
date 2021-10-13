@@ -64,20 +64,6 @@
                            visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' }"/>
                 </t:template>
             </t:Column>
-            <t:Column label="ValueType">
-                <t:template>
-                    <Input type="Text" value="{filterEdit>valueType}"
-                           placeholder="Enter type"
-                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' }"
-                           valueState="{filterEdit>valueType_valueState}" valueStateText="{filterEdit>valueType_valueStateText}"
-                           showSuggestion="true"
-                           suggestionItems="{path: 'suggestedColumnTypes>/', templateShareable:false}">
-                        <suggestionItems>
-                            <core:Item key="{suggestedColumnTypes>type}" text="{suggestedColumnTypes>type}"/>
-                        </suggestionItems>
-                    </Input>
-                </t:template>
-            </t:Column>
         </t:columns>
     </t:TreeTable>
 

@@ -42,6 +42,12 @@ class EntityDialog {
       return;
     }
 
+    // transforms /selectedSchema to expected fields on backend:
+    if (newEntity.selectedSchema) {
+      newEntity.schemaName = newEntity.selectedSchema.name;
+      newEntity.schemaVersion = newEntity.selectedSchema.version;
+    }
+
     if (this.isValid(newEntity)) {
       // send and update UI
       if (newEntity.isEdit) {
@@ -305,6 +311,7 @@ class EditDatasetDialog extends DatasetDialog {
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
+      current.selectedSchema = {name: current.schemaName, version: current.schemaVersion};
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
@@ -394,8 +401,9 @@ class MappingTableDialog extends EntityDialog {
         sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
       } else {
         let updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(updatedFilters[0]);
+        const schemaFilledFilter = this.filterEdit.applyValueTypesFromSchema(updatedFilter);
 
-        this.oDialog.getModel("entity").setProperty("/filter", updatedFilter);
+        this.oDialog.getModel("entity").setProperty("/filter", schemaFilledFilter);
       }
     } // do nothing on empty filter
 
@@ -495,7 +503,7 @@ class AddMappingTableDialog extends MappingTableDialog {
     super.onPress();
 
     this.schemaService.getList(this.oDialog).then(() => {
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel({
+      const emptyDialogModel = new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
         schemaName: "",
@@ -504,9 +512,12 @@ class AddMappingTableDialog extends MappingTableDialog {
         isEdit: false,
         title: "Add",
         hdfsBrowserEnabled: true
-      }), "entity");
+      });
 
+      this.oDialog.setModel(emptyDialogModel, "entity");
       this.setFilterEditModel([]); // empty filter data for new MT
+      this.filterEdit.bindModelToSchemaChange(emptyDialogModel);
+
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }
@@ -526,6 +537,7 @@ class EditMappingTableDialog extends MappingTableDialog {
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
+      current.selectedSchema = {name: current.schemaName, version: current.schemaVersion};
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
@@ -533,21 +545,7 @@ class EditMappingTableDialog extends MappingTableDialog {
       this.setFilterEditModel(updatedFilters);
 
       // todo do for mCR, too.
-      // todo move & make for adding, too.
-      // set binding from entity model to filterModel:
-      // binding to /schemaVersion change - it is set after /schemaName, otherwise risking an inconsistent pair ("newSchema1", "versionOfThePreviousSchema")
-      // const schemaService = this.schemaService;
-      const filterEdit = this.filterEdit;
-
-      const binding = new sap.ui.model.Binding(model, "/schemaVersion", model.getContext("/"));
-      binding.attachChange(function() {
-        const updatedSchemaName = model.getProperty("/schemaName");
-        const updatedSchemaVersion = model.getProperty("/schemaVersion");
-
-        console.log(`entity schema change: ${updatedSchemaName}, version ${updatedSchemaVersion}`);
-        filterEdit.onUpdatedSchema(updatedSchemaName, updatedSchemaVersion);
-
-      });
+      this.filterEdit.bindModelToSchemaChange(model);
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
