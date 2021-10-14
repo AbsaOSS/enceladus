@@ -1,0 +1,9 @@
+---
+- name: atum.hdfs.info.file.permissions
+  options:
+    - name: string with FS permissions
+      description: 'Desired FS permissions for Atum <code>_INFO</code> file. Default: <code>644</code>.'
+- name: spline.hdfs.file.permissions
+  options:
+    - name: string with FS permissions
+      description: "Desired FS permissions for Spline's <code>_LINEAGE</code> file. Default: <code>644</code>."
