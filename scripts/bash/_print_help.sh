@@ -49,6 +49,8 @@ echo "  --conf-spark-memory-fraction NUM         Fraction of the heap space rese
 echo "  --jar                                    Custom path to Enceladus's SparkJobs jar"
 echo "  --class CLASS_NAME                       Application's main class."
 echo "  --run-kinit BOOLEAN                      A switch saying if the scripts should or should not run kinit. Default value can be set in enceladus_env.sh"
+echo "  --min-processing-block-size NUM          Minimum number of bytes for each processing block, used for limiting the output partition size"
+echo "  --max-processing-block-size NUM          Maximum number of bytes for each processing block, used for limiting the output partition size"
 echo ""
 echo "job-specific-options:"
 echo "  Running the JAR --help to print all job specific options"

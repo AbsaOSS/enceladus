@@ -22,12 +22,12 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.{SPARK_VERSION, sql}
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -103,6 +103,16 @@ trait CommonJobExecution extends ProjectMetadata {
       case _ => // no problems found
     }
 
+    val minBlock = confReader.getLongOption(CommonConfConstants.minBlockSizeKey)
+    val maxBlock = confReader.getLongOption(CommonConfConstants.maxBlockSizeKey)
+
+    (minBlock, maxBlock) match {
+      case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
+          s"${CommonConfConstants.minBlockSizeKey} has to be smaller than ${CommonConfConstants.minBlockSizeKey}"
+      )
+      case _ => //validation passed
+    }
+
     val reportVersion = getReportVersion(cmd, dataset)
     val pathCfg: PathConfig = getPathConfig(cmd, dataset, reportVersion)
 
@@ -175,39 +185,29 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
                                     (implicit spark: SparkSession): DataFrame = {
+    def computeBlockCount(desiredBlockSize: Long, totalByteSize: BigInt, addRemainder: Boolean): Int = {
+      val int = (totalByteSize / desiredBlockSize).toInt
+      int + (if (addRemainder && (totalByteSize % desiredBlockSize != 0)) 1 else 0)
+    }
 
-    def computeBlockCount(desiredBlockSize: Long, totalByteSize: BigInt): Int =
-      (totalByteSize / desiredBlockSize).toInt + (if (totalByteSize % desiredBlockSize != 0) 1 else 0)
+    def changePartitionCount(blockCount: Int, fnc: Int => DataFrame): DataFrame = {
+      val outputDf = fnc(blockCount)
+      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+      outputDf
+    }
 
     val catalystPlan = df.queryExecution.logical
     val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 
     val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
 
-
-    def changePartitionCount(sizeLimit: Long, fnc: Int => DataFrame): DataFrame = {
-      val blockCount = computeBlockCount(sizeLimit, sizeInBytes)
-      val outputDf = fnc(blockCount)
-      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
-      outputDf
-    }
-
     (minBlockSize, maxBlockSize) match {
-      case (Some(min), None) => if (currentBlockSize < min) {
-        changePartitionCount(min, (count: Int) => df.coalesce(count))
-      } else {
-        df
-      }
-      case (None, Some(max)) => if (currentBlockSize > max) {
-        changePartitionCount(max, (count: Int) => df.repartition(count))
-      } else {
-        df
-      }
-      case (Some(min), Some(max)) => if (currentBlockSize < min || currentBlockSize > max) {
-        changePartitionCount(max, (count: Int) => df.repartition(count))
-      } else {
-        df
-      }
+      case (Some(min), None) if currentBlockSize < min =>
+        changePartitionCount(computeBlockCount(min, sizeInBytes, addRemainder = false), df.coalesce)
+      case (None, Some(max)) if currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+      case (Some(min), Some(max)) if currentBlockSize < min || currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
       case _ => df
     }
   }
