@@ -91,9 +91,6 @@ APPLICATION_PROPERTIES_CLUSTER="-Dconfig.file=application.conf"
 #TRUST_STORE_CLUSTER="-Djavax.net.ssl.trustStore=trustStore.jks"
 #TRUST_STORE_PASSWORD="-Djavax.net.ssl.trustStorePassword=password"
 
-#MIN_PROCESSING_BLOCK_SIZE="-Dmin.processing.block.size=134216704"
-#MAX_PROCESSING_BLOCK_SIZE="-Dmax.processing.block.size=134217728"
-
 # Files to send when running in cluster mode (comma separated)
 # Hash is used as the file alias: https://stackoverflow.com/a/49866757/1038282
 ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
@@ -110,14 +107,14 @@ ADDITIONAL_SPARK_CONF=""
 # Additional JVM options
 # Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
 # for deployment mode: client
-ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $KRB5_CONF_CLIENT $TRUST_STORE_CLIENT $TRUST_STORE_PASSWORD $JAAS_CLIENT $MIN_PROCESSING_BLOCK_SIZE $MAX_PROCESSING_BLOCK_SIZE"
+ADDITIONAL_JVM_CONF_CLIENT="$APPLICATION_PROPERTIES_CLIENT $KRB5_CONF_CLIENT $TRUST_STORE_CLIENT $TRUST_STORE_PASSWORD $JAAS_CLIENT"
 ADDITIONAL_JVM_EXECUTOR_CONF_CLIENT="$KRB5_CONF_CLIENT $TRUST_STORE_CLIENT $TRUST_STORE_PASSWORD"
 
 # for deployment mode: cluster
 # Warning!
 # Avoid suppression of Info level logger. This will lead to the fact that, we are not able to get application_id
 # and thus the scripts will not be able to continue properly, not giving the status update or kill option on interrupt
-ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $TRUST_STORE_PASSWORD $JAAS_CLUSTER $MIN_PROCESSING_BLOCK_SIZE $MAX_PROCESSING_BLOCK_SIZE"
+ADDITIONAL_JVM_CONF_CLUSTER="$APPLICATION_PROPERTIES_CLUSTER $KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $TRUST_STORE_PASSWORD $JAAS_CLUSTER"
 ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER="$KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $TRUST_STORE_PASSWORD"
 
 # Switch that tells the script if it should exit if it encounters unrecognized.
