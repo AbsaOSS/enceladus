@@ -156,8 +156,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    val menasSetup: Option[String] = if (conf.containsKey(menasSetupKey)) {
-      Option(conf.getString(menasSetupKey))
+    val menasSetup: Option[String] = if (conf.containsKey(menasAvailabilitySetupKey)) {
+      Option(conf.getString(menasAvailabilitySetupKey))
     } else {
       None
     }

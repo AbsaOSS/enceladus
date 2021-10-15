@@ -22,7 +22,7 @@ object HyperConformanceAttributes {
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
   val menasUriKey = "menas.rest.uri"
   val menasUriRetryCountKey = "menas.rest.retries"
-  val menasSetupKey = "menas.rest.availability.setup"
+  val menasAvailabilitySetupKey = "menas.rest.availability.setup"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"
   val datasetNameKey = "dataset.name"
@@ -48,7 +48,7 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("Menas API URL retry count",
         Some("How many times a call to Menas API URL should be retried after failure before proceeding to the next URL. E.g. 2"),
         required = false),
-    menasSetupKey ->
+    menasAvailabilitySetupKey ->
       PropertyMetadata("The setup type of Menas URLs",
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
           "Round-robin - start from random, fallback - start from first"),

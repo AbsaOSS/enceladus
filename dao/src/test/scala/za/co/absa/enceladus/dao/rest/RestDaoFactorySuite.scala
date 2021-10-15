@@ -15,8 +15,8 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.mockito.MockitoSugar.withObjectMocked
+import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.UnauthorizedException

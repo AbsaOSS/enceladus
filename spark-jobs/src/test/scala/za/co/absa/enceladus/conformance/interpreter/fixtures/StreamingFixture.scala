@@ -56,6 +56,9 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
     when(configStub.containsKey(menasAuthKeytabKey)).thenReturn(true)
     when(configStub.containsKey(menasCredentialsFileKey)).thenReturn(false)
     when(configStub.getString(menasAuthKeytabKey)).thenReturn("key1")
+    when(configStub.containsKey(menasUriRetryCountKey)).thenReturn(true)
+    when(configStub.getInt(menasUriRetryCountKey)).thenReturn(0)
+    when(configStub.containsKey(menasAvailabilitySetupKey)).thenReturn(false)
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
     val hyperConformance = HyperConformance(configStub).asInstanceOf[HyperConformance]
