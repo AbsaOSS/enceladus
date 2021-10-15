@@ -310,8 +310,11 @@ class FilterEdit {
     binding.attachChange(function() {
       const selectedSchema = model.getProperty("/selectedSchema");
 
-      console.trace(`entity schema change: ${selectedSchema.name}, version ${selectedSchema.version}`);
-      filterEdit.#onUpdatedSchema(selectedSchema);
+      if (selectedSchema) { // initially, on new MT, no schema is preselected in the dialog
+        console.debug(`entity schema change: ${selectedSchema.name}, version ${selectedSchema.version}`);
+        filterEdit.#onUpdatedSchema(selectedSchema);
+      }
+
     });
   }
 
