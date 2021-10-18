@@ -58,7 +58,7 @@
                                               HDFSPath="{entity>/hdfsPath}"/>
 
                         </VBox>
-                        <Label text="Filter Tree"/>
+                        <Label text="Mapping table filter"/>
                         <!-- using common fragment for MT & Mapping CR for filter editing -->
                         <core:Fragment type="XML" fragmentName="components.mappingTable.filterEdit.filterTreeEdit"/>
                     </form:content>

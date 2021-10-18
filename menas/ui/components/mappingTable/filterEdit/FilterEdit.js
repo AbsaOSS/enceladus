@@ -208,7 +208,7 @@ class FilterEdit {
 
     let hasValidFilter = true;
     // filter data can be [filter], [null] or null
-    if (!filterData || filterData.map(x => x).length == 0) {
+    if (!filterData || filterData.filter(x => x).length == 0) {
       hasValidFilter = true;
     } else {
       // validate filter tree
@@ -216,7 +216,7 @@ class FilterEdit {
         switch (filterNode._t) {
           case "AndJoinedFilters":
           case "OrJoinedFilters":
-            if (filterNode.filterItems.map(x => x).length == 0) { // empty deleted ([null]) is not valid
+            if (filterNode.filterItems.filter(x => x).length == 0) { // empty deleted ([null]) is not valid
               filterNode.filter_valueState = "Error";
               filterNode.filter_valueStateText = "Container filter must contain child filters!";
               hasValidFilter = false;
@@ -311,7 +311,6 @@ class FilterEdit {
       const selectedSchema = model.getProperty("/selectedSchema");
 
       if (selectedSchema) { // initially, on new MT, no schema is preselected in the dialog
-        console.debug(`entity schema change: ${selectedSchema.name}, version ${selectedSchema.version}`);
         filterEdit.#onUpdatedSchema(selectedSchema);
       }
 
@@ -329,8 +328,6 @@ class FilterEdit {
 
   applyValueTypesFromSchema(filterData) {
     const allColsList = this.dialog.getModel("suggestedColumns").getProperty("/columnNames");
-    console.log(`applyValueTypesFromSchema: allColsList = ${JSON.stringify(allColsList)}`);
-
     const allColsKv = allColsList.map(x => [x.name, x.type]); // [{name1, type1}, ...] => [[name1, type1], ...]
     const allColsMap = new Map(allColsKv);
 

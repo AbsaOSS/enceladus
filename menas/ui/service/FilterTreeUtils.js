@@ -114,6 +114,21 @@ class FilterTreeUtils {
     return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
   }
 
+  /**
+   * can be used to prevent removal of filter ("trailing null")
+   * @param filterData
+   * @returns {copy}
+   */
+  static removeDeletedNodesFromFilterData(filterData) {
+    const applyFn = function (filterNode) {
+      if (filterNode.filterItems) {
+        filterNode.filterItems = filterNode.filterItems.filter(x => x) // remove nulls from array
+      }
+    };
+
+    return FilterTreeUtils.applyToFilterDataImmutably(filterData, applyFn);
+  }
+
   static removeNiceNamesFromFilterData(filterData) {
 
     // fn to add human readable text

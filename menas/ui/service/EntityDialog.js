@@ -400,7 +400,8 @@ class MappingTableDialog extends EntityDialog {
         console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
         sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
       } else {
-        let updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(updatedFilters[0]);
+        const cleanedFilter = FilterTreeUtils.removeDeletedNodesFromFilterData(updatedFilters[0]);
+        const updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(cleanedFilter);
         const schemaFilledFilter = this.filterEdit.applyValueTypesFromSchema(updatedFilter);
 
         this.oDialog.getModel("entity").setProperty("/filter", schemaFilledFilter);
