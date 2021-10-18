@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.nio.charset.StandardCharsets
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
@@ -27,6 +25,8 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+
+import java.nio.charset.StandardCharsets
 
 class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
 
@@ -90,7 +90,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
         |{"A1":"4","A2":" on  ","A3":"    Data 4"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
-    val actual = df.toJSON.collect.mkString("\n")
+    val actual = df.orderBy("A1").toJSON.collect.mkString("\n")
 
     assert(actual == expected)
   }
@@ -105,7 +105,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
         |{"A1":"4","A2":"on  ","A3":"Data 4"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
-    val actual = df.toJSON.collect.mkString("\n")
+    val actual = df.orderBy("A1").toJSON.collect.mkString("\n")
 
     assert(actual == expected)
   }
@@ -120,7 +120,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
         |{"A1":"4","A2":" on","A3":"    Data 4"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
-    val actual = df.toJSON.collect.mkString("\n")
+    val actual = df.orderBy("A1").toJSON.collect.mkString("\n")
 
     assert(actual == expected)
   }
@@ -135,7 +135,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
         |{"A1":"4","A2":"on","A3":"Data 4"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
-    val actual = df.toJSON.collect.mkString("\n")
+    val actual = df.orderBy("A1").toJSON.collect.mkString("\n")
 
     assert(actual == expected)
   }
@@ -146,11 +146,11 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
     val expected =
       """{"A1":"1","A2":"Tes","A3":"0123456789"}
         |{"A1":"2","A2":"est2","A3":"SomeText"}
-        |{"A1":"3","A2":"None","A3":"Data   3"}
-        |{"A1":"","A2":"4 on","A3":"Data"}""".stripMargin.replace("\r\n", "\n")
+        |{"A1":"3","A2":"None","A3":"Data 3"}
+        |{"A1":"4","A2":"on","A3":"Data 4"}""".stripMargin.replace("\r\n", "\n")
 
     val df = getTestDataFrame(tmpFileName, args)
-    val actual = df.toJSON.collect.mkString("\n")
+    val actual = df.orderBy("A1").toJSON.collect.mkString("\n")
 
     assert(actual == expected)
   }
