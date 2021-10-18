@@ -51,11 +51,11 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCo
 
   def baseUrlsCount: Int = apiBaseUrls.size
 
-  def currentBasetUrl: String = apiBaseUrls(currentHostIndex)
+  def currentBaseUrl: String = apiBaseUrls(currentHostIndex)
 
   def nextBaseUrl(): String = {
     currentHostIndex = (currentHostIndex + 1) % baseUrlsCount
-    currentBasetUrl
+    currentBaseUrl
   }
 
 
@@ -86,7 +86,7 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCo
       }
     }
 
-    attempt(currentBasetUrl,1, 1).get
+    attempt(currentBaseUrl,1, 1).get
   }
 
 }
