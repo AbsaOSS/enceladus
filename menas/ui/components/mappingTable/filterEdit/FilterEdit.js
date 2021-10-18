@@ -281,19 +281,17 @@ class FilterEdit {
       switch (field.type) {
         case "struct":
         case "array":
-            const children = FilterEdit.extractFieldNamesInDepth(field.children);
-            const prefix = field.name;
-            // add prefix to all
-          const prefixedChildren = children.map(child => {
+          const children = FilterEdit.extractFieldNamesInDepth(field.children);
+          const prefix = field.name;
 
+          // add prefix to all
+          const prefixedChildren = children.map(child => {
             let childCopy = $.extend(true, {}, child); // being immutable
             childCopy.name = `${prefix}.${child.name}`; // prepending "parentName." for this recursion level
             return childCopy;
           });
 
-            return prefixedChildren;
-          break;
-
+          return prefixedChildren; // no break needed
         default:
           return [{name: field.name, type: field.type}]; // leaf field
       }
