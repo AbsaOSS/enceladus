@@ -42,6 +42,8 @@ case class MappingTable(name: String,
                         disabled: Boolean = false,
                         dateDisabled: Option[ZonedDateTime] = None,
                         userDisabled: Option[String] = None,
+
+                        modifiable: Boolean = false,
                         parent: Option[MenasReference] = None,
                         filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
 
@@ -54,6 +56,7 @@ case class MappingTable(name: String,
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
   override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
+  override def setModifiable(modifiable: Boolean): VersionedModel = this.copy(modifiable = modifiable)
   def setSchemaName(newName: String): MappingTable = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)

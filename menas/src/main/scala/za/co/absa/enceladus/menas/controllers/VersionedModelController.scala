@@ -158,4 +158,16 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     versionedModelService.disableVersion(name, v)
   }
 
+  @PutMapping(Array("/block/{name}", "/block/{name}/{version}"))
+  @ResponseStatus(HttpStatus.OK)
+  def block(@PathVariable name: String,
+            @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
+    val v = if (version.isPresent) {
+      Some(version.get.toInt)
+    } else {
+      None
+    }
+    versionedModelService.blockVersion(name, v)
+  }
+
 }

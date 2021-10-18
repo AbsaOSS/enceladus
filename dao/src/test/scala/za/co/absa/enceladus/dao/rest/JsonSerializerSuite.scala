@@ -46,6 +46,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "disabled": false,
           |  "dateDisabled": null,
           |  "userDisabled": null,
+          |  "modifiable": true,
           |  "conformance": [],
           |  "parent": null,
           |  "schedule": null,
@@ -99,6 +100,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |  "disabled": false,
         |  "dateDisabled": null,
         |  "userDisabled": null,
+        |  "modifiable": true,
         |  "conformance": [
         |    {
         |      "_t": "CastingConformanceRule",
@@ -290,6 +292,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "disabled": false,
           |  "dateDisabled": null,
           |  "userDisabled": null,
+          |  "modifiable": true,
           |  "conformance": [
           |    {
           |      "_t": "CastingConformanceRule",
@@ -361,6 +364,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "disabled": false,
           |  "dateDisabled": null,
           |  "userDisabled": null,
+          |  "modifiable": true,
           |  "parent": null,
           |  "filter": null,
           |  "createdMessage": {
@@ -413,6 +417,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "disabled": false,
           |  "dateDisabled": null,
           |  "userDisabled": null,
+          |  "modifiable": true,
           |  "parent": null,
           |  "filter": {
           |    "_t": "AndJoinedFilters",
@@ -509,6 +514,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "disabled": false,
           |  "dateDisabled": null,
           |  "userDisabled": null,
+          |  "modifiable": true,
           |  "fields": [],
           |  "parent": null,
           |  "createdMessage": {

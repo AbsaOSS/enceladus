@@ -132,6 +132,11 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
+  def blockVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
+    collection.updateMany(getNameVersionFilter(name, version), combine(
+      set("modifiable", false))).toFuture()
+  }
+
   def isDisabled(name: String): Future[Boolean] = {
     val pipeline = Seq(filter(getNameFilter(name)),
       Aggregates.addFields(Field("enabled", BsonDocument("""{$toInt: {$not: "$disabled"}}"""))),

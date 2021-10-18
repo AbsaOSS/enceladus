@@ -49,6 +49,7 @@ class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
   private val disabled = false
   private val dateDisabled = None
   private val userDisabled = None
+  private val modifiable = true
   private val reportVersion = 3
   private val rawFormat = "parquet"
   private val folderPrefix = s"year=$year/month=$month/day=$day"
@@ -130,6 +131,7 @@ class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
       disabled,
       dateDisabled,
       userDisabled,
+      modifiable,
       List()
     )
     val cmdConfigNoFolderPrefix = StandardizationConfig.getFromArguments(
