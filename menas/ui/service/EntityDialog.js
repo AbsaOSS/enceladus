@@ -544,8 +544,6 @@ class EditMappingTableDialog extends MappingTableDialog {
       const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
       this.oDialog.setModel(model, "entity");
       this.setFilterEditModel(updatedFilters);
-
-      // todo do for mCR, too.
       this.filterEdit.bindModelToSchemaChange(model);
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)

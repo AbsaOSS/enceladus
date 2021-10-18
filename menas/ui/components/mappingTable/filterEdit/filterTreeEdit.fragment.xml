@@ -52,8 +52,8 @@
                     <Select selectedKey="{filterEdit>columnName}" items="{path: 'suggestedColumns>/columnNames', templateShareable:false}"
                             forceSelection="false"
                             visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' || ${filterEdit>_t} === 'IsNullFilter' }"
-                            valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}" >
-                        <core:ListItem key="{suggestedColumns>name}" text="{suggestedColumns>name}"/>
+                            valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}" showSecondaryValues="true">
+                        <core:ListItem key="{suggestedColumns>name}" text="{suggestedColumns>name}" additionalText="{suggestedColumns>type}" />
                     </Select>
                 </t:template>
             </t:Column>
