@@ -43,7 +43,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -187,7 +187,8 @@ trait CommonJobExecution extends ProjectMetadata {
                                     (implicit spark: SparkSession): DataFrame = {
     def computeBlockCount(desiredBlockSize: Long, totalByteSize: BigInt, addRemainder: Boolean): Int = {
       val int = (totalByteSize / desiredBlockSize).toInt
-      int + (if (addRemainder && (totalByteSize % desiredBlockSize != 0)) 1 else 0)
+      val blockCount = int + (if (addRemainder && (totalByteSize % desiredBlockSize != 0)) 1 else 0)
+      blockCount max 1
     }
 
     def changePartitionCount(blockCount: Int, fnc: Int => DataFrame): DataFrame = {
@@ -196,6 +197,7 @@ trait CommonJobExecution extends ProjectMetadata {
       outputDf
     }
 
+    df.cacheIfNot().foreach(_ => Unit)
     val catalystPlan = df.queryExecution.logical
     val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 
