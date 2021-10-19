@@ -83,6 +83,7 @@ SET CONF_SPARK_MEMORY_FRACTION=
 :: Security command line defaults
 SET MENAS_CREDENTIALS_FILE=
 SET MENAS_AUTH_KEYTAB=
+SET CLIENT_MODE_RUN_KINIT=%DEFAULT_CLIENT_MODE_RUN_KINIT%
 
 :: Parse command line arguments
 SET UNKNOWN_OPTIONS=
@@ -422,6 +423,24 @@ IF "%1"=="--set-dra" (
     SHIFT
     GOTO CmdParse
 )
+IF "%1"=="--run-kinit" (
+    SET CLIENT_MODE_RUN_KINIT=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--min-processing-block-size" (
+    SET MIN_PROCESSING_BLOCK_SIZE=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
+IF "%1"=="--max-processing-block-size" (
+    SET MAX_PROCESSING_BLOCK_SIZE=%2
+    SHIFT
+    SHIFT
+    GOTO CmdParse
+)
 IF "%1"=="--help" (
     SET HELP_CALL=true
     SHIFT
@@ -485,6 +504,18 @@ IF DEFINED MAPPING_TABLE_PATTERN (
     SET MT_PATTERN=
 )
 
+IF DEFINED MIN_PROCESSING_BLOCK_SIZE (
+    SET MIN_BLOCK_SIZE=-Dmin.processing.block.size=%MIN_PROCESSING_BLOCK_SIZE%
+) ELSE (
+    SET MIN_BLOCK_SIZE=
+)
+
+IF DEFINED MAX_PROCESSING_BLOCK_SIZE (
+    SET MAX_BLOCK_SIZE=-Dmax.processing.block.size=%MAX_PROCESSING_BLOCK_SIZE%
+) ELSE (
+    SET MAX_BLOCK_SIZE=
+)
+
 SET SPARK_CONF=--conf spark.logConf=true
 
 :: Dynamic Resource Allocation
@@ -530,7 +561,7 @@ IF %DRA_ENABLED%==true (
     IF DEFINED EXECUTOR_CORES SET CMD_LINE=%CMD_LINE% --executor-cores %EXECUTOR_CORES%
 )
 
-SET JVM_CONF=spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=%STD_HDFS_PATH% -Dspline.mongodb.url=%SPLINE_MONGODB_URL% -Dspline.mongodb.name=%SPLINE_MONGODB_NAME% -Dhdp.version=%HDP_VERSION% %MT_PATTERN%
+SET JVM_CONF=spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=%STD_HDFS_PATH% -Dspline.mongodb.url=%SPLINE_MONGODB_URL% -Dspline.mongodb.name=%SPLINE_MONGODB_NAME% -Dhdp.version=%HDP_VERSION% %MT_PATTERN% %MIN_BLOCK_SIZE% %MAX_BLOCK_SIZE%
 
 SET CMD_LINE=%SPARK_SUBMIT%
 
@@ -551,10 +582,14 @@ IF DEFINED CONF_SPARK_MEMORY_FRACTION SET SPARK_CONF=%SPARK_CONF% --conf spark.m
 :: Adding JVM configuration, entry point class name and the jar file
 IF "%DEPLOY_MODE%"=="client" (
   SET ADDITIONAL_JVM_CONF=%ADDITIONAL_JVM_CONF_CLIENT%
+  SET ADDITIONAL_JVM_EXECUTOR_CONF=%ADDITIONAL_JVM_EXECUTOR_CONF_CLIENT%
 ) ELSE (
   SET ADDITIONAL_JVM_CONF=%ADDITIONAL_JVM_CONF_CLUSTER%
+  SET ADDITIONAL_JVM_EXECUTOR_CONF=%ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER%
 )
-SET CMD_LINE=%CMD_LINE% %ADDITIONAL_SPARK_CONF% %SPARK_CONF% --conf "%JVM_CONF% %ADDITIONAL_JVM_CONF%" --class %CLASS% %JAR%
+SET CMD_LINE=%CMD_LINE% %ADDITIONAL_SPARK_CONF% %SPARK_CONF% --conf "%JVM_CONF% %ADDITIONAL_JVM_CONF%"
+SET CMD_LINE=%CMD_LINE% --conf spark.executor.extraJavaOptions=%ADDITIONAL_JVM_EXECUTOR_CONF%
+SET CMD_LINE=%CMD_LINE% --class %CLASS% %JAR%
 
 :: Adding command line parameters that go AFTER the jar file
 IF DEFINED MENAS_AUTH_KEYTAB SET CMD_LINE=%CMD_LINE% --menas-auth-keytab %MENAS_AUTH_KEYTAB%
@@ -609,7 +644,7 @@ CALL :temp_log_file TMP_PATH_NAME
 IF DEFINED MENAS_AUTH_KEYTAB (
     :: Get principle stored in the keyfile`
     FOR /F "tokens=1-3" %%A IN ('ktab -l -k %MENAS_AUTH_KEYTAB%') DO IF "%%A"=="0" SET PR=%%B
-    IF DEFINED PR (
+    IF DEFINED PR (IF "%CLIENT_MODE_RUN_KINIT%"=="true" (
         kinit -k -t "%MENAS_AUTH_KEYTAB%" "%PR%"
         klist -e 2>&1 | tee -a %TMP_PATH_NAME%
     ) ELSE (
@@ -617,7 +652,7 @@ IF DEFINED MENAS_AUTH_KEYTAB (
         CALL :echoerr "Unable to determine principle from the keytab file %MENAS_AUTH_KEYTAB%."
         CALL :echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
         CALL :sleep 10
-    )
+    ))
 )
 ECHO The log will be saved to %TMP_PATH_NAME%
 ECHO %CMD_LINE% >> %TMP_PATH_NAME%

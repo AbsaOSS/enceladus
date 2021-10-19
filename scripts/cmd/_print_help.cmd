@@ -44,6 +44,9 @@ ECHO   --conf-spark-executor-memoryOverhead     Amount of non-heap memory to be 
 ECHO   --conf-spark-memory-fraction NUM         Fraction of the heap space reserved for execution and storage regions (default 0.6)
 ECHO   --jar                                    Custom path to Enceladus's SparkJobs jar
 ECHO   --class CLASS_NAME                       Application's main class.
+ECHO   --run-kinit BOOLEAN                      A switch saying if the scripts should or should not run kinit. Default value can be set in enceladus_env.sh
+ECHO   --min-processing-block-size NUM          Minimum number of bytes for each processing block, used for limiting the output partition size
+ECHO   --max-processing-block-size NUM          Maximum number of bytes for each processing block, used for limiting the output partition size
 ECHO/
 ECHO job-specific-options:
 ECHO   Running the JAR --help to print all job specific options
