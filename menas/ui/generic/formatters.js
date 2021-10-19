@@ -81,7 +81,7 @@ var Formatters = new function() {
   };
 
   this.nonEmptyAndNonNullFilled = function(oObj) {
-    return Formatters.nonEmptyObject(oObj) && oObj.map(x => x).length !== 0 // [null] will return false, too
+    return Formatters.nonEmptyObject(oObj) && oObj.filter(x => x).length !== 0 // [null] will return false, too
   };
 
   this.isDefinedAndTrue = function(oObj) {
