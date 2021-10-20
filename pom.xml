@@ -152,7 +152,7 @@
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
         <absa.commons.version>0.0.27</absa.commons.version>
-        <atum.version>3.6.0</atum.version>
+        <atum.version>3.7.0</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
         <cobrix.version>2.4.2</cobrix.version>
