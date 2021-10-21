@@ -319,11 +319,12 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
                            mt: MappingConformanceRule): RuleValidationsAndFields = {
     val inputValidation = mt.attributeMappings.values.map(validateInputColumn(fields, _))
 
-    val outputValidation = (mt.outputColumn +: mt.definedAdditionalColumns().keys.toList)
-      .map(validateOutputColumn(fields, _))
+    val outputCols = mt.definedAdditionalColumns().keys.toSet + mt.outputColumn
+    val outputValidation = outputCols.map(validateOutputColumn(fields, _))
 
-    (inputValidation ++ outputValidation)
-      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.update(instance))
+    val mergedValidations = (inputValidation ++ outputValidation)
+      .foldLeft(RuleValidationsAndFields(Seq.empty, fields.map(c => c ++ outputCols)))((acc, instance) => acc.update(instance))
+    mergedValidations.copy(fields = mergedValidations.fields.map(_ ++ outputCols))
   }
 
   private def validateMultipleInAndOut[C <: WithMultipleInAndOut](fields: Future[Set[String]],
