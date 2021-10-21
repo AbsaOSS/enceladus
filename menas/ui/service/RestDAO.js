@@ -227,6 +227,21 @@ class MappingTableRestDAO extends DependentRestDAO {
 
 }
 
+class PropertyRestDAO extends RestDAO {
+
+  constructor() {
+    super("property")
+  }
+
+  getMissingProperties() {
+    return RestClient.get(`/statistics/properties/missing`)
+  }
+
+  getDatasetsMissingProperty(propertyName) {
+    return RestClient.get(`/dataset/latest?missing_property=${propertyName}`)
+  }
+}
+
 class ConfigRestClient {
 
   static getEnvironmentName() {

@@ -15,15 +15,21 @@
 
 package za.co.absa.enceladus.conformance.streaming
 
+import org.apache.commons.configuration2.plist.PropertyListConfiguration
 import org.apache.spark.sql.DataFrame
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.conformance.HyperConformanceAttributes.{reportDateKey, reportVersionKey}
 import za.co.absa.enceladus.conformance.interpreter.fixtures.{MultipleMappingFixture, StreamingFixture}
 
 class HyperConformanceMappingIntegrationSuite extends AnyFunSuite with StreamingFixture with MultipleMappingFixture {
 
   // todo dependent on resolving #1744 udf for spark 3
   ignore("Test streaming multiple mapping") {
-    implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
+    val configuration = new PropertyListConfiguration()
+    configuration.addProperty(reportDateKey, "2020-05-23")
+    configuration.addProperty(reportVersionKey, 1)
+    implicit val infoDateFactory: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(configuration)
+    implicit val infoVersionFactory: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(configuration)
     val df: DataFrame = testHyperConformance(standardizedDf,
       "result", mappingDS)
       .orderBy("result.property")

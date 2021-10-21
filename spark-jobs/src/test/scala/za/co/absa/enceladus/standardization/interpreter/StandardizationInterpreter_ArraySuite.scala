@@ -27,6 +27,7 @@ import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -34,6 +35,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBa
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val fieldName = "arrayField"
 

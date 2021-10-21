@@ -129,6 +129,11 @@ sap.ui.define([
       this._app.toMaster(this.createId("mappingTablesPage"));
     },
 
+    onPropertiesPress: function (oEv) {
+      this._eventBus.publish("properties", "list");
+      this._app.toMaster(this.createId("propertiesPage"));
+    },
+
     onEntityCreated: function (sTopic, sEvent, oData) {
       this._router.navTo(sTopic, {
         id: oData.name,

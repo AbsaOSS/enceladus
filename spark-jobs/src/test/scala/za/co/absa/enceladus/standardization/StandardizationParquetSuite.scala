@@ -20,7 +20,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
@@ -37,6 +37,8 @@ import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import StandardizationParquetSuite._
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
+import org.apache.spark.sql.functions.{col, to_timestamp}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer  {
   type FixtureParam = String
@@ -48,16 +50,19 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
   private val datasetVersion = 1
+  private val tsPattern = "yyyy-MM-dd HH:mm:ss zz"
 
   private val data = Seq (
-    (1, Array("A", "B"), FooClass(false)),
-    (2, Array("C"), FooClass(true))
+    (1, Array("A", "B"), FooClass(false), "1970-01-01 00:00:00 UTC"),
+    (2, Array("C"), FooClass(true), "1970-01-01 00:00:00 CET")
   )
-  private val sourceDataDF = data.toDF("id", "letters", "struct")
+  private val sourceDataDF = data.toDF("id", "letters", "struct", "str_ts")
+    .withColumn("ts", to_timestamp(col("str_ts"), tsPattern))
   private val dataSet = Dataset(name = datasetName,
                                 version = datasetVersion,
                                 description = None,
@@ -71,8 +76,8 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
   private def getTestDataFrame(tmpFileName: String,
                                args: Array[String]): (StandardizationConfig, DataFrame) = {
     val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
-    val csvReader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
-    (cmd, csvReader.load(tmpFileName).orderBy("id"))
+    val reader = standardizationReader.getFormatSpecificReader(cmd, dataSet)
+    (cmd, reader.load(tmpFileName).orderBy("id"))
   }
 
   def withFixture(test: OneArgTest): Outcome = {
@@ -278,7 +283,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
-     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", StructType(Seq(StructField("bar", BooleanType))), nullable = true),
       StructField("struct", LongType, nullable = true),
@@ -397,6 +402,37 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
+  test("Timestamp with timezone in metadata are shifted") {tmpFileName =>
+    val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
+      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--raw-format parquet").split(" ")
+
+
+    /* This might seem confusing for a quick observer. The reason why this is the correct result:
+       the source data has two timestamps 12:00:00AM and 23:00:00PM *without* time zone.
+       The metadata then signal the timestamp are to be considered in CET time zone. The data are ingested with that
+       time zone and adjusted to system time zone - UTC. Therefore they are seemingly shifted by one hour. */
+    val expected =
+      """+---+-------------------+------+
+        ||id |ts                 |errCol|
+        |+---+-------------------+------+
+        ||1  |1969-12-31 23:00:00|[]    |
+        ||2  |1969-12-31 22:00:00|[]    |
+        |+---+-------------------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
+    val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
+    val seq = Seq(
+      StructField("id", LongType, nullable = false),
+      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
+    )
+    val schema = StructType(seq)
+    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+
+    val actual = destDF.dataAsString(truncate = false)
+    assert(actual == expected)
+  }
 }
 
 object StandardizationParquetSuite {

@@ -294,8 +294,8 @@
                     <buildArgs>
                         <WAR_FILE>${project.build.finalName}.war</WAR_FILE>
                         <PROPERTY_FILE>${dockerfile.property.file}</PROPERTY_FILE>
-                        <DOCKER_BASE_ARTIFACT>${dockerfile.base.artifact}</DOCKER_BASE_ARTIFACT>
-                        <DOCKER_BASE_TAG>${dockerfile.base.tag}</DOCKER_BASE_TAG>
+                        <DOCKER_BASE_ARTIFACT>${dockerfile.rest-api.repository}</DOCKER_BASE_ARTIFACT>
+                        <DOCKER_BASE_TAG>${dockerfile.tag}</DOCKER_BASE_TAG>
                     </buildArgs>
                 </configuration>
             </plugin>
@@ -314,7 +314,7 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>${maven.scala.version}</version>
+                <version>${scala.maven.plugin.version}</version>
                 <executions>
                     <execution>
                         <goals>
@@ -335,7 +335,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>${maven.war.version}</version>
+                <version>${maven.war.plugin.version}</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                     <packagingExcludes>META-INF/*.SF, META-INF/*.DSA, META-INF/*.RSA</packagingExcludes>
@@ -356,7 +356,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.ant.plugin.version}</version>
+                <version>${maven.antrun.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>copy</id>

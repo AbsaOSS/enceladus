@@ -57,7 +57,7 @@ object CustomRuleSample4 extends CustomRuleSampleFs {
     opt[String]("row-tag").optional.action((value, config) =>
       config.copy(rowTag = Some(value))).text("use the specific row tag instead of 'ROW' for XML format")
       .validate(_ =>
-        if (inputFormat.isDefined && inputFormat.get.equalsIgnoreCase("xml")) {
+        if (inputFormat.isDefined && inputFormat.get =="xml") {
           success
         } else {
           failure("The --row-tag option is supported only for XML raw data format")
