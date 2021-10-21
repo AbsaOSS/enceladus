@@ -74,7 +74,7 @@ class FilterTreeUtils {
           filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
           break;
         case "IsNullFilter":
-          filterNode.text = `Value of "${filterNode.columnName}" is not null`;
+          filterNode.text = `Value of "${filterNode.columnName}" is null`;
           filterNode.icon = "sap-icon://SAP-icons-TNT/marquee";
           break;
         default:
