@@ -32,6 +32,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import org.apache.spark.sql.functions.{col, to_timestamp}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
@@ -43,6 +44,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
@@ -265,16 +267,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
-    val expected =
-      """+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||id  |letters|lettersB|errCol                                                                                                                                                                                                                                                                                                                |
-        |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
-        ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
-        |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
-
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", ArrayType(StringType), nullable = true),
@@ -294,16 +286,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
-
-    val expected =
-      """|+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||id  |struct|structB|errCol                                                                                                                                                                                                                                                                                                                 |
-         |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
-         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
-         |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-         |
-         |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(

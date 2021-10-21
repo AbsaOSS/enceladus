@@ -49,7 +49,7 @@ object StandardizationInterpreter {
    */
   def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
                   recordIdGenerationStrategy: IdType = IdType.NoId)
-                 (implicit spark: SparkSession, udfLib: UDFLibrary): Dataset[Row] = {
+                 (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
@@ -79,7 +79,7 @@ object StandardizationInterpreter {
   }
 
   private def standardizeDataset(df: Dataset[Row], expSchema: StructType, failOnInputNotPerSchema: Boolean)
-                                (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame  = {
+                                (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame  = {
 
     val rowErrors: List[Column] = gatherRowErrors(df.schema)
     val (stdCols, errorCols, oldErrorColumn) = expSchema.fields.foldLeft(List.empty[Column], rowErrors, None: Option[Column]) {
