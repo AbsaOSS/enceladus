@@ -319,7 +319,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
                            mt: MappingConformanceRule): RuleValidationsAndFields = {
     val inputValidation = mt.attributeMappings.values.map(validateInputColumn(fields, _))
 
-    val outputValidation = (mt.outputColumn +: mt.additionalColumns.getOrElse(Map()).keys.toList)
+    val outputValidation = (mt.outputColumn +: mt.definedAdditionalColumns().keys.toList)
       .map(validateOutputColumn(fields, _))
 
     (inputValidation ++ outputValidation)
