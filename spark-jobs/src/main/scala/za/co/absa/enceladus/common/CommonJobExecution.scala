@@ -103,12 +103,12 @@ trait CommonJobExecution extends ProjectMetadata {
       case _ => // no problems found
     }
 
-    val minBlock = confReader.getLongOption(CommonConfConstants.minBlockSizeKey)
-    val maxBlock = confReader.getLongOption(CommonConfConstants.maxBlockSizeKey)
+    val minPartition = confReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartition = confReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
 
-    (minBlock, maxBlock) match {
+    (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
-          s"${CommonConfConstants.minBlockSizeKey} has to be smaller than ${CommonConfConstants.minBlockSizeKey}"
+          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
       )
       case _ => //validation passed
     }
@@ -197,7 +197,6 @@ trait CommonJobExecution extends ProjectMetadata {
       outputDf
     }
 
-    df.cacheIfNot().foreach(_ => Unit)
     val catalystPlan = df.queryExecution.logical
     val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 

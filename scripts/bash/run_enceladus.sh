@@ -310,12 +310,12 @@ case $key in
     CLIENT_MODE_RUN_KINIT="$2"
     shift 2 # past argument and value
     ;;
-   --min-processing-block-size)
-    MIN_PROCESSING_BLOCK_SIZE="$2"
+   --min-processing-partition-size)
+    MIN_PROCESSING_PARTITION_SIZE="$2"
     shift 2 # past argument and value
     ;;
-  --max-processing-block-size)
-    MAX_PROCESSING_BLOCK_SIZE="$2"
+  --max-processing-partition-size)
+    MAX_PROCESSING_PARTITION_SIZE="$2"
     shift 2 # past argument and value
     ;;
   --help)
@@ -423,13 +423,13 @@ if [ -n "$MAPPING_TABLE_PATTERN" ]; then
 fi
 
 MIN_BLOCK_SIZE=""
-if [ -n "$MIN_PROCESSING_BLOCK_SIZE" ]; then
-    MIN_BLOCK_SIZE="-Dmin.processing.block.size=$MIN_PROCESSING_BLOCK_SIZE"
+if [ -n "$MIN_PROCESSING_PARTITION_SIZE" ]; then
+    MIN_BLOCK_SIZE="-Dmin.processing.block.size=$MIN_PROCESSING_PARTITION_SIZE"
 fi
 
 MAX_BLOCK_SIZE=""
-if [ -n "$MAX_PROCESSING_BLOCK_SIZE" ]; then
-    MAX_BLOCK_SIZE="-Dmax.processing.block.size=$MAX_PROCESSING_BLOCK_SIZE"
+if [ -n "$MAX_PROCESSING_PARTITION_SIZE" ]; then
+    MAX_BLOCK_SIZE="-Dmax.processing.block.size=$MAX_PROCESSING_PARTITION_SIZE"
 fi
 
 SPARK_CONF="--conf spark.logConf=true"

@@ -21,7 +21,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 
 object DataFrameImplicits {
-  implicit class DataFrameEnhancements(val df: DataFrame) extends AnyVal {
+  implicit class DataFrameEnhancements(val df: DataFrame) {
 
     private def gatherData(showFnc: () => Unit): String = {
       val outCapture = new ByteArrayOutputStream
@@ -66,15 +66,6 @@ object DataFrameImplicits {
       */
     def withColumnIfDoesNotExist(colName: String, col: Column): DataFrame = {
       SparkUtils.withColumnIfDoesNotExist(df, colName, col)
-    }
-
-    def cacheIfNot(): DataFrame = {
-      val planToCache = df.queryExecution.analyzed
-      if (df.sparkSession.sharedState.cacheManager.lookupCachedData(planToCache).isEmpty) {
-        df.cache()
-      } else {
-        df
-      }
     }
 
   }
