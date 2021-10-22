@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization
 
 import java.io.File
 import java.nio.file.Files
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -32,6 +31,8 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
+import za.co.absa.atum.utils.InfoFile
+import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils.JsonType
 import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
@@ -43,11 +44,14 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
 import scala.concurrent.duration.DurationInt
 import scala.util.control.NonFatal
 
 class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar with Eventually{
+
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
@@ -92,15 +96,14 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with Spark
     ).toDF("id", "data").as("DatasetA")
 
     // rawPath must exist, _INFO file creation assures so
-    val cm = ControlMeasureBuilder.forDF(someDataset)
-        .withSourceApplication("test app")
-        .withInputPath(rawPath)
-        .withReportDate("2020-02-20")
-        .withReportVersion(1)
-        .withCountry("CZ")
-        .withAggregateColumns(List("id", "data"))
-        .build
-    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(cm, new Path(rawPath))
+    val controlMeasure = ControlMeasureBuilder.forDF(someDataset)
+      .withSourceApplication("test app")
+      .withReportDate("2020-02-20")
+      .withReportVersion(1)
+      .withCountry("CZ")
+      .withAggregateColumns(List("id", "data"))
+      .build
+    ControlMeasureUtils.writeControlMeasureInfoFileToHadoopFs(controlMeasure, rawPath.toPath, JsonType.Pretty)
 
     Mockito.when(dao.storeNewRunObject(ArgumentMatchers.any[Run])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))
     Mockito.when(dao.updateRunStatus(ArgumentMatchers.any[String], ArgumentMatchers.any[RunStatus])).thenReturn(RunFactory.getDummyRun(Some("uniqueId1")))

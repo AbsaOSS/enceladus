@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization
 
 import java.sql.{Date, Timestamp}
-import java.time.LocalDateTime
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.Row
@@ -31,10 +30,12 @@ import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenera
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationJsonSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with DatasetComparer{
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 

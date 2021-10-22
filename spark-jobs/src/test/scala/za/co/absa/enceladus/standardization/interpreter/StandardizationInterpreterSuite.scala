@@ -22,12 +22,14 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.general.JsonUtils
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationInterpreterSuite  extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val defaults: Defaults = GlobalDefaults
 
   test("Errors in fields and having source columns") {
     val desiredSchema = StructType(Seq(

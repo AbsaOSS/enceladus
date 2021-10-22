@@ -13,6 +13,9 @@
 
 # Enceladus
 
+### <a name="latest_release"/>Latest Release
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/za.co.absa.enceladus/parent/badge.png)](https://maven-badges.herokuapp.com/maven-central/za.co.absa.enceladus/parent/)
+
 ### <a name="build_status"/>Build Status
 | master | develop |
 | ------------- | ------------- |
@@ -20,6 +23,10 @@
 ### <a name="code_quality_status"/>Code Quality Status
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AbsaOSS_enceladus&metric=alert_status)](https://sonarcloud.io/dashboard?id=AbsaOSS_enceladus)
 
+### <a name="documentation"/>Documentation
+[![Read the Docs](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://absaoss.github.io/enceladus/)
+[![Read the Docs](https://img.shields.io/badge/docs-release%20notes-yellow.svg)](https://absaoss.github.io/enceladus/blog/)
+[![Read the Docs](https://img.shields.io/badge/docs-release--1.x-red.svg)](https://absaoss.github.io/enceladus/docs/1.0.0/components)
 ___
 
 <!-- toc -->
@@ -33,7 +40,6 @@ ___
 - [Plugins](#plugins)
     - [Built-in Plugins](#built-in-plugins)
 - [How to contribute](#how-to-contribute)
-- [Documentation](#documentation)
 <!-- tocstop -->
 
 ## What is Enceladus?
@@ -356,6 +362,3 @@ A module containing [examples](examples/README.md) of the project usage.
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
-
-## Documentation
-Please see the [documentation pages](https://absaoss.github.io/enceladus/).

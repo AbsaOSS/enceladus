@@ -16,12 +16,12 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
-
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class ErrorPreserve(a: String, b: String, errCol: List[ErrorMessage])
@@ -36,6 +36,7 @@ case class StdTime(id: Int, date: Date, timestamp: Timestamp, errCol: List[Error
 
 class StdInterpreterSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._
+  private implicit val defaults: Defaults = GlobalDefaults
 
   case class subCC(subFieldA: Integer, subFieldB: String)
   case class sub2CC(subSub2FieldA: Integer, subSub2FieldB: String)

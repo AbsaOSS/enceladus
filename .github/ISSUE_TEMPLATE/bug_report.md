@@ -15,7 +15,7 @@ Steps to reproduce the behavior OR commands run:
 3. Enter value '...'
 4. See error
 
-## Expected behaviour
+## Expected behavior
 A clear and concise description of what you expected to happen.
 
 ## Screenshots
