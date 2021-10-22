@@ -23,8 +23,7 @@ import za.co.absa.enceladus.conformance.interpreter.fixtures.{MultipleMappingFix
 
 class HyperConformanceMappingIntegrationSuite extends AnyFunSuite with StreamingFixture with MultipleMappingFixture {
 
-  // todo dependent on resolving #1744 udf for spark 3
-  ignore("Test streaming multiple mapping") {
+  test("Test streaming multiple mapping") {
     val configuration = new PropertyListConfiguration()
     configuration.addProperty(reportDateKey, "2020-05-23")
     configuration.addProperty(reportVersionKey, 1)
