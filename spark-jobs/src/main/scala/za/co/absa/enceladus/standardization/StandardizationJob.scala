@@ -16,10 +16,9 @@
 package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.conformance.DynamicConformanceJob.{menasBaseUrls, menasSetup, menasUrlsRetryCount}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
-import za.co.absa.enceladus.dao.rest.RestDaoFactory.{DefaultAvailabilitySetup, AvailabilitySetup}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
