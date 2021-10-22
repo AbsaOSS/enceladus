@@ -57,6 +57,14 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
     redactingConfig.withFallback(config)
   }
 
+  def getLong(path: String): Long = {
+    config.getLong(path)
+  }
+
+  def getLongOption(path: String): Option[Long] = {
+    getIfExists(path)(getLong)
+  }
+
   /**
    * Flattens TypeSafe config tree and returns the effective configuration
    * while redacting sensitive keys.
@@ -105,5 +113,17 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
       .mkString("\n")
 
     log.info(s"Effective configuration:\n$rendered")
+  }
+
+  private def getIfExists[T](path: String)(readFnc: String => T): Option[T] = {
+    if (config.hasPathOrNull(path)) {
+      if (config.getIsNull(path)) {
+        None
+      } else {
+        Option(readFnc(path))
+      }
+    } else {
+      None
+    }
   }
 }
