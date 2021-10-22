@@ -87,7 +87,7 @@ var EntityValidationService = new function () {
     return isOk;
   };
 
-  this.hasValidProperties = function(aProperties) {
+  this.hasValidProperties = function(aProperties, showDialogs) {
     let isOk = true;
 
     aProperties.map((oProp) => {
@@ -113,6 +113,17 @@ var EntityValidationService = new function () {
         oProp.validationText = msg;
       }
     });
+
+    if (showDialogs && isOk) {
+      // show warnings for unfilled Recommended properties but only if hasn't failed the validation already
+      aProperties.map((oProp) => {
+        if (oProp.essentiality._t === "Recommended" && !oProp.value) {
+          if (isOk) {
+            isOk = confirm(`Recommended property "${oProp.name}" does not have a defined value. Are you sure you want to continue?`);
+          }
+        }
+      });
+    }
     return isOk;
   };
 

@@ -17,12 +17,12 @@ package za.co.absa.enceladus.standardization.interpreter
 
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Locale
-
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class StandardizationInterpreter_IntegralSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase{
@@ -30,6 +30,7 @@ class StandardizationInterpreter_IntegralSuite extends AnyFunSuite with SparkTes
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val pathToTestData = "src/test/resources/data/"
   private val bigDecimalFormat = {

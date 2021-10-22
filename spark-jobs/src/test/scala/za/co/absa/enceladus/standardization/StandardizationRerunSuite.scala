@@ -16,14 +16,12 @@
 package za.co.absa.enceladus.standardization
 
 import java.nio.charset.StandardCharsets
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import org.slf4j.Logger
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -31,6 +29,7 @@ import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -40,10 +39,10 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase wi
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 
-  private val tmpDirPrefix = "StdRerunTest"
   private val tmpFilePrefix = "test-input-"
   private val tmpFileSuffix = ".csv"
 

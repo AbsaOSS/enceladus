@@ -19,13 +19,14 @@ import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
 import org.apache.spark.sql.{DataFrame, Row}
+import org.mockito.Mockito.lenient
 import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.HyperConformance
 import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
-import za.co.absa.enceladus.conformance.streaming.InfoDateFactory
+import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.SparkTestBase
@@ -41,6 +42,9 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
                                               (implicit menasDAO: MenasDAO): DataFrame = {
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
+    when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
+    lenient.when(configStub.containsKey(reportVersionColumnKey)).thenReturn(true)
+    when(configStub.getString(reportVersionColumnKey)).thenReturn("numerics.SmartObject.all_random")
     when(configStub.containsKey(reportDateKey)).thenReturn(true)
     when(configStub.getString(reportDateKey)).thenReturn(reportDate)
     when(configStub.containsKey(datasetNameKey)).thenReturn(true)
@@ -79,7 +83,8 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
                                      sinkTableName: String,
                                      dataset: Dataset,
                                      catalystWorkaround: Boolean = true)
-                                    (implicit menasDAO: MenasDAO, infoDateFactory: InfoDateFactory): DataFrame = {
+                                    (implicit menasDAO: MenasDAO, infoDateFactory: InfoDateFactory,
+                                     infoVersionFactory: InfoVersionFactory): DataFrame = {
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(false)
       .setCatalystWorkaroundEnabled(catalystWorkaround)

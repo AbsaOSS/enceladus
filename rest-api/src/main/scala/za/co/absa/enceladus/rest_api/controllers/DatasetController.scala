@@ -19,6 +19,7 @@ import java.net.URI
 import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
@@ -29,6 +30,7 @@ import za.co.absa.enceladus.rest_api.services.DatasetService
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevelName
 
@@ -43,6 +45,14 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
   import scala.concurrent.ExecutionContext.Implicits.global
+
+  @GetMapping(Array("/latest"))
+  @ResponseStatus(HttpStatus.OK)
+  def getLatestVersions(@RequestParam(value = "missing_property", required = false)
+                        missingProperty: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+    datasetService.getLatestVersions(missingProperty.toScalaOption)
+      .map(datasets => datasets.map(dataset => VersionedSummary(dataset.name, dataset.version)))
+  }
 
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)

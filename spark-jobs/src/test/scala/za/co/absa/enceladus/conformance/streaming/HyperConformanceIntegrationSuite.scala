@@ -15,14 +15,20 @@
 
 package za.co.absa.enceladus.conformance.streaming
 
+import org.apache.commons.configuration2.plist.PropertyListConfiguration
 import org.apache.spark.sql.DataFrame
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 import za.co.absa.enceladus.conformance.interpreter.fixtures.{NestedStructsFixture, StreamingFixture}
 
 class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture with NestedStructsFixture {
 
   test("Test with catalyst workaround, literal factory") {
-    implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
+    val configuration = new PropertyListConfiguration()
+    configuration.addProperty(reportDateKey, "2020-05-23")
+    configuration.addProperty(reportVersionKey, 1)
+    implicit val infoDateFactory: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(configuration)
+    implicit val infoVersionFactory: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(configuration)
     val df: DataFrame = testHyperConformance(standardizedDf,
       "result",
       nestedStructsDS)
@@ -37,7 +43,7 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
     assertResult(returned)(conformed)
   }
 
-  test("Test Hyperconformance from config") {
+  test("Test Hyperconformance from config, column info") {
     val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
       "result",
       nestedStructsDS,
@@ -46,7 +52,7 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
 
     assertResult(df.count())(20)
     val conformed = spark.read
-      .textFile("src/test/testData/nestedStructs/conformed_literal.json")
+      .textFile("src/test/testData/nestedStructs/conformed_literal_info_col.json")
       .collect().mkString("\n")
     val returned = df.toJSON.collect().mkString("\n")
 
@@ -54,8 +60,11 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
   }
 
   test("Test with catalyst workaround, event time factory") {
-    implicit val infoDateFactory: InfoDateFactory = new InfoDateFromColumnFactory("dates.date_format5",
-      "MM-dd-yyyy HH:mm")
+    val configuration = new PropertyListConfiguration()
+    configuration.addProperty(eventTimestampColumnKey, "dates.date_format5")
+    configuration.addProperty(eventTimestampPatternKey, "MM-dd-yyyy HH:mm")
+    implicit val infoDateFactory: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(configuration)
+    implicit val infoVersionFactory: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(configuration)
     val df: DataFrame = testHyperConformance(standardizedDf,
       "result2",
       nestedStructsDS)
@@ -71,7 +80,9 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
 
   //should run indefinetely
   /*test("Test without catalyst workaround") {
-  implicit val infoDateFactory: InfoDateFactory = new InfoDateLiteralFactory("2020-05-23")
+    val configuration = new PropertyListConfiguration()
+    configuration.addProperty(reportDateKey, "2020-05-23")
+    configuration.addProperty(reportVersionKey, 1)
     val frame: DataFrame = testHyperConformance(standardizedDf,
       "result2",
       nestedStructsDS,

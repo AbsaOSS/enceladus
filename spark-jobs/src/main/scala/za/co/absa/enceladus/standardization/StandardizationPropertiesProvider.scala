@@ -81,7 +81,7 @@ class StandardizationPropertiesProvider {
   }
 
   private def getXmlOptions[T](cmd: StandardizationConfigParser[T]): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.rawFormat.equalsIgnoreCase("xml")) {
+    if (cmd.rawFormat == "xml") {
       HashMap("rowtag" -> cmd.rowTag.map(StringParameter))
     } else {
       HashMap()
@@ -90,7 +90,7 @@ class StandardizationPropertiesProvider {
 
   private def getCsvOptions[T](cmd: StandardizationConfigParser[T],
                                numberOfColumns: Int = 0): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.rawFormat.equalsIgnoreCase("csv")) {
+    if (cmd.rawFormat =="csv") {
       HashMap(
         "delimiter" -> cmd.csvDelimiter.map(s => StringParameter(s.includingUnicode.includingNone)),
         "header" -> cmd.csvHeader.map(BooleanParameter),
@@ -111,7 +111,7 @@ class StandardizationPropertiesProvider {
   }
 
   private def getFixedWidthOptions[T](cmd: StandardizationConfigParser[T]): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.rawFormat.equalsIgnoreCase("fixed-width")) {
+    if (cmd.rawFormat == "fixed-width") {
       HashMap(
         "trimValues" -> cmd.fixedWidthTrimValues.map(BooleanParameter),
         "treatEmptyValuesAsNulls" -> cmd.fixedWidthTreatEmptyValuesAsNulls.map(BooleanParameter),
@@ -125,7 +125,7 @@ class StandardizationPropertiesProvider {
 
   private def getCobolOptions[T](cmd: StandardizationConfigParser[T], dataset: Dataset)
                                 (implicit dao: MenasDAO): HashMap[String, Option[RawFormatParameter]] = {
-    if (cmd.rawFormat.equalsIgnoreCase("cobol")) {
+    if (cmd.rawFormat =="cobol") {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
       val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
       val isTextOpt = if (cobolOptions.isText) Some(true) else None

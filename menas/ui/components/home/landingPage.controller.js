@@ -78,6 +78,8 @@ sap.ui.define([
         viewBase = `${viewBase}--mappingTablesPage`;
       } else if(sTarget === "runs") {
         viewBase = `${viewBase}--runsDatasetNamePage`;
+      } else if(sTarget === "properties") {
+        viewBase = `${viewBase}--propertiesPage`;
       }
 
       if (sTarget === "runs") {
