@@ -476,7 +476,7 @@ JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH 
 $MT_PATTERN $MIN_PARTITION_SIZE $MAX_PARTITION_SIZE"
 
 if [ "$HELP_CALL" == "1" ]; then
-  source ${SRC_DIR}/_print_help.sh
+  source "${SRC_DIR:=$(dirname "$0")}/_print_help.sh"
   exit "$?"
 fi
 
