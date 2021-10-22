@@ -19,13 +19,13 @@ import java.text.MessageFormat
 import java.time.Instant
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.{SPARK_VERSION, sql}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -41,7 +41,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-
+import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -93,13 +93,23 @@ trait CommonJobExecution extends ProjectMetadata {
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
       case Some(validation) if validation.nonEmpty =>
-        val warning = validation.warnings.map {case (field, warnMsg) =>
+        val warning = validation.warnings.map { case (field, warnMsg) =>
           val header = s" - '$field': "
           s"$header${warnMsg.mkString(s"\n$header")}"
         }.mkString("\n")
         log.warn("Dataset validation had some warnings:\n" + warning)
       case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
       case _ => // no problems found
+    }
+
+    val minPartition = confReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartition = confReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+
+    (minPartition, maxPartition) match {
+      case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
+          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
+      )
+      case _ => //validation passed
     }
 
     val reportVersion = getReportVersion(cmd, dataset)
@@ -169,6 +179,36 @@ trait CommonJobExecution extends ProjectMetadata {
 
     if (runId.isEmpty) {
       log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+  }
+
+  protected def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                    (implicit spark: SparkSession): DataFrame = {
+    def computeBlockCount(desiredBlockSize: Long, totalByteSize: BigInt, addRemainder: Boolean): Int = {
+      val int = (totalByteSize / desiredBlockSize).toInt
+      val blockCount = int + (if (addRemainder && (totalByteSize % desiredBlockSize != 0)) 1 else 0)
+      blockCount max 1
+    }
+
+    def changePartitionCount(blockCount: Int, fnc: Int => DataFrame): DataFrame = {
+      val outputDf = fnc(blockCount)
+      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+      outputDf
+    }
+
+    val catalystPlan = df.queryExecution.logical
+    val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
+
+    val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
+
+    (minBlockSize, maxBlockSize) match {
+      case (Some(min), None) if currentBlockSize < min =>
+        changePartitionCount(computeBlockCount(min, sizeInBytes, addRemainder = false), df.coalesce)
+      case (None, Some(max)) if currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+      case (Some(min), Some(max)) if currentBlockSize < min || currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+      case _ => df
     }
   }
 

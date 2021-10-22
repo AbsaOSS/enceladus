@@ -108,6 +108,14 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     ConfigReader(redactingConfig.withFallback(config))
   }
 
+  def getLong(path: String): Long = {
+    config.getLong(path)
+  }
+
+  def getLongOption(path: String): Option[Long] = {
+    getIfExists(path)(getLong)
+  }
+
   /**
     * Flattens TypeSafe config tree and returns the effective configuration
     * while redacting sensitive keys.
@@ -169,5 +177,5 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
       None
     }
   }
-
+  
 }
