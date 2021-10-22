@@ -74,7 +74,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
-      conf,
+      configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
@@ -103,7 +103,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
                           (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO): DataFrame = {
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
     implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem

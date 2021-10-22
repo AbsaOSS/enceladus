@@ -17,11 +17,9 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
-
-import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.{SPARK_VERSION, sql}
+import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
@@ -43,7 +41,6 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -57,8 +54,10 @@ trait CommonJobExecution extends ProjectMetadata {
   SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
-  protected val conf: Config = ConfigFactory.load()
-  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  protected val configReader: ConfigReader = new ConfigReader()
+  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
+  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
+  protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
@@ -74,15 +73,14 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(configReader.config)
   }
 
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
                               cmd: JobConfigParser[T],
                               spark: SparkSession): PreparationResult = {
-    val confReader: ConfigReader = new ConfigReader(conf)
-    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+    configReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
     dao.authenticate()
 
     implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
@@ -103,8 +101,8 @@ trait CommonJobExecution extends ProjectMetadata {
       case _ => // no problems found
     }
 
-    val minPartition = confReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxPartition = confReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+    val minPartition = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartition = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
 
     (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
@@ -175,7 +173,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
       sourcePhase, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
-    val postProcessingService = PostProcessingService(conf, params)
+    val postProcessingService = PostProcessingService(configReader.config, params)
     postProcessingService.onSaveOutput(df)
 
     if (runId.isEmpty) {
@@ -258,7 +256,7 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   private def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
-    MessageFormat.format(conf.getString("standardized.hdfs.path"),
+    MessageFormat.format(configReader.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
       jobConfig.reportDate,
@@ -269,7 +267,7 @@ trait CommonJobExecution extends ProjectMetadata {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
       case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) =>
         val confEntry = "control.info.validation"
-        conf.getString(confEntry) match {
+        configReader.getString(confEntry) match {
           case "strict" => throw ex
           case "warning" => log.warn(ex.msg)
           case "none" =>
@@ -288,7 +286,7 @@ trait CommonJobExecution extends ProjectMetadata {
     })
   }
 
-  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+  protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
     val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")

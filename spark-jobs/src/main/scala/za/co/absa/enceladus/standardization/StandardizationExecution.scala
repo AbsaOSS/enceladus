@@ -69,7 +69,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
-      conf,
+      configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
@@ -89,7 +89,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Add Dataset properties marked with putIntoInfoFile=true
     val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
-    addCustomDataToInfoFile(conf, dataForInfoFile)
+    addCustomDataToInfoFile(configReader, dataForInfoFile)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.raw,
@@ -150,7 +150,7 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
                               (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
     //scalastyle:on parameter.number
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
 
     try {
       handleControlInfoValidation()
