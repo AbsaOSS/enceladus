@@ -310,6 +310,14 @@ case $key in
     CLIENT_MODE_RUN_KINIT="$2"
     shift 2 # past argument and value
     ;;
+   --min-processing-partition-size)
+    MIN_PROCESSING_PARTITION_SIZE="$2"
+    shift 2 # past argument and value
+    ;;
+  --max-processing-partition-size)
+    MAX_PROCESSING_PARTITION_SIZE="$2"
+    shift 2 # past argument and value
+    ;;
   --help)
     HELP_CALL="1"
     shift # past argument
@@ -414,6 +422,16 @@ if [ -n "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
+MIN_PARTITION_SIZE=""
+if [ -n "$MIN_PROCESSING_PARTITION_SIZE" ]; then
+    MIN_PARTITION_SIZE="-Dmin.processing.partition.size=$MIN_PROCESSING_PARTITION_SIZE"
+fi
+
+MAX_PARTITION_SIZE=""
+if [ -n "$MAX_PROCESSING_PARTITION_SIZE" ]; then
+    MAX_PARTITION_SIZE="-Dmax.processing.partition.size=$MAX_PROCESSING_PARTITION_SIZE"
+fi
+
 SPARK_CONF="--conf spark.logConf=true"
 
 # Dynamic Resource Allocation
@@ -455,7 +473,7 @@ fi
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
-$MT_PATTERN"
+$MT_PATTERN $MIN_PARTITION_SIZE $MAX_PARTITION_SIZE"
 
 if [ "$HELP_CALL" == "1" ]; then
   source ${SRC_DIR}/_print_help.sh
