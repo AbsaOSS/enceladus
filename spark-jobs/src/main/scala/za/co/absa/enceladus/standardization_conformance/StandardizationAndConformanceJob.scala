@@ -36,7 +36,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
-    implicit val configReader: ConfigReader = new ConfigReader(conf)
+    implicit val configReader: ConfigReader = new ConfigReader()
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     val menasSetupValue = AvailabilitySetup.withName(menasSetup)

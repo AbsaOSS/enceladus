@@ -41,7 +41,6 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -102,8 +101,8 @@ trait CommonJobExecution extends ProjectMetadata {
       case _ => // no problems found
     }
 
-    val minPartition = confReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxPartition = confReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+    val minPartition = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartition = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
 
     (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
