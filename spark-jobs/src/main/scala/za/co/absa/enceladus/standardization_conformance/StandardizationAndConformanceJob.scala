@@ -18,6 +18,7 @@ package za.co.absa.enceladus.standardization_conformance
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -34,10 +35,11 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
-    implicit val configReader: ConfigReader = new ConfigReader(conf)
+    implicit val configReader: ConfigReader = new ConfigReader()
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
+    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, menasCredentials, preparationResult)

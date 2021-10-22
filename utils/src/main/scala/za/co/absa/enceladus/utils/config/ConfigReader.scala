@@ -16,34 +16,85 @@
 package za.co.absa.enceladus.utils.config
 
 import com.typesafe.config._
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import za.co.absa.enceladus.utils.config.ConfigUtils.ConfigImplicits
+import scala.util.{Failure, Try}
 
 object ConfigReader {
+  type ConfigExceptionBadValue = ConfigException.BadValue
+
   val redactedReplacement: String = "*****"
-}
+  private val defaultConfig: ConfigReader = new ConfigReader(ConfigFactory.load())
 
-class ConfigReader(config: Config = ConfigFactory.load()) {
-  import ConfigReader._
-
-  private val log = LoggerFactory.getLogger(this.getClass)
-
-  def readStringConfigIfExist(path: String): Option[String] = {
-    config.getOptionString(path)
+  def apply(): ConfigReader = defaultConfig
+  def apply(config: Config): ConfigReader = new ConfigReader(config)
+  def apply(configMap: Map[String, String]): ConfigReader = {
+    val config = ConfigFactory.parseMap(configMap.asJava)
+    apply(config)
   }
 
-  def readStringConfig(path: String, default: String): String = {
-    readStringConfigIfExist(path).getOrElse(default)
+  def parseString(configLine: String): ConfigReader = {
+    val config = ConfigFactory.parseString(configLine)
+    apply(config)
+  }
+}
+
+class ConfigReader(val config: Config = ConfigFactory.load()) {
+  import ConfigReader._
+
+
+  def hasPath(path: String): Boolean = {
+    config.hasPath(path)
+  }
+
+  def getString(path: String): String = {
+    config.getString(path)
+  }
+
+  def getInt(path: String): Int = {
+    config.getInt(path)
+  }
+
+  def getBoolean(path: String): Boolean = {
+    config.getBoolean(path)
   }
 
   /**
-   * Given a configuration returns a new configuration which has all sensitive keys redacted.
-   *
-   * @param keysToRedact A set of keys to be redacted.
-   */
-  def getRedactedConfig(keysToRedact: Set[String]): Config = {
+    * Inspects the config for the presence of the `path` and returns an optional result.
+    *
+    * @param path path to look for, e.g. "group1.subgroup2.value3
+    * @return None if not found or defined Option[String]
+    */
+  def getStringOption(path: String): Option[String] = {
+    getIfExists(path)(getString)
+  }
+
+  def getIntOption(path: String): Option[Int] = {
+    getIfExists(path)(getInt)
+  }
+
+  /**
+    * Inspects the config for the presence of the `path` and returns an optional result.
+    *
+    * @param path path to look for, e.g. "group1.subgroup2.value3
+    * @return None if not found or defined Option[Boolean]
+    */
+  def getBooleanOption(path: String): Option[Boolean] = {
+    getIfExists(path)(getBoolean)
+  }
+
+  /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
+  def withAnyRefValue(key: String, value: AnyRef) : ConfigReader = {
+    ConfigReader(config.withValue(key, ConfigValueFactory.fromAnyRef(value)))
+  }
+
+  /**
+    * Given a configuration returns a new configuration which has all sensitive keys redacted.
+    *
+    * @param keysToRedact A set of keys to be redacted.
+    */
+  def getRedactedConfig(keysToRedact: Set[String]): ConfigReader = {
     def withAddedKey(accumulatedConfig: Config, key: String): Config = {
       if (config.hasPath(key)) {
         accumulatedConfig.withValue(key, ConfigValueFactory.fromAnyRef(redactedReplacement))
@@ -54,7 +105,7 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
 
     val redactingConfig = keysToRedact.foldLeft(ConfigFactory.empty)(withAddedKey)
 
-    redactingConfig.withFallback(config)
+    ConfigReader(redactingConfig.withFallback(config))
   }
 
   def getLong(path: String): Long = {
@@ -66,25 +117,25 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
   }
 
   /**
-   * Flattens TypeSafe config tree and returns the effective configuration
-   * while redacting sensitive keys.
-   *
-   * @param keysToRedact A set of keys for which should be redacted.
-   * @return the effective configuration as a map
-   */
+    * Flattens TypeSafe config tree and returns the effective configuration
+    * while redacting sensitive keys.
+    *
+    * @param keysToRedact A set of keys for which should be redacted.
+    * @return the effective configuration as a map
+    */
   def getFlatConfig(keysToRedact: Set[String] = Set()): Map[String, AnyRef] = {
-    getRedactedConfig(keysToRedact).entrySet().asScala.map({ entry =>
+    getRedactedConfig(keysToRedact).config.entrySet().asScala.map({ entry =>
       entry.getKey -> entry.getValue.unwrapped()
     }).toMap
   }
 
   /**
-   * Logs the effective configuration while redacting sensitive keys
-   * in HOCON format.
-   *
-   * @param keysToRedact A set of keys for which values shouldn't be logged.
-   */
-  def logEffectiveConfigHocon(keysToRedact: Set[String] = Set()): Unit = {
+    * Logs the effective configuration while redacting sensitive keys
+    * in HOCON format.
+    *
+    * @param keysToRedact A set of keys for which values shouldn't be logged.
+    */
+  def logEffectiveConfigHocon(keysToRedact: Set[String] = Set(), log: Logger = LoggerFactory.getLogger(this.getClass)): Unit = {
     val redactedConfig = getRedactedConfig(keysToRedact)
 
     val renderOptions = ConfigRenderOptions.defaults()
@@ -92,18 +143,18 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
       .setOriginComments(false)
       .setJson(false)
 
-    val rendered = redactedConfig.root().render(renderOptions)
+    val rendered = redactedConfig.config.root().render(renderOptions)
 
     log.info(s"Effective configuration:\n$rendered")
   }
 
   /**
-   * Logs the effective configuration while redacting sensitive keys
-   * in Properties format.
-   *
-   * @param keysToRedact A set of keys for which values shouldn't be logged.
-   */
-  def logEffectiveConfigProps(keysToRedact: Set[String] = Set()): Unit = {
+    * Logs the effective configuration while redacting sensitive keys
+    * in Properties format.
+    *
+    * @param keysToRedact A set of keys for which values shouldn't be logged.
+    */
+  def logEffectiveConfigProps(keysToRedact: Set[String] = Set(), log: Logger = LoggerFactory.getLogger(this.getClass)): Unit = {
     val redactedConfig = getFlatConfig(keysToRedact)
 
     val rendered = redactedConfig.map {
@@ -126,4 +177,5 @@ class ConfigReader(config: Config = ConfigFactory.load()) {
       None
     }
   }
+  
 }

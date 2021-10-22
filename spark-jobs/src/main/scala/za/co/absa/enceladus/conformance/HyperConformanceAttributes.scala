@@ -21,6 +21,8 @@ object HyperConformanceAttributes {
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
   val menasUriKey = "menas.rest.uri"
+  val menasUriRetryCountKey = "menas.rest.retryCount"
+  val menasAvailabilitySetupKey = "menas.rest.availability.setup"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"
   val datasetNameKey = "dataset.name"
@@ -42,12 +44,21 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   override def getProperties: Map[String, PropertyMetadata] = Map(
     menasUriKey ->
       PropertyMetadata("Menas API URL", Some("E.g. http://localhost:8080/menas"), required = true),
+    menasUriRetryCountKey ->
+      PropertyMetadata("Menas API URL retry count",
+        Some("How many times a call to Menas API URL should be retried after failure before proceeding to the next URL. E.g. 2"),
+        required = false),
+    menasAvailabilitySetupKey ->
+      PropertyMetadata("The setup type of Menas URLs",
+        Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
+          "Round-robin - start from random, fallback - start from first"),
+        required = false),
     datasetNameKey ->
       PropertyMetadata("Dataset name", None, required = true),
     datasetVersionKey ->
       PropertyMetadata("Dataset version", None, required = true),
     reportDateKey ->
-      PropertyMetadata("Report date", Some("The current date is used by default "), required = false),
+      PropertyMetadata("Report date", Some("The current date is used by default"), required = false),
     reportVersionColumnKey ->
       PropertyMetadata("Report version column", Some("Taken from another column"), required = false),
     reportVersionKey ->
