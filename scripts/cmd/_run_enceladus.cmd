@@ -429,14 +429,14 @@ IF "%1"=="--run-kinit" (
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--min-processing-block-size" (
-    SET MIN_PROCESSING_BLOCK_SIZE=%2
+IF "%1"=="--min-processing-partition-size" (
+    SET MIN_PROCESSING_PARTITION_SIZE=%2
     SHIFT
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--max-processing-block-size" (
-    SET MAX_PROCESSING_BLOCK_SIZE=%2
+IF "%1"=="--max-processing-partition-size" (
+    SET MAX_PROCESSING_PARTITION_SIZE=%2
     SHIFT
     SHIFT
     GOTO CmdParse
@@ -504,14 +504,14 @@ IF DEFINED MAPPING_TABLE_PATTERN (
     SET MT_PATTERN=
 )
 
-IF DEFINED MIN_PROCESSING_BLOCK_SIZE (
-    SET MIN_BLOCK_SIZE=-Dmin.processing.block.size=%MIN_PROCESSING_BLOCK_SIZE%
+IF DEFINED MIN_PROCESSING_PARTITION_SIZE (
+    SET MIN_BLOCK_SIZE=-Dmin.processing.partition.size=%MIN_PROCESSING_PARTITION_SIZE%
 ) ELSE (
     SET MIN_BLOCK_SIZE=
 )
 
-IF DEFINED MAX_PROCESSING_BLOCK_SIZE (
-    SET MAX_BLOCK_SIZE=-Dmax.processing.block.size=%MAX_PROCESSING_BLOCK_SIZE%
+IF DEFINED MAX_PROCESSING_PARTITION_SIZE (
+    SET MAX_BLOCK_SIZE=-Dmax.processing.partition.size=%MAX_PROCESSING_PARTITION_SIZE%
 ) ELSE (
     SET MAX_BLOCK_SIZE=
 )
