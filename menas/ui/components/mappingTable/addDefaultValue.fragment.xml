@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form" xmlns:l="sap.ui.layout"
     xmlns:table="sap.ui.table" xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
-    <Dialog id="addDefaultValueDialog" title="{/newDefaultValue/title} Default Value" resizable="true" draggable="true" class="minW40rem">
+    <Dialog id="addDefaultValueDialog" title="{/newDefaultValue/title} Default Value" resizable="true" draggable="true">
         <content>
             <form:SimpleForm adjustLabelSpan="true" editable="true">
                 <form:content>
