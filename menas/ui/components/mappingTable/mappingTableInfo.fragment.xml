@@ -14,7 +14,9 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
-                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
+                         xmlns:table="sap.ui.table"
+                         xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+                         xmlns:t="sap.ui.table">
     <form:SimpleForm id="info">
         <form:content>
             <Label text="Mapping Table"/>
@@ -39,6 +41,11 @@
                 text="{path: 'mappingTable>/dateCreated', formatter: 'Formatters.stringDateShortFormatter'}"/>
             <Label text="Created By"/>
             <Text text="{mappingTable>/userCreated}"/>
+            <Label text="Filter" />
+            <Tree id="filterTree" items="{path: 'mappingTable>/filterTree', parameters: {numberOfExpandedLevels: 1}}" noDataText="No filter set.">
+                <StandardTreeItem title="{mappingTable>text}" icon="{mappingTable>icon}"/>
+            </Tree>
+
         </form:content>
     </form:SimpleForm>
 </core:FragmentDefinition>
