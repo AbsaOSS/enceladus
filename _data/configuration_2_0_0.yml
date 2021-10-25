@@ -26,11 +26,32 @@
         always-the-same <code>Int</code> hash (Murmur3-based, for testing)."
     - name: <i>none</i>
       description: no column will be added to the output.
+  - name: max.processing.partition.size
+    options:
+      - name: non-negative long integer
+        description: 'Maximal size (in bytes) of the parquet file on output
+        <b>NB! Experimental - sizes might still not fulfill the requested limits</b>'
   - name: menas.rest.uri
     options:
     - name: string with URLs
       description: 'Comma-separated list of URLs where Menas will be looked for. E.g.:
         <code>http://example.com/menas1,http://domain.com:8080/menas2</code>'
+  - name: menas.rest.retryCount
+    options:
+      - name: non-negative integer
+        description: Each of the <code>menas.rest.uri</code> URLs can be tried multiple times for fault-tolerance
+  - name: menas.rest..availability.setup
+    options:
+      - name: <i>roundrobin</i>
+        description: "(default) Starts from a random URL from the <code>menas.rest.uri</code> list, if it fails the next
+         one is tried, if last is reached start from 0 until all are tried"
+      - name: <i>fallback</i>
+        description: "Always starts from the first URL, and only if it fails the second follows etc."
+  - name: min.processing.partition.size
+    options:
+      - name: non-negative long integer
+        description: 'Minimal size (in bytes) of the parquet file on output
+        <b>NB! Experimental - sizes might still not fulfill the requested limits</b>'
   - name: standardization.defaultTimestampTimeZone.default
     options:
     - name: string with any valid time zone name
