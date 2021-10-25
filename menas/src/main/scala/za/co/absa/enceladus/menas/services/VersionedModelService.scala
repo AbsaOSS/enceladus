@@ -271,12 +271,12 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.isDisabled(name)
   }
 
-  def blockVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
+  def setModifiableVersion(name: String, version: Option[Int], modifiable: Boolean): Future[UpdateResult] = {
     getUsedIn(name, version).flatMap { usedIn =>
       if (usedIn.nonEmpty) {
         throw EntityInUseException(usedIn)
       } else {
-        versionedMongoRepository.blockVersion(name, version)
+        versionedMongoRepository.setModifiableState(name, version, modifiable)
       }
     }
   }
