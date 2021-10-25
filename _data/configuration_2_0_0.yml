@@ -29,7 +29,7 @@
   - name: max.processing.partition.size
     options:
       - name: non-negative long integer
-        description: 'Maximal size (in bytes) of the parquet file on output
+        description: 'Maximal size (in bytes) for the processing partition, which would influence the written parquet file size 
         <b>NB! Experimental - sizes might still not fulfill the requested limits</b>'
   - name: menas.rest.uri
     options:
@@ -50,7 +50,7 @@
   - name: min.processing.partition.size
     options:
       - name: non-negative long integer
-        description: 'Minimal size (in bytes) of the parquet file on output
+        description: 'Minimal size (in bytes) for the processing partition, which would influence the written parquet file size 
         <b>NB! Experimental - sizes might still not fulfill the requested limits</b>'
   - name: standardization.defaultTimestampTimeZone.default
     options:
