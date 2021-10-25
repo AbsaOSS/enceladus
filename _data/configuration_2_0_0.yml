@@ -40,7 +40,7 @@
     options:
       - name: non-negative integer
         description: Each of the <code>menas.rest.uri</code> URLs can be tried multiple times for fault-tolerance
-  - name: menas.rest..availability.setup
+  - name: menas.rest.availability.setup
     options:
       - name: <i>roundrobin</i>
         description: "(default) Starts from a random URL from the <code>menas.rest.uri</code> list, if it fails the next
