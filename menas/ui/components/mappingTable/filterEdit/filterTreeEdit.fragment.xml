@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright 2018 ABSA Group Limited
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:t="sap.ui.table">
+    <!-- filter editing has its own named model ("filterEdit") in order to be reused more easily -->
+    <t:TreeTable id="filterTreeEdit" rows="{
+                            path:'filterEdit>/editingFilters',
+                            parameters: {
+                                numberOfExpandedLevels: 1
+                            }
+                        }">
+        <t:extension>
+            <OverflowToolbar style="Clear">
+                <MenuButton text="Add">
+                    <menu>
+                        <Menu>
+                            <MenuItem id="addAndBtn" text="AND" icon="sap-icon://combine" />
+                            <MenuItem id="addOrBtn" text="OR" icon="sap-icon://split" />
+                            <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://filter" />
+                            <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://clear-filter" />
+                            <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://SAP-icons-TNT/solution-not-licensed" />
+                            <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://SAP-icons-TNT/marquee" />
+                        </Menu>
+                    </menu>
+                </MenuButton>
+                <ToolbarSpacer/>
+                <Button id="removeSelectedBtn" text="Remove selected" icon="sap-icon://delete" />
+            </OverflowToolbar>
+        </t:extension>
+        <t:columns>
+            <t:Column label="FilterName">
+                <t:template>
+                    <ObjectStatus text="{filterEdit>text}" state="{filterEdit>filter_valueState}"
+                                  icon="{= ${filterEdit>filter_valueState} === 'None' ? undefined : 'sap-icon://error' }"
+                                  tooltip="{filterEdit>filter_valueStateText}"/>
+                </t:template>
+            </t:Column>
+            <t:Column label="Column">
+                <t:template>
+                    <Select selectedKey="{filterEdit>columnName}" items="{path: 'suggestedColumns>/columnNames', templateShareable:false}"
+                            forceSelection="false"
+                            visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' || ${filterEdit>_t} === 'IsNullFilter' }"
+                            valueState="{filterEdit>columnName_valueState}" valueStateText="{filterEdit>columnName_valueStateText}" showSecondaryValues="true">
+                        <core:ListItem key="{suggestedColumns>name}" text="{suggestedColumns>name}" additionalText="{suggestedColumns>type}" />
+                    </Select>
+                </t:template>
+            </t:Column>
+            <t:Column label="Value">
+                <t:template>
+                    <Input type="Text" value="{filterEdit>value}" placeholder="Enter value"
+                           valueState="{filterEdit>value_valueState}" valueStateText="{filterEdit>value_valueStateText}"
+                           visible="{= ${filterEdit>_t} === 'EqualsFilter' || ${filterEdit>_t} === 'DiffersFilter' }"/>
+                </t:template>
+            </t:Column>
+        </t:columns>
+    </t:TreeTable>
+
+</core:FragmentDefinition>

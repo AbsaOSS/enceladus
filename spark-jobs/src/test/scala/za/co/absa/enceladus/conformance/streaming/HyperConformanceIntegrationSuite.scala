@@ -96,7 +96,7 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
     assertResult(returned)(conformed)
   }
 
-  //should run indefinetely
+  //should run indefinitely
   /*test("Test without catalyst workaround") {
     val configuration = new PropertyListConfiguration()
     configuration.addProperty(reportDateKey, "2020-05-23")

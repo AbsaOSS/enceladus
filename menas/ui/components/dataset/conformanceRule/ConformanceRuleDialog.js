@@ -29,6 +29,9 @@ class ConformanceRuleDialog {
     this._ruleForms = new ConformanceRuleFormRepository(this);
     this._rules = this._ruleForms.all;
 
+    this._schemaService = new SchemaService(this.model, eventBus);
+    this.filterEdit = new FilterEdit(sap.ui.getCore(), "MappingConformanceRule--", this._schemaService);
+
     this.model.setProperty("/rules", this.rules);
     this.model.setProperty("/dataTypes", this._ruleForms.byType("CastingConformanceRule").dataTypes);
   }
@@ -105,6 +108,13 @@ class ConformanceRuleDialog {
     let newRule = $.extend(true, {}, this.model.getProperty("/newRule"));
     this.beforeSubmitChanges(newRule);
     this.resetRuleValidation();
+
+    newRule.hasValidFilter = true; // default for non-MappingConformanceRules
+    if (newRule._t === "MappingConformanceRule") {
+      const validFilter = this.filterEdit.validateFilterData();
+      newRule.hasValidFilter = validFilter;
+    }
+
     if (this.ruleForms.byType(newRule._t).isValid(newRule, this.controller._transitiveSchemas, currentDataset.conformance)) {
       if (this.model.getProperty("/newRule/isEdit")) {
         this.updateRule(currentDataset, newRule);
@@ -166,6 +176,10 @@ class ConformanceRuleDialog {
           const model = new sap.ui.model.json.JSONModel(mappingTableSchema);
           model.setSizeLimit(5000);
           this._dialog.setModel(model, "mappingTableSchema");
+
+          const colNames = FilterEdit.extractFieldNamesInDepth(mappingTableSchema.fields);
+          const columnNamesModel = new sap.ui.model.json.JSONModel({columnNames: colNames});
+          this._dialog.setModel(columnNamesModel, "suggestedColumns");
         }
       });
       const datasetSchema = this._dialog.getModel("schema").oData;
@@ -285,6 +299,8 @@ class ConformanceRuleDialog {
     }
 
     if (currentRule._t === "MappingConformanceRule") {
+      const filterModel = new sap.ui.model.json.JSONModel();
+
       if (!currentRule.isEdit) {
         newRule.newJoinConditions = [];
         newRule.newOutputColumns = [];
@@ -310,9 +326,16 @@ class ConformanceRuleDialog {
 
         newRule.newJoinConditions = aNewJoinConditions;
         newRule.newOutputColumns = aNewOutputColumns;
+
+        const filters = [FilterTreeUtils.addNiceNamesToFilterData(newRule.mappingTableFilter)];
+        filterModel.setProperty("/editingFilters", filters);
+
       }
       this.mappingTableService.getAllVersions(newRule.mappingTable, sap.ui.getCore().byId("mappingTableVersionSelect"));
       this.selectMappingTableVersion(newRule.mappingTable, newRule.mappingTableVersion);
+
+      this._dialog.setModel(filterModel, "filterEdit"); // filter editing has its own named model ("filterEdit")
+      this.filterEdit.bindFilterEditControls(this._dialog);
     }
 
     if (!newRule.isEdit && newRule.order === undefined) {
@@ -339,6 +362,19 @@ class ConformanceRuleDialog {
       });
       delete newRule.newOutputColumns;
       delete newRule.joinConditions;
+
+      const updatedFilters = this._dialog.getModel("filterEdit").getProperty("/editingFilters");
+      if (updatedFilters) {
+        if (updatedFilters.length > 1) {
+          console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
+          sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
+        } else {
+          const cleanedFilter = FilterTreeUtils.removeDeletedNodesFromFilterData(updatedFilters[0]);
+          const updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(cleanedFilter);
+          const schemaFilledFilter = this.filterEdit.applyValueTypesFromSchema(updatedFilter);
+          newRule.mappingTableFilter = schemaFilledFilter
+        }
+      }
     }
   }
 
@@ -372,6 +408,11 @@ class ConformanceRuleDialog {
   resetRuleValidation() {
     const newRule = this.model.getProperty("/newRule");
     this.ruleForms.byType(newRule._t).reset();
+
+    if (newRule._t === "MappingConformanceRule") {
+      this.filterEdit.resetFilterValidation();
+    }
+
   }
 
 }
