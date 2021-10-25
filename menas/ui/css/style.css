@@ -131,3 +131,7 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 .missingPropertyValue{
   font-style: italic;
 }
+
+.sapMListNoDataText {
+  font-size: 1rem;
+}
