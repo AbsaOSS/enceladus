@@ -42,6 +42,12 @@ class EntityDialog {
       return;
     }
 
+    // transforms /selectedSchema to expected fields on backend:
+    if (newEntity.selectedSchema) {
+      newEntity.schemaName = newEntity.selectedSchema.name;
+      newEntity.schemaVersion = newEntity.selectedSchema.version;
+    }
+
     if (this.isValid(newEntity)) {
       // send and update UI
       if (newEntity.isEdit) {
@@ -95,7 +101,7 @@ class DatasetDialog extends EntityDialog {
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
 
- }
+  }
 
   /**
    * Will create `oProps`'s allowedValues mapped into displayable sequence of objects, e.g.
@@ -104,7 +110,7 @@ class DatasetDialog extends EntityDialog {
    * @returns {undefined} or allowedValues sequence of Select-mappable object: (value, text)*
    */
   preprocessedAllowedValues(oProp) {
-    if(Functions.hasValidAllowedValues(oProp.propertyType)) {
+    if (Functions.hasValidAllowedValues(oProp.propertyType)) {
       let allowedMap = oProp.propertyType.allowedValues.map(val => {
         if (val == oProp.propertyType.suggestedValue) {
           return {value: val, text: `${val} (suggested value)`}
@@ -116,7 +122,7 @@ class DatasetDialog extends EntityDialog {
       if (oProp.essentiality._t !== "Mandatory") {
         allowedMap = [{value: "", text: ""}, ...allowedMap] // (ES6 prepending) - ability to undefine the property
       }
-        return allowedMap;
+      return allowedMap;
 
     } else {
       return undefined;
@@ -305,6 +311,7 @@ class EditDatasetDialog extends DatasetDialog {
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
+      current.selectedSchema = {name: current.schemaName, version: current.schemaVersion};
 
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
       this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
@@ -385,12 +392,34 @@ class EditSchemaDialog extends SchemaDialog {
 class MappingTableDialog extends EntityDialog {
   static hdfsPropertyNames = ["/hdfsPath"];
 
+  submit() {
+    let updatedFilters = this.oDialog.getModel("filterEdit").getProperty("/editingFilters");
+
+    if (updatedFilters) {
+      if (updatedFilters.length > 1) {
+        console.error(`Multiple root filters found, aborting: ${JSON.stringify(updatedFilters)}`);
+        sap.m.MessageToast.show("Invalid filter update found (multiple roots), no filter update done");
+      } else {
+        const cleanedFilter = FilterTreeUtils.removeDeletedNodesFromFilterData(updatedFilters[0]);
+        const updatedFilter = FilterTreeUtils.removeNiceNamesFromFilterData(cleanedFilter);
+        const schemaFilledFilter = this.filterEdit.applyValueTypesFromSchema(updatedFilter);
+
+        this.oDialog.getModel("entity").setProperty("/filter", schemaFilledFilter);
+      }
+    } // do nothing on empty filter
+
+    super.submit()
+  }
+
   constructor(oDialog, mappingTableService, schemaService, oController) {
     super(oDialog, mappingTableService, oController);
     this._schemaService = schemaService;
     oController.byId("newMappingTableAddButton").attachPress(this.submit, this);
     oController.byId("newMappingTableCancelButton").attachPress(this.cancel, this);
     oController.byId("newMappingTableName").attachChange(this.onNameChange, this);
+
+    this.filterEdit = new FilterEdit(this.oController, "", this._schemaService);
+    this.filterEdit.bindFilterEditControls(this.oDialog);
 
     oController.byId("toggleHdfsBrowser").attachPress(this.onHdfsBrowserToggle, this);
   }
@@ -413,15 +442,18 @@ class MappingTableDialog extends EntityDialog {
     // simple path-based
     this.oController.byId("addMtSimplePath").setValueState(sap.ui.core.ValueState.None);
     this.oController.byId("addMtSimplePath").setValueStateText("");
+
+    this.filterEdit.resetFilterValidation();
   }
 
   isValid(oMT) {
-    this.resetValueState();
+    this.resetValueState(); // includes reset of filter validation
 
     let hasValidName = EntityValidationService.hasValidName(oMT, "Mapping Table",
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
+    let hasValidFilter = this.filterEdit.validateFilterData();
 
     if (oMT.hdfsBrowserEnabled) {
       let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,
@@ -429,14 +461,14 @@ class MappingTableDialog extends EntityDialog {
         this.oController.byId("selectedHDFSPathLabel"));
       let hasExistingHDFSPath = hasValidHDFSPath ? this.oController.byId("addMtHDFSBrowser").validate() : false;
 
-      return hasValidName && hasValidSchema && hasExistingHDFSPath;
+      return hasValidName && hasValidSchema && hasExistingHDFSPath && hasValidFilter;
     } else {
 
       let hasValidSimplePath = EntityValidationService.hasValidSimplePath(oMT.hdfsPath,
         "Mapping Table path",
         this.oController.byId("addMtSimplePath"));
 
-      return hasValidName && hasValidSchema && hasValidSimplePath;
+      return hasValidName && hasValidSchema && hasValidSimplePath && hasValidFilter;
     }
   }
 
@@ -448,13 +480,31 @@ class MappingTableDialog extends EntityDialog {
       this.oDialog.getModel("entity").setProperty("/nameUnique", true);
     }
   }
+
+  // on MTDialog open - base
+  onPress() {
+    const typeModel = new sap.ui.model.json.JSONModel(DataTypeUtils.dataTypesAsTypes);
+    this.oDialog.setModel(typeModel, "suggestedColumnTypes");
+  }
+
+  setFilterEditModel(filterData) {
+    // "filterEdit>/editingFilters" holds user-changing filter
+    const filterModel = new sap.ui.model.json.JSONModel();
+    filterModel.setProperty("/editingFilters", filterData);
+    this.oDialog.setModel(filterModel, "filterEdit");
+
+    const suggestedSchemaColumnsModel = new sap.ui.model.json.JSONModel();
+    this.oDialog.setModel(suggestedSchemaColumnsModel, "suggestedColumns");
+  }
 }
 
 class AddMappingTableDialog extends MappingTableDialog {
 
   onPress() {
+    super.onPress();
+
     this.schemaService.getList(this.oDialog).then(() => {
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel({
+      const emptyDialogModel = new sap.ui.model.json.JSONModel({
         name: "",
         description: "",
         schemaName: "",
@@ -463,7 +513,11 @@ class AddMappingTableDialog extends MappingTableDialog {
         isEdit: false,
         title: "Add",
         hdfsBrowserEnabled: true
-      }), "entity");
+      });
+
+      this.oDialog.setModel(emptyDialogModel, "entity");
+      this.setFilterEditModel([]); // empty filter data for new MT
+      this.filterEdit.bindModelToSchemaChange(emptyDialogModel);
 
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
@@ -474,15 +528,24 @@ class AddMappingTableDialog extends MappingTableDialog {
 class EditMappingTableDialog extends MappingTableDialog {
 
   onPress() {
+    super.onPress();
+
     this.schemaService.getList(this.oDialog).then(() => {
       const current = this.oController._model.getProperty("/currentMappingTable");
+
+      const updatedFilters = [FilterTreeUtils.addNiceNamesToFilterData(this.filterEdit.resetFilterDataValidation(current.filter))];
 
       current.isEdit = true;
       current.title = "Edit";
       current.hdfsBrowserEnabled = true;
+      current.selectedSchema = {name: current.schemaName, version: current.schemaVersion};
       this.schemaService.getAllVersions(current.schemaName, this.oController.byId("schemaVersionSelect"));
 
-      this.oDialog.setModel(new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current)), "entity");
+      const model = new sap.ui.model.json.JSONModel(jQuery.extend(true, {}, current));
+      this.oDialog.setModel(model, "entity");
+      this.setFilterEditModel(updatedFilters);
+      this.filterEdit.bindModelToSchemaChange(model);
+
       this.openSimpleOrHdfsBrowsingDialog(this.oDialog, MappingTableDialog.hdfsPropertyNames)
     });
   }

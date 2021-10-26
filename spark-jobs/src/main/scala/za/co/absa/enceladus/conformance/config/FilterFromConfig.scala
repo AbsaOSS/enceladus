@@ -44,7 +44,7 @@ object FilterFromConfig {
   }
 
   private def readJson(configKey: String): Option[String] = {
-    configReader.readStringConfigIfExist(configKey).filter(_.nonEmpty).map(_.replaceAllLiterally("'","\""))
+    configReader.getStringOption(configKey).filter(_.nonEmpty).map(_.replaceAllLiterally("'","\""))
   }
 
   def loadFilter(dataFrameName: String): Option[DataFrameFilter] = {

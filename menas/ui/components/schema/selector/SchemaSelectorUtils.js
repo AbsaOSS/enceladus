@@ -63,13 +63,19 @@ sap.ui.define(["sap/ui/core/Fragment"], function(Fragment) {
     const oCtx = oEv.getParameter("selectedContexts")[0];
     const oDialog = oEv.getSource();
     const selectedSchema = oDialog.getModel("schemas").getProperty(oCtx.getPath());
-    oDialog.getModel("entity").setProperty("/schemaName", selectedSchema._id);
 
     const eventBus = sap.ui.getCore().getEventBus();
     const schemaService = new SchemaService(oDialog.getModel("entity"), eventBus);
-    schemaService.getAllVersions(selectedSchema._id, oDialog,
-        oDialog.getModel("entity"), "/schemaVersion").then((oVersions) => {
-          sap.ui.getCore().getModel().setProperty("/currentSchemaVersions", oVersions);
+
+    // undefineds model & property (param 3, 4) prevent from setting "just the schema version" to a named property
+    schemaService.getAllVersions(selectedSchema._id, oDialog)
+      .then((oVersionData) => {
+          const schemaName = selectedSchema._id;
+          const latestVersion =  oVersionData[oVersionData.length - 1].version;
+
+          // instead, we assign selected schema "name+version" at-once
+          oDialog.getModel("entity").setProperty("/selectedSchema", {name: schemaName, version: latestVersion});
+          sap.ui.getCore().getModel().setProperty("/currentSchemaVersions", oVersionData);
         });
   };
 

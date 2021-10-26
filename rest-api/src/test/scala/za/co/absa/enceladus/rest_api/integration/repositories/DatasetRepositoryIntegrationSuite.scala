@@ -25,6 +25,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.rest_api.exceptions.EntityAlreadyExistsException
 import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService}
 import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
+import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule

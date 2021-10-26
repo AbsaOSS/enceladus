@@ -81,6 +81,7 @@ CONF_SPARK_MEMORY_FRACTION=""
 # Security command line defaults
 MENAS_CREDENTIALS_FILE=""
 MENAS_AUTH_KEYTAB=""
+CLIENT_MODE_RUN_KINIT="$DEFAULT_CLIENT_MODE_RUN_KINIT"
 
 # Parse command line (based on https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
 OTHER_PARAMETERS=()
@@ -305,6 +306,18 @@ case $key in
     DRA_ENABLED="$2"
     shift 2 # past argument and value
     ;;
+  --run-kinit)
+    CLIENT_MODE_RUN_KINIT="$2"
+    shift 2 # past argument and value
+    ;;
+   --min-processing-partition-size)
+    MIN_PROCESSING_PARTITION_SIZE="$2"
+    shift 2 # past argument and value
+    ;;
+  --max-processing-partition-size)
+    MAX_PROCESSING_PARTITION_SIZE="$2"
+    shift 2 # past argument and value
+    ;;
   --help)
     HELP_CALL="1"
     shift # past argument
@@ -409,6 +422,16 @@ if [ -n "$MAPPING_TABLE_PATTERN" ]; then
     MT_PATTERN="-Dconformance.mappingtable.pattern=$MAPPING_TABLE_PATTERN"
 fi
 
+MIN_PARTITION_SIZE=""
+if [ -n "$MIN_PROCESSING_PARTITION_SIZE" ]; then
+    MIN_PARTITION_SIZE="-Dmin.processing.partition.size=$MIN_PROCESSING_PARTITION_SIZE"
+fi
+
+MAX_PARTITION_SIZE=""
+if [ -n "$MAX_PROCESSING_PARTITION_SIZE" ]; then
+    MAX_PARTITION_SIZE="-Dmax.processing.partition.size=$MAX_PROCESSING_PARTITION_SIZE"
+fi
+
 SPARK_CONF="--conf spark.logConf=true"
 
 # Dynamic Resource Allocation
@@ -449,7 +472,8 @@ else
 fi
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
- -Dhdp.version=$HDP_VERSION $MT_PATTERN"
+-Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
+$MT_PATTERN $MIN_PARTITION_SIZE $MAX_PARTITION_SIZE"
 
 if [ "$HELP_CALL" == "1" ]; then
   source ${SRC_DIR}/_print_help.sh
@@ -470,11 +494,17 @@ add_spark_conf_cmd "spark.memory.fraction" "${CONF_SPARK_MEMORY_FRACTION}"
 # Adding JVM configuration, entry point class name and the jar file
 if [[ "$DEPLOY_MODE" == "client" ]]; then
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLIENT"
+  ADDITIONAL_JVM_EXECUTOR_CONF="$ADDITIONAL_JVM_EXECUTOR_CONF_CLIENT"
 else
   ADDITIONAL_JVM_CONF="$ADDITIONAL_JVM_CONF_CLUSTER"
+  ADDITIONAL_JVM_EXECUTOR_CONF="$ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER"
   add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
-CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\" --class ${CLASS} ${JAR}"
+
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF}"
+CMD_LINE="${CMD_LINE} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\""
+CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_EXECUTOR_CONF}\""
+CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
 add_to_cmd_line "--menas-auth-keytab" "${MENAS_AUTH_KEYTAB}"
@@ -514,8 +544,8 @@ if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
     TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
-    if [[ -n "$MENAS_AUTH_KEYTAB" ]]; then
-      # Get principle stored in the keyfile (Thanks @Zejnilovic)
+    if [[ -n "$MENAS_AUTH_KEYTAB" ]] && [[ "$CLIENT_MODE_RUN_KINIT" == "true" ]]; then
+      # Get principle stored in the keyfile
       PR=$(printf "read_kt %s\nlist" "$MENAS_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
       # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)

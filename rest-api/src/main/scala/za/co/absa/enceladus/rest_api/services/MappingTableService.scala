@@ -43,7 +43,8 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
       description = mt.description,
       schemaName = mt.schemaName,
       schemaVersion = mt.schemaVersion,
-      hdfsPath = mt.hdfsPath)
+      hdfsPath = mt.hdfsPath,
+      filter = mt.filter)
     super.create(mappingTable, username)
   }
 
@@ -66,6 +67,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
+        .setFilter(mt.filter)
     }
   }
 
