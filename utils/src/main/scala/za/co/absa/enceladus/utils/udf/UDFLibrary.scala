@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.utils.udf
 
 import java.util.Base64
-
 import org.apache.spark.sql.api.java._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SparkSession}
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 import za.co.absa.enceladus.utils.udf.UDFNames._
 
+import java.util.concurrent.ConcurrentHashMap
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
@@ -31,69 +31,72 @@ class UDFLibrary()(implicit val spark: SparkSession) {
 }
 
 object UDFLibrary {
+  private[this] type Key = Int
 
-  private var isRegistered = false
+  private[this] val registry = new ConcurrentHashMap[Key, Unit]
+
+  private[this] implicit class SparkWithKey(val spark: SparkSession) extends AnyVal {
+    def makeKey(): Key = spark.hashCode()  //using hash as sufficiently unique and allowing garbage collection
+  }
+
+  private[this] def doTheRegistration()(implicit spark: SparkSession): Unit = {
+    spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
+      ErrorMessage.stdCastErr(errCol, rawValue)
+    })
+
+    spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
+
+    spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow) })
+
+    spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
+      ErrorMessage.confMappingErr(errCol, rawValues, mappings)
+    })
+
+    spark.udf.register(confCastErr, { (errCol: String, rawValue: String) =>
+      ErrorMessage.confCastErr(errCol, rawValue)
+    })
+
+    spark.udf.register(confNegErr, { (errCol: String, rawValue: String) =>
+      ErrorMessage.confNegErr(errCol, rawValue)
+    })
+
+    spark.udf.register(confLitErr, { (errCol: String, rawValue: String) =>
+      ErrorMessage.confLitErr(errCol, rawValue)
+    })
+
+    spark.udf.register(arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake
+      (arr: mutable.WrappedArray[ErrorMessage]) =>
+        if (arr != null) {
+          arr.distinct.filter((a: AnyRef) => a != null)
+        } else {
+          Seq[ErrorMessage]()
+        }
+    )
+
+    spark.udf.register(cleanErrCol,
+      UDFLibrary.cleanErrColUdfFn,
+      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false)
+    )
+
+    spark.udf.register(errorColumnAppend,
+      UDFLibrary.errorColumnAppendUdfFn,
+      ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
+
+
+    spark.udf.register(binaryUnbase64,
+      { stringVal: String =>
+        Try {
+          Base64.getDecoder.decode(stringVal)
+        } match {
+          case Success(decoded) => decoded
+          case Failure(_) => null //scalastyle:ignore null
+        }
+      })
+  }
 
   private def registerUdf()(implicit spark: SparkSession) {
-    this.synchronized {
-      if (!isRegistered) {
-
-        spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
-          ErrorMessage.stdCastErr(errCol, rawValue)
-        })
-
-        spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
-
-        spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow) })
-
-        spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
-          ErrorMessage.confMappingErr(errCol, rawValues, mappings)
-        })
-
-        spark.udf.register(confCastErr, { (errCol: String, rawValue: String) =>
-          ErrorMessage.confCastErr(errCol, rawValue)
-        })
-
-        spark.udf.register(confNegErr, { (errCol: String, rawValue: String) =>
-          ErrorMessage.confNegErr(errCol, rawValue)
-        })
-
-        spark.udf.register(confLitErr, { (errCol: String, rawValue: String) =>
-          ErrorMessage.confLitErr(errCol, rawValue)
-        })
-
-        spark.udf.register(arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake
-          (arr: mutable.WrappedArray[ErrorMessage]) =>
-            if (arr != null) {
-              arr.distinct.filter((a: AnyRef) => a != null)
-            } else {
-              Seq[ErrorMessage]()
-            }
-        )
-
-        spark.udf.register(cleanErrCol,
-          UDFLibrary.cleanErrColUdfFn,
-          ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false)
-        )
-
-        spark.udf.register(errorColumnAppend,
-          UDFLibrary.errorColumnAppendUdfFn,
-          ArrayType.apply(ErrorMessage.errorColSchema, containsNull = false))
-
-
-        spark.udf.register(binaryUnbase64,
-          { stringVal: String =>
-            Try {
-              Base64.getDecoder.decode(stringVal)
-            } match {
-              case Success(decoded) => decoded
-              case Failure(_) => null //scalastyle:ignore null
-            }
-          })
-
-        isRegistered = true
-      }
-    }
+    Option(registry.putIfAbsent(spark.makeKey(), Unit))
+      .getOrElse(doTheRegistration())
   }
 
   private val cleanErrColUdfFn = new UDF1[Seq[Row], Seq[Row]] {
