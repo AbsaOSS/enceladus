@@ -17,16 +17,15 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
-import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
@@ -42,7 +41,6 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -56,8 +54,10 @@ trait CommonJobExecution extends ProjectMetadata {
   SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
-  protected val conf: Config = ConfigFactory.load()
-  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  protected val configReader: ConfigReader = new ConfigReader()
+  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
+  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
+  protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
@@ -73,15 +73,14 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(conf)
+    SecureConfig.setSecureKafkaProperties(configReader.config)
   }
 
   protected def prepareJob[T]()
                              (implicit dao: MenasDAO,
                               cmd: JobConfigParser[T],
                               spark: SparkSession): PreparationResult = {
-    val confReader: ConfigReader = new ConfigReader(conf)
-    confReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
+    configReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
     dao.authenticate()
 
     implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
@@ -93,13 +92,23 @@ trait CommonJobExecution extends ProjectMetadata {
           validation.errors.map { case (field, errMsg) => s" - '$field': $errMsg" }.mkString("\n")
         )
       case Some(validation) if validation.nonEmpty =>
-        val warning = validation.warnings.map {case (field, warnMsg) =>
+        val warning = validation.warnings.map { case (field, warnMsg) =>
           val header = s" - '$field': "
           s"$header${warnMsg.mkString(s"\n$header")}"
         }.mkString("\n")
         log.warn("Dataset validation had some warnings:\n" + warning)
       case None => throw new IllegalStateException("Dataset validation was not retrieved correctly")
       case _ => // no problems found
+    }
+
+    val minPartition = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartition = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+
+    (minPartition, maxPartition) match {
+      case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
+          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
+      )
+      case _ => //validation passed
     }
 
     val reportVersion = getReportVersion(cmd, dataset)
@@ -164,11 +173,41 @@ trait CommonJobExecution extends ProjectMetadata {
     val params = ErrorSenderPluginParams(jobCmdConfig.datasetName,
       jobCmdConfig.datasetVersion, jobCmdConfig.reportDate, preparationResult.reportVersion, outputPath,
       sourcePhase, sourceSystem, runUrl, runId, uniqueRunId, Instant.now)
-    val postProcessingService = PostProcessingService(conf, params)
+    val postProcessingService = PostProcessingService(configReader.config, params)
     postProcessingService.onSaveOutput(df)
 
     if (runId.isEmpty) {
       log.warn("No run number found, the Run URL cannot be properly reported!")
+    }
+  }
+
+  protected def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                    (implicit spark: SparkSession): DataFrame = {
+    def computeBlockCount(desiredBlockSize: Long, totalByteSize: BigInt, addRemainder: Boolean): Int = {
+      val int = (totalByteSize / desiredBlockSize).toInt
+      val blockCount = int + (if (addRemainder && (totalByteSize % desiredBlockSize != 0)) 1 else 0)
+      blockCount max 1
+    }
+
+    def changePartitionCount(blockCount: Int, fnc: Int => DataFrame): DataFrame = {
+      val outputDf = fnc(blockCount)
+      log.info(s"Number of output partitions: ${outputDf.rdd.getNumPartitions}")
+      outputDf
+    }
+
+    val catalystPlan = df.queryExecution.logical
+    val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
+
+    val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
+
+    (minBlockSize, maxBlockSize) match {
+      case (Some(min), None) if currentBlockSize < min =>
+        changePartitionCount(computeBlockCount(min, sizeInBytes, addRemainder = false), df.coalesce)
+      case (None, Some(max)) if currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+      case (Some(min), Some(max)) if currentBlockSize < min || currentBlockSize > max =>
+        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+      case _ => df
     }
   }
 
@@ -217,7 +256,7 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   private def getStandardizationPath[T](jobConfig: JobConfigParser[T], reportVersion: Int): String = {
-    MessageFormat.format(conf.getString("standardized.hdfs.path"),
+    MessageFormat.format(configReader.getString("standardized.hdfs.path"),
       jobConfig.datasetName,
       jobConfig.datasetVersion.toString,
       jobConfig.reportDate,
@@ -228,7 +267,7 @@ trait CommonJobExecution extends ProjectMetadata {
     ControlInfoValidation.addRawAndSourceRecordCountsToMetadata() match {
       case Failure(ex: za.co.absa.enceladus.utils.validation.ValidationException) =>
         val confEntry = "control.info.validation"
-        conf.getString(confEntry) match {
+        configReader.getString(confEntry) match {
           case "strict" => throw ex
           case "warning" => log.warn(ex.msg)
           case "none" =>
@@ -247,7 +286,7 @@ trait CommonJobExecution extends ProjectMetadata {
     })
   }
 
-  protected def addCustomDataToInfoFile(conf: Config, data: Map[String, String]): Unit = {
+  protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
     val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
