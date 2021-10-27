@@ -374,13 +374,8 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
   }
 
   hasValidJoinConditions(fieldValue = []) {
-    let isValid = fieldValue.length >= 1;
-
-    if (!isValid) {
-      sap.m.MessageToast.show("At least 1 join condition is required.");
-    }
-
-    return isValid
+    // empty join conditions are allowed
+    return true;
   }
 
   hasValidOutputColumns(rule = []) {
