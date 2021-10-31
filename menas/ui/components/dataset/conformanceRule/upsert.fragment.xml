@@ -15,7 +15,7 @@
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form">
     <Dialog id="upsertConformanceRuleDialog" title="{/newRule/title} Conformance Rule" resizable="true"
-            draggable="true" class="minW40rem" beforeOpen="onBeforeOpen" afterOpen="onAfterOpen">
+            draggable="true" beforeOpen="onBeforeOpen" afterOpen="onAfterOpen" contentWidth="950px">
         <content>
             <form:SimpleForm id="addConformanceRuleForm" adjustLabelSpan="false" editable="true">
                 <form:content>
