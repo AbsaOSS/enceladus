@@ -236,7 +236,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
       MappingRuleInterpreterBroadcast(rule, ictx.conformance)
     } else {
       //Only MappingRuleInterpreterBroadcast or MappingRuleInterpreterGroupExplode support multiple outputs
-      if (ictx.featureSwitches.experimentalMappingRuleEnabled || rule.additionalColumns.getOrElse(Map()).nonEmpty) {
+      if (ictx.featureSwitches.experimentalMappingRuleEnabled || rule.definedAdditionalColumns().nonEmpty) {
         log.info("Group explode strategy for mapping rules used")
         MappingRuleInterpreterGroupExplode(rule, ictx.conformance)
       } else {

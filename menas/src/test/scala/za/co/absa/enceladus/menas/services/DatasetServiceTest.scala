@@ -145,6 +145,44 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       validationResult shouldBe expectedValidationResultForSetup
     }
 
+    test("Validate mapping table with valid fields") {
+      val initialSet = Future.successful(Set("dummyValue"))
+      val validationResultDefault = service.validateMappingTable(initialSet, DatasetFactory.getDummyMappingRule())
+      val validationResultOutputCol = service.validateMappingTable(initialSet,
+        DatasetFactory.getDummyMappingRule(additionalOutputs = Some(Map("a"->"abc", "b"->"cc"))))
+
+      val validations1: Validation = await(validationResultDefault.mergeValidations())
+      val validations2: Validation = await(validationResultOutputCol.mergeValidations())
+
+      assertResult(Validation(Map(), Map()))(validations1)
+      assertResult(Set("dummyValue", "dummyOutputCol"))(await(validationResultDefault.fields))
+
+      assertResult(Validation(Map(), Map()))(validations2)
+      assertResult(Set("dummyValue", "dummyOutputCol", "a", "b"))(await(validationResultOutputCol.fields))
+    }
+
+    test("Validate mapping table with invalid input field") {
+      val existingIncompleteSet = Future.successful(Set("first", "second"))
+
+      val validationResult = service.validateMappingTable(existingIncompleteSet,
+        DatasetFactory.getDummyMappingRule(additionalOutputs = Some(Map("a"->"abc", "b"->"cc"))))
+
+      assertResult(Validation(Map("item.conformanceRules" ->
+        List("Input column dummyValue for conformance rule cannot be found")), Map())
+      )(await(validationResult.mergeValidations()))
+      assertResult(Set("a", "b", "first", "second", "dummyOutputCol"))(await(validationResult.fields))
+    }
+
+    test("Validate mapping table with invalid output field") {
+      val existingCompleteSet = Future.successful(Set("dummyValue", "first", "second"))
+      val validationResult4 = service.validateMappingTable(existingCompleteSet,
+        DatasetFactory.getDummyMappingRule(additionalOutputs = Some(Map("a"->"abc", "b"->"cc", "first"->"there"))))
+      assertResult(Validation(Map("item.conformanceRules" -> List("Output column first already exists")), Map())
+      )(await(validationResult4.mergeValidations()))
+      assertResult(Set("a", "b", "first", "second", "dummyValue", "dummyOutputCol")
+      )(await(validationResult4.fields))
+    }
+
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1, properties = Some(datasetProperties))
     Seq(
       ("validation for run", ValidationLevel.ForRun, Some(dataset), Some(dataset.copy(propertiesValidation = Some(expectedValidationResultForRun)))),
