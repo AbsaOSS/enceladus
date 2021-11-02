@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa.enceladus</groupId>
     <artifactId>parent</artifactId>
-    <version>2.25.0-SNAPSHOT</version>
+    <version>2.26.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Enceladus</name>
@@ -152,7 +152,7 @@
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
         <absa.commons.version>0.0.27</absa.commons.version>
-        <atum.version>3.6.0</atum.version>
+        <atum.version>3.7.0</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
         <cobrix.version>2.4.2</cobrix.version>
@@ -170,7 +170,7 @@
         <kafka.spark.version>0-10</kafka.spark.version>
         <lodash.version>4.17.10</lodash.version>
         <mockito.core.version>3.5.2</mockito.core.version>
-        <mockito.scala.version>1.15.0</mockito.scala.version>
+        <mockito.scala.version>1.16.42</mockito.scala.version>
         <momentjs.version>2.22.2</momentjs.version>
         <mongo.java.driver.version>3.6.4</mongo.java.driver.version>
         <mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
@@ -541,6 +541,7 @@
                                 <exclude>.editorconfig</exclude>
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>scripts/cmd/tee.bat</exclude>
+                                <exclude>**/org.mockito.plugins.MockMaker</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

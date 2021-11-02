@@ -25,7 +25,7 @@ import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
@@ -35,7 +35,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
-import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.modules.SourcePhase
@@ -74,7 +74,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
-      conf,
+      configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
@@ -103,7 +103,7 @@ trait ConformanceExecution extends CommonJobExecution {
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
                           (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO): DataFrame = {
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
 
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
     implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem
@@ -134,7 +134,8 @@ trait ConformanceExecution extends CommonJobExecution {
                                             preparationResult: PreparationResult,
                                             menasCredentials: MenasCredentials)
                                            (implicit spark: SparkSession,
-                                            cmd: ConformanceConfigParser[T]): Unit = {
+                                            cmd: ConformanceConfigParser[T],
+                                            configReader: ConfigReader): Unit = {
     val cmdLineArgs: String = args.mkString(" ")
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
     val publishFs = preparationResult.pathCfg.publish.fileSystem
@@ -159,7 +160,11 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    withPartCols.write.parquet(preparationResult.pathCfg.publish.path)
+    val minBlockSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxBlockSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+    val withRepartitioning = repartitionDataFrame(result, minBlockSize, maxBlockSize)
+
+    withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
     val publishDirSize = HadoopFsUtils.getOrCreate(publishFs).getDirectorySize(preparationResult.pathCfg.publish.path)
     preparationResult.performance.finishMeasurement(publishDirSize, recordCount)
