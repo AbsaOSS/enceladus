@@ -20,15 +20,18 @@ import org.apache.spark.sql.types._
 
 import scala.util.control.TailCalls.{TailRec, done, tailcall}
 
+/**
+  * Estimate an average row size in bytes.
+  */
 object RecordSizer {
   private val zeroByteSize: ByteSize = 0
 
   def fromSchema(schema: StructType)(implicit dataTypeSizes: DataTypeSizes): ByteSize = {
-    structSize(schema, 1, done(zeroByteSize)).result
+    structSize(schema, 1, done(zeroByteSize)).result //nullability not taken into account
   }
 
   def fromDataFrameSample(df: DataFrame, sampleSize: Int): ByteSize = {
-    val (rowsTotalSize, rowCount) = df.head(sampleSize)
+    val (rowsTotalSize, rowCount) = df.head(sampleSize) //TODO head could be skewed
       .foldLeft(zeroByteSize, 0L){case ((size, count), row) =>
         (size + rowSize(row), count + 1)
       }

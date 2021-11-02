@@ -20,6 +20,7 @@ import org.apache.spark.sql.functions.spark_partition_id
 
 
 // TODO add (optional) skew suppression
+// use standard deviation
 
 object DataFramePartitioner {
   implicit class DataFrameFunctions(val df: DataFrame) extends AnyVal {
@@ -44,6 +45,7 @@ object DataFramePartitioner {
     }
 
     def repartitionByRecordCount(maxRecordsPerPartition: Long): DataFrame = {
+      //TODO verify max of each partition, it might still break the limit
       val partitionCountLong = (recordCount / maxRecordsPerPartition) +
         (if (recordCount % maxRecordsPerPartition == 0) 0 else 1)
       val partitionCount: Int = partitionCountLong match {
