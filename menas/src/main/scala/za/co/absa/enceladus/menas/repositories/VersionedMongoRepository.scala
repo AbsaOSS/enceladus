@@ -132,9 +132,9 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
-  def setModifiableState(name: String, version: Option[Int], modifiable: Boolean): Future[UpdateResult] = {
-    collection.updateMany(getNameVersionFilter(name, version), combine(
-      set("modifiable", modifiable))).toFuture()
+  def setLockState(name: String, isLocked: Boolean): Future[UpdateResult] = {
+    collection.updateMany(getNameFilter(name), combine(
+      set("locked", isLocked))).toFuture()
   }
 
   def isDisabled(name: String): Future[Boolean] = {

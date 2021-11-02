@@ -224,8 +224,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
-      } else if (!versionToUpdate.get.modifiable) {
-        Future.failed(new NotAllowedException("Entity is not modifiable"))
+      } else if (versionToUpdate.get.locked) {
+        Future.failed(new NotAllowedException("Entity is locked"))
       }
       else {
         transform(versionToUpdate.get)
@@ -271,14 +271,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.isDisabled(name)
   }
 
-  def setModifiableVersion(name: String, version: Option[Int], modifiable: Boolean): Future[UpdateResult] = {
-    getUsedIn(name, version).flatMap { usedIn =>
-      if (usedIn.nonEmpty) {
-        throw EntityInUseException(usedIn)
-      } else {
-        versionedMongoRepository.setModifiableState(name, version, modifiable)
-      }
-    }
+  def setLock(name: String, isLocked: Boolean): Future[UpdateResult] = {
+    versionedMongoRepository.setLockState(name, isLocked)
   }
 
   def validate(item: C): Future[Validation] = {

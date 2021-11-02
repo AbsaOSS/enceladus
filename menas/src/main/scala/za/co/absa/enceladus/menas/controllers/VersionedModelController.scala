@@ -158,28 +158,16 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
     versionedModelService.disableVersion(name, v)
   }
 
-  @PutMapping(Array("/block/{name}", "/block/{name}/{version}"))
+  @PutMapping(Array("/lock/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def block(@PathVariable name: String,
-            @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-    val v = if (version.isPresent) {
-      Some(version.get.toInt)
-    } else {
-      None
-    }
-    versionedModelService.setModifiableVersion(name, v, false)
+  def lock(@PathVariable name: String): CompletableFuture[UpdateResult] = {
+    versionedModelService.setLock(name, isLocked = false)
   }
 
-  @PutMapping(Array("/unblock/{name}", "/unblock/{name}/{version}"))
+  @PutMapping(Array("/unlock/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def unblock(@PathVariable name: String,
-            @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-    val v = if (version.isPresent) {
-      Some(version.get.toInt)
-    } else {
-      None
-    }
-    versionedModelService.setModifiableVersion(name, v, true)
+  def unlock(@PathVariable name: String): CompletableFuture[UpdateResult] = {
+    versionedModelService.setLock(name, isLocked = true)
   }
 
 

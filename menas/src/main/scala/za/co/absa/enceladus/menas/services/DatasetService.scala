@@ -60,8 +60,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
     if (newDataset.schedule == latest.schedule) {
       Future(latest)
-    } else if (!latest.modifiable) {
-      Future.failed(new NotAllowedException("Entity is not modifiable"))
+    } else if (latest.locked) {
+      Future.failed(new NotAllowedException("Entity is locked"))
     } else if (newDataset.schedule.isEmpty) {
       Future(latest.setSchedule(None))
     } else {
