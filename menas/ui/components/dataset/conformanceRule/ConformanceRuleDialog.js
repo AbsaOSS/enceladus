@@ -109,10 +109,10 @@ class ConformanceRuleDialog {
     this.beforeSubmitChanges(newRule);
     this.resetRuleValidation();
 
-    newRule.hasValidFilter = true; // default for non-MappingConformanceRules
+    newRule.filterValidations = {empty: true, valid: true}; // default for non-MappingConformanceRules
     if (newRule._t === "MappingConformanceRule") {
-      const validFilter = this.filterEdit.validateFilterData();
-      newRule.hasValidFilter = validFilter;
+      const filterValidations = this.filterEdit.validateFilterData();
+      newRule.filterValidations = filterValidations;
     }
 
     if (this.ruleForms.byType(newRule._t).isValid(newRule, this.controller._transitiveSchemas, currentDataset.conformance)) {
