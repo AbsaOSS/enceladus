@@ -25,7 +25,7 @@ import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.DatasetFactory
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.concurrent.Future
@@ -59,6 +59,8 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     Mockito.when(modelRepository.getLatestVersionValue("dataset")).thenReturn(Future.successful(Some(1)))
     Mockito.when(modelRepository.isUniqueName("dataset")).thenReturn(Future.successful(true))
     Mockito.when(modelRepository.update(eqTo("user"), any[Dataset])).thenReturn(Future.failed(writeException))
+    Mockito.when(modelRepository.getConnectedMappingTable("dummyMappingTable", 1)).thenReturn(Future.successful(Some(MappingTableFactory.getDummyMappingTable())))
+    Mockito.when(modelRepository.getConnectedSchema("dummySchema", 1)).thenReturn(Future.successful(Some(SchemaFactory.getDummySchema())))
 
     val result = intercept[ValidationException] {
       await(service.update("user", dataset))

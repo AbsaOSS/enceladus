@@ -316,17 +316,35 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   def validateMappingTable(fields: Future[Set[String]],
-                           mt: MappingConformanceRule): RuleValidationsAndFields = {
-    val inputValidation = mt.attributeMappings.values.map(validateInputColumn(fields, _))
+                           mtRule: MappingConformanceRule): RuleValidationsAndFields = {
+    val inputValidation = mtRule.attributeMappings.values.map(validateInputColumn(fields, _))
+
+    val mtFields: Future[Set[String]] = for {
+      someMappingTable <- datasetMongoRepository.getConnectedMappingTable(mtRule.mappingTable, mtRule.mappingTableVersion)
+      mtSchema <- someMappingTable.map(mt => datasetMongoRepository.getConnectedSchema(mt.schemaName, mt.schemaVersion)).get
+    } yield mtSchema.map(x => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet ).get
 
     val inputsValidated = inputValidation
       .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
 
-    val outputCols = mt.allOutputColumns().keySet
-    outputCols.foldLeft(inputsValidated)((acc, outputCol: String) => {
+    val outputCols = mtRule.allOutputColumns()
+    val outputColsKeys = mtRule.allOutputColumns().keySet
+
+    val validatedOutputCols = outputColsKeys.foldLeft(inputsValidated)((acc, outputCol: String) => {
       val updated: RuleValidationsAndFields = validateOutputColumn(acc.fields, outputCol)
       acc.updateWithFieldsReplace(updated)
     })
+
+    val outputColsFlat: Future[Set[String]] = for {
+      fieldsFromMT <- mtFields
+      oldFields <- validatedOutputCols.fields
+    } yield  oldFields ++ outputCols.flatMap { case (in, out) =>
+      fieldsFromMT
+        .filter(_.startsWith(in))
+        .map(x => s"$out.${x.replaceAllLiterally(in, "")}")
+    }
+
+    validatedOutputCols.updateFields(outputColsFlat)
   }
 
   private def validateMultipleInAndOut[C <: WithMultipleInAndOut](fields: Future[Set[String]],
@@ -343,12 +361,10 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   private def validateInputColumn(fields: Future[Set[String]],
                                   input: String): RuleValidationsAndFields = {
-    val validation = Validation()
-
     val newValidation = for {
       f <- fields
     } yield {
-      validation.withErrorIf(
+      Validation().withErrorIf(
         !f.contains(input),
         "item.conformanceRules",
         s"Input column $input for conformance rule cannot be found"
@@ -359,12 +375,10 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   private def validateOutputColumn(fields: Future[Set[String]],
                                    output: String): RuleValidationsAndFields = {
-    val validation = Validation()
-
     val newValidation = for {
       f <- fields
     } yield {
-      validation.withErrorIf(
+      Validation().withErrorIf(
         f.contains(output),
         "item.conformanceRules",
         s"Output column $output already exists"
