@@ -28,8 +28,9 @@ import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
+import java.util.regex.Pattern
 import scala.concurrent.Future
-import scala.language.reflectiveCalls
+import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.{Failure, Success}
 
 
@@ -318,30 +319,47 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   def validateMappingTable(fields: Future[Set[String]],
                            mtRule: MappingConformanceRule): RuleValidationsAndFields = {
     val inputValidation = mtRule.attributeMappings.values.map(validateInputColumn(fields, _))
+    val outputCols = mtRule.allOutputColumns()
+    val outputColsKeys = mtRule.allOutputColumns().keySet
+    val outputColsValues = mtRule.allOutputColumns().values
 
-    val mtFields: Future[Set[String]] = for {
+    val mtFields = for {
       someMappingTable <- datasetMongoRepository.getConnectedMappingTable(mtRule.mappingTable, mtRule.mappingTableVersion)
       mtSchema <- someMappingTable.map(mt => datasetMongoRepository.getConnectedSchema(mt.schemaName, mt.schemaVersion)).get
-    } yield mtSchema.map(x => x.fields.flatMap(f => f.getAllChildren :+ f.getAbsolutePath).toSet ).get
+    } yield mtSchema.map(x => x.fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet ).get
 
     val inputsValidated = inputValidation
       .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
-
-    val outputCols = mtRule.allOutputColumns()
-    val outputColsKeys = mtRule.allOutputColumns().keySet
 
     val validatedOutputCols = outputColsKeys.foldLeft(inputsValidated)((acc, outputCol: String) => {
       val updated: RuleValidationsAndFields = validateOutputColumn(acc.fields, outputCol)
       acc.updateWithFieldsReplace(updated)
     })
 
+    // This won't work because some paths are full paths and some paths are up to this path
+//    val mappingTableInValidations = for {
+//      fieldsFromMT <- mtFields
+//    } yield outputColsValues.foldLeft(Validation())((acc, outputCol: String) => {
+//      acc.withErrorIf(
+//        !fieldsFromMT.contains(outputCol),
+//        s"item.conformanceRules.mappingTable.${mtRule.order}",
+//        s"MappingTable ${mtRule.mappingTable} (v${mtRule.mappingTableVersion}) does not have field $outputCol"
+//      )
+//    })
+
+//    val validatedWithInCols = validatedOutputCols.appendValidations(Seq(mappingTableInValidations))
+
     val outputColsFlat: Future[Set[String]] = for {
       fieldsFromMT <- mtFields
       oldFields <- validatedOutputCols.fields
-    } yield  oldFields ++ outputCols.flatMap { case (in, out) =>
+    } yield  oldFields ++ outputCols.flatMap { case (out, in) =>
       fieldsFromMT
-        .filter(_.startsWith(in))
-        .map(x => s"$out.${x.replaceAllLiterally(in, "")}")
+        .filter(x => x.equals(in) || x.startsWith(s"$in.") )
+        .map { x =>
+          val postfix = x.split('.').drop(in.split('.').length).mkString(".")
+          val postfixWithDot = if (postfix.nonEmpty) s".$postfix" else ""
+          s"$out$postfixWithDot"
+        }
     }
 
     validatedOutputCols.updateFields(outputColsFlat)
@@ -412,6 +430,7 @@ object DatasetService {
     )
 
     def updateFields(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+    def appendValidations(v: Seq[Future[Validation]]): RuleValidationsAndFields = copy(validations = validations ++ v)
 
     def mergeValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
   }
