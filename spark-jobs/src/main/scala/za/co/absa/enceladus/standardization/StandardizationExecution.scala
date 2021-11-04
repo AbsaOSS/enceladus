@@ -23,7 +23,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -32,7 +32,7 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.config.PathWithFs
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
@@ -68,7 +68,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Enable Menas plugin for Control Framework
     MenasPlugin.enableMenas(
-      conf,
+      configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
       cmd.reportDate,
@@ -88,7 +88,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Add Dataset properties marked with putIntoInfoFile=true
     val dataForInfoFile: Map[String, String] = dao.getDatasetPropertiesForInfoFile(cmd.datasetName, cmd.datasetVersion)
-    addCustomDataToInfoFile(conf, dataForInfoFile)
+    addCustomDataToInfoFile(configReader, dataForInfoFile)
 
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.raw,
@@ -149,7 +149,7 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
                               (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
     //scalastyle:on parameter.number
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
 
     try {
       handleControlInfoValidation()
@@ -174,7 +174,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
                                                 menasCredentials: MenasCredentials)
-                                               (implicit spark: SparkSession): DataFrame = {
+                                               (implicit spark: SparkSession, configReader: ConfigReader): DataFrame = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
@@ -195,7 +195,16 @@ trait StandardizationExecution extends CommonJobExecution {
     }
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
-    standardizedDF.write.parquet(preparationResult.pathCfg.standardization.path)
+
+    val minPartitionSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
+    val maxPartitionSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
+
+    val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
+        repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
+      } else {
+      standardizedDF
+    }
+    withRepartitioning.write.parquet(preparationResult.pathCfg.standardization.path)
 
     // Store performance metrics
     // (record count, directory sizes, elapsed time, etc. to _INFO file metadata and performance file)

@@ -29,7 +29,7 @@ object MenasConnectionStringParser {
         .replaceAll("/$", "")
         .replaceAll("/api$", "")
       )
-      .toSet
+      .distinct
       .toList
   }
 

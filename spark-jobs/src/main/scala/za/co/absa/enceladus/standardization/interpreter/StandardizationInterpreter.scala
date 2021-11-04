@@ -26,7 +26,7 @@ import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, T
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
 
@@ -34,7 +34,6 @@ import za.co.absa.enceladus.utils.validation.ValidationException
  * Object representing set of tools for performing the actual standardization
  */
 object StandardizationInterpreter {
-  private implicit val defaults: Defaults = GlobalDefaults
   private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   /**

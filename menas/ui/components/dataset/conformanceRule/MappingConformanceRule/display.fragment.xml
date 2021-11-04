@@ -47,6 +47,10 @@
                         </CustomListItem>
                     </items>
                 </List>
+                <Label text="Filter" />
+                <Tree id="filterTree" items="{path: 'filterViewTree', parameters: {numberOfExpandedLevels: 1}}" noDataText="No filter set.">
+                    <StandardTreeItem title="{text}" icon="{icon}"/>
+                </Tree>
             </form:content>
         </form:SimpleForm>
         <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>
