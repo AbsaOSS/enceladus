@@ -185,8 +185,11 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
             SchemaField("RawFeedName", "string", "RawFeedName", nullable = true, metadata = Map(), children = List()),
             SchemaField("SourceSystem", "struct", "SourceSystem", nullable = true, metadata = Map(), children = List(
               SchemaField("Description", "string", "SourceSystem.Description", nullable = true, metadata = Map(), children = List()),
-              SchemaField("SourceSystem", "string", "SourceSystem.SourceSystem", nullable = true, metadata = Map(), children = List()))
-            )
+              SchemaField("Details", "struct", "SourceSystem.Details", nullable = true, metadata = Map(), children = List(
+                SchemaField("Stable", "boolean", "SourceSystem.Details.Stable", nullable = true, metadata = Map(), children = List()),
+                SchemaField("Version", "integer", "SourceSystem.Details.Version", nullable = true, metadata = Map(), children = List())
+              ))
+            ))
           ))
         )))
 
@@ -203,9 +206,11 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       assertResult(Validation(Map(), Map()))(validationsResult) // no errors, no warnings
 
       val expectedFields = Set(
-        "Alfa", // these 3 fields are included from MT schema with root renamed as per mCr definition
-        "Alfa.SourceSystem",
+        "Alfa", // these fields are included from MT schema with root renamed as per mCr definition
         "Alfa.Description",
+        "Alfa.Details",
+        "Alfa.Details.Stable",
+        "Alfa.Details.Version",
         "Byte",
         "SomeBox",
         "SomeBox.boxedVal",
@@ -301,6 +306,27 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val dataset = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(properties))
     DatasetService.removeBlankProperties(dataset.properties) shouldBe Some(Map("propKey1" -> "someValue"))
+  }
+
+  test("DatasetService.replacePrefixIfFound replaces field prefixes") {
+    DatasetService.replacePrefixIfFound("Alfa", "Beta", "Alfa") shouldBe Some("Beta")
+    DatasetService.replacePrefixIfFound("Omega", "Beta", "Alfa") shouldBe None
+
+    DatasetService.replacePrefixIfFound("Alfa.abc.def", "Beta", "Alfa") shouldBe Some("Beta.abc.def")
+    // not a .-separated prefix:
+    DatasetService.replacePrefixIfFound("Alfaville.there", "Beta", "Alfa") shouldBe None
+    // not a prefix
+    DatasetService.replacePrefixIfFound("some.Alfa.other", "Beta", "Alfa") shouldBe None
+
+    // all at once in an iterable:
+    DatasetService.replacePrefixIfFound(Seq(
+      "Alfa", "Omega",
+      "Alfa.abc.def", "Alfaville", "Alfaville.there"
+    ), "Beta", "Alfa") shouldBe Seq(
+      "Beta",
+      "Beta.abc.def"
+    )
+
   }
 
 }

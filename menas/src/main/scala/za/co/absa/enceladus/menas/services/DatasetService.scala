@@ -28,7 +28,6 @@ import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
-import java.util.regex.Pattern
 import scala.concurrent.Future
 import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.{Failure, Success}
@@ -319,9 +318,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   def validateMappingTable(fields: Future[Set[String]],
                            mtRule: MappingConformanceRule): RuleValidationsAndFields = {
     val inputValidation = mtRule.attributeMappings.values.map(validateInputColumn(fields, _))
-    val outputCols = mtRule.allOutputColumns()
-    val outputColsKeys = mtRule.allOutputColumns().keySet
-    val outputColsValues = mtRule.allOutputColumns().values
+    val allOutput = mtRule.allOutputColumns()
+    val outputColumns = mtRule.allOutputColumns().keySet
 
     val mtFields = for {
       someMappingTable <- datasetMongoRepository.getConnectedMappingTable(mtRule.mappingTable, mtRule.mappingTableVersion)
@@ -331,35 +329,16 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     val inputsValidated = inputValidation
       .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
 
-    val validatedOutputCols = outputColsKeys.foldLeft(inputsValidated)((acc, outputCol: String) => {
+    val validatedOutputCols = outputColumns.foldLeft(inputsValidated)((acc, outputCol: String) => {
       val updated: RuleValidationsAndFields = validateOutputColumn(acc.fields, outputCol)
       acc.updateWithFieldsReplace(updated)
     })
 
-    // This won't work because some paths are full paths and some paths are up to this path
-//    val mappingTableInValidations = for {
-//      fieldsFromMT <- mtFields
-//    } yield outputColsValues.foldLeft(Validation())((acc, outputCol: String) => {
-//      acc.withErrorIf(
-//        !fieldsFromMT.contains(outputCol),
-//        s"item.conformanceRules.mappingTable.${mtRule.order}",
-//        s"MappingTable ${mtRule.mappingTable} (v${mtRule.mappingTableVersion}) does not have field $outputCol"
-//      )
-//    })
-
-//    val validatedWithInCols = validatedOutputCols.appendValidations(Seq(mappingTableInValidations))
-
     val outputColsFlat: Future[Set[String]] = for {
       fieldsFromMT <- mtFields
       oldFields <- validatedOutputCols.fields
-    } yield  oldFields ++ outputCols.flatMap { case (out, in) =>
-      fieldsFromMT
-        .filter(x => x.equals(in) || x.startsWith(s"$in.") )
-        .map { x =>
-          val postfix = x.split('.').drop(in.split('.').length).mkString(".")
-          val postfixWithDot = if (postfix.nonEmpty) s".$postfix" else ""
-          s"$out$postfixWithDot"
-        }
+    } yield  oldFields ++ allOutput.flatMap { case (out, in) =>
+      DatasetService.replacePrefixIfFound(fieldsFromMT, out, in)
     }
 
     validatedOutputCols.updateFields(outputColsFlat)
@@ -445,5 +424,19 @@ object DatasetService {
     properties.map {
       _.filter { case (_, propValue) => propValue.nonEmpty }
     }
+  }
+
+  private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {
+    fieldName match {
+      case `lookFor` => Some(replacement) // exact match
+      case field if field.startsWith(s"$lookFor.") =>
+        val strippedField = field.stripPrefix(s"$lookFor.")
+        Some(s"$replacement.$strippedField")
+      case _ => None
+    }
+  }
+
+  private[services] def replacePrefixIfFound(fieldNames: Iterable[String], replacement: String, lookFor: String): Iterable[String] = {
+    fieldNames.flatMap(replacePrefixIfFound(_, replacement, lookFor)) // Nones discarded, Some's lifted
   }
 }
