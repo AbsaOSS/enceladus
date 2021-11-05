@@ -62,6 +62,14 @@ class RulesSuite extends AnyFunSuite with SparkTestBase {
     assert(roleCondGen.semanticEquals(roleCond))
   }
 
+  test("Test empty join condition evaluates to true") {
+    val countryRule = EmployeeConformance.countryRule.copy(attributeMappings = Map.empty)
+    val countryCondGen = CommonMappingRuleInterpreter.getJoinCondition(countryRule).expr
+    val countryCond = lit(true).expr
+
+    assert(countryCondGen.semanticEquals(countryCond))
+  }
+
   test("Infest strictest type int") {
     val colGen = dummyInterpreter.inferStrictestType("2").expr
     val colMan = lit(2).expr

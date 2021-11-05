@@ -369,18 +369,20 @@ class MappingConformanceRuleForm extends ConformanceRuleForm {
   isCorrectlyConfigured(rule) {
     return this.hasValidInputColumn(rule.targetAttribute)
       & this.hasValidOutputColumns(rule)
-      & this.hasValidJoinConditions(rule.newJoinConditions)
-      & rule.hasValidFilter;
+      & this.hasValidJoinConditions(rule.newJoinConditions, rule.filterValidations.empty)
+      & rule.filterValidations.valid;
   }
 
-  hasValidJoinConditions(fieldValue = []) {
-    let isValid = fieldValue.length >= 1;
+  hasValidJoinConditions(fieldValue = [], filtersEmpty) {
+    const nonEmptyJoinConditions = fieldValue.length >= 1;
+    const validJoinConditions = (nonEmptyJoinConditions || !filtersEmpty);
 
-    if (!isValid) {
-      sap.m.MessageToast.show("At least 1 join condition is required.");
+
+    if (!validJoinConditions) {
+      sap.m.MessageToast.show("Either provide a join condition or a filter!");
     }
 
-    return isValid
+    return validJoinConditions;
   }
 
   hasValidOutputColumns(rule = []) {
