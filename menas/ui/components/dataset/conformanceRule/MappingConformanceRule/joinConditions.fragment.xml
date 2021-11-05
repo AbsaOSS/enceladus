@@ -21,7 +21,7 @@
     <Label text="Join Conditions"/>
     <List id="joinConditions"
           items="{/newRule/newJoinConditions}"
-          noDataText="No join conditions (1 minimum)"
+          noDataText="No join conditions"
           mode="Delete"
           delete=".onDeleteJoinCondition">
         <items>
