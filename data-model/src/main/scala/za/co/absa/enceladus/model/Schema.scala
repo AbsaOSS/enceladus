@@ -49,7 +49,7 @@ case class Schema(name: String,
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
-  override def setLocked(modifiable: Boolean): VersionedModel = this.copy(locked = modifiable)
+  override def setLocked(locked: Boolean): VersionedModel = this.copy(locked = locked)
   override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
   override def setParent(newParent: Option[MenasReference]): Schema = this.copy(parent = newParent)
 

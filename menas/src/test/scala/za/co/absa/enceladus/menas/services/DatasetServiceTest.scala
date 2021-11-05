@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.menas.services
 
 import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
+import javax.ws.rs.NotAllowedException
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
@@ -247,6 +248,28 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     val dataset = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(properties))
     DatasetService.removeBlankProperties(dataset.properties) shouldBe Some(Map("propKey1" -> "someValue"))
+  }
+
+  test("DatasetService.lock works correctly") {
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"),locked = true)
+    Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
+    Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
+    Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
+
+    assertThrows[NotAllowedException](await(service.update("datasetA",
+      DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr")))))
+  }
+
+  test("DatasetService.unlocked works correctly") {
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))
+    Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
+    Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
+    Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
+
+    val maybeDataset = await(service.update("datasetA",
+      DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
+    assertResult(Some("newdescr"))(maybeDataset.get.description)
+    assert(!maybeDataset.get.locked)
   }
 
 }

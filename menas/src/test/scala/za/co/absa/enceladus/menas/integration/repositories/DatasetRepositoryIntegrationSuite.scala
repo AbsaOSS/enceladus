@@ -668,4 +668,30 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       }
     }
   }
+
+  "DatasetMongoRepository::lock" should {
+    val datasetName = "dataset"
+    "lock" when {
+      "updating to locked" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset(name = datasetName, version = 1),
+          DatasetFactory.getDummyDataset(name = datasetName, version = 2)
+        )
+        await(datasetMongoRepository.setLockState(datasetName, isLocked = true))
+        val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
+        assert(resultedDatasets.forall(_.locked))
+      }
+    }
+    "unlock" when {
+      "updating to unlocked" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset(name = datasetName, version = 1),
+          DatasetFactory.getDummyDataset(name = datasetName, version = 2)
+        )
+        await(datasetMongoRepository.setLockState(datasetName, isLocked = false))
+        val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
+        assert(resultedDatasets.forall(!_.locked))
+      }
+    }
+  }
 }

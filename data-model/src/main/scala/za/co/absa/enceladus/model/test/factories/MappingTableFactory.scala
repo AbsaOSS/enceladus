@@ -39,7 +39,7 @@ object MappingTableFactory extends EntityFactory[Schema] {
                            disabled: Boolean = false,
                            dateDisabled: Option[ZonedDateTime] = None,
                            userDisabled: Option[String] = None,
-                           modifiable: Boolean = true,
+                           locked: Boolean = false,
                            parent: Option[MenasReference] = None,
                            filter: Option[DataFrameFilter] = None): MappingTable = {
 
@@ -57,7 +57,7 @@ object MappingTableFactory extends EntityFactory[Schema] {
       disabled,
       dateDisabled,
       userDisabled,
-      modifiable,
+      locked,
       parent,
       filter
     )

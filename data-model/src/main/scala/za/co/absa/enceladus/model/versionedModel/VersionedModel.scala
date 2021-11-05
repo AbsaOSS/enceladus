@@ -48,7 +48,7 @@ trait VersionedModel extends Exportable {
   def setDescription(desc: Option[String]): VersionedModel
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
-  def setLocked(modifiable: Boolean): VersionedModel
+  def setLocked(locked: Boolean): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
 
   def exportItem(): String

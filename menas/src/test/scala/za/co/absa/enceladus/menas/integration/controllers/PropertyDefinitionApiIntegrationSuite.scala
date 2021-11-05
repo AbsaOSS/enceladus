@@ -323,7 +323,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
                  |"putIntoInfoFile":false,
                  |"essentiality":{"_t":"Optional"},
                  |"disabled":false,
-                 |"locked":true,
+                 |"locked":false,
                  |"dateCreated":"${pd23.dateCreated}",
                  |"userCreated":"dummyUser",
                  |"lastUpdated":"${pd23.lastUpdated}",

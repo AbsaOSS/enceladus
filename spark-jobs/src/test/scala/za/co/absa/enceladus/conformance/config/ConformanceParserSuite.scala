@@ -50,7 +50,7 @@ class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
   private val disabled = false
   private val dateDisabled = None
   private val userDisabled = None
-  private val modifiable = true
+  private val locked = false
   private val folderPrefix = s"year=$year/month=$month/day=$day"
   private val infoDateColumn = "enceladus_info_date"
   private val infoVersionColumn = "enceladus_info_version"
@@ -147,7 +147,7 @@ class ConformanceParserSuite extends AnyFunSuite with SparkTestBase {
       disabled,
       dateDisabled,
       userDisabled,
-      modifiable,
+      locked,
       List()
     )
     val cmdConfigNoFolderPrefix = ConformanceConfig.getFromArguments(
