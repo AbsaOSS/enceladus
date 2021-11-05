@@ -21,7 +21,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.menas.exceptions.ValidationException
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
@@ -149,18 +149,70 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
     test("Validate mapping table with valid fields") {
       val initialSet = Future.successful(Set("dummyValue"))
-      val validationResultDefault = service.validateMappingTable(initialSet, DatasetFactory.getDummyMappingRule())
-      val validationResultOutputCol = service.validateMappingTable(initialSet,
+      val validationResultFut = service.validateMappingTable(initialSet, DatasetFactory.getDummyMappingRule())
+
+      val validationResult: Validation = await(validationResultFut.mergeValidations())
+
+      assertResult(Validation(Map(), Map()))(validationResult)
+      assertResult(Set("dummyValue", "dummyOutputCol"))(await(validationResultFut.fields))
+    }
+
+    test("Validate mapping table with valid fields - additional fields") {
+      val initialSet = Future.successful(Set("dummyValue"))
+      val validationResultFut = service.validateMappingTable(initialSet,
         DatasetFactory.getDummyMappingRule(additionalOutputs = Some(Map("a"->"abc", "b"->"cc"))))
 
-      val validations1: Validation = await(validationResultDefault.mergeValidations())
-      val validations2: Validation = await(validationResultOutputCol.mergeValidations())
+      val validationsResult: Validation = await(validationResultFut.mergeValidations())
 
-      assertResult(Validation(Map(), Map()))(validations1)
-      assertResult(Set("dummyValue", "dummyOutputCol"))(await(validationResultDefault.fields))
+      assertResult(Validation(Map(), Map()))(validationsResult)
+      assertResult(Set("dummyValue", "dummyOutputCol", "a", "b"))(await(validationResultFut.fields))
+    }
 
-      assertResult(Validation(Map(), Map()))(validations2)
-      assertResult(Set("dummyValue", "dummyOutputCol", "a", "b"))(await(validationResultOutputCol.fields))
+    test("Validate mapping table with valid fields - structs") {
+      val initialSet = Future.successful(Set(
+        "Byte",
+        "SomeBox",
+        "SomeBox.boxedVal",
+        "RegularField1"
+      ))
+
+      Mockito.when(modelRepository.getConnectedMappingTable("SourceSystemMappingTable", 1)).thenReturn(Future.successful(
+        Some(MappingTableFactory.getDummyMappingTable(name = "SourceSystemMappingTable", schemaName = "SourceSystemMappingSchema"))
+      ))
+      Mockito.when(modelRepository.getConnectedSchema("SourceSystemMappingSchema", 1))
+        .thenReturn(Future.successful(Some(
+          Schema("SourceSystemMappingSchema", description = None, userCreated = "user", userUpdated = "user", fields = List(
+            SchemaField("RawFeedName", "string", "RawFeedName", nullable = true, metadata = Map(), children = List()),
+            SchemaField("SourceSystem", "struct", "SourceSystem", nullable = true, metadata = Map(), children = List(
+              SchemaField("Description", "string", "SourceSystem.Description", nullable = true, metadata = Map(), children = List()),
+              SchemaField("SourceSystem", "string", "SourceSystem.SourceSystem", nullable = true, metadata = Map(), children = List()))
+            )
+          ))
+        )))
+
+      val mCr = DatasetFactory.getDummyMappingRule(
+        mappingTable = "SourceSystemMappingTable",
+        attributeMappings = Map("RawFeedName" -> "Byte"), // "Byte" must exists in input, because it is joined on
+        targetAttribute = "SourceSystem",
+        outputColumn = "Alfa"
+      )
+
+      val validationResultFut = service.validateMappingTable(initialSet, mCr)
+
+      val validationsResult: Validation = await(validationResultFut.mergeValidations())
+      assertResult(Validation(Map(), Map()))(validationsResult) // no errors, no warnings
+
+      val expectedFields = Set(
+        "Alfa", // these 3 fields are included from MT schema with root renamed as per mCr definition
+        "Alfa.SourceSystem",
+        "Alfa.Description",
+        "Byte",
+        "SomeBox",
+        "SomeBox.boxedVal",
+        "RegularField1"
+      )
+
+      assertResult(expectedFields)(await(validationResultFut.fields))
     }
 
     test("Validate mapping table with invalid input field") {
