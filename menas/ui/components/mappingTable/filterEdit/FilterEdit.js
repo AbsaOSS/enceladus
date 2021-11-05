@@ -198,72 +198,78 @@ class FilterEdit {
   }
 
   /**
-   * Validates data in the filter TreeTable, sets their valueState|valueStateText (error+error descs)
-   * @returns {boolean} returns true if the filter content is valid, false when invalid
+   * Validates data and emptiness in the filter TreeTable, sets their valueState|valueStateText (error+error descs)
+   * @returns {empty: boolean, valid: boolean}
    */
   validateFilterData() {
     const treeTable = this.#getById("filterTreeEdit");
     const treeTableModel = treeTable.getBinding().getModel();
     const filterData = treeTableModel.getProperty("/editingFilters");
 
-    let hasValidFilter = true;
     // filter data can be [filter], [null] or null
     if (!filterData || filterData.filter(x => x).length == 0) {
-      hasValidFilter = true;
-    } else {
-      // validate filter tree
-      const validateInUiFn = function (filterNode) {
-        switch (filterNode._t) {
-          case "AndJoinedFilters":
-          case "OrJoinedFilters":
-            if (filterNode.filterItems.filter(x => x).length == 0) { // empty deleted ([null]) is not valid
-              filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "Container filter must contain child filters!";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "NotFilter":
-            if (!filterNode.inputFilter) {
-              filterNode.filter_valueState = "Error";
-              filterNode.filter_valueStateText = "Container filter must contain a child filter!";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "EqualsFilter":
-          case "DiffersFilter":
-            if (filterNode.columnName.length == 0) {
-              filterNode.columnName_valueState = "Error";
-              filterNode.columnName_valueStateText = "Select the column.";
-              hasValidFilter = false;
-            }
-
-            if (filterNode.value.length == 0) {
-              filterNode.value_valueState = "Error";
-              filterNode.value_valueStateText = "Fill in the value.";
-              hasValidFilter = false;
-            }
-            break;
-
-          case "IsNullFilter":
-            if (filterNode.columnName.length == 0) {
-              filterNode.columnName_valueState = "Error";
-              filterNode.columnName_valueStateText = "Fill in column name.";
-              hasValidFilter = false;
-            }
-            break;
-
-          default:
-        }
+      return {
+        empty: true,
+        valid: true
       };
-
-      const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(filterData[0], validateInUiFn);
-      treeTableModel.setProperty("/editingFilters", [validatedFilter]);
-      treeTableModel.refresh();
     }
 
-    return hasValidFilter;
+    // nonempty filter: validate filter tree
+    let filterValid = true;
+    const validateInUiFn = function (filterNode) {
+      switch (filterNode._t) {
+        case "AndJoinedFilters":
+        case "OrJoinedFilters":
+          if (filterNode.filterItems.filter(x => x).length == 0) { // empty deleted ([null]) is not valid
+            filterNode.filter_valueState = "Error";
+            filterNode.filter_valueStateText = "Container filter must contain child filters!";
+            filterValid = false;
+          }
+          break;
+
+        case "NotFilter":
+          if (!filterNode.inputFilter) {
+            filterNode.filter_valueState = "Error";
+            filterNode.filter_valueStateText = "Container filter must contain a child filter!";
+            filterValid = false;
+          }
+          break;
+
+        case "EqualsFilter":
+        case "DiffersFilter":
+          if (filterNode.columnName.length == 0) {
+            filterNode.columnName_valueState = "Error";
+            filterNode.columnName_valueStateText = "Select the column.";
+            filterValid = false;
+          }
+
+          if (filterNode.value.length == 0) {
+            filterNode.value_valueState = "Error";
+            filterNode.value_valueStateText = "Fill in the value.";
+            filterValid = false;
+          }
+          break;
+
+        case "IsNullFilter":
+          if (filterNode.columnName.length == 0) {
+            filterNode.columnName_valueState = "Error";
+            filterNode.columnName_valueStateText = "Fill in column name.";
+            filterValid = false;
+          }
+          break;
+
+        default:
+      }
+    };
+
+    const validatedFilter = FilterTreeUtils.applyToFilterDataImmutably(filterData[0], validateInUiFn);
+    treeTableModel.setProperty("/editingFilters", [validatedFilter]);
+    treeTableModel.refresh();
+
+    return {
+      empty: false,
+      valid: filterValid
+    };
   }
 
   /**

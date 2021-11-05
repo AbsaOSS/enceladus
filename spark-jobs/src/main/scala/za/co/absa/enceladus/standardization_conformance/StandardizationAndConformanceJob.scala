@@ -50,6 +50,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
       processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
+      standardized.unpersist()
 
       prepareConformance(preparationResult)
       val confInputData = readConformanceInputData(preparationResult.pathCfg)
