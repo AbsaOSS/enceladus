@@ -20,11 +20,12 @@ import java.time.Instant
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
+import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
-import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoVersionColumn}
+import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
@@ -41,6 +42,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -312,6 +314,14 @@ trait CommonJobExecution extends ProjectMetadata {
       spark.setControlMeasurementError(job.toString, errMsg, "")
       throw new IllegalStateException(errMsg)
     }
+  }
+
+  protected def addInfoColumns(intoDf: DataFrame, reportDate: String, reportVersion: Int): DataFrame = {
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+    intoDf
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(reportDate))
+      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
   }
 
   private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit hadoopConf: Configuration): Int = {
