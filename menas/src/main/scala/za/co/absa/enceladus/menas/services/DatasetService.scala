@@ -323,8 +323,11 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
     val mtFields = for {
       someMappingTable <- datasetMongoRepository.getConnectedMappingTable(mtRule.mappingTable, mtRule.mappingTableVersion)
-      mtSchema <- someMappingTable.map(mt => datasetMongoRepository.getConnectedSchema(mt.schemaName, mt.schemaVersion)).get
-    } yield mtSchema.map(x => x.fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet ).get
+      mtSchema: Option[Schema] <- someMappingTable.map(mt => datasetMongoRepository.getConnectedSchema(mt.schemaName, mt.schemaVersion)).get
+      result = mtSchema.map(_.
+        fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet
+      ).getOrElse(Set.empty)
+    } yield result
 
     val inputsValidated = inputValidation
       .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
@@ -334,12 +337,13 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       acc.updateWithFieldsReplace(updated)
     })
 
-    val outputColsFlat: Future[Set[String]] = for {
+   val outputColsFlat: Future[Set[String]] = for {
       fieldsFromMT <- mtFields
       oldFields <- validatedOutputCols.fields
-    } yield  oldFields ++ allOutput.flatMap { case (out, in) =>
-      DatasetService.replacePrefixIfFound(fieldsFromMT, out, in)
-    }
+      newFields = allOutput.flatMap { case (out, in) =>
+        DatasetService.replacePrefixIfFound(fieldsFromMT, out, in)
+      }
+    } yield oldFields ++ newFields
 
     validatedOutputCols.updateFields(outputColsFlat)
   }
