@@ -33,7 +33,7 @@ case class PropertyDefinition(name: String,
                               essentiality: Essentiality = Essentiality.Optional,
                               disabled: Boolean = false,
 
-                              locked: Boolean = false,
+                              locked: Option[Boolean] = None,
 
                               // VersionModel induced fields:
                               dateCreated: ZonedDateTime = ZonedDateTime.now(),
@@ -63,7 +63,7 @@ case class PropertyDefinition(name: String,
   override def setDateCreated(time: ZonedDateTime): PropertyDefinition = this.copy(dateCreated = time)
   override def setUserCreated(user: String): PropertyDefinition = this.copy(userCreated = user)
   override def setDateDisabled(time: Option[ZonedDateTime]): PropertyDefinition = this.copy(dateDisabled = time)
-  override def setLocked(locked: Boolean): VersionedModel = this.copy(locked = locked)
+  override def setLocked(locked: Option[Boolean]): VersionedModel = this.copy(locked = locked)
   override def setUserDisabled(user: Option[String]): PropertyDefinition = this.copy(userDisabled = user)
   override def setParent(newParent: Option[MenasReference]): PropertyDefinition = this.copy(parent = newParent)
 

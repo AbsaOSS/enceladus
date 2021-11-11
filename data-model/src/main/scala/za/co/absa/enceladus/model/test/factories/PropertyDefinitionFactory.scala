@@ -34,7 +34,7 @@ object PropertyDefinitionFactory extends EntityFactory[PropertyDefinition] {
                                  putIntoInfoFile: Boolean = false,
                                  essentiality: Essentiality = Essentiality.Optional,
                                  disabled: Boolean = false,
-                                 locked: Boolean = false,
+                                 locked: Option[Boolean] = None,
                                  dateCreated: ZonedDateTime = dummyZonedDateTime,
                                  userCreated: String = "dummyUser",
                                  lastUpdated: ZonedDateTime = dummyZonedDateTime,

@@ -679,7 +679,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         )
         await(datasetMongoRepository.setLockState(datasetName, isLocked = true))
         val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
-        assert(resultedDatasets.forall(_.locked))
+        assert(resultedDatasets.forall(_.locked.contains(true)))
       }
     }
     "unlock" when {
@@ -690,7 +690,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         )
         await(datasetMongoRepository.setLockState(datasetName, isLocked = false))
         val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
-        assert(resultedDatasets.forall(!_.locked))
+        assert(resultedDatasets.forall(!_.locked.contains(true)))
       }
     }
   }

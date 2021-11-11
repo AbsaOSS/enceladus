@@ -224,8 +224,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
-      } else if (versionToUpdate.get.locked) {
-        Future.failed(new NotAllowedException("Entity is locked"))
+      } else if (versionToUpdate.get.locked.getOrElse(false)) {
+        Future.failed(LockedEntityException(s"Entity $itemName is locked"))
       }
       else {
         transform(versionToUpdate.get)

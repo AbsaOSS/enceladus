@@ -161,13 +161,13 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @PutMapping(Array("/lock/{name}"))
   @ResponseStatus(HttpStatus.OK)
   def lock(@PathVariable name: String): CompletableFuture[UpdateResult] = {
-    versionedModelService.setLock(name, isLocked = false)
+    versionedModelService.setLock(name, isLocked = true)
   }
 
   @PutMapping(Array("/unlock/{name}"))
   @ResponseStatus(HttpStatus.OK)
   def unlock(@PathVariable name: String): CompletableFuture[UpdateResult] = {
-    versionedModelService.setLock(name, isLocked = true)
+    versionedModelService.setLock(name, isLocked = false)
   }
 
 

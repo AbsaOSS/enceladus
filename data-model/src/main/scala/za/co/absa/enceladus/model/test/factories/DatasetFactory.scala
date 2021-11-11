@@ -40,7 +40,7 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       disabled: Boolean = false,
                       dateDisabled: Option[ZonedDateTime] = None,
                       userDisabled: Option[String] = None,
-                      locked: Boolean = false,
+                      locked: Option[Boolean] = None,
                       conformance: List[ConformanceRule] = List(),
                       parent: Option[MenasReference] = None,
                       properties: Option[Map[String, String]] = None): Dataset = {

@@ -16,11 +16,10 @@
 package za.co.absa.enceladus.menas.services
 
 import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
-import javax.ws.rs.NotAllowedException
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.menas.exceptions.ValidationException
+import za.co.absa.enceladus.menas.exceptions.{LockedEntityException, ValidationException}
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -251,12 +250,12 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
   }
 
   test("DatasetService.lock works correctly") {
-    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"),locked = true)
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"),locked = Some(true))
     Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
     Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
     Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
 
-    assertThrows[NotAllowedException](await(service.update("datasetA",
+    assertThrows[LockedEntityException](await(service.update("datasetA",
       DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr")))))
   }
 
@@ -269,7 +268,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val maybeDataset = await(service.update("datasetA",
       DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
     assertResult(Some("newdescr"))(maybeDataset.get.description)
-    assert(!maybeDataset.get.locked)
+    assert(!maybeDataset.get.locked.contains(true))
   }
 
 }
