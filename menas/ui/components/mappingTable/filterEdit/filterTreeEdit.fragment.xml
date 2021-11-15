@@ -28,9 +28,9 @@
                         <Menu>
                             <MenuItem id="addAndBtn" text="AND" icon="sap-icon://combine" />
                             <MenuItem id="addOrBtn" text="OR" icon="sap-icon://split" />
-                            <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://filter" />
-                            <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://clear-filter" />
-                            <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://SAP-icons-TNT/solution-not-licensed" />
+                            <MenuItem id="addNotBtn" text="NOT" icon="sap-icon://SAP-icons-TNT/solution-not-licensed" />
+                            <MenuItem id="addEqualsBtn" text="Equals" icon="sap-icon://filter" />
+                            <MenuItem id="addDiffersBtn" text="Differs" icon="sap-icon://clear-filter" />
                             <MenuItem id="addIsNullBtn" text="IsNull" icon="sap-icon://SAP-icons-TNT/marquee" />
                         </Menu>
                     </menu>
