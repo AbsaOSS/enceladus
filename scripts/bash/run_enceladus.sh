@@ -413,9 +413,9 @@ get_temp_log_file() {
 }
 
 add_keytab_to_files() {
-    MENAS_AUTH_KEYTAB_NAME = echo "${MENAS_AUTH_KEYTAB}" | grep -o '[^/]*$'
+    MENAS_AUTH_KEYTAB_NAME=`echo "${MENAS_AUTH_KEYTAB}" | grep -o '[^/]*$'`
     FILES="${FILES},${MENAS_AUTH_KEYTAB}#${MENAS_AUTH_KEYTAB_NAME}"
-    MENAS_AUTH_KEYTAB = "${MENAS_AUTH_KEYTAB_NAME}"
+    MENAS_AUTH_KEYTAB="${MENAS_AUTH_KEYTAB_NAME}"
 }
 
 CMD_LINE="$SPARK_SUBMIT"
