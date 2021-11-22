@@ -28,7 +28,6 @@ import za.co.absa.enceladus.model.menas.audit._
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
-import javax.ws.rs.NotAllowedException
 
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
   (versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
@@ -222,7 +221,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
-      } else if (versionToUpdate.get.locked.getOrElse(false)) {
+      } else if (versionToUpdate.get.lockedWithDefault) {
         Future.failed(LockedEntityException(s"Entity $itemName is locked"))
       }
       else {

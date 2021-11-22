@@ -348,7 +348,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val maybeDataset = await(service.update("datasetA",
       DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
     assertResult(Some("newdescr"))(maybeDataset.get.description)
-    assert(!maybeDataset.get.locked.contains(true))
+    assert(!maybeDataset.get.lockedWithDefault)
   }
 
 }

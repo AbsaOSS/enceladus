@@ -51,6 +51,8 @@ trait VersionedModel extends Exportable {
   def setLocked(locked: Option[Boolean]): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
 
+  def lockedWithDefault: Boolean = locked.getOrElse(false)
+
   def exportItem(): String
 
   def setCreatedInfo(username: String): VersionedModel = {
