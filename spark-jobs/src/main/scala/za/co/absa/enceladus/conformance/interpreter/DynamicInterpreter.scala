@@ -312,7 +312,9 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     val mappingTableFs = PathWithFs.fromPath(mappingTablePath)(ictx.spark.sparkContext.hadoopConfiguration)
 
     val mappingTableSize = HadoopFsUtils.getOrCreate(mappingTableFs.fileSystem).getDirectorySizeNoHidden(mappingTableFs.path)
-    (mappingTableSize / (1024 * 1024)).toInt
+    val mb = (mappingTableSize / (1024 * 1024)).toInt
+    log.debug(s"$mappingTablePath size: ${mb}MB")
+    mb
   }
 
   /**
