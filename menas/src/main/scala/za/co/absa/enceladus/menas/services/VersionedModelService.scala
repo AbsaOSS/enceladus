@@ -128,11 +128,9 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   private[services] def validateSchema(schemaName: String,
                                        schemaVersion: Int,
                                        maybeSchema: Future[Option[Schema]]): Future[Validation] = {
-    val validation = Validation()
-
     for {
       schema <- maybeSchema
-    } yield validation.withErrorIf(
+    } yield Validation().withErrorIf(
       schema.isEmpty,
       "item.schema",
       s"schema $schemaName v$schemaVersion defined for the dataset could not be found"
