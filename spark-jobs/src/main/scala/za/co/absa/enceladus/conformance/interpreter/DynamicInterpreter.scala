@@ -27,12 +27,11 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{
-  MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode
-}
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
+import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
@@ -309,8 +308,13 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     val mappingTableDef = ictx.dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
     val mappingTablePath = PartitioningUtils.getPartitionedPathName(mappingTableDef.hdfsPath,
       ictx.progArgs.reportDate)
-    val mappingTableSize = HadoopFsUtils.getOrCreate(inputFs).getDirectorySizeNoHidden(mappingTablePath)
-    (mappingTableSize / (1024 * 1024)).toInt
+    //accommodate different fs for the mapping table or different bucket
+    val mappingTableFs = PathWithFs.fromPath(mappingTablePath)(ictx.spark.sparkContext.hadoopConfiguration)
+
+    val mappingTableSize = HadoopFsUtils.getOrCreate(mappingTableFs.fileSystem).getDirectorySizeNoHidden(mappingTableFs.path)
+    val mb = (mappingTableSize / (1024 * 1024)).toInt
+    log.debug(s"$mappingTablePath size: ${mb}MB")
+    mb
   }
 
   /**
