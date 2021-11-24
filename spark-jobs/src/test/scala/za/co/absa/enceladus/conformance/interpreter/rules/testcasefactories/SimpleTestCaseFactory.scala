@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories
 
-import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
@@ -25,7 +25,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
+import za.co.absa.enceladus.utils.fs.LocalFsUtils
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
