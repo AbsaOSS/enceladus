@@ -498,12 +498,6 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
 
     "throw an exception" when {
 
-      "a join without key fields is attempted" in {
-        intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Nil, Map(""->"val"))
-        }
-      }
-
       "a join with more than 10 fields attempted" in {
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id",
           "id", "id", "id", "id", "id"), Map(""->"val"))

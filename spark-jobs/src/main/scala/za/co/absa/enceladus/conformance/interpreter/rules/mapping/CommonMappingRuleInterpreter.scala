@@ -19,7 +19,6 @@ import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
-import za.co.absa.enceladus.conformance.config.FilterFromConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -66,13 +65,9 @@ trait CommonMappingRuleInterpreter {
 
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
-    val ruleFilter = if (rule.mappingTableFilter.nonEmpty) {
-      rule.mappingTableFilter
-    } else {
-      // This is a workaround until UI supports filter definition. Until then, the filters can be set via configuration.
-      FilterFromConfig.loadFilter(rule.mappingTable)
-    }
+    val ruleFilter = rule.mappingTableFilter
     val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.getOverrideMappingTableOwnFilter)
+
     // find the data frame from the mapping table
     val filter: Option[DataFrameFilter] = (ruleFilter, mappingTableFilter) match {
       case (Some(a), Some(b)) => Option(a and b)

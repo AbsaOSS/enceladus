@@ -29,7 +29,7 @@ import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future
-import scala.language.reflectiveCalls
+import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.{Failure, Success}
 
 
@@ -270,29 +270,29 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     val ruleValidationsAndFields = conformanceRules.foldLeft(accumulator) { case (validationsAndFields, conformanceRule) =>
       conformanceRule match {
         case cr: CastingConformanceRule =>
-          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateInAndOut(validationsAndFields.fields, cr))
         case cr: NegationConformanceRule =>
-          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateInAndOut(validationsAndFields.fields, cr))
         case cr: UppercaseConformanceRule =>
-          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateInAndOut(validationsAndFields.fields, cr))
         case cr: SingleColumnConformanceRule =>
-          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateInAndOut(validationsAndFields.fields, cr))
         case cr: FillNullsConformanceRule =>
-          validationsAndFields.update(validateInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateInAndOut(validationsAndFields.fields, cr))
         case cr: ConcatenationConformanceRule =>
-          validationsAndFields.update(validateMultipleInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateMultipleInAndOut(validationsAndFields.fields, cr))
         case cr: CoalesceConformanceRule =>
-          validationsAndFields.update(validateMultipleInAndOut(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateMultipleInAndOut(validationsAndFields.fields, cr))
         case cr: LiteralConformanceRule =>
-          validationsAndFields.update(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
+          validationsAndFields.updateWithFieldsReplace(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
         case cr: SparkSessionConfConformanceRule =>
-          validationsAndFields.update(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
+          validationsAndFields.updateWithFieldsReplace(validateOutputColumn(validationsAndFields.fields, cr.outputColumn))
         case cr: DropConformanceRule =>
-          validationsAndFields.update(validateDrop(validationsAndFields.fields, cr.outputColumn))
+          validationsAndFields.updateWithFieldsReplace(validateDrop(validationsAndFields.fields, cr.outputColumn))
         case cr: MappingConformanceRule =>
-          validationsAndFields.update(validateMappingTable(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(validateMappingTable(validationsAndFields.fields, cr))
         case cr =>
-          validationsAndFields.update(unknownRule(validationsAndFields.fields, cr))
+          validationsAndFields.updateWithFieldsReplace(unknownRule(validationsAndFields.fields, cr))
       }
     }
 
@@ -302,7 +302,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def validateDrop(currentColumns: Future[Set[String]],
                            output: String): RuleValidationsAndFields = {
     validateInputColumn(currentColumns, output)
-      .update(currentColumns.map(f => f - output))
+      .updateFields(currentColumns.map(f => f - output))
   }
 
   private type WithInAndOut = {def inputColumn: String; def outputColumn: String}
@@ -312,19 +312,40 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
                                                   cr: C): RuleValidationsAndFields = {
     val withOutputValidated = validateOutputColumn(fields, cr.outputColumn)
     val validationInputFields = validateInputColumn(fields, cr.inputColumn)
-    validationInputFields.update(withOutputValidated)
+    validationInputFields.updateWithFieldsReplace(withOutputValidated)
   }
 
   def validateMappingTable(fields: Future[Set[String]],
-                           mt: MappingConformanceRule): RuleValidationsAndFields = {
-    val inputValidation = mt.attributeMappings.values.map { input =>
-      validateInputColumn(fields, input)
-    }
-    val outputValidation = validateOutputColumn(fields, mt.outputColumn)
+                           mtRule: MappingConformanceRule): RuleValidationsAndFields = {
+    val inputValidation = mtRule.attributeMappings.values.map(validateInputColumn(fields, _))
+    val allOutput = mtRule.allOutputColumns()
+    val outputColumns = mtRule.allOutputColumns().keySet
 
-    inputValidation
-      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.update(instance))
-      .update(outputValidation)
+    val mtFields = for {
+      someMappingTable <- datasetMongoRepository.getConnectedMappingTable(mtRule.mappingTable, mtRule.mappingTableVersion)
+      mtSchema: Option[Schema] <- someMappingTable.map(mt => datasetMongoRepository.getConnectedSchema(mt.schemaName, mt.schemaVersion)).get
+      result = mtSchema.map(_.
+        fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet
+      ).getOrElse(Set.empty)
+    } yield result
+
+    val inputsValidated = inputValidation
+      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
+
+    val validatedOutputCols = outputColumns.foldLeft(inputsValidated)((acc, outputCol: String) => {
+      val updated: RuleValidationsAndFields = validateOutputColumn(acc.fields, outputCol)
+      acc.updateWithFieldsReplace(updated)
+    })
+
+   val outputColsFlat: Future[Set[String]] = for {
+      fieldsFromMT <- mtFields
+      oldFields <- validatedOutputCols.fields
+      newFields = allOutput.flatMap { case (out, in) =>
+        DatasetService.replacePrefixIfFound(fieldsFromMT, out, in)
+      }
+    } yield oldFields ++ newFields
+
+    validatedOutputCols.updateFields(outputColsFlat)
   }
 
   private def validateMultipleInAndOut[C <: WithMultipleInAndOut](fields: Future[Set[String]],
@@ -335,18 +356,16 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     val outputValidation = validateOutputColumn(fields, cr.outputColumn)
 
     inputValidation
-      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.update(instance))
-      .update(outputValidation)
+      .foldLeft(RuleValidationsAndFields(Seq.empty, fields))((acc, instance) => acc.updateWithFieldsReplace(instance))
+      .updateWithFieldsReplace(outputValidation)
   }
 
   private def validateInputColumn(fields: Future[Set[String]],
                                   input: String): RuleValidationsAndFields = {
-    val validation = Validation()
-
     val newValidation = for {
       f <- fields
     } yield {
-      validation.withErrorIf(
+      Validation().withErrorIf(
         !f.contains(input),
         "item.conformanceRules",
         s"Input column $input for conformance rule cannot be found"
@@ -357,12 +376,10 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   private def validateOutputColumn(fields: Future[Set[String]],
                                    output: String): RuleValidationsAndFields = {
-    val validation = Validation()
-
     val newValidation = for {
       f <- fields
     } yield {
-      validation.withErrorIf(
+      Validation().withErrorIf(
         f.contains(output),
         "item.conformanceRules",
         s"Output column $output already exists"
@@ -390,12 +407,13 @@ object DatasetService {
 
   // Local class for the representation of validation of conformance rules.
   final case class RuleValidationsAndFields(validations: Seq[Future[Validation]], fields: Future[Set[String]]) {
-    def update(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
+    def updateWithFieldsReplace(ruleValidationsAndFields: RuleValidationsAndFields): RuleValidationsAndFields = copy(
       validations = validations ++ ruleValidationsAndFields.validations,
       fields = ruleValidationsAndFields.fields
     )
 
-    def update(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+    def updateFields(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
+    def appendValidations(v: Seq[Future[Validation]]): RuleValidationsAndFields = copy(validations = validations ++ v)
 
     def mergeValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
   }
@@ -410,5 +428,19 @@ object DatasetService {
     properties.map {
       _.filter { case (_, propValue) => propValue.nonEmpty }
     }
+  }
+
+  private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {
+    fieldName match {
+      case `lookFor` => Some(replacement) // exact match
+      case field if field.startsWith(s"$lookFor.") =>
+        val strippedField = field.stripPrefix(s"$lookFor.")
+        Some(s"$replacement.$strippedField")
+      case _ => None
+    }
+  }
+
+  private[services] def replacePrefixIfFound(fieldNames: Iterable[String], replacement: String, lookFor: String): Iterable[String] = {
+    fieldNames.flatMap(replacePrefixIfFound(_, replacement, lookFor)) // Nones discarded, Some's lifted
   }
 }
