@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.common
 
+import org.apache.spark.sql.types.{StringType, StructType}
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.mockito.Mockito
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
@@ -33,6 +35,9 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
       prepareJob()
     }
     override protected def validatePaths(pathConfig: PathConfig): Unit = {}
+    override def repartitionDataFrame(df:  DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                               (implicit spark: SparkSession): DataFrame =
+      super.repartitionDataFrame(df, minBlockSize, maxBlockSize)
   }
 
   Seq(
@@ -57,6 +62,16 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
         exceptionMessage should include(subMsg)
       }
     }
+  }
+
+  "repartitionDataFrame" should "pass on empty data" in {
+    val schema = new StructType()
+      .add("not_important", StringType, nullable = true)
+    val df = spark.read.schema(schema).parquet("src/test/resources/data/empty")
+    println(df.rdd.getNumPartitions)
+    val commonJob = new CommonJobExecutionTest
+    val result = commonJob.repartitionDataFrame(df, Option(1), Option(2))
+    result shouldBe df
   }
 
 }
