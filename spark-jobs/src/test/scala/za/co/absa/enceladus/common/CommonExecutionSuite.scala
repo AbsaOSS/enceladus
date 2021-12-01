@@ -54,7 +54,6 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
       Mockito.when(dao.getDataset("DatasetA", 1, ValidationLevel.ForRun)).thenReturn(dataset)
       doNothing.when(dao).authenticate()
 
-
       val commonJob = new CommonJobExecutionTest
 
       val exceptionMessage = intercept[IllegalStateException](commonJob.testRun).getMessage
@@ -67,8 +66,9 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
   "repartitionDataFrame" should "pass on empty data" in {
     val schema = new StructType()
       .add("not_important", StringType, nullable = true)
+    // reading the data from empty directory to get 0 partitions, even creating a DatFrame from an empty sequence gives 1 partition
     val df = spark.read.schema(schema).parquet("src/test/resources/data/empty")
-    println(df.rdd.getNumPartitions)
+    df.rdd.getNumPartitions shouldBe 0 // ensure there are 0 partitions for the test
     val commonJob = new CommonJobExecutionTest
     val result = commonJob.repartitionDataFrame(df, Option(1), Option(2))
     result shouldBe df
