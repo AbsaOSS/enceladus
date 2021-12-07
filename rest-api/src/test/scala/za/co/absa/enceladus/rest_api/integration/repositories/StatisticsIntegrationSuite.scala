@@ -13,16 +13,15 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.integration.repositories
+package za.co.absa.enceladus.rest_api.integration.repositories
 
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.menas.integration.fixtures.{DatasetFixtureService, FixtureService, PropertyDefinitionFixtureService}
-import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
-import za.co.absa.enceladus.menas.services.StatisticsService
+import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService, PropertyDefinitionFixtureService}
+import za.co.absa.enceladus.rest_api.services.StatisticsService
 import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefinitionStats}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality.{Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
