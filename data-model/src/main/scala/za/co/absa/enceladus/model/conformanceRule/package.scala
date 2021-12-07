@@ -88,8 +88,10 @@ package object conformanceRule {
                                    ) extends ConformanceRule {
 
     def allOutputColumns(): Map[String, String] = {
-      additionalColumns.getOrElse(Map()) + (outputColumn -> targetAttribute)
+      definedAdditionalColumns() + (outputColumn -> targetAttribute)
     }
+
+    def definedAdditionalColumns(): Map[String, String] = additionalColumns.getOrElse(Map())
 
     override def withUpdatedOrder(newOrder: Int): MappingConformanceRule = copy(order = newOrder)
 

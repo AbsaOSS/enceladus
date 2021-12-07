@@ -58,7 +58,7 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
     datasetVersionKey ->
       PropertyMetadata("Dataset version", None, required = true),
     reportDateKey ->
-      PropertyMetadata("Report date", Some("The current date is used by default "), required = false),
+      PropertyMetadata("Report date", Some("The current date is used by default"), required = false),
     reportVersionColumnKey ->
       PropertyMetadata("Report version column", Some("Taken from another column"), required = false),
     reportVersionKey ->

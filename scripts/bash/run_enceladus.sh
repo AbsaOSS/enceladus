@@ -412,6 +412,12 @@ get_temp_log_file() {
     mktemp -p "$LOG_DIR" -t "$TEMPLATE"
 }
 
+add_keytab_to_files() {
+    MENAS_AUTH_KEYTAB_NAME=`echo "${MENAS_AUTH_KEYTAB}" | grep -o '[^/]*$'`
+    FILES="${FILES},${MENAS_AUTH_KEYTAB}#${MENAS_AUTH_KEYTAB_NAME}"
+    MENAS_AUTH_KEYTAB="${MENAS_AUTH_KEYTAB_NAME}"
+}
+
 CMD_LINE="$SPARK_SUBMIT"
 
 # Constructing the grand command line
@@ -478,6 +484,16 @@ $MT_PATTERN $MIN_PARTITION_SIZE $MAX_PARTITION_SIZE"
 if [ "$HELP_CALL" == "1" ]; then
   source ${SRC_DIR}/_print_help.sh
   exit "$?"
+fi
+
+if [[ "${MENAS_AUTH_KEYTAB}" =~ "^(s|S)3://.*" ]]; then
+  echo "Using Keytab from S3"
+  add_keytab_to_files
+elif [[ -f "${MENAS_AUTH_KEYTAB}" ]]; then
+  echo "Using Keytab from local FS"
+  add_keytab_to_files
+else
+  echo "Using Keytab from HDFS"
 fi
 
 # Adding command line parameters that go BEFORE the jar file

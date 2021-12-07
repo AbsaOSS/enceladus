@@ -200,8 +200,8 @@ trait StandardizationExecution extends CommonJobExecution {
     val maxPartitionSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
 
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-        repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
-      } else {
+      repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
+    } else {
       standardizedDF
     }
     withRepartitioning.write.parquet(preparationResult.pathCfg.standardization.path)
@@ -224,10 +224,10 @@ trait StandardizationExecution extends CommonJobExecution {
     cmd.csvDelimiter.foreach(delimiter => Atum.setAdditionalInfo("csv_delimiter" -> delimiter))
 
     log.info(s"infoFilePath = ${preparationResult.pathCfg.standardization.path}/_INFO")
-    standardizedDF.writeInfoFile(preparationResult.pathCfg.standardization.path)(stdFs)
+    withRepartitioning.writeInfoFile(preparationResult.pathCfg.standardization.path)(stdFs)
     writePerformanceMetrics(preparationResult.performance, cmd)
     log.info(s"$sourceId finished successfully")
-    standardizedDF
+    withRepartitioning
   }
 
   //scalastyle:off parameter.number

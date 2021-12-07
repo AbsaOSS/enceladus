@@ -453,7 +453,7 @@ class MappingTableDialog extends EntityDialog {
       this.oController.byId("newMappingTableName"));
     let hasValidSchema = EntityValidationService.hasValidSchema(oMT, "Mapping Table",
       this.oController.byId("schemaVersionSelect"));
-    let hasValidFilter = this.filterEdit.validateFilterData();
+    let hasValidFilter = this.filterEdit.validateFilterData().valid; // validity flag suffices, emptiness irrelevant
 
     if (oMT.hdfsBrowserEnabled) {
       let hasValidHDFSPath = EntityValidationService.hasValidHDFSPath(oMT.hdfsPath,

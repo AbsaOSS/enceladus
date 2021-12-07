@@ -16,7 +16,6 @@
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core"
                          xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
 
-    <CheckBox selected="{/newRule/isNullSafe}"/>
     <Label text="Output Columns"/>
     <List id="outputColumns"
           items="{/newRule/newOutputColumns}"

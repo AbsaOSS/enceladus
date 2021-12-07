@@ -31,6 +31,7 @@ import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 import za.co.absa.enceladus.model.menas.scheduler.oozie._
+import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.rest_api.models._
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
