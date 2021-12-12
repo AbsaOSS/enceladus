@@ -169,6 +169,7 @@
         <junit.version>4.11</junit.version>
         <kafka.spark.version>0-10</kafka.spark.version>
         <lodash.version>4.17.10</lodash.version>
+        <log4j.version>2.15.0</log4j.version>
         <mockito.core.version>3.5.2</mockito.core.version>
         <mockito.scala.version>1.16.42</mockito.scala.version>
         <momentjs.version>2.22.2</momentjs.version>
