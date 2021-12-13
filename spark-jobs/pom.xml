@@ -26,7 +26,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>4.0.0</hyperdrive.version>
+        <hyperdrive.version>4.5.2</hyperdrive.version>
         <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
     </properties>
 
@@ -75,7 +75,7 @@
         <!-- Hyperdrive -->
         <dependency>
             <groupId>za.co.absa.hyperdrive</groupId>
-            <artifactId>api</artifactId>
+            <artifactId>api_${scala.compat.version}</artifactId>
             <version>${hyperdrive.version}</version>
             <scope>provided</scope>
         </dependency>
