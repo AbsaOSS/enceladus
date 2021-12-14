@@ -677,7 +677,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
           DatasetFactory.getDummyDataset(name = datasetName, version = 1),
           DatasetFactory.getDummyDataset(name = datasetName, version = 2)
         )
-        await(datasetMongoRepository.setLockState(datasetName, isLocked = true))
+        await(datasetMongoRepository.setLockState(datasetName, isLocked = true, ""))
         val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
         assert(resultedDatasets.forall(_.lockedWithDefault))
       }
@@ -688,7 +688,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
           DatasetFactory.getDummyDataset(name = datasetName, version = 1),
           DatasetFactory.getDummyDataset(name = datasetName, version = 2)
         )
-        await(datasetMongoRepository.setLockState(datasetName, isLocked = false))
+        await(datasetMongoRepository.setLockState(datasetName, isLocked = false, ""))
         val resultedDatasets = await(datasetMongoRepository.getAllVersions(datasetName))
         assert(resultedDatasets.forall(!_.lockedWithDefault))
       }

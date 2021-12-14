@@ -35,6 +35,8 @@ object SchemaFactory extends EntityFactory[Schema] {
                      dateDisabled: Option[ZonedDateTime] = None,
                      userDisabled: Option[String] = None,
                      locked: Option[Boolean] = None,
+                     dateLocked: Option[ZonedDateTime] = None,
+                     userLocked: Option[String] = None,
                      fields: List[SchemaField] = List(),
                      parent: Option[MenasReference] = None): Schema = {
 
@@ -49,6 +51,8 @@ object SchemaFactory extends EntityFactory[Schema] {
       dateDisabled,
       userDisabled,
       locked,
+      dateLocked,
+      userLocked,
       fields,
       parent)
   }

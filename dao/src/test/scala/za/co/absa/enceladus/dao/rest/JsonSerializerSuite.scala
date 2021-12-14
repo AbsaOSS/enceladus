@@ -47,6 +47,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "dateDisabled": null,
           |  "userDisabled": null,
           |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
           |  "conformance": [],
           |  "parent": null,
           |  "schedule": null,
@@ -101,6 +103,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |  "dateDisabled": null,
         |  "userDisabled": null,
         |  "locked": null,
+        |  "dateLocked":null,
+        |  "userLocked":null,
         |  "conformance": [
         |    {
         |      "_t": "CastingConformanceRule",
@@ -293,6 +297,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "dateDisabled": null,
           |  "userDisabled": null,
           |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
           |  "conformance": [
           |    {
           |      "_t": "CastingConformanceRule",
@@ -365,6 +371,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "dateDisabled": null,
           |  "userDisabled": null,
           |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
           |  "parent": null,
           |  "filter": null,
           |  "createdMessage": {
@@ -418,6 +426,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "dateDisabled": null,
           |  "userDisabled": null,
           |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
           |  "parent": null,
           |  "filter": {
           |    "_t": "AndJoinedFilters",
@@ -515,6 +525,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "dateDisabled": null,
           |  "userDisabled": null,
           |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
           |  "fields": [],
           |  "parent": null,
           |  "createdMessage": {

@@ -41,13 +41,15 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       dateDisabled: Option[ZonedDateTime] = None,
                       userDisabled: Option[String] = None,
                       locked: Option[Boolean] = None,
+                      dateLocked: Option[ZonedDateTime] = None,
+                      userLocked: Option[String] = None,
                       conformance: List[ConformanceRule] = List(),
                       parent: Option[MenasReference] = None,
                       properties: Option[Map[String, String]] = None): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,
       schemaVersion, dateCreated, userCreated, lastUpdated, userUpdated,
-      disabled, dateDisabled, userDisabled, locked, conformance, parent, properties = properties)
+      disabled, dateDisabled, userDisabled, locked, dateLocked, userLocked, conformance, parent, properties = properties)
   }
 
   def getDummyConcatenationRule(order: Int = 1,

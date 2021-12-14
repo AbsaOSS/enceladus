@@ -28,5 +28,8 @@ package object controllers {
       .setDateDisabled(actual.dateDisabled)
       .setUserDisabled(actual.userDisabled)
       .setLocked(actual.locked)
+      .setDateLocked(actual.dateLocked)
+      .setUserLocked(actual.userLocked)
+
   }.asInstanceOf[T] // type of `expectedBase` will remain unchanged, good enough for testing support
 }

@@ -269,7 +269,9 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   def setLock(name: String, isLocked: Boolean): Future[UpdateResult] = {
-    versionedMongoRepository.setLockState(name, isLocked)
+    val auth = SecurityContextHolder.getContext.getAuthentication
+    val principal = auth.getPrincipal.asInstanceOf[UserDetails]
+    versionedMongoRepository.setLockState(name, isLocked, principal.getUsername)
   }
 
   def validate(item: C): Future[Validation] = {
