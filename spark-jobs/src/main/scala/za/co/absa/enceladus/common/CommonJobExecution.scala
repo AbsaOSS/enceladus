@@ -197,19 +197,26 @@ trait CommonJobExecution extends ProjectMetadata {
       outputDf
     }
 
-    val catalystPlan = df.queryExecution.logical
-    val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
+    val currentPartionCount = df.rdd.getNumPartitions
 
-    val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
+    if (currentPartionCount > 0) {
+      val catalystPlan = df.queryExecution.logical
+      val sizeInBytes = spark.sessionState.executePlan(catalystPlan).optimizedPlan.stats.sizeInBytes
 
-    (minBlockSize, maxBlockSize) match {
-      case (Some(min), None) if currentBlockSize < min =>
-        changePartitionCount(computeBlockCount(min, sizeInBytes, addRemainder = false), df.coalesce)
-      case (None, Some(max)) if currentBlockSize > max =>
-        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
-      case (Some(min), Some(max)) if currentBlockSize < min || currentBlockSize > max =>
-        changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
-      case _ => df
+      val currentBlockSize = sizeInBytes / df.rdd.getNumPartitions
+
+      (minBlockSize, maxBlockSize) match {
+        case (Some(min), None) if currentBlockSize < min =>
+          changePartitionCount(computeBlockCount(min, sizeInBytes, addRemainder = false), df.coalesce)
+        case (None, Some(max)) if currentBlockSize > max =>
+          changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+        case (Some(min), Some(max)) if currentBlockSize < min || currentBlockSize > max =>
+          changePartitionCount(computeBlockCount(max, sizeInBytes, addRemainder = true), df.repartition)
+        case _ => df
+      }
+    } else {
+      // empty dataframe
+      df
     }
   }
 

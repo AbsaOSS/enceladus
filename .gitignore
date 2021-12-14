@@ -55,8 +55,6 @@ build.log
 #  syntax: regexp
 #  ^\.pc/
 
-build.log
-
 .cache*
 dependency-reduced-pom.xml
 
