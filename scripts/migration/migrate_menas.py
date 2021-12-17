@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import argparse
-from minydra.dict import MinyDict # dictionary with dot access
-import pymongo
+from minydra.dict import MinyDict  # dictionary with dot access
+from pymongo import MongoClient
 
 # Default configuration
 # =====================
@@ -15,11 +15,12 @@ defaults = MinyDict({
 
 asdf = True
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog='migrate_menas',
         description='Menas MongoDb migration script.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter #prints default values, too, on help (-h)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
         )
 
     parser.add_argument('-n', '--dryrun', action='store_true', default=defaults.dryrun,
@@ -34,6 +35,38 @@ def parse_args():
     parser.add_argument('target', metavar="TARGET",
                         help="connection string for target MongoDb")
     return parser.parse_args()
+
+
+def get_database(db_name, conn_str):
+    """
+    Gets db handle
+    :param db_name: string db name
+    :param conn_str: connection string, e.g. mongodb://username1:password213@my.domain.ext/adminOrAnotherDb"
+    :return: mongoDb handle
+    """
+    client = MongoClient(conn_str)
+
+    return client[db_name]  # gets or creates db
+
+
+def ugly_migrate(src, tgt):
+    """
+    First ugly simplistic migration attempt
+    """
+    src_db = get_database('menas', src)  # todo make configurable
+
+    dataset_collection = src_db["dataset_v1"]
+    docs = dataset_collection.find()
+    just_some_docs = docs[:2]
+
+    target_db = get_database('migrated', tgt)  # todo change # would create db with default settings
+    target_dataset_collection = target_db["dataset_v1b"]  # would create coll. with default settings (no extra indices!)
+
+    for item in just_some_docs:
+        # item preview
+        print(item)
+        target_dataset_collection.insert_one(item)
+
 
 if __name__ == '__main__':
     args = parse_args()
@@ -52,4 +85,9 @@ if __name__ == '__main__':
 
     print('test: {}'.format(defaults.lockMigrated))
 
+    ugly_migrate(source, target)
+
     print("Done.")
+
+    # example test-run:
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin
