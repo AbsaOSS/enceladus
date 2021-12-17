@@ -37,7 +37,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_database(db_name, conn_str):
+def get_database(conn_str, db_name):
     """
     Gets db handle
     :param db_name: string db name
@@ -49,23 +49,69 @@ def get_database(db_name, conn_str):
     return client[db_name]  # gets or creates db
 
 
-def ugly_migrate(src, tgt):
+def simple_migration_test(src, tgt):
     """
     First ugly simplistic migration attempt
     """
-    src_db = get_database('menas', src)  # todo make configurable
+    src_db = get_database(src, 'menas')  # todo make configurable
 
     dataset_collection = src_db["dataset_v1"]
     docs = dataset_collection.find()
     just_some_docs = docs[:2]
 
-    target_db = get_database('migrated', tgt)  # todo change # would create db with default settings
+    target_db = get_database(tgt, 'migrated')  # todo change # would create db with default settings
     target_dataset_collection = target_db["dataset_v1b"]  # would create coll. with default settings (no extra indices!)
 
     for item in just_some_docs:
         # item preview
         print(item)
         target_dataset_collection.insert_one(item)
+
+
+def assemble_ds_schemas(db, ds_names):
+    ds_collection = db["dataset_v1"]
+
+    schemas = ds_collection.find(
+        {"name": {"$in": ds_names}},  # selection based on dataset name
+        {"schemaName": 1, "schemaVersion": 1, "_id": 0}  # projection for needed fields
+    )
+
+    # [(schemaName, schemaVersion)*]  # todo migrate all versions or just the needed ones? if just some, group versions by https://stackoverflow.com/questions/3749512/python-group-by ?
+    return schemas
+
+
+def assemble_ds_mapping_tables(db, ds_names):
+    ds_collection = db["dataset_v1"]
+
+    mapping_tables = ds_collection.aggregate([
+        {"$match": {"$and": [  # selection based on:
+            {"name": {"$in": ds_names}},  # dataset name
+            {"conformance" : {"$elemMatch": {"_t": "MappingConformanceRule"}}}  # having some MCRs
+        ]}},
+        {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
+        {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
+        {"$project": {"mappingTable": "$conformance.mappingTable", "mappingTableVersion": "$conformance.mappingTableVersion", "_id": 0}}  # projecting nested fields to root fields
+    ])
+
+    # todo distinct & what about versions - all versions or just the used?
+    return mapping_tables
+
+
+def get_migration_data(src, ds_names):
+    db = get_database(src, "menas")
+
+    schemas = assemble_ds_schemas(db, ds_names)
+    print('Schemas to migrate:')  # todo distinct them
+    for schema in schemas:
+        print(schema)
+
+
+    mapping_tables = assemble_ds_mapping_tables(db, ds_names)
+    print('MTs to migrate:')  # todo distinct them
+    for mt in mapping_tables:
+        print(mt)
+
+    # todo schema for MT
 
 
 if __name__ == '__main__':
@@ -83,9 +129,12 @@ if __name__ == '__main__':
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
 
-    print('test: {}'.format(defaults.lockMigrated))
+    # simple_migration_test(source, target)
 
-    ugly_migrate(source, target)
+    dsnames = ["mydataset1", "Cobol2", "test654"]
+
+    # just testing for now:
+    get_migration_data(source, dsnames)
 
     print("Done.")
 
