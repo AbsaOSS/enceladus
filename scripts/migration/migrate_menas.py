@@ -71,43 +71,37 @@ def simple_migration_test(src, tgt):
 def assemble_ds_schemas(db, ds_names):
     ds_collection = db["dataset_v1"]
 
-    schemas = ds_collection.find(
-        {"name": {"$in": ds_names}},  # selection based on dataset name
-        {"schemaName": 1, "schemaVersion": 1, "_id": 0}  # projection for needed fields
+    schemas = ds_collection.distinct(
+        "schemaName",  # field to distinct on
+        {"name": {"$in": ds_names}}  # filter
     )
-
-    # [(schemaName, schemaVersion)*]  # todo migrate all versions or just the needed ones? if just some, group versions by https://stackoverflow.com/questions/3749512/python-group-by ?
-    return schemas
+    return schemas  # array of distinct schemaNames (in a single document)
 
 
 def assemble_ds_mapping_tables(db, ds_names):
     ds_collection = db["dataset_v1"]
 
-    mapping_tables = ds_collection.aggregate([
+    mapping_table_names = ds_collection.aggregate([
         {"$match": {"$and": [  # selection based on:
             {"name": {"$in": ds_names}},  # dataset name
-            {"conformance" : {"$elemMatch": {"_t": "MappingConformanceRule"}}}  # having some MCRs
+            {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}}  # having some MCRs
         ]}},
         {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
         {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
-        {"$project": {"mappingTable": "$conformance.mappingTable", "mappingTableVersion": "$conformance.mappingTableVersion", "_id": 0}}  # projecting nested fields to root fields
+        {"$group": {"_id": "$conformance.mappingTable"}}  # essentially distinct on the field
     ])
 
-    # todo distinct & what about versions - all versions or just the used?
-    return mapping_tables
+    return mapping_table_names  # documents, each {_id : mappingTableNameThatIsDistinctOnTheName}
 
 
 def get_migration_data(src, ds_names):
     db = get_database(src, "menas")
 
-    schemas = assemble_ds_schemas(db, ds_names)
-    print('Schemas to migrate:')  # todo distinct them
-    for schema in schemas:
-        print(schema)
-
+    schema_names = assemble_ds_schemas(db, ds_names)
+    print('Schemas to migrate: {}'.format(schema_names))
 
     mapping_tables = assemble_ds_mapping_tables(db, ds_names)
-    print('MTs to migrate:')  # todo distinct them
+    print('MTs to migrate:') # todo toArray?
     for mt in mapping_tables:
         print(mt)
 
@@ -131,7 +125,7 @@ if __name__ == '__main__':
 
     # simple_migration_test(source, target)
 
-    dsnames = ["mydataset1", "Cobol2", "test654"]
+    dsnames = ["mydataset1", "Cobol2", "test654", "toDelete1"]
 
     # just testing for now:
     get_migration_data(source, dsnames)
