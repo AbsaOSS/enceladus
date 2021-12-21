@@ -98,17 +98,27 @@ def assemble_ds_mapping_tables(db, ds_names):
     return extracted_array
 
 
+def assemble_mt_schemas(db, mt_names):  # todo generalize with assemble_ds_schemas
+    mt_collection = db["mapping_table_v1"]
+
+    schemas = mt_collection.distinct(
+        "schemaName",  # field to distinct on
+        {"name": {"$in": mt_names}}  # filter
+    )
+    return schemas  # array of distinct schemaNames (in a single document)
+
+
 def get_migration_data(src, ds_names):
     db = get_database(src, "menas")
 
-    schema_names = assemble_ds_schemas(db, ds_names)
-    print('Schemas to migrate: {}'.format(schema_names))
+    ds_schema_names = assemble_ds_schemas(db, ds_names)
+    print('DS schemas to migrate: {}'.format(ds_schema_names))
 
-    mapping_tables = assemble_ds_mapping_tables(db, ds_names)
-    print('MTs to migrate: {}'.format(mapping_tables))
+    mapping_table_names = assemble_ds_mapping_tables(db, ds_names)
+    print('MTs to migrate: {}'.format(mapping_table_names))
 
-    # todo schema for MT
-
+    mt_schema_names = assemble_mt_schemas(db, mapping_table_names)
+    print('MT schemas to migrate: {}'.format(mt_schema_names))
 
 if __name__ == '__main__':
     args = parse_args()
