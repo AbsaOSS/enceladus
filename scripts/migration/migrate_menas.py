@@ -88,10 +88,14 @@ def assemble_ds_mapping_tables(db, ds_names):
         ]}},
         {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
         {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
-        {"$group": {"_id": "$conformance.mappingTable"}}  # essentially distinct on the field
-    ])
+        {"$group" : {
+            "_id": "notNeededButRequired",
+            "mts": {"$addToSet": "$conformance.mappingTable"}
+        }}  # grouping on fixed id (essentially distinct) and adding all MTs to a set
+    ])  # single doc with { _id: ... , "mts" : [mt1, mt2, ...]}
 
-    return mapping_table_names  # documents, each {_id : mappingTableNameThatIsDistinctOnTheName}
+    extracted_array = list(mapping_table_names)[0]['mts']
+    return extracted_array
 
 
 def get_migration_data(src, ds_names):
@@ -101,9 +105,7 @@ def get_migration_data(src, ds_names):
     print('Schemas to migrate: {}'.format(schema_names))
 
     mapping_tables = assemble_ds_mapping_tables(db, ds_names)
-    print('MTs to migrate:') # todo toArray?
-    for mt in mapping_tables:
-        print(mt)
+    print('MTs to migrate: {}'.format(mapping_tables))
 
     # todo schema for MT
 
