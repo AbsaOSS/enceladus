@@ -13,7 +13,7 @@ defaults = MinyDict({
     'lockMigrated': True
 })
 
-asdf = True
+migration_hash = "34df"  # todo generate at some point
 
 
 def parse_args():
@@ -78,6 +78,16 @@ def assemble_schemas_general(db, entity_names, collection_name):
     return schemas  # array of distinct schemaNames (in a single document)
 
 
+def assemble_runs(db, ds_names):
+    collection = db["run_v1"]
+
+    ids = collection.distinct(
+        "uniqueId",  # field to distinct on
+        {"dataset": {"$in": ds_names}}  # filter
+    )
+    return ids  # array of distinct uniqueId (in a single document)
+
+
 def assemble_ds_schemas(db, ds_names):
     return assemble_schemas_general(db, ds_names, "dataset_v1")
 
@@ -96,27 +106,78 @@ def assemble_ds_mapping_tables(db, ds_names):
         ]}},
         {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
         {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
-        {"$group" : {
+        {"$group": {
             "_id": "notNeededButRequired",
             "mts": {"$addToSet": "$conformance.mappingTable"}
         }}  # grouping on fixed id (essentially distinct) and adding all MTs to a set
     ])  # single doc with { _id: ... , "mts" : [mt1, mt2, ...]}
 
+    # if no MCRs are present, the result may be empty
+    if not list(mapping_table_names):
+        return []
+
     extracted_array = list(mapping_table_names)[0]['mts']
     return extracted_array
 
 
-def get_migration_data(src, ds_names):
-    db = get_database(src, "menas")
+def migrate_collections(source, target, ds_names):
+    source_db = get_database(source, "menas")
+    target_db = get_database(target, 'menas_migrated')
 
-    ds_schema_names = assemble_ds_schemas(db, ds_names)
+    ds_schema_names = assemble_ds_schemas(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
 
-    mapping_table_names = assemble_ds_mapping_tables(db, ds_names)
+    mapping_table_names = assemble_ds_mapping_tables(source_db, ds_names)
     print('MTs to migrate: {}'.format(mapping_table_names))
 
-    mt_schema_names = assemble_mt_schemas(db, mapping_table_names)
+    mt_schema_names = assemble_mt_schemas(source_db, mapping_table_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
+
+    runs = assemble_runs(source_db, ds_names)
+    print('Runs to migrate: {}'.format(runs))
+
+    migrate_schemas(source_db, target_db, ds_schema_names)
+    # todo migrate the rest of the entities and generalize
+
+
+def migrate_schemas(source_db, target_db, ds_schema_names):
+    print("migrating schemas started")
+
+    dataset_collection = source_db["schema_v1"]
+
+    # mark as locked first
+    update_result = dataset_collection.update_many(
+        {"name": {"$in": ds_schema_names}},  # dataset name
+        {"$set": {
+            "migrationHash": migration_hash,
+            "locked": True
+        }}
+    )
+
+    if update_result.acknowledged:
+        if verbose:
+            print("Locking of {} successful. Migrating ... ".format(update_result.modified_count))
+    else:
+        raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
+                        .format(update_result.acknowledged, update_result.matched_count, update_result.modified_count))
+
+    docs = dataset_collection.find(
+        {"$and": [
+            {"name": {"$in": ds_schema_names}},  # dataset name
+            {"migrationHash": migration_hash},  # belongs to this migration
+            {"locked": True}  # is successfully locked (previous step)
+        ]}
+    )
+
+    target_dataset_collection = target_db["dataset_v1migrated"]  # todo make configurable
+    for item in docs:
+        # item preview
+        if verbose:
+            print("Migrating schema: {} v{}".format(item["name"], item["version"]))
+        del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
+        target_dataset_collection.insert_one(item)
+
+    print("Migrating schemas finished.")
 
 
 if __name__ == '__main__':
@@ -136,12 +197,12 @@ if __name__ == '__main__':
 
     # simple_migration_test(source, target)
 
-    dsnames = ["mydataset1", "Cobol2", "test654", "toDelete1"]
+    dsnames = ["mydataset1"]  # , "Cobol2", "test654", "toDelete1"
 
     # just testing for now:
-    get_migration_data(source, dsnames)
+    migrate_collections(source, target, dsnames)
 
     print("Done.")
 
     # example test-run:
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v
