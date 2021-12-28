@@ -24,7 +24,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Projections._
-import org.mongodb.scala.model.Updates.{set, _}
+import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import za.co.absa.enceladus.model.menas._
@@ -131,7 +131,9 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("dateDisabled", ZonedDateTime.now()),
       set("userDisabled", username))).toFuture()
   }
- def setLockState(name: String, isLocked: Boolean, username: String, datetime: ZonedDateTime = ZonedDateTime.now()): Future[UpdateResult] = {
+
+  def setLockState(name: String, isLocked: Boolean, username: String,
+                  datetime: ZonedDateTime = ZonedDateTime.now()): Future[UpdateResult] = {
     val (dateLocked, userLocked) = if (isLocked) {
       (datetime, username)
     } else {
