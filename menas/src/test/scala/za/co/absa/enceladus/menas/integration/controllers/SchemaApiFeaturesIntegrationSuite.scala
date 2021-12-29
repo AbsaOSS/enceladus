@@ -222,7 +222,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -237,7 +237,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -254,7 +254,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -271,7 +271,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -282,7 +282,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
       }
       "no Schema with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -302,7 +302,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, UsedIn](s"$apiUrl/disable/schema")
 
           assertBadRequest(response)
 
@@ -319,7 +319,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+          val response = sendDeleteByAdmin[Schema, UsedIn](s"$apiUrl/disable/schema")
 
           assertBadRequest(response)
 
@@ -339,7 +339,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -354,7 +354,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -371,7 +371,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -388,7 +388,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/2")
 
           assertOk(response)
 
@@ -405,7 +405,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -422,7 +422,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/2")
 
           assertOk(response)
 
@@ -433,7 +433,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
       }
       "no Schema with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -454,7 +454,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, UsedIn](s"$apiUrl/disable/schema/1")
 
           assertBadRequest(response)
 
@@ -472,7 +472,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+          val response = sendDeleteByAdmin[Schema, UsedIn](s"$apiUrl/disable/schema/1")
 
           assertBadRequest(response)
 
