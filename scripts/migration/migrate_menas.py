@@ -115,16 +115,19 @@ def assemble_ds_mapping_tables(db, ds_names):
     ])  # single doc with { _id: ... , "mts" : [mt1, mt2, ...]}
 
     # if no MCRs are present, the result may be empty
-    if not list(mapping_table_names):
+    mapping_table_names_list = list(mapping_table_names)  # cursor behaves one-iteration only.
+    if not list(mapping_table_names_list):
         return []
 
-    extracted_array = list(mapping_table_names)[0]['mts']
+    extracted_array = mapping_table_names_list[0]['mts']
     return extracted_array
 
 
 def migrate_collections(source, target, ds_names):
     source_db = get_database(source, "menas")
     target_db = get_database(target, 'menas_migrated')
+
+    print('Datasets to migrate: {}'.format(ds_names))
 
     ds_schema_names = assemble_ds_schemas(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
@@ -138,18 +141,28 @@ def migrate_collections(source, target, ds_names):
     runs = assemble_runs(source_db, ds_names)
     print('Runs to migrate: {}'.format(runs))
 
-    migrate_schemas(source_db, target_db, ds_schema_names)
-    # todo migrate the rest of the entities and generalize
+    all_schemas = list(set.union(set(ds_schema_names), set(mt_schema_names)))
+    if verbose:
+        print('All schemas (DS & MT) to migrate: {}'.format(all_schemas))
+
+    migrate_entities(source_db, target_db, "schema_v1", all_schemas)
+    migrate_entities(source_db, target_db, "dataset_v1", ds_names)
+    migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names)
+    # todo migrate runs etc.
 
 
-def migrate_schemas(source_db, target_db, ds_schema_names):
-    print("migrating schemas started")
+def migrate_entities(source_db, target_db, collection_name, entity_names_list,
+                     name_field="name", version_field="version"):
+    if not entity_names_list:
+        print("No entities to migrate in {}, skipping.".format(collection_name))
 
-    dataset_collection = source_db["schema_v1"]
+    print("Migrating {} started".format(collection_name))
+
+    dataset_collection = source_db[collection_name]
 
     # mark as locked first
     update_result = dataset_collection.update_many(
-        {"name": {"$in": ds_schema_names}},  # dataset name
+        {name_field: {"$in": entity_names_list}},  # dataset/schema/mt/... name
         {"$set": {
             "migrationHash": migration_hash,
             "locked": True
@@ -158,28 +171,28 @@ def migrate_schemas(source_db, target_db, ds_schema_names):
 
     if update_result.acknowledged:
         if verbose:
-            print("Locking of {} successful. Migrating ... ".format(update_result.modified_count))
+            print("Successfully locked entities: {}. Migrating ... ".format(update_result.modified_count))
     else:
         raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
                         .format(update_result.acknowledged, update_result.matched_count, update_result.modified_count))
 
     docs = dataset_collection.find(
         {"$and": [
-            {"name": {"$in": ds_schema_names}},  # dataset name
+            {name_field: {"$in": entity_names_list}},  # dataset name
             {"migrationHash": migration_hash},  # belongs to this migration
             {"locked": True}  # is successfully locked (previous step)
         ]}
     )
 
-    target_dataset_collection = target_db["schema_v1migrated"]  # todo make configurable
+    target_dataset_collection = target_db[collection_name + "migrated"]  # todo make configurable
     for item in docs:
         # item preview
         if verbose:
-            print("Migrating schema: {} v{}.".format(item["name"], item["version"]))
+            print("Migrating entity: {} v{}.".format(item[name_field], item[version_field]))
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
         target_dataset_collection.insert_one(item)
 
-    print("Migrating schemas finished.")
+    print("Migrating {} finished.".format(collection_name))
 
 
 if __name__ == '__main__':
@@ -198,11 +211,10 @@ if __name__ == '__main__':
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
 
+    # todo remove:
     # simple_migration_test(source, target)
 
-    dsnames = ["mydataset1"]  # , "Cobol2", "test654", "toDelete1"
-
-    # just testing for now:
+    dsnames = ["mydataset1", "Cobol2", "test654", "toDelete1"]
     migrate_collections(source, target, dsnames)
 
     print("Done.")
