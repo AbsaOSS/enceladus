@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
 import argparse
+import secrets  # migration hash generation
 from minydra.dict import MinyDict  # dictionary with dot access
 from pymongo import MongoClient
+
 
 # Default configuration
 # =====================
@@ -13,7 +15,7 @@ defaults = MinyDict({
     'lockMigrated': True
 })
 
-migration_hash = "34df"  # todo generate at some point
+migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
 
 
 def parse_args():
@@ -192,6 +194,7 @@ if __name__ == '__main__':
 
     print('Menas mongo migration')
     print('running with settings: dryrun={}, verbose={}, locking={}'.format(dryrun, verbose, locking))
+    print("Using migration #: '{}'".format(migration_hash))
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
 
