@@ -51,25 +51,6 @@ def get_database(conn_str, db_name):
     return client[db_name]  # gets or creates db
 
 
-def simple_migration_test(src, tgt):
-    """
-    First ugly simplistic migration attempt
-    """
-    src_db = get_database(src, 'menas')  # todo make configurable
-
-    dataset_collection = src_db["dataset_v1"]
-    docs = dataset_collection.find()
-    just_some_docs = docs[:2]
-
-    target_db = get_database(tgt, 'migrated')  # todo change # would create db with default settings
-    target_dataset_collection = target_db["dataset_v1b"]  # would create coll. with default settings (no extra indices!)
-
-    for item in just_some_docs:
-        # item preview
-        print(item)
-        target_dataset_collection.insert_one(item)
-
-
 def assemble_schemas_general(db, entity_names, collection_name):
     collection = db[collection_name]
 
@@ -138,31 +119,33 @@ def migrate_collections(source, target, ds_names):
     mt_schema_names = assemble_mt_schemas(source_db, mapping_table_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
 
-    runs = assemble_runs(source_db, ds_names)
-    print('Runs to migrate: {}'.format(runs))
+    runUniqueIds = assemble_runs(source_db, ds_names)
+    print('Runs to migrate: {}'.format(runUniqueIds))
 
     all_schemas = list(set.union(set(ds_schema_names), set(mt_schema_names)))
     if verbose:
         print('All schemas (DS & MT) to migrate: {}'.format(all_schemas))
 
-    migrate_entities(source_db, target_db, "schema_v1", all_schemas)
-    migrate_entities(source_db, target_db, "dataset_v1", ds_names)
-    migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names)
-    # todo migrate runs etc.
+    migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
+    migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
+    migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
+    migrate_entities(source_db, target_db, "run_v1", runUniqueIds, describe_run_entity, entity_name="run", name_field="uniqueId")
+    # todo migrate attachments, too?
 
 
 def migrate_entities(source_db, target_db, collection_name, entity_names_list,
-                     name_field="name", version_field="version"):
+                     describe_fn, entity_name="entity", name_field="name"):
     if not entity_names_list:
-        print("No entities to migrate in {}, skipping.".format(collection_name))
+        print("No {}s to migrate in {}, skipping.".format(entity_name, collection_name))
+        return
 
-    print("Migrating {} started".format(collection_name))
+    print("Migration of collection {} started".format(collection_name))
 
     dataset_collection = source_db[collection_name]
 
     # mark as locked first
     update_result = dataset_collection.update_many(
-        {name_field: {"$in": entity_names_list}},  # dataset/schema/mt/... name
+        {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
         {"$set": {
             "migrationHash": migration_hash,
             "locked": True
@@ -188,11 +171,29 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
     for item in docs:
         # item preview
         if verbose:
-            print("Migrating entity: {} v{}.".format(item[name_field], item[version_field]))
+            print("Migrating {}: {}.".format(entity_name, describe_fn(item)))
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
         target_dataset_collection.insert_one(item)
 
-    print("Migrating {} finished.".format(collection_name))
+    print("Migration of collection {} finished.".format(collection_name))
+
+
+def describe_default_entity(item):
+    """
+    Aux method to describe dataset/schema/mapping-table object - relying on fields 'name' and 'version' being present
+    :param item: object to describe
+    :return: formatted description string
+    """
+    return "{} v{}.".format(item["name"], item["version"])
+
+
+def describe_run_entity(item):
+    """
+    Aux method to describe run object - relying on fields 'dataset', 'datasetVersion', and 'uniqueId' being present
+    :param item: object to describe
+    :return: formatted description string
+    """
+    return "for {} v{} - run {} (uniqueId {})".format(item["dataset"], item["datasetVersion"], item["runId"], item["uniqueId"])
 
 
 if __name__ == '__main__':
@@ -206,13 +207,10 @@ if __name__ == '__main__':
     target = args.target
 
     print('Menas mongo migration')
-    print('running with settings: dryrun={}, verbose={}, locking={}'.format(dryrun, verbose, locking))
+    print('Running with settings: dryrun={}, verbose={}, locking={}'.format(dryrun, verbose, locking))
     print("Using migration #: '{}'".format(migration_hash))
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
-
-    # todo remove:
-    # simple_migration_test(source, target)
 
     dsnames = ["mydataset1", "Cobol2", "test654", "toDelete1"]
     migrate_collections(source, target, dsnames)
