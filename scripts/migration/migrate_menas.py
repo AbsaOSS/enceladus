@@ -169,11 +169,11 @@ def migrate_schemas(source_db, target_db, ds_schema_names):
         ]}
     )
 
-    target_dataset_collection = target_db["dataset_v1migrated"]  # todo make configurable
+    target_dataset_collection = target_db["schema_v1migrated"]  # todo make configurable
     for item in docs:
         # item preview
         if verbose:
-            print("Migrating schema: {} v{}".format(item["name"], item["version"]))
+            print("Migrating schema: {} v{}.".format(item["name"], item["version"]))
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
         target_dataset_collection.insert_one(item)
 
