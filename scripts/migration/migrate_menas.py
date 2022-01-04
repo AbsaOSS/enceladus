@@ -100,6 +100,9 @@ def assemble_runs(db, ds_names):
 
 
 def assemble_ds_schemas(db, ds_names):
+    """Since schemas are assembled from datasets, only locked state of the datasets is checked.
+    Locked state of the schemas is not checked here. However, later, in the migration phase, only non-locked schemas
+    are actually migrated."""
     return assemble_schemas(db, ds_names, "dataset_v1")
 
 
