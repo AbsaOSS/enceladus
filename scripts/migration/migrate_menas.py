@@ -4,6 +4,9 @@ import argparse
 import secrets  # migration hash generation
 from minydra.dict import MinyDict  # dictionary with dot access
 from pymongo import MongoClient
+from pymongo.database import Database
+from pymongo.write_concern import WriteConcern
+from pymongo.read_concern import ReadConcern
 
 
 # Default configuration
@@ -48,17 +51,39 @@ def get_database(conn_str, db_name):
     """
     client = MongoClient(conn_str)
 
-    return client[db_name]  # gets or creates db
+    ## return client[db_name]  # gets or creates db
+    majority_write_concern = WriteConcern(w="majority")
+    majority_read_concern = ReadConcern(level="majority")
+
+    return Database(client, db_name, write_concern=majority_write_concern, read_concern=majority_read_concern)
 
 
-def assemble_schemas_general(db, entity_names, collection_name):
+NOT_LOCKED_MONGO_FILTER = {"$or": [
+    {"locked": False},  # is not locked, or
+    {"locked": {"$exists": False}}  # or: there is no locking info at all
+]}
+
+
+def assemble_schemas(db, entity_names, collection_name):
+    return assemble_default_entities(db, entity_names, collection_name, distinct_field="schemaName")
+
+
+def assemble_datasets(db, ds_names):
+    return assemble_default_entities(db, ds_names, "dataset_v1", distinct_field="name")
+
+
+def assemble_default_entities(db, entity_names, collection_name, distinct_field):
+    """ Assembles schemas or datasets based on entity names and not being locked """
     collection = db[collection_name]
 
-    schemas = collection.distinct(
-        "schemaName",  # field to distinct on
-        {"name": {"$in": entity_names}}  # filter
+    entities = collection.distinct(
+        distinct_field,  # field to distinct on
+        {"$and": [
+            {"name": {"$in": entity_names}},  # filter on name (ds/mt)
+            NOT_LOCKED_MONGO_FILTER
+        ]}
     )
-    return schemas  # array of distinct schemaNames (in a single document)
+    return entities  # array of distinct names (in a single document)
 
 
 def assemble_runs(db, ds_names):
@@ -66,17 +91,20 @@ def assemble_runs(db, ds_names):
 
     ids = collection.distinct(
         "uniqueId",  # field to distinct on
-        {"dataset": {"$in": ds_names}}  # filter
+        {"$and": [
+            {"dataset": {"$in": ds_names}},  # filter on DS names
+            NOT_LOCKED_MONGO_FILTER
+        ]}
     )
     return ids  # array of distinct uniqueId (in a single document)
 
 
 def assemble_ds_schemas(db, ds_names):
-    return assemble_schemas_general(db, ds_names, "dataset_v1")
+    return assemble_schemas(db, ds_names, "dataset_v1")
 
 
 def assemble_mt_schemas(db, mt_names):
-    return assemble_schemas_general(db, mt_names, "mapping_table_v1")
+    return assemble_schemas(db, mt_names, "mapping_table_v1")
 
 
 def assemble_ds_mapping_tables(db, ds_names):
@@ -85,7 +113,8 @@ def assemble_ds_mapping_tables(db, ds_names):
     mapping_table_names = ds_collection.aggregate([
         {"$match": {"$and": [  # selection based on:
             {"name": {"$in": ds_names}},  # dataset name
-            {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}}  # having some MCRs
+            {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}},  # having some MCRs
+            NOT_LOCKED_MONGO_FILTER
         ]}},
         {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
         {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
@@ -104,11 +133,15 @@ def assemble_ds_mapping_tables(db, ds_names):
     return extracted_array
 
 
-def migrate_collections(source, target, ds_names):
+def migrate_collections(source, target, supplied_ds_names):
     source_db = get_database(source, "menas")
     target_db = get_database(target, 'menas_migrated')
 
-    print('Datasets to migrate: {}'.format(ds_names))
+    if verbose:
+        print("Dataset names given: {}".format(supplied_ds_names))
+
+    ds_names = assemble_datasets(source_db, supplied_ds_names)
+    print('Dataset names to migrate: {}'.format(ds_names))
 
     ds_schema_names = assemble_ds_schemas(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
@@ -126,6 +159,7 @@ def migrate_collections(source, target, ds_names):
     if verbose:
         print('All schemas (DS & MT) to migrate: {}'.format(all_schemas))
 
+    print("\n")
     migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
     migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
     migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
@@ -145,7 +179,10 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
 
     # mark as locked first
     update_result = dataset_collection.update_many(
-        {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
+        {"$and": [
+            {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
+            NOT_LOCKED_MONGO_FILTER
+        ]},
         {"$set": {
             "migrationHash": migration_hash,
             "locked": True
@@ -154,11 +191,13 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
 
     if update_result.acknowledged:
         if verbose:
-            print("Successfully locked entities: {}. Migrating ... ".format(update_result.modified_count))
+            print("Successfully locked {}s: {}. Migrating ... ".format(entity_name, update_result.modified_count))
     else:
         raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
                         .format(update_result.acknowledged, update_result.matched_count, update_result.modified_count))
 
+    # This relies on the locking-update being completed, this is why we are using majority r/w concerns.
+    # https://docs.mongodb.com/manual/core/causal-consistency-read-write-concerns/#std-label-causal-rc-majority-wc-majority
     docs = dataset_collection.find(
         {"$and": [
             {name_field: {"$in": entity_names_list}},  # dataset name
@@ -175,7 +214,9 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
         target_dataset_collection.insert_one(item)
 
-    print("Migration of collection {} finished.".format(collection_name))
+    ## todo check locked # = migrated #. What to do if != ?
+
+    print("Migration of collection {} finished.\n".format(collection_name))
 
 
 def describe_default_entity(item):
@@ -184,7 +225,7 @@ def describe_default_entity(item):
     :param item: object to describe
     :return: formatted description string
     """
-    return "{} v{}.".format(item["name"], item["version"])
+    return "{} v{}".format(item["name"], item["version"])
 
 
 def describe_run_entity(item):
