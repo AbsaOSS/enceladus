@@ -207,16 +207,21 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
     )
 
     target_dataset_collection = target_db[collection_name + "migrated"]  # todo make configurable
+    migrated_count = 0
     for item in docs:
         # item preview
         if verbose:
             print("Migrating {}: {}.".format(entity_name, describe_fn(item)))
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
         target_dataset_collection.insert_one(item)
+        migrated_count += 1
 
-    ## todo check locked # = migrated #. What to do if != ?
+    locked_count = update_result.modified_count
+    if locked_count != migrated_count:
+        raise Exception("Locked {} {}s, but managed to migrate only {} of them!"
+                        .format(locked_count, entity_name, migrated_count))
 
-    print("Migration of collection {} finished.\n".format(collection_name))
+    print("Migration of collection {} finished, migrated {} {}s\n".format(collection_name, migrated_count, entity_name))
 
 
 def describe_default_entity(item):
@@ -253,7 +258,7 @@ if __name__ == '__main__':
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
 
-    dsnames = ["mydataset1", "Cobol2", "test654", "toDelete1"]
+    dsnames = ["mydataset1" ] #, "Cobol2", "test654", "toDelete1"]
     migrate_collections(source, target, dsnames)
 
     print("Done.")
