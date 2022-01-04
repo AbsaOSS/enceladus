@@ -39,6 +39,13 @@ def parse_args():
                         help="connection string for source MongoDb")
     parser.add_argument('target', metavar="TARGET",
                         help="connection string for target MongoDb")
+
+    input_options_group = parser.add_mutually_exclusive_group(required=True)
+    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+
     return parser.parse_args()
 
 
@@ -136,7 +143,7 @@ def assemble_ds_mapping_tables(db, ds_names):
     return extracted_array
 
 
-def migrate_collections(source, target, supplied_ds_names):
+def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     source_db = get_database(source, "menas")
     target_db = get_database(target, 'menas_migrated')
 
@@ -261,10 +268,18 @@ if __name__ == '__main__':
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
 
-    dsnames = ["mydataset1" ] #, "Cobol2", "test654", "toDelete1"]
-    migrate_collections(source, target, dsnames)
+    dataset_names = args.datasets
+    mapping_table_names = args.mtables
+    if dataset_names:
+        print('dataset names supplied: {}'.format(dataset_names))
+        migrate_collections_by_ds_names(source, target, dataset_names)
+    elif mapping_table_names:
+        print('mapping table names supplied: {}'.format(mapping_table_names))
+        print("TODO: Not yet implemented")  # todo implement by-mt-migration
+    else:
+        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
 
     print("Done.")
 
     # example test-run:
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 mydataset2
