@@ -28,7 +28,7 @@ NOT_LOCKED_MONGO_FILTER = {"$or": [
     {"locked": False},  # is not locked, or
     {"locked": {"$exists": False}}  # or: there is no locking info at all
 ]}
-
+EMPTY_MONGO_FILTER = {}
 
 
 def parse_args():
@@ -74,36 +74,38 @@ def get_database(conn_str, db_name):
     return Database(client, db_name, write_concern=majority_write_concern, read_concern=majority_read_concern)
 
 
-def get_distinct_ds_names_from_ds_names(db, ds_names):
-    return get_distinct_entities_ids(db, ds_names, "dataset_v1")
+def get_distinct_ds_names_from_ds_names(db, ds_names, not_locked_only):
+    return get_distinct_entities_ids(db, ds_names, "dataset_v1", not_locked_only)
 
 
-def get_distinct_schema_names_from_schema_names(db, schema_names):
-    return get_distinct_entities_ids(db, schema_names, "schema_v1")
+def get_distinct_schema_names_from_schema_names(db, schema_names, not_locked_only):
+    return get_distinct_entities_ids(db, schema_names, "schema_v1", not_locked_only)
 
 
-def get_distinct_entities_ids(db, entity_names, collection_name, entity_name_field="name", distinct_field="name"):
+def get_distinct_entities_ids(db, entity_names, collection_name, not_locked_only, entity_name_field="name", distinct_field="name"):
     """ General way to retrieve distinct entity field values (names, ids, ...) from non-locked entities """
     collection = db[collection_name]
+    locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
 
     entities = collection.distinct(
         distinct_field,  # field to distinct on
         {"$and": [
             {entity_name_field: {"$in": entity_names}},  # filter on name (ds/mt)
-            NOT_LOCKED_MONGO_FILTER
+            locked_filter
         ]}
     )
     return entities  # array of distinct names (in a single document)
 
 
-def get_distinct_mapping_tables_from_ds_names(db, ds_names):
+def get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only):
     ds_collection = db["dataset_v1"]
+    locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
 
     mapping_table_names = ds_collection.aggregate([
         {"$match": {"$and": [  # selection based on:
             {"name": {"$in": ds_names}},  # dataset name
             {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}},  # having some MCRs
-            NOT_LOCKED_MONGO_FILTER
+            locked_filter
         ]}},
         {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
         {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
@@ -123,7 +125,7 @@ def get_distinct_mapping_tables_from_ds_names(db, ds_names):
 
 
 def assemble_nonlocked_runs_from_ds_names(db, ds_names):
-    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId")
+    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId", not_locked_only=True)
 
 
 def assemble_notlocked_schemas_from_ds_names(db, ds_names):
@@ -135,22 +137,21 @@ def assemble_notlocked_schemas_from_mt_names(db, mt_names):
 
 
 def assemble_notlocked_schemas_from_x(db, entity_names, collection_name, distinct_field):
-    # schema names from not locked X (datasets/mts) (the schemas themselves may or may not be locked)
-    schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field)
-
+    # schema names from locked+notlocked (datasets/mts) (the schemas themselves may or may not be locked):
+    schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field, not_locked_only=False)
     # check schema collection which of these schemas are actually not locked:
-    return get_distinct_schema_names_from_schema_names(db, schema_names)
+    return get_distinct_schema_names_from_schema_names(db, schema_names, not_locked_only=True)
 
 
 def assemble_nonlocked_mapping_tables_from_mt_names(db, mt_names):
-    return get_distinct_entities_ids(db, mt_names, "mapping_table_v1")
+    return get_distinct_entities_ids(db, mt_names, "mapping_table_v1", not_locked_only=True)
 
 
 def assemble_nonlocked_mapping_tables_from_ds_names(db, ds_names):
-    # mt names from not datasets (the mts themselves may or may not be locked)
-    mt_names_from_ds_names = get_distinct_mapping_tables_from_ds_names(db, ds_names)
-
-    return get_distinct_entities_ids(db, mt_names_from_ds_names, "mapping_table_v1")
+    # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
+    mt_names_from_ds_names = get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only=False)
+    # ids for not locked mapping tables
+    return get_distinct_entities_ids(db, mt_names_from_ds_names, "mapping_table_v1", not_locked_only=True)
 
 
 def migrate_entities(source_db, target_db, collection_name, entity_names_list,
@@ -205,6 +206,7 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
     if locked_count != migrated_count:
         raise Exception("Locked {} {}s, but managed to migrate only {} of them!"
                         .format(locked_count, entity_name, migrated_count))
+        # todo mark migration as successful? on error
 
     print("Migration of collection {} finished, migrated {} {}s\n".format(collection_name, migrated_count, entity_name))
 
@@ -234,15 +236,18 @@ def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
 
-    ds_names = get_distinct_ds_names_from_ds_names(source_db, supplied_ds_names)
-    print('Dataset names to migrate: {}'.format(ds_names))
+    ds_names = get_distinct_ds_names_from_ds_names(source_db, supplied_ds_names, not_locked_only=False)
+    notlocked_ds_names = get_distinct_ds_names_from_ds_names(source_db, supplied_ds_names, not_locked_only=True)
+    print('Dataset names to migrate: {}'.format(notlocked_ds_names))
 
     ds_schema_names = assemble_notlocked_schemas_from_ds_names(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
 
-    mapping_table_names = assemble_nonlocked_mapping_tables_from_ds_names(source_db, ds_names)
-    print('MTs to migrate: {}'.format(mapping_table_names))
+    notlocked_mapping_table_names = assemble_nonlocked_mapping_tables_from_ds_names(source_db, ds_names)
+    mapping_table_names = get_distinct_mapping_tables_from_ds_names(source_db, ds_names, not_locked_only=False)
+    print('MTs to migrate: {}'.format(notlocked_mapping_table_names))
 
+    # MT schemas must be retrieved from locked MTs, too, not just notlocked_mapping_table_names
     mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, mapping_table_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
 
@@ -256,7 +261,7 @@ def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     print("\n")
     migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
     migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
-    migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
+    migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity, entity_name="mapping table")
     migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
     # todo migrate attachments, too?
 
@@ -271,7 +276,7 @@ def migrate_collections_by_mt_names(source, target, supplied_mt_names):
     mapping_table_names = assemble_nonlocked_mapping_tables_from_mt_names(source_db, supplied_mt_names)
     print('MTs to migrate: {}'.format(mapping_table_names))
 
-    mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, mapping_table_names)
+    mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, supplied_mt_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
 
     # todo is this all for my MT migration or should we reversly lookup datasets that use these MTs, their runs and ds schemas, too?
