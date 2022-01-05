@@ -57,8 +57,6 @@ def get_database(conn_str, db_name):
     :return: mongoDb handle
     """
     client = MongoClient(conn_str)
-
-    ## return client[db_name]  # gets or creates db
     majority_write_concern = WriteConcern(w="majority")
     majority_read_concern = ReadConcern(level="majority")
 
@@ -71,50 +69,46 @@ NOT_LOCKED_MONGO_FILTER = {"$or": [
 ]}
 
 
-def assemble_schemas(db, entity_names, collection_name):
-    return assemble_default_entities(db, entity_names, collection_name, distinct_field="schemaName")
+def get_distinct_ds_names_from_ds_names(db, ds_names):
+    return get_distinct_entities_ids(db, ds_names, "dataset_v1")
 
 
-def assemble_datasets(db, ds_names):
-    return assemble_default_entities(db, ds_names, "dataset_v1", distinct_field="name")
+def get_distinct_schema_names_from_schema_names(db, schema_names):
+    return get_distinct_entities_ids(db, schema_names, "schema_v1")
 
 
-def assemble_default_entities(db, entity_names, collection_name, distinct_field):
-    """ Assembles schemas or datasets based on entity names and not being locked """
+def get_distinct_entities_ids(db, entity_names, collection_name, entity_name_field="name", distinct_field="name"):
+    """ General way to retrieve distinct entity field values (names, ids, ...) from non-locked entities """
     collection = db[collection_name]
 
     entities = collection.distinct(
         distinct_field,  # field to distinct on
         {"$and": [
-            {"name": {"$in": entity_names}},  # filter on name (ds/mt)
+            {entity_name_field: {"$in": entity_names}},  # filter on name (ds/mt)
             NOT_LOCKED_MONGO_FILTER
         ]}
     )
     return entities  # array of distinct names (in a single document)
 
 
-def assemble_runs(db, ds_names):
-    collection = db["run_v1"]
-
-    ids = collection.distinct(
-        "uniqueId",  # field to distinct on
-        {"$and": [
-            {"dataset": {"$in": ds_names}},  # filter on DS names
-            NOT_LOCKED_MONGO_FILTER
-        ]}
-    )
-    return ids  # array of distinct uniqueId (in a single document)
+def assemble_nonlocked_runs_from_ds_names(db, ds_names):
+    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId")
 
 
-def assemble_ds_schemas(db, ds_names):
-    """Since schemas are assembled from datasets, only locked state of the datasets is checked.
-    Locked state of the schemas is not checked here. However, later, in the migration phase, only non-locked schemas
-    are actually migrated."""
-    return assemble_schemas(db, ds_names, "dataset_v1")
+def assemble_notlocked_schemas_from_ds_names(db, ds_names):
+    return assemble_notlocked_schemas_from_x(db, ds_names, "dataset_v1", "schemaName")
 
 
-def assemble_mt_schemas(db, mt_names):
-    return assemble_schemas(db, mt_names, "mapping_table_v1")
+def assemble_notlocked_schemas_from_mt_names(db, mt_names):
+    return assemble_notlocked_schemas_from_x(db, mt_names, "mapping_table_v1", "schemaName")
+
+
+def assemble_notlocked_schemas_from_x(db, entity_names, collection_name, distinct_field):
+    # schema names from not locked X (datasets/mts) (the schemas themselves may or may not be locked)
+    schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field)
+
+    # check schema collection which of these schemas are actually not locked:
+    return get_distinct_schema_names_from_schema_names(db, schema_names)
 
 
 def assemble_ds_mapping_tables(db, ds_names):
@@ -145,25 +139,25 @@ def assemble_ds_mapping_tables(db, ds_names):
 
 def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     source_db = get_database(source, "menas")
-    target_db = get_database(target, 'menas_migrated')
+    target_db = get_database(target, 'menas_migrated')  # todo configurable?
 
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
 
-    ds_names = assemble_datasets(source_db, supplied_ds_names)
+    ds_names = get_distinct_ds_names_from_ds_names(source_db, supplied_ds_names)
     print('Dataset names to migrate: {}'.format(ds_names))
 
-    ds_schema_names = assemble_ds_schemas(source_db, ds_names)
+    ds_schema_names = assemble_notlocked_schemas_from_ds_names(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
 
     mapping_table_names = assemble_ds_mapping_tables(source_db, ds_names)
     print('MTs to migrate: {}'.format(mapping_table_names))
 
-    mt_schema_names = assemble_mt_schemas(source_db, mapping_table_names)
+    mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, mapping_table_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
 
-    runUniqueIds = assemble_runs(source_db, ds_names)
-    print('Runs to migrate: {}'.format(runUniqueIds))
+    run_unique_ids = assemble_nonlocked_runs_from_ds_names(source_db, ds_names)
+    print('Runs to migrate: {}'.format(run_unique_ids))
 
     all_schemas = list(set.union(set(ds_schema_names), set(mt_schema_names)))
     if verbose:
@@ -173,7 +167,7 @@ def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
     migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
     migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
-    migrate_entities(source_db, target_db, "run_v1", runUniqueIds, describe_run_entity, entity_name="run", name_field="uniqueId")
+    migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
     # todo migrate attachments, too?
 
 
@@ -184,7 +178,6 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
         return
 
     print("Migration of collection {} started".format(collection_name))
-
     dataset_collection = source_db[collection_name]
 
     # mark as locked first
@@ -206,7 +199,7 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
         raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
                         .format(update_result.acknowledged, update_result.matched_count, update_result.modified_count))
 
-    # This relies on the locking-update being completed, this is why we are using majority r/w concerns.
+    # This relies on the locking-update being complete on mongo-cluster, thus using majority r/w concerns.
     # https://docs.mongodb.com/manual/core/causal-consistency-read-write-concerns/#std-label-causal-rc-majority-wc-majority
     docs = dataset_collection.find(
         {"$and": [
@@ -269,17 +262,19 @@ if __name__ == '__main__':
     print('  target: {}'.format(target))
 
     dataset_names = args.datasets
-    mapping_table_names = args.mtables
+    mt_names = args.mtables
     if dataset_names:
         print('dataset names supplied: {}'.format(dataset_names))
         migrate_collections_by_ds_names(source, target, dataset_names)
-    elif mapping_table_names:
-        print('mapping table names supplied: {}'.format(mapping_table_names))
+    elif mt_names:
+        print('mapping table names supplied: {}'.format(mt_names))
         print("TODO: Not yet implemented")  # todo implement by-mt-migration
     else:
+        # should not happen (-d/-m is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
 
     print("Done.")
 
     # example test-run:
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 mydataset2
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 test654
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -d mydataset1 test654 Cobol1 Cobol2
