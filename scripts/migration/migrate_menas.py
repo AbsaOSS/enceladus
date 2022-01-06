@@ -15,7 +15,6 @@ from pymongo.read_concern import ReadConcern
 defaults = MinyDict({
     'verbose': False,
     'dryrun': False,
-    'lock_migrated': True,
     'target_db_name': "menas_migrated"
 })
 
@@ -42,8 +41,6 @@ def parse_args():
                         help="if specified, skip the actual synchronization, just print what would be copied over.")
     parser.add_argument('-v', '--verbose', action="store_true", default=defaults.verbose,
                         help="prints extra information while running.")
-    parser.add_argument('-l', '--locking', action='store_true', default=defaults.lock_migrated,
-                        help="locking of migrated entities")
 
     # todo target db name param
     parser.add_argument('source', metavar="SOURCE",
@@ -258,12 +255,15 @@ def migrate_collections_by_ds_names(source, target, supplied_ds_names):
     if verbose:
         print('All schemas (DS & MT) to migrate: {}'.format(all_schemas))
 
-    print("\n")
-    migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
-    migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
-    migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity, entity_name="mapping table")
-    migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
-    # todo migrate attachments, too?
+    if not dryrun:
+        print("\n")
+        migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
+        migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
+        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity, entity_name="mapping table")
+        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
+        # todo migrate attachments, too?
+    else:
+        print("*** Dryrun selected, no actual migration will take place.")
 
 
 def migrate_collections_by_mt_names(source, target, supplied_mt_names):
@@ -281,24 +281,27 @@ def migrate_collections_by_mt_names(source, target, supplied_mt_names):
 
     # todo is this all for my MT migration or should we reversly lookup datasets that use these MTs, their runs and ds schemas, too?
 
-    print("\n")
-    migrate_entities(source_db, target_db, "schema_v1", mt_schema_names, describe_default_entity, entity_name="schema")
-    migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
-    # todo migrate attachments, too?
+    if not dryrun:
+        print("\n")
+        migrate_entities(source_db, target_db, "schema_v1", mt_schema_names, describe_default_entity, entity_name="schema")
+        migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
+        # todo migrate attachments, too?
+    else:
+        print("*** Dryrun selected, no actual migration will take place.")
 
 
 if __name__ == '__main__':
     args = parse_args()
 
+    # global flags
     dryrun = args.dryrun
     verbose = args.verbose
-    locking = args.locking
 
     source = args.source
     target = args.target
 
     print('Menas mongo migration')
-    print('Running with settings: dryrun={}, verbose={}, locking={}'.format(dryrun, verbose, locking))
+    print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
     print("Using migration #: '{}'".format(migration_hash))
     print('  source: {}'.format(source))
     print('  target: {}'.format(target))
