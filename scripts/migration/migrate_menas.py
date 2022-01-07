@@ -2,11 +2,14 @@
 
 import argparse
 import secrets  # migration hash generation
+from argparse import ArgumentParser
+
 from minydra.dict import MinyDict  # dictionary with dot access
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
+from typing import List
 
 
 # Default configuration
@@ -30,7 +33,7 @@ NOT_LOCKED_MONGO_FILTER = {"$or": [
 EMPTY_MONGO_FILTER = {}
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='migrate_menas',
         description='Menas MongoDb migration script.',
@@ -57,7 +60,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_database(conn_str, db_name):
+def get_database(conn_str: str, db_name: str) -> Database:
     """
     Gets db handle
     :param db_name: string db name
@@ -71,15 +74,17 @@ def get_database(conn_str, db_name):
     return Database(client, db_name, write_concern=majority_write_concern, read_concern=majority_read_concern)
 
 
-def get_distinct_ds_names_from_ds_names(db, ds_names, not_locked_only):
+def get_distinct_ds_names_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
     return get_distinct_entities_ids(db, ds_names, "dataset_v1", not_locked_only)
 
 
-def get_distinct_schema_names_from_schema_names(db, schema_names, not_locked_only):
+def get_distinct_schema_names_from_schema_names(db: Database, schema_names: List[str],
+                                                not_locked_only: bool) -> List[str]:
     return get_distinct_entities_ids(db, schema_names, "schema_v1", not_locked_only)
 
 
-def get_distinct_entities_ids(db, entity_names, collection_name, not_locked_only, entity_name_field="name", distinct_field="name"):
+def get_distinct_entities_ids(db: Database, entity_names: List[str], collection_name: str, not_locked_only: bool,
+                              entity_name_field: str = "name", distinct_field: object = "name") -> List[str]:
     """ General way to retrieve distinct entity field values (names, ids, ...) from non-locked entities """
     collection = db[collection_name]
     locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
@@ -91,10 +96,10 @@ def get_distinct_entities_ids(db, entity_names, collection_name, not_locked_only
             locked_filter
         ]}
     )
-    return entities  # array of distinct names (in a single document)
+    return entities  # list of distinct names (in a single document)
 
 
-def get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only):
+def get_distinct_mapping_tables_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
     ds_collection = db["dataset_v1"]
     locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
 
@@ -117,42 +122,45 @@ def get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only):
     if not list(mapping_table_names_list):
         return []
 
-    extracted_array = mapping_table_names_list[0]['mts']
-    return extracted_array
+    extracted_list = mapping_table_names_list[0]['mts']
+    return extracted_list
 
 
-def assemble_nonlocked_runs_from_ds_names(db, ds_names):
-    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId", not_locked_only=True)
+def assemble_nonlocked_runs_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
+    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId",
+                                     not_locked_only=True)
 
 
-def assemble_notlocked_schemas_from_ds_names(db, ds_names):
+def assemble_notlocked_schemas_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
     return assemble_notlocked_schemas_from_x(db, ds_names, "dataset_v1", "schemaName")
 
 
-def assemble_notlocked_schemas_from_mt_names(db, mt_names):
+def assemble_notlocked_schemas_from_mt_names(db: Database, mt_names: List[str]) -> List[str]:
     return assemble_notlocked_schemas_from_x(db, mt_names, "mapping_table_v1", "schemaName")
 
 
-def assemble_notlocked_schemas_from_x(db, entity_names, collection_name, distinct_field):
+def assemble_notlocked_schemas_from_x(db: Database, entity_names: List[str], collection_name: str,
+                                      distinct_field: str) -> List[str]:
     # schema names from locked+notlocked (datasets/mts) (the schemas themselves may or may not be locked):
-    schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field, not_locked_only=False)
+    schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field,
+                                             not_locked_only=False)
     # check schema collection which of these schemas are actually not locked:
     return get_distinct_schema_names_from_schema_names(db, schema_names, not_locked_only=True)
 
 
-def assemble_nonlocked_mapping_tables_from_mt_names(db, mt_names):
+def assemble_nonlocked_mapping_tables_from_mt_names(db: Database, mt_names: List[str]) -> List[str]:
     return get_distinct_entities_ids(db, mt_names, "mapping_table_v1", not_locked_only=True)
 
 
-def assemble_nonlocked_mapping_tables_from_ds_names(db, ds_names):
+def assemble_nonlocked_mapping_tables_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
     # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
     mt_names_from_ds_names = get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only=False)
     # ids for not locked mapping tables
     return get_distinct_entities_ids(db, mt_names_from_ds_names, "mapping_table_v1", not_locked_only=True)
 
 
-def migrate_entities(source_db, target_db, collection_name, entity_names_list,
-                     describe_fn, entity_name="entity", name_field="name"):
+def migrate_entities(source_db: Database, target_db: Database, collection_name: str, entity_names_list: List[str],
+                     describe_fn, entity_name: str = "entity", name_field: str = "name") -> None:
     if not entity_names_list:
         print("No {}s to migrate in {}, skipping.".format(entity_name, collection_name))
         return
@@ -208,7 +216,7 @@ def migrate_entities(source_db, target_db, collection_name, entity_names_list,
     print("Migration of collection {} finished, migrated {} {}s\n".format(collection_name, migrated_count, entity_name))
 
 
-def describe_default_entity(item):
+def describe_default_entity(item: dict) -> str:
     """
     Aux method to describe dataset/schema/mapping-table object - relying on fields 'name' and 'version' being present
     :param item: object to describe
@@ -217,16 +225,17 @@ def describe_default_entity(item):
     return "{} v{}".format(item["name"], item["version"])
 
 
-def describe_run_entity(item):
+def describe_run_entity(item: dict) -> str:
     """
     Aux method to describe run object - relying on fields 'dataset', 'datasetVersion', and 'uniqueId' being present
     :param item: object to describe
     :return: formatted description string
     """
-    return "for {} v{} - run {} (uniqueId {})".format(item["dataset"], item["datasetVersion"], item["runId"], item["uniqueId"])
+    return "for {} v{} - run {} (uniqueId {})".format(item["dataset"], item["datasetVersion"], item["runId"],
+                                                      item["uniqueId"])
 
 
-def migrate_collections_by_ds_names(source, target, supplied_ds_names):
+def migrate_collections_by_ds_names(source: str, target: str, supplied_ds_names: List[str]) -> None:
     source_db = get_database(source, SOURCE_DB_NAME)
     target_db = get_database(target, defaults.target_db_name)  # todo configurable?
 
@@ -259,14 +268,16 @@ def migrate_collections_by_ds_names(source, target, supplied_ds_names):
         print("\n")
         migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
         migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
-        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity, entity_name="mapping table")
-        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
+        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
+                         describe_default_entity, entity_name="mapping table")
+        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run",
+                         name_field="uniqueId")
         # todo migrate attachments, too?
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-def migrate_collections_by_mt_names(source, target, supplied_mt_names):
+def migrate_collections_by_mt_names(source: str, target: str, supplied_mt_names: List[str]) -> None:
     source_db = get_database(source, SOURCE_DB_NAME)
     target_db = get_database(target, defaults.target_db_name)  # todo configurable?
 
@@ -284,7 +295,8 @@ def migrate_collections_by_mt_names(source, target, supplied_mt_names):
     if not dryrun:
         print("\n")
         migrate_entities(source_db, target_db, "schema_v1", mt_schema_names, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity, entity_name="mapping table")
+        migrate_entities(source_db, target_db, "mapping_table_v1", mapping_table_names, describe_default_entity,
+                         entity_name="mapping table")
         # todo migrate attachments, too?
     else:
         print("*** Dryrun selected, no actual migration will take place.")
