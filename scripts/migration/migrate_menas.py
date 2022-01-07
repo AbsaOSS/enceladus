@@ -18,7 +18,7 @@ from typing import List
 defaults = MinyDict({
     'verbose': False,
     'dryrun': False,
-    'target_db_name': "menas_migrated"
+    'target_db_name': "menas_migrated"  # todo change to 'menas'?
 })
 
 migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
@@ -36,7 +36,7 @@ EMPTY_MONGO_FILTER = {}
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='migrate_menas',
-        description='Menas MongoDb migration script.',
+        description='Menas MongoDB migration script.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
         )
 
@@ -45,11 +45,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-v', '--verbose', action="store_true", default=defaults.verbose,
                         help="prints extra information while running.")
 
-    # todo target db name param
     parser.add_argument('source', metavar="SOURCE",
-                        help="connection string for source MongoDb")
+                        help="connection string for source MongoDB")
     parser.add_argument('target', metavar="TARGET",
-                        help="connection string for target MongoDb")
+                        help="connection string for target MongoDB")
+
+    parser.add_argument('-t', '--target-database', dest="targetdb", default=defaults.target_db_name,
+                        help="Name of db on target to migrate to.")
 
     input_options_group = parser.add_mutually_exclusive_group(required=True)
     input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
@@ -65,7 +67,7 @@ def get_database(conn_str: str, db_name: str) -> Database:
     Gets db handle
     :param db_name: string db name
     :param conn_str: connection string, e.g. mongodb://username1:password213@my.domain.ext/adminOrAnotherDb"
-    :return: mongoDb handle
+    :return: MongoDB handle
     """
     client = MongoClient(conn_str)
     majority_write_concern = WriteConcern(w="majority")
@@ -257,9 +259,10 @@ def describe_run_entity(item: dict) -> str:
                                                       item["uniqueId"])
 
 
-def migrate_collections_by_ds_names(source: str, target: str, supplied_ds_names: List[str]) -> None:
+def migrate_collections_by_ds_names(source: str, target: str, target_db_name: str,
+                                    supplied_ds_names: List[str]) -> None:
     source_db = get_database(source, SOURCE_DB_NAME)
-    target_db = get_database(target, defaults.target_db_name)  # todo configurable?
+    target_db = get_database(target, target_db_name)
 
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
@@ -299,9 +302,10 @@ def migrate_collections_by_ds_names(source: str, target: str, supplied_ds_names:
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-def migrate_collections_by_mt_names(source: str, target: str, supplied_mt_names: List[str]) -> None:
+def migrate_collections_by_mt_names(source: str, target: str, target_db_name: str,
+                                    supplied_mt_names: List[str]) -> None:
     source_db = get_database(source, SOURCE_DB_NAME)
-    target_db = get_database(target, defaults.target_db_name)  # todo configurable?
+    target_db = get_database(target, target_db_name)
 
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
@@ -324,35 +328,42 @@ def migrate_collections_by_mt_names(source: str, target: str, supplied_mt_names:
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-if __name__ == '__main__':
-    args = parse_args()
-
-    # global flags
-    dryrun = args.dryrun
-    verbose = args.verbose
-
-    source = args.source
-    target = args.target
+def run(parsed_args: argparse.Namespace):
+    source = parsed_args.source
+    target = parsed_args.target
+    target_db_name = parsed_args.targetdb
 
     print('Menas mongo migration')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
     print("Using migration #: '{}'".format(migration_hash))
-    print('  source: {}'.format(source))
-    print('  target: {}'.format(target))
+    print('  source connection-string: {}'.format(source))
+    print('  source DB: {}'.format(SOURCE_DB_NAME))
+    print('  target connection-string: {}'.format(target))
+    print('  target DB: {}'.format(target_db_name))
 
-    dataset_names = args.datasets
-    mt_names = args.mtables
+    dataset_names = parsed_args.datasets
+    mt_names = parsed_args.mtables
     if dataset_names:
         print('dataset names supplied: {}'.format(dataset_names))
-        migrate_collections_by_ds_names(source, target, dataset_names)
+        migrate_collections_by_ds_names(source, target, target_db_name, dataset_names)
     elif mt_names:
         print('mapping table names supplied: {}'.format(mt_names))
-        migrate_collections_by_mt_names(source, target, mt_names)
+        migrate_collections_by_mt_names(source, target, target_db_name, mt_names)
     else:
         # should not happen (-d/-m is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
 
     print("Done.")
+
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    # script-global flags
+    dryrun = args.dryrun
+    verbose = args.verbose
+
+    run(args)
 
     # example test-runs:
     # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 test654
