@@ -18,7 +18,7 @@ from typing import List
 defaults = MinyDict({
     'verbose': False,
     'dryrun': False,
-    'target_db_name': "menas_migrated"  # todo change to 'menas'?
+    'target_db_name': "menas"
 })
 
 migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
@@ -31,35 +31,6 @@ NOT_LOCKED_MONGO_FILTER = {"$or": [
     {"locked": {"$exists": False}}  # or: there is no locking info at all
 ]}
 EMPTY_MONGO_FILTER = {}
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog='migrate_menas',
-        description='Menas MongoDB migration script.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
-        )
-
-    parser.add_argument('-n', '--dryrun', action='store_true', default=defaults.dryrun,
-                        help="if specified, skip the actual synchronization, just print what would be copied over.")
-    parser.add_argument('-v', '--verbose', action="store_true", default=defaults.verbose,
-                        help="prints extra information while running.")
-
-    parser.add_argument('source', metavar="SOURCE",
-                        help="connection string for source MongoDB")
-    parser.add_argument('target', metavar="TARGET",
-                        help="connection string for target MongoDB")
-
-    parser.add_argument('-t', '--target-database', dest="targetdb", default=defaults.target_db_name,
-                        help="Name of db on target to migrate to.")
-
-    input_options_group = parser.add_mutually_exclusive_group(required=True)
-    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
-    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
-
-    return parser.parse_args()
 
 
 def get_database(conn_str: str, db_name: str) -> Database:
@@ -340,6 +311,35 @@ def migrate_collections_by_mt_names(source: str, target: str, target_db_name: st
         print("*** Dryrun selected, no actual migration will take place.")
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='migrate_menas',
+        description='Menas MongoDB migration script.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
+    )
+
+    parser.add_argument('-n', '--dryrun', action='store_true', default=defaults.dryrun,
+                        help="if specified, skip the actual synchronization, just print what would be copied over.")
+    parser.add_argument('-v', '--verbose', action="store_true", default=defaults.verbose,
+                        help="prints extra information while running.")
+
+    parser.add_argument('source', metavar="SOURCE",
+                        help="connection string for source MongoDB")
+    parser.add_argument('target', metavar="TARGET",
+                        help="connection string for target MongoDB")
+
+    parser.add_argument('-t', '--target-database', dest="targetdb", default=defaults.target_db_name,
+                        help="Name of db on target to migrate to.")
+
+    input_options_group = parser.add_mutually_exclusive_group(required=True)
+    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+
+    return parser.parse_args()
+
+
 def run(parsed_args: argparse.Namespace):
     source = parsed_args.source
     target = parsed_args.target
@@ -378,6 +378,6 @@ if __name__ == '__main__':
     run(args)
 
     # example test-runs:
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 test654
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -d mydataset1 test654 Cobol1 Cobol2
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -m MyAwesomeMappingTable1
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 test654 -t target_migrated_menas_db
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -d mydataset1 test654 Cobol1 Cobol2 -t target_migrated_menas_db
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -m MyAwesomeMappingTable1 -t target_migrated_menas_db
