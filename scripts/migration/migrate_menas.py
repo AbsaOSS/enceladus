@@ -2,13 +2,13 @@
 
 import argparse
 import secrets  # migration hash generation
-from argparse import ArgumentParser
 
 from minydra.dict import MinyDict  # dictionary with dot access
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
+from pymongo.errors import DuplicateKeyError
 from typing import List
 
 
@@ -66,7 +66,7 @@ def get_database(conn_str: str, db_name: str) -> Database:
     """
     Gets db handle
     :param db_name: string db name
-    :param conn_str: connection string, e.g. mongodb://username1:password213@my.domain.ext/adminOrAnotherDb"
+    :param conn_str: connection string, e.g. mongodb://username1:password213@my.domain.ext/adminOrAnotherDb
     :return: MongoDB handle
     """
     client = MongoClient(conn_str)
@@ -128,7 +128,7 @@ def get_distinct_mapping_tables_from_ds_names(db: Database, ds_names: List[str],
     return extracted_list
 
 
-def assemble_nonlocked_runs_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
+def assemble_notlocked_runs_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
     return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId",
                                      not_locked_only=True)
 
@@ -150,11 +150,11 @@ def assemble_notlocked_schemas_from_x(db: Database, entity_names: List[str], col
     return get_distinct_schema_names_from_schema_names(db, schema_names, not_locked_only=True)
 
 
-def assemble_nonlocked_mapping_tables_from_mt_names(db: Database, mt_names: List[str]) -> List[str]:
+def assemble_notlocked_mapping_tables_from_mt_names(db: Database, mt_names: List[str]) -> List[str]:
     return get_distinct_entities_ids(db, mt_names, "mapping_table_v1", not_locked_only=True)
 
 
-def assemble_nonlocked_mapping_tables_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
+def assemble_notlocked_mapping_tables_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
     # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
     mt_names_from_ds_names = get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only=False)
     # ids for not locked mapping tables
@@ -201,18 +201,27 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
     )
 
     # migrate locked entities from source to target
-    target_dataset_collection = target_db[collection_name + "migrated"]  # todo make configurable
+    target_dataset_collection = target_db[collection_name]
     migrated_count = 0
+    dupe_kvs = []  # keeping the dupe-ids here
     for item in docs:
         # item preview
         if verbose:
             print("Migrating {}: {}.".format(entity_name, describe_fn(item)))
         del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
-        target_dataset_collection.insert_one(item)
-        migrated_count += 1
 
-    # mark migrated as such or report problems
-    if locked_count == migrated_count:
+        try:
+            target_dataset_collection.insert_one(item)
+        except DuplicateKeyError as e:
+            dupe_kv = e.details['keyValue']
+            dupe_kvs.append(dupe_kv)
+            print("Warning: The {} IDed by {} already found on target, skipping it.".format(entity_name, dupe_kv))
+        else:
+            migrated_count += 1
+
+    dupe_count = len(dupe_kvs)
+    # mark migrated/existing duplicates as migrated or report problems
+    if locked_count == migrated_count + dupe_count:
         migration_tagging_update_result = dataset_collection.update_many(
             {"$and": [
                 {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
@@ -234,10 +243,15 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
                                     locking_update_result.modified_count))
 
     else:
-        raise Exception("Locked {} {}s, but managed to migrate only {} of them!"
-                        .format(locked_count, entity_name, migrated_count))
+        raise Exception("Locked {} {}s, but managed to migrate only {} of them (dupe skipped: {})!"
+                        .format(locked_count, entity_name, migrated_count, dupe_count))
 
-    print("Migration of collection {} finished, migrated {} {}s\n".format(collection_name, migrated_count, entity_name))
+    if dupe_count == 0:
+        print("Migration of collection {} finished, migrated {} {}s.\n"
+              .format(collection_name, migrated_count, entity_name))
+    else:
+        print("Migration of collection {} finished, migrated {} {}s,".format(collection_name, migrated_count, entity_name) +
+              " skipped {} {}s (duplicate already existed on target).\n".format(dupe_count, entity_name))
 
 
 def describe_default_entity(item: dict) -> str:
@@ -274,7 +288,7 @@ def migrate_collections_by_ds_names(source: str, target: str, target_db_name: st
     ds_schema_names = assemble_notlocked_schemas_from_ds_names(source_db, ds_names)
     print('DS schemas to migrate: {}'.format(ds_schema_names))
 
-    notlocked_mapping_table_names = assemble_nonlocked_mapping_tables_from_ds_names(source_db, ds_names)
+    notlocked_mapping_table_names = assemble_notlocked_mapping_tables_from_ds_names(source_db, ds_names)
     mapping_table_names = get_distinct_mapping_tables_from_ds_names(source_db, ds_names, not_locked_only=False)
     print('MTs to migrate: {}'.format(notlocked_mapping_table_names))
 
@@ -282,7 +296,7 @@ def migrate_collections_by_ds_names(source: str, target: str, target_db_name: st
     mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, mapping_table_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
 
-    run_unique_ids = assemble_nonlocked_runs_from_ds_names(source_db, ds_names)
+    run_unique_ids = assemble_notlocked_runs_from_ds_names(source_db, ds_names)
     print('Runs to migrate: {}'.format(run_unique_ids))
 
     all_schemas = list(set.union(set(ds_schema_names), set(mt_schema_names)))
@@ -310,13 +324,11 @@ def migrate_collections_by_mt_names(source: str, target: str, target_db_name: st
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
 
-    mapping_table_names = assemble_nonlocked_mapping_tables_from_mt_names(source_db, supplied_mt_names)
+    mapping_table_names = assemble_notlocked_mapping_tables_from_mt_names(source_db, supplied_mt_names)
     print('MTs to migrate: {}'.format(mapping_table_names))
 
     mt_schema_names = assemble_notlocked_schemas_from_mt_names(source_db, supplied_mt_names)
     print('MT schemas to migrate: {}'.format(mt_schema_names))
-
-    # todo is this all for my MT migration or should we reversly lookup datasets that use these MTs, their runs and ds schemas, too?
 
     if not dryrun:
         print("\n")
