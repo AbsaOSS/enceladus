@@ -168,8 +168,8 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
     print("Migration of collection {} started".format(collection_name))
     dataset_collection = source_db[collection_name]
 
-    # mark as locked first
-    update_result = dataset_collection.update_many(
+    # mark as locked first in source
+    locking_update_result = dataset_collection.update_many(
         {"$and": [
             {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
             NOT_LOCKED_MONGO_FILTER
@@ -180,12 +180,13 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         }}
     )
 
-    if update_result.acknowledged:
+    locked_count = locking_update_result.modified_count
+    if locking_update_result.acknowledged:
         if verbose:
-            print("Successfully locked {}s: {}. Migrating ... ".format(entity_name, update_result.modified_count))
+            print("Successfully locked {}s: {}. Migrating ... ".format(entity_name, locked_count))
     else:
         raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
-                        .format(update_result.acknowledged, update_result.matched_count, update_result.modified_count))
+                        .format(locking_update_result.acknowledged, locking_update_result.matched_count, locking_update_result.modified_count))
 
     # This relies on the locking-update being complete on mongo-cluster, thus using majority r/w concerns.
     # https://docs.mongodb.com/manual/core/causal-consistency-read-write-concerns/#std-label-causal-rc-majority-wc-majority
@@ -197,6 +198,7 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         ]}
     )
 
+    # migrate locked entities from source to target
     target_dataset_collection = target_db[collection_name + "migrated"]  # todo make configurable
     migrated_count = 0
     for item in docs:
@@ -207,11 +209,31 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         target_dataset_collection.insert_one(item)
         migrated_count += 1
 
-    locked_count = update_result.modified_count
-    if locked_count != migrated_count:
+    # mark migrated as such or report problems
+    if locked_count == migrated_count:
+        migration_tagging_update_result = dataset_collection.update_many(
+            {"$and": [
+                {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
+                {"migrationHash": migration_hash},
+                {"locked": True}
+            ]},
+            {"$set": {
+                "migrated": True
+            }}
+        )
+        migration_tagging_count = migration_tagging_update_result.modified_count
+        if migration_tagging_update_result.acknowledged and migration_tagging_count == locked_count:
+            if verbose:
+                print("Successfully marked {}s as migrated: {}. ".format(entity_name, migration_tagging_count))
+        else:
+            raise Exception("Migration tagging unsuccessful: {}, matched={}, modified={}"
+                            .format(migration_tagging_update_result.acknowledged,
+                                    migration_tagging_update_result.matched_count,
+                                    locking_update_result.modified_count))
+
+    else:
         raise Exception("Locked {} {}s, but managed to migrate only {} of them!"
                         .format(locked_count, entity_name, migrated_count))
-        # todo mark migration as successful? on error
 
     print("Migration of collection {} finished, migrated {} {}s\n".format(collection_name, migrated_count, entity_name))
 
@@ -267,7 +289,7 @@ def migrate_collections_by_ds_names(source: str, target: str, supplied_ds_names:
     if not dryrun:
         print("\n")
         migrate_entities(source_db, target_db, "schema_v1", all_schemas, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, "dataset_v1", ds_names, describe_default_entity, entity_name="dataset")
+        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity, entity_name="dataset")
         migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
                          describe_default_entity, entity_name="mapping table")
         migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run",
