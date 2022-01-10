@@ -23,6 +23,8 @@ from pymongo.write_concern import WriteConcern
 from pymongo.read_concern import ReadConcern
 from pymongo.errors import DuplicateKeyError
 from typing import List
+from datetime import datetime, timezone
+
 
 # python package needed to run:
 # pymongo minydra
@@ -38,9 +40,12 @@ defaults = MinyDict({
     'target_db_name': "menas"
 })
 
+# initialized values common for the whole run
 migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
+utc_now = datetime.now(timezone.utc)
 
 SOURCE_DB_NAME = "menas"
+LOCKING_USER = "migration"
 
 # Constants
 NOT_LOCKED_MONGO_FILTER = {"$or": [
@@ -155,6 +160,27 @@ def assemble_notlocked_attachments_from_schema_names(db: Database, schema_names:
                                      distinct_field="refName", not_locked_only=True)
 
 
+def get_date_locked_structure(dt: datetime) -> dict:
+
+    return {
+        "dateTime": {
+            "date": {
+                "year": dt.year,
+                "month": dt.month,
+                "day": dt.day
+            },
+            "time": {
+                "hour": dt.hour,
+                "minute": dt.minute,
+                "second": dt.second,
+                "nano": dt.microsecond*1000
+            }
+        },
+        "offset": 0,
+        "zone": "UTC"
+    }
+
+
 def migrate_entities(source_db: Database, target_db: Database, collection_name: str, entity_names_list: List[str],
                      describe_fn, entity_name: str = "entity", name_field: str = "name") -> None:
     if not entity_names_list:
@@ -172,7 +198,9 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         ]},
         {"$set": {
             "migrationHash": migration_hash,
-            "locked": True
+            "locked": True,
+            "userLocked": LOCKING_USER,
+            "dateLocked": get_date_locked_structure(utc_now)
         }}
     )
 
@@ -202,7 +230,11 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         # item preview
         if verbose:
             print("Migrating {}: {}.".format(entity_name, describe_fn(item)))
-        del item["locked"]  # the original is locked, but the migrated in target should not be (keeping the migration #)
+
+        # the original is locked (+ has user/datetime info) + migration #, target carries has migration #.
+        del item["locked"]
+        del item["userLocked"]
+        del item["dateLocked"]
 
         try:
             target_dataset_collection.insert_one(item)
@@ -397,7 +429,7 @@ def run(parsed_args: argparse.Namespace):
 
     print('Menas mongo migration')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
-    print("Using migration #: '{}'".format(migration_hash))
+    print("Using migration #: '{}' and locking timestamp {} (UTC)".format(migration_hash, utc_now))
     print('  source connection-string: {}'.format(source))
     print('  source DB: {}'.format(SOURCE_DB_NAME))
     print('  target connection-string: {}'.format(target))
