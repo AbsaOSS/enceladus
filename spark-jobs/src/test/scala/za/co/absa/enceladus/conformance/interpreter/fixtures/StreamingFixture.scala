@@ -18,6 +18,7 @@ package za.co.absa.enceladus.conformance.interpreter.fixtures
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
+import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.mockito.Mockito.lenient
 import org.scalatest.funsuite.AnyFunSuite
@@ -38,13 +39,15 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
   protected def testHyperConformanceFromConfig(input: DataFrame,
                                                sinkTableName: String,
                                                dataset: Dataset,
-                                               reportDate: String)
+                                               reportDate: String,
+                                               reportVersionColumnKeyProvided: String
+                                              )
                                               (implicit menasDAO: MenasDAO): DataFrame = {
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
     when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
     lenient.when(configStub.containsKey(reportVersionColumnKey)).thenReturn(true)
-    when(configStub.getString(reportVersionColumnKey)).thenReturn("numerics.SmartObject.all_random")
+    when(configStub.getString(reportVersionColumnKey)).thenReturn(reportVersionColumnKeyProvided)
     when(configStub.containsKey(reportDateKey)).thenReturn(true)
     when(configStub.getString(reportDateKey)).thenReturn(reportDate)
     when(configStub.containsKey(datasetNameKey)).thenReturn(true)
@@ -59,6 +62,10 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
     when(configStub.containsKey(menasUriRetryCountKey)).thenReturn(true)
     when(configStub.getInt(menasUriRetryCountKey)).thenReturn(0)
     when(configStub.containsKey(menasAvailabilitySetupKey)).thenReturn(false)
+
+    when(menasDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
+      StructField("numerics.SmartObject.all_random", StringType)
+    )))
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
     val hyperConformance = HyperConformance(configStub).asInstanceOf[HyperConformance]

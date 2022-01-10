@@ -87,9 +87,6 @@ object LocalMappingTable {
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
-    if (keyFields.isEmpty) {
-      throw new IllegalArgumentException("No join key fields are provided for the mapping table.")
-    }
     keyFields.foreach(field => {
       SchemaUtils.getFieldType(field, mappingTableDf.schema) match {
         case Some(_: ArrayType) => throw new IllegalArgumentException(s"Join condition field cannot be an array: $field.")

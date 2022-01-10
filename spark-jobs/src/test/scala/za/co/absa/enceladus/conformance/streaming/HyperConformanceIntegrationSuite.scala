@@ -23,9 +23,11 @@ import za.co.absa.enceladus.conformance.interpreter.fixtures.{NestedStructsFixtu
 
 class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture with NestedStructsFixture {
 
+  private val reportDateValue = "2020-05-23"
+
   test("Test with catalyst workaround, literal factory") {
     val configuration = new PropertyListConfiguration()
-    configuration.addProperty(reportDateKey, "2020-05-23")
+    configuration.addProperty(reportDateKey, reportDateValue)
     configuration.addProperty(reportVersionKey, 1)
     implicit val infoDateFactory: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(configuration)
     implicit val infoVersionFactory: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(configuration)
@@ -47,12 +49,28 @@ class HyperConformanceIntegrationSuite extends AnyFunSuite with StreamingFixture
     val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
       "result",
       nestedStructsDS,
-      reportDate = "2020-05-23" )
+      reportDate = reportDateValue, "numerics.SmartObject.all_random" )
       .orderBy("ID")
 
     assertResult(df.count())(20)
     val conformed = spark.read
       .textFile("src/test/testData/nestedStructs/conformed_literal_info_col.json")
+      .collect().mkString("\n")
+    val returned = df.toJSON.collect().mkString("\n")
+
+    assertResult(returned)(conformed)
+  }
+
+  test("Test Hyperconformance from config, conformed column info") {
+    val df: DataFrame = testHyperConformanceFromConfig(standardizedDf,
+      "result",
+      nestedStructsDS,
+      reportDate = reportDateValue, "strings.all_random_upper" )
+      .orderBy("ID")
+
+    assertResult(df.count())(20)
+    val conformed = spark.read
+      .textFile("src/test/testData/nestedStructs/conformed_literal_conf_info_col.json")
       .collect().mkString("\n")
     val returned = df.toJSON.collect().mkString("\n")
 

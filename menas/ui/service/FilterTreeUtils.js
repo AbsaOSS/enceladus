@@ -61,6 +61,10 @@ class FilterTreeUtils {
           filterNode.text = "OR";
           filterNode.icon = "sap-icon://split";
           break;
+        case "NotFilter":
+          filterNode.text = "NOT";
+          filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
+          break;
         case "EqualsFilter":
           filterNode.text = `Value of "${filterNode.columnName}" equals to "${filterNode.value}" (of type ${filterNode.valueType})`;
           filterNode.icon = "sap-icon://filter";
@@ -68,10 +72,6 @@ class FilterTreeUtils {
         case "DiffersFilter":
           filterNode.text = `Value of "${filterNode.columnName}" differs from "${filterNode.value}" (of type ${filterNode.valueType})`;
           filterNode.icon = "sap-icon://clear-filter";
-          break;
-        case "NotFilter":
-          filterNode.text = "NOT";
-          filterNode.icon = "sap-icon://SAP-icons-TNT/solution-not-licensed";
           break;
         case "IsNullFilter":
           filterNode.text = `Value of "${filterNode.columnName}" is null`;
