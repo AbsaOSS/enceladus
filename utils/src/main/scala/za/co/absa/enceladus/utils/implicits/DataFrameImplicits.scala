@@ -22,7 +22,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
 
 object DataFrameImplicits {
-  implicit class DataFrameEnhancements(val df: DataFrame) {
+  implicit class DataFrameEnhancements(val df: DataFrame) extends AnyVal {
 
     private def gatherData(showFnc: () => Unit): String = {
       val outCapture = new ByteArrayOutputStream
@@ -89,6 +89,21 @@ object DataFrameImplicits {
         df // no change
       } else {
         df.sqlContext.createDataFrame(df.rdd, newSchema) // apply new schema
+      }
+    }
+
+    /**
+      * Execute tranformation on the DataFrame based on the given condition
+      *
+      * @param condition the boolean condition based on which the decision is done if to execute the transformation or not
+      * @param transformation the eventual transformation to be executed on the DataFrame
+      * @return the transformed DataFrame if condition was true or the original one otherwise
+      */
+    def conditionally(condition: Boolean)(transformation: DataFrame => DataFrame): DataFrame = {
+      if (condition) {
+        transformation(df)
+      } else {
+        df
       }
     }
 
