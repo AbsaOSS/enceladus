@@ -147,7 +147,6 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   }
 
   @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   @ResponseStatus(HttpStatus.OK)
   def disable(@PathVariable name: String,
       @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
