@@ -55,7 +55,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
-            <version>${commons.version}</version>
+            <version>${absa.commons.version}</version>
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>

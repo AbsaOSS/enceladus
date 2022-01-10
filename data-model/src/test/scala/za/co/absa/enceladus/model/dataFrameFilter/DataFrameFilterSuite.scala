@@ -56,7 +56,7 @@ class DataFrameFilterSuite extends AnyFunSuite {
     assert(filterExpr2.semanticEquals(expected))
   }
 
-  test("Three filters joined with an and condidion") {
+  test("Three filters joined with an and condition") {
     val f1 = DiffersFilter("column1", "v1")
     val f2 = DiffersFilter("column2", "v2")
     val f3 = DiffersFilter("column3", "v3")

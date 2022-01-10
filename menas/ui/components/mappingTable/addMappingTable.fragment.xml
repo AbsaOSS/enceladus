@@ -14,9 +14,10 @@
   -->
 
 <core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:form="sap.ui.layout.form"
+                         xmlns:t="sap.ui.table"
                          xmlns:hdfs="components.hdfs">
     <Dialog id="addMappingTableDialog" title="{entity>/title} Mapping Table" resizable="true" draggable="true"
-            class="minW40rem">
+            contentWidth="950px">
         <content>
             <VBox class="sapUiSmallMargin">
                 <form:SimpleForm adjustLabelSpan="true" editable="true">
@@ -57,6 +58,9 @@
                                               HDFSPath="{entity>/hdfsPath}"/>
 
                         </VBox>
+                        <Label text="Mapping table filter"/>
+                        <!-- using common fragment for MT & Mapping CR for filter editing -->
+                        <core:Fragment type="XML" fragmentName="components.mappingTable.filterEdit.filterTreeEdit"/>
                     </form:content>
                 </form:SimpleForm>
             </VBox>

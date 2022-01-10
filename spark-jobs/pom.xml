@@ -26,7 +26,7 @@
 
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <hyperdrive.version>4.2.1</hyperdrive.version>
+        <hyperdrive.version>4.5.2</hyperdrive.version>
         <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
     </properties>
 
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
-            <version>${commons.version}</version>
+            <version>${absa.commons.version}</version>
         </dependency>
 
         <!-- Libraries -->

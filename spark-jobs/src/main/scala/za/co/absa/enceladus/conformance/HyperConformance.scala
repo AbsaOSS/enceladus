@@ -22,6 +22,7 @@ import org.apache.commons.configuration2.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants._
@@ -31,15 +32,18 @@ import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter,
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (implicit cmd: ConformanceConfig,
+class HyperConformance (menasBaseUrls: List[String],
+                        urlsRetryCount: Option[Int] = None,
+                        menasSetup: Option[String] = None)
+                       (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
-                        menasBaseUrls: List[String],
                         infoDateFactory: InfoDateFactory,
                         infoVersionFactory: InfoVersionFactory) extends StreamTransformer {
   val log: Logger = LoggerFactory.getLogger(this.getClass)
@@ -49,7 +53,8 @@ class HyperConformance (implicit cmd: ConformanceConfig,
     implicit val spark: SparkSession = rawDf.sparkSession
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls)
+    val menasSetupValue = menasSetup.map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue)
     dao.authenticate()
 
     logPreConformanceInfo(rawDf)
@@ -65,8 +70,11 @@ class HyperConformance (implicit cmd: ConformanceConfig,
                                      (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
     import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
+    val schema: StructType = menasDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
+    val schemaFields = if (schema == null) List() else schema.fields.toList
+    val conformedSchema = ConformedSchema(schemaFields, conformance)
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
-    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn(rawDf)
+    val infoVersionColumn = infoVersionFactory.getInfoVersionColumn(conformedSchema)
 
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
@@ -147,8 +155,18 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
     implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
-    implicit val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
-    new HyperConformance()
+    val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
+    val menasUrlsRetryCount: Option[Int] = if (conf.containsKey(menasUriRetryCountKey)) {
+      Option(conf.getInt(menasUriRetryCountKey))
+    } else {
+      None
+    }
+    val menasSetup: Option[String] = if (conf.containsKey(menasAvailabilitySetupKey)) {
+      Option(conf.getString(menasAvailabilitySetupKey))
+    } else {
+      None
+    }
+    new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup)
   }
 
   private def getReportVersion(conf: Configuration): Int = {

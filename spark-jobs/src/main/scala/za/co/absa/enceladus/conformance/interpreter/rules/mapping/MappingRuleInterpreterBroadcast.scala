@@ -47,7 +47,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
     val broadcastedMt = spark.sparkContext.broadcast(mt)
     val errorUDF = BroadcastUtils.getErrorUdf(broadcastedMt, rule.allOutputColumns().keys.toSeq, mappings)
 
-    if (rule.additionalColumns.getOrElse(Map()).isEmpty) {
+    if (rule.definedAdditionalColumns().isEmpty) {
       val mappingUDF = BroadcastUtils.getMappingUdfForSingleOutput(broadcastedMt, defaultValues)
 
       val withMappedFieldsDf = NestedArrayTransformations.nestedExtendedStructAndErrorMap(

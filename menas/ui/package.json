@@ -16,7 +16,7 @@
   "dependencies": {
     "chart.js": "^2.7.3",
     "cronstrue": "^1.106.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "moment": "^2.22.2"
   },
   "scripts": {

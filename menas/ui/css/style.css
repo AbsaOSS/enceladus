@@ -26,8 +26,6 @@ html, body {
   width: 100%;
 }
 
-}
-
 .propertyInput {
   /*overriding default to have all fields of the same length */
   width: 14rem !important;
@@ -137,4 +135,8 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 .lineageErrorLabel {
   font-size: 200%;
   padding-top: 2rem;
+}
+
+.sapMListNoDataText {
+  font-size: 1rem;
 }

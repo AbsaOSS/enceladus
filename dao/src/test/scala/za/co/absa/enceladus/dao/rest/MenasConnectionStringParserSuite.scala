@@ -202,6 +202,24 @@ class MenasConnectionStringParserSuite extends BaseTestSuite {
         exception.getMessage should be("Malformed Menas connection string")
       }
     }
-  }
 
+    "keep the order of urls" when {
+      val expectedList = List(
+        "http://host1:8080/menas",
+        "http://host2:9000/menas",
+        "http://host3:8080/menas",
+        "http://host4:9000/menas",
+        "http://localhost:8080/menas",
+        "http://localhost:8090/menas"
+      )
+      "they are full fledged urls separated by semicolon" in {
+        val result = MenasConnectionStringParser.parse("http://host1:8080/menas;http://host2:9000/menas;http://host3:8080/menas;http://host4:9000/menas;http://localhost:8080/menas;http://localhost:8090/menas")
+        result should be(expectedList)
+      }
+      "varied hosts separated by comma within one url" in {
+        val result = MenasConnectionStringParser.parse("http://host1:8080,host2:9000,host3:8080,host4:9000,localhost:8080,localhost:8090/menas")
+        result should be(expectedList)
+      }
+    }
+  }
 }

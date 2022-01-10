@@ -51,7 +51,7 @@ class DefaultsByFormat(formatName: String,
   override def getDecimalSymbols: DecimalSymbols = globalDefaults.getDecimalSymbols
 
   private def readTimezone(path: String): Option[String] = {
-    val result = config.readStringConfigIfExist(path)
+    val result = config.getStringOption(path)
     result.foreach(tz =>
       if (!TimeZone.getAvailableIDs().contains(tz )) {
         throw new IllegalStateException(s"The setting '$tz' of '$path' is not recognized as known time zone")
