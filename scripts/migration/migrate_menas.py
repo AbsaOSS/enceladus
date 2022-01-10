@@ -24,6 +24,10 @@ from pymongo.read_concern import ReadConcern
 from pymongo.errors import DuplicateKeyError
 from typing import List
 
+# python package needed to run:
+# pymongo minydra
+# so install those e.g. by running
+# pip install pymongo minydra
 
 # Default configuration
 # =====================
