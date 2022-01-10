@@ -110,6 +110,11 @@ class RestExceptionHandler {
     ResponseEntity.badRequest().body(exception.usedIn)
   }
 
+  @ExceptionHandler(value = Array(classOf[LockedEntityException]))
+  def handleValidationException(exception: LockedEntityException): ResponseEntity[String] = {
+    ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.message)
+  }
+
   @ExceptionHandler(value = Array(classOf[MethodArgumentTypeMismatchException]))
   def handleTypeMismatchException(exception: MethodArgumentTypeMismatchException): ResponseEntity[Any] = {
     val queryStringParamNames = Set("validateProperties", "forRun")
