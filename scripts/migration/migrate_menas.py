@@ -312,8 +312,10 @@ def migrate_collections_by_ds_names(source: str, target: str, target_db_name: st
 
     if not dryrun:
         print("\n")
-        migrate_entities(source_db, target_db, "schema_v1", all_notlocked_schemas, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity, entity_name="dataset")
+        migrate_entities(source_db, target_db, "schema_v1", all_notlocked_schemas, describe_default_entity,
+                         entity_name="schema")
+        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity,
+                         entity_name="dataset")
         migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
                          describe_default_entity, entity_name="mapping table")
         migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run",
@@ -422,6 +424,6 @@ if __name__ == '__main__':
     run(args)
 
     # example test-runs:
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 test654 -t target_migrated_menas_db
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -d mydataset1 test654 Cobol1 Cobol2 -t target_migrated_menas_db
-    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -m MyAwesomeMappingTable1 -t target_migrated_menas_db
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -v -d mydataset1 -t menas_target
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -d mydataset1 test654 -t menas2
+    # migrate_menas.py mongodb://localhost:27017/admin mongodb://localhost:27017/admin -m MyAwesomeMappingTable1 -t msn2
