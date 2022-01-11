@@ -107,15 +107,16 @@ def assemble_notlocked_runs_from_ds_names(db: Database, ds_names: List[str]) -> 
 
 
 def assemble_schemas_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
-    return assemble_schemas_from_x(db, ds_names, "dataset_v1", "schemaName", not_locked_only)
+    return assemble_schemas(db, ds_names, "dataset_v1", "schemaName", not_locked_only)
 
 
 def assemble_schemas_from_mt_names(db: Database, mt_names: List[str], not_locked_only: bool) -> List[str]:
-    return assemble_schemas_from_x(db, mt_names, "mapping_table_v1", "schemaName", not_locked_only)
+    return assemble_schemas(db, mt_names, "mapping_table_v1", "schemaName", not_locked_only)
 
 
-def assemble_schemas_from_x(db: Database, entity_names: List[str], collection_name: str,
-                            distinct_field: str, not_locked_only: bool) -> List[str]:
+def assemble_schemas(db: Database, entity_names: List[str], collection_name: str,
+                     distinct_field: str, not_locked_only: bool) -> List[str]:
+    """ Common processing method for `assemble_schemas_from_ds_names` and `assemble_schemas_from_mt_names` """
     # schema names from locked+notlocked (datasets/mts) (the schemas themselves may or may not be locked):
     schema_names = get_distinct_entities_ids(db, entity_names, collection_name, distinct_field=distinct_field,
                                              not_locked_only=False)
