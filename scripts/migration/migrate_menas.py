@@ -26,10 +26,8 @@ from typing import List
 from datetime import datetime, timezone
 
 
-# python package needed to run:
-# pymongo minydra
-# so install those e.g. by running
-# pip install pymongo minydra
+# python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
+# pip install -r requirements.txt
 
 # Default configuration
 # =====================

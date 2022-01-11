@@ -1,0 +1,2 @@
+minydra>=0.1.5
+pymongo>=4.0.1
