@@ -74,12 +74,12 @@ def get_database(conn_str: str, db_name: str) -> Database:
 
 
 def get_distinct_ds_names_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
-    return get_distinct_entities_ids(db, ds_names, "dataset_v1", not_locked_only)
+    return get_distinct_entities_ids(db, ds_names, DATASET_COLLECTION, not_locked_only)
 
 
 def get_distinct_schema_names_from_schema_names(db: Database, schema_names: List[str],
                                                 not_locked_only: bool) -> List[str]:
-    return get_distinct_entities_ids(db, schema_names, "schema_v1", not_locked_only)
+    return get_distinct_entities_ids(db, schema_names, SCHEMA_COLLECTION, not_locked_only)
 
 
 def get_distinct_entities_ids(db: Database, entity_names: List[str], collection_name: str, not_locked_only: bool,
@@ -99,7 +99,7 @@ def get_distinct_entities_ids(db: Database, entity_names: List[str], collection_
 
 
 def get_distinct_mapping_tables_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
-    ds_collection = db["dataset_v1"]
+    ds_collection = db[DATASET_COLLECTION]
     locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
 
     mapping_table_names = ds_collection.aggregate([
@@ -126,16 +126,16 @@ def get_distinct_mapping_tables_from_ds_names(db: Database, ds_names: List[str],
 
 
 def assemble_notlocked_runs_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
-    return get_distinct_entities_ids(db, ds_names, "run_v1", entity_name_field="dataset", distinct_field="uniqueId",
+    return get_distinct_entities_ids(db, ds_names, RUN_COLLECTION, entity_name_field="dataset", distinct_field="uniqueId",
                                      not_locked_only=True)
 
 
 def assemble_schemas_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
-    return assemble_schemas(db, ds_names, "dataset_v1", "schemaName", not_locked_only)
+    return assemble_schemas(db, ds_names, DATASET_COLLECTION, "schemaName", not_locked_only)
 
 
 def assemble_schemas_from_mt_names(db: Database, mt_names: List[str], not_locked_only: bool) -> List[str]:
-    return assemble_schemas(db, mt_names, "mapping_table_v1", "schemaName", not_locked_only)
+    return assemble_schemas(db, mt_names, MAPPING_TABLE_COLLECTION, "schemaName", not_locked_only)
 
 
 def assemble_schemas(db: Database, entity_names: List[str], collection_name: str,
@@ -150,18 +150,18 @@ def assemble_schemas(db: Database, entity_names: List[str], collection_name: str
 
 def assemble_mapping_tables_from_mt_names(db: Database, mt_names: List[str],
                                           not_locked_only: bool) -> List[str]:
-    return get_distinct_entities_ids(db, mt_names, "mapping_table_v1", not_locked_only)
+    return get_distinct_entities_ids(db, mt_names, MAPPING_TABLE_COLLECTION, not_locked_only)
 
 
 def assemble_notlocked_mapping_tables_from_ds_names(db: Database, ds_names: List[str]) -> List[str]:
     # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
     mt_names_from_ds_names = get_distinct_mapping_tables_from_ds_names(db, ds_names, not_locked_only=False)
     # ids for not locked mapping tables
-    return get_distinct_entities_ids(db, mt_names_from_ds_names, "mapping_table_v1", not_locked_only=True)
+    return get_distinct_entities_ids(db, mt_names_from_ds_names, MAPPING_TABLE_COLLECTION, not_locked_only=True)
 
 
 def assemble_notlocked_attachments_from_schema_names(db: Database, schema_names: List[str]) -> List[str]:
-    return get_distinct_entities_ids(db, schema_names, "attachment_v1", entity_name_field="refName",
+    return get_distinct_entities_ids(db, schema_names, ATTACHMENT_COLLECTION, entity_name_field="refName",
                                      distinct_field="refName", not_locked_only=True)
 
 
@@ -304,12 +304,34 @@ def describe_attachment_entity(item: dict) -> str:
     return "attachment for {} {} v{}".format(item["refCollection"], item["refName"], item["refVersion"])
 
 
+def ensure_menas_collections_exist(db: Database, alias: str = "") -> None:
+    """
+    Ensures given database contains expected collections to migrate (see #MIGRATING_COLLECTIONS).
+    Raises an exception with description if expected collections are not found in the db.
+    :param db: database to check
+    :param alias: name for db to print, e.g. "source"
+    """
+    def ensure_collections_exist(collection_names: List[str]) -> None:
+        existing_collections = db.list_collection_names()
+        for collection_name in collection_names:
+            if not(collection_name in existing_collections):
+                hint = " ({})".format(alias) if alias else ""
+                raise Exception("Collection '{}' not found in database '{}'{}. ".format(collection_name, db.name, hint)
+                                + "Are you sure your setup is correct?")
+
+    return ensure_collections_exist(MIGRATING_COLLECTIONS)
+
+
 def migrate_collections_by_ds_names(source: str, target: str,
                                     source_db_name: str, target_db_name: str,
                                     supplied_ds_names: List[str],
                                     dryrun: bool) -> None:
     source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
+
+    ensure_menas_collections_exist(source_db, alias="source db")
+    # todo do target checking, too when we have menas to create blank db (collections, indices, ...)
+
 
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
@@ -345,13 +367,13 @@ def migrate_collections_by_ds_names(source: str, target: str,
 
     if not dryrun:
         print("\n")
-        migrate_entities(source_db, target_db, "schema_v1", all_notlocked_schemas, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity, entity_name="dataset")
-        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity,
-                         entity_name="mapping table")
-        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
-        migrate_entities(source_db, target_db, "attachment_v1", notlocked_attachment_names, describe_attachment_entity,
-                         entity_name="attachment", name_field="refName")
+        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_notlocked_schemas, describe_default_entity, entity_name="schema")
+        migrate_entities(source_db, target_db, DATASET_COLLECTION, notlocked_ds_names, describe_default_entity, entity_name="dataset")
+        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
+                         describe_default_entity, entity_name="mapping table")
+        migrate_entities(source_db, target_db, RUN_COLLECTION, run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
+        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, notlocked_attachment_names,
+                         describe_attachment_entity, entity_name="attachment", name_field="refName")
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
@@ -362,6 +384,8 @@ def migrate_collections_by_mt_names(source: str, target: str,
                                     dryrun: bool) -> None:
     source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
+
+    ensure_menas_collections_exist(source_db, alias="source db")
 
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
@@ -378,10 +402,10 @@ def migrate_collections_by_mt_names(source: str, target: str,
 
     if not dryrun:
         print("\n")
-        migrate_entities(source_db, target_db, "schema_v1", notlocked_mt_schema_names, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
+        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, notlocked_mt_schema_names, describe_default_entity, entity_name="schema")
+        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
                          describe_default_entity, entity_name="mapping table")
-        migrate_entities(source_db, target_db, "attachment_v1", notlocked_attachment_names, describe_attachment_entity,
+        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, notlocked_attachment_names, describe_attachment_entity,
                          entity_name="attachment", name_field="refName")
     else:
         print("*** Dryrun selected, no actual migration will take place.")

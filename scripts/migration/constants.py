@@ -26,3 +26,12 @@ NOT_LOCKED_MONGO_FILTER = {"$or": [
     {"locked": {"$exists": False}}  # or: there is no locking info at all
 ]}
 EMPTY_MONGO_FILTER = {}
+
+SCHEMA_COLLECTION = "schema_v1"
+DATASET_COLLECTION = "dataset_v1"
+MAPPING_TABLE_COLLECTION = "mapping_table_v1"
+RUN_COLLECTION = "run_v1"
+ATTACHMENT_COLLECTION = "attachment_v1"
+
+MIGRATING_COLLECTIONS = [SCHEMA_COLLECTION, DATASET_COLLECTION, MAPPING_TABLE_COLLECTION, RUN_COLLECTION,
+                         ATTACHMENT_COLLECTION]
