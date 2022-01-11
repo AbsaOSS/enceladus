@@ -25,7 +25,7 @@
                         <Title text="Schema: {/currentSchema/name} (v{/currentSchema/version})"/>
                         <core:Icon src="sap-icon://locked"
                                    visible="{= ${/currentSchema/locked} === true}"
-                                   tooltip="Currently locked"/>
+                                   tooltip="Locked by {/currentSchema/userLocked} at {/currentSchema/dateLocked}"/>
                     </HBox>
                 </contentMiddle>
                 <contentRight>

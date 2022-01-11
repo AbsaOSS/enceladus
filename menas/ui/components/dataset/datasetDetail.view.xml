@@ -25,7 +25,7 @@
                         <Title text="Dataset: {/currentDataset/name} (v{/currentDataset/version})"/>
                         <core:Icon src="sap-icon://locked"
                                    visible="{= ${/currentDataset/locked} === true}"
-                                   tooltip="Currently locked"/>
+                                   tooltip="Locked by {/currentDataset/userLocked} at {/currentDataset/dateLocked}"/>
                     </HBox>
                 </contentMiddle>
                 <contentRight>

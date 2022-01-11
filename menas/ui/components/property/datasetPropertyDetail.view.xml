@@ -25,7 +25,7 @@
                         <Title text="Property: {/currentProperty/name} (v{/currentProperty/version})"/>
                         <core:Icon src="sap-icon://locked"
                                    visible="{= ${/currentProperty/locked} === true}"
-                                   tooltip="Currently locked"/>
+                                   tooltip="Locked by {/currentProperty/userLocked} at {/currentProperty/dateLocked}"/>
                     </HBox>
                 </contentMiddle>
                 <contentRight>

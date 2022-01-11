@@ -25,7 +25,7 @@
                         <Title text="Mapping Table: {/currentMappingTable/name} (v{/currentMappingTable/version})">
                         <core:Icon src="sap-icon://locked"
                                    visible="{= ${/currentMappingTable/locked} === true}"
-                                   tooltip="Currently locked"/>
+                                   tooltip="Locked by {/currentMappingTable/userLocked} at {/currentMappingTable/dateLocked}"/>
                     </HBox>
                 </contentMiddle>
                 <contentRight>
