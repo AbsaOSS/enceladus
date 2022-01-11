@@ -42,14 +42,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-v', '--verbose', action="store_true", default=DEFAULT_VERBOSE,
                         help="prints extra information while running.")
 
-    parser.add_argument('source', metavar="SOURCE",
-                        help="connection string for source MongoDB")
-    parser.add_argument('target', metavar="TARGET",
-                        help="connection string for target MongoDB")
+    parser.add_argument('source', metavar="SOURCE", help="connection string for source MongoDB")
+    parser.add_argument('target', metavar="TARGET", help="connection string for target MongoDB")
 
     parser.add_argument('-t', '--target-database', dest="targetdb", default=DEFAULT_DB_NAME,
                         help="Name of db on target to migrate to.")
-
     parser.add_argument('-s', '--source-database', dest="sourcedb", default=DEFAULT_DB_NAME,
                         help="Name of db on source to migrate from.")
 
@@ -169,20 +166,10 @@ def assemble_notlocked_attachments_from_schema_names(db: Database, schema_names:
 
 
 def get_date_locked_structure(dt: datetime) -> dict:
-
     return {
         "dateTime": {
-            "date": {
-                "year": dt.year,
-                "month": dt.month,
-                "day": dt.day
-            },
-            "time": {
-                "hour": dt.hour,
-                "minute": dt.minute,
-                "second": dt.second,
-                "nano": dt.microsecond * 1000
-            }
+            "date": {"year": dt.year, "month": dt.month, "day": dt.day},
+            "time": {"hour": dt.hour, "minute": dt.minute, "second": dt.second,"nano": dt.microsecond * 1000}
         },
         "offset": 0,
         "zone": "UTC"
@@ -358,14 +345,11 @@ def migrate_collections_by_ds_names(source: str, target: str,
 
     if not dryrun:
         print("\n")
-        migrate_entities(source_db, target_db, "schema_v1", all_notlocked_schemas, describe_default_entity,
-                         entity_name="schema")
-        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity,
-                         entity_name="dataset")
-        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
-                         describe_default_entity, entity_name="mapping table")
-        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run",
-                         name_field="uniqueId")
+        migrate_entities(source_db, target_db, "schema_v1", all_notlocked_schemas, describe_default_entity, entity_name="schema")
+        migrate_entities(source_db, target_db, "dataset_v1", notlocked_ds_names, describe_default_entity, entity_name="dataset")
+        migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names, describe_default_entity,
+                         entity_name="mapping table")
+        migrate_entities(source_db, target_db, "run_v1", run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
         migrate_entities(source_db, target_db, "attachment_v1", notlocked_attachment_names, describe_attachment_entity,
                          entity_name="attachment", name_field="refName")
     else:
@@ -382,8 +366,7 @@ def migrate_collections_by_mt_names(source: str, target: str,
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
 
-    notlocked_mapping_table_names = assemble_mapping_tables_from_mt_names(source_db, supplied_mt_names,
-                                                                          not_locked_only=True)
+    notlocked_mapping_table_names = assemble_mapping_tables_from_mt_names(source_db, supplied_mt_names, not_locked_only=True)
     print('MTs to migrate: {}'.format(notlocked_mapping_table_names))
 
     notlocked_mt_schema_names = assemble_schemas_from_mt_names(source_db, supplied_mt_names, not_locked_only=True)
@@ -395,8 +378,7 @@ def migrate_collections_by_mt_names(source: str, target: str,
 
     if not dryrun:
         print("\n")
-        migrate_entities(source_db, target_db, "schema_v1", notlocked_mt_schema_names, describe_default_entity,
-                         entity_name="schema")
+        migrate_entities(source_db, target_db, "schema_v1", notlocked_mt_schema_names, describe_default_entity, entity_name="schema")
         migrate_entities(source_db, target_db, "mapping_table_v1", notlocked_mapping_table_names,
                          describe_default_entity, entity_name="mapping table")
         migrate_entities(source_db, target_db, "attachment_v1", notlocked_attachment_names, describe_attachment_entity,
