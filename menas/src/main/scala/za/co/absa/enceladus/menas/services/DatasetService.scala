@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.menas.services
 
+import javax.ws.rs.NotAllowedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.menas.repositories.{DatasetMongoRepository, OozieRepository}
@@ -59,6 +60,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
     if (newDataset.schedule == latest.schedule) {
       Future(latest)
+    } else if (latest.lockedWithDefault) {
+      Future.failed(new NotAllowedException("Entity is locked"))
     } else if (newDataset.schedule.isEmpty) {
       Future(latest.setSchedule(None))
     } else {

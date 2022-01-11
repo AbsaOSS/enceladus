@@ -43,6 +43,10 @@ case class Dataset(name: String,
                    disabled: Boolean = false,
                    dateDisabled: Option[ZonedDateTime] = None,
                    userDisabled: Option[String] = None,
+
+                   locked: Option[Boolean] = None,
+                   dateLocked: Option[ZonedDateTime] = None,
+                   userLocked: Option[String] = None,
                    conformance: List[ConformanceRule],
                    parent: Option[MenasReference] = None,
                    schedule: Option[OozieSchedule] = None,
@@ -59,6 +63,10 @@ case class Dataset(name: String,
   override def setUserCreated(user: String): VersionedModel = this.copy(userCreated = user)
   override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
   override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
+  override def setLocked(locked: Option[Boolean]): VersionedModel = this.copy(locked = locked)
+  override def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel = this.copy(dateLocked = dateLocked)
+  override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
+
   def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
