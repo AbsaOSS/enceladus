@@ -30,4 +30,3 @@ VALUES (0, 0, 0);
 
 CREATE RULE jobs_configurations_del_protect AS ON DELETE TO stats.jobs_configurations DO INSTEAD NOTHING;
 CREATE RULE jobs_configurations_ins_protect AS ON INSERT TO stats.jobs_configurations DO INSTEAD NOTHING;
-

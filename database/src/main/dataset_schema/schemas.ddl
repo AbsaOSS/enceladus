@@ -30,5 +30,4 @@ CREATE TABLE dataset_schema.schemas
 ALTER TABLE dataset_schema.schemas
     ADD CONSTRAINT schemas_unq UNIQUE (schema_name, schema_version);
 
-ALTER TABLE dataset_schema.schemas
-    OWNER to enceladus;
+ALTER TABLE dataset_schema.schemas OWNER to enceladus;
