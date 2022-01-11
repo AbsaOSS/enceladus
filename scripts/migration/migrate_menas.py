@@ -29,10 +29,37 @@ from constants import *
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
 # pip install -r requirements.txt
 
-# initialized values common for the whole run
-# todo CAPS? move? mark as global?
-migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
-utc_now = datetime.now(timezone.utc)
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog='migrate_menas',
+        description='Menas MongoDB migration script.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
+    )
+
+    parser.add_argument('-n', '--dryrun', action='store_true', default=DEFAULT_DRYRUN,
+                        help="if specified, skip the actual synchronization, just print what would be copied over.")
+    parser.add_argument('-v', '--verbose', action="store_true", default=DEFAULT_VERBOSE,
+                        help="prints extra information while running.")
+
+    parser.add_argument('source', metavar="SOURCE",
+                        help="connection string for source MongoDB")
+    parser.add_argument('target', metavar="TARGET",
+                        help="connection string for target MongoDB")
+
+    parser.add_argument('-t', '--target-database', dest="targetdb", default=DEFAULT_DB_NAME,
+                        help="Name of db on target to migrate to.")
+
+    parser.add_argument('-s', '--source-database', dest="sourcedb", default=DEFAULT_DB_NAME,
+                        help="Name of db on source to migrate from.")
+
+    input_options_group = parser.add_mutually_exclusive_group(required=True)
+    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
+                                     nargs="+", help='list datasets to migrate')
+
+    return parser.parse_args()
 
 
 def get_database(conn_str: str, db_name: str) -> Database:
@@ -178,10 +205,10 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
             NOT_LOCKED_MONGO_FILTER
         ]},
         {"$set": {
-            "migrationHash": migration_hash,
+            "migrationHash": migration_hash,  # script-global var
             "locked": True,
             "userLocked": LOCKING_USER,
-            "dateLocked": get_date_locked_structure(utc_now)
+            "dateLocked": get_date_locked_structure(utc_now) # script-global var
         }}
     )
 
@@ -198,7 +225,7 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
     docs = dataset_collection.find(
         {"$and": [
             {name_field: {"$in": entity_names_list}},  # dataset name
-            {"migrationHash": migration_hash},  # belongs to this migration
+            {"migrationHash": migration_hash},  # belongs to this migration # script-global var
             {"locked": True}  # is successfully locked (previous step)
         ]}
     )
@@ -232,7 +259,7 @@ def migrate_entities(source_db: Database, target_db: Database, collection_name: 
         migration_tagging_update_result = dataset_collection.update_many(
             {"$and": [
                 {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
-                {"migrationHash": migration_hash},
+                {"migrationHash": migration_hash}, # script-global var
                 {"locked": True}
             ]},
             {"$set": {
@@ -292,7 +319,8 @@ def describe_attachment_entity(item: dict) -> str:
 
 def migrate_collections_by_ds_names(source: str, target: str,
                                     source_db_name: str, target_db_name: str,
-                                    supplied_ds_names: List[str]) -> None:
+                                    supplied_ds_names: List[str],
+                                    dryrun: bool) -> None:
     source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
 
@@ -346,7 +374,8 @@ def migrate_collections_by_ds_names(source: str, target: str,
 
 def migrate_collections_by_mt_names(source: str, target: str,
                                     source_db_name: str, target_db_name: str,
-                                    supplied_mt_names: List[str]) -> None:
+                                    supplied_mt_names: List[str],
+                                    dryrun: bool) -> None:
     source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
 
@@ -376,48 +405,17 @@ def migrate_collections_by_mt_names(source: str, target: str,
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog='migrate_menas',
-        description='Menas MongoDB migration script.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
-    )
-
-    parser.add_argument('-n', '--dryrun', action='store_true', default=DEFAULT_DRYRUN,
-                        help="if specified, skip the actual synchronization, just print what would be copied over.")
-    parser.add_argument('-v', '--verbose', action="store_true", default=DEFAULT_VERBOSE,
-                        help="prints extra information while running.")
-
-    parser.add_argument('source', metavar="SOURCE",
-                        help="connection string for source MongoDB")
-    parser.add_argument('target', metavar="TARGET",
-                        help="connection string for target MongoDB")
-
-    parser.add_argument('-t', '--target-database', dest="targetdb", default=DEFAULT_DB_NAME,
-                        help="Name of db on target to migrate to.")
-
-    parser.add_argument('-s', '--source-database', dest="sourcedb", default=DEFAULT_DB_NAME,
-                        help="Name of db on source to migrate from.")
-
-    input_options_group = parser.add_mutually_exclusive_group(required=True)
-    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
-    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
-
-    return parser.parse_args()
-
-
 def run(parsed_args: argparse.Namespace):
     source = parsed_args.source
     target = parsed_args.target
     target_db_name = parsed_args.targetdb
     source_db_name = parsed_args.sourcedb
 
+    dryrun = args.dryrun  # if set, only migration description will be printed, no actual migration will run
 
     print('Menas mongo migration')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
-    print("Using migration #: '{}' and locking timestamp {} (UTC)".format(migration_hash, utc_now))
+    print("Using migration #: '{}' and locking timestamp {} (UTC)".format(migration_hash, utc_now))  # script-global vars
     print('  source connection-string: {}'.format(source))
     print('  source DB: {}'.format(source_db_name))
     print('  target connection-string: {}'.format(target))
@@ -427,10 +425,10 @@ def run(parsed_args: argparse.Namespace):
     mt_names = parsed_args.mtables
     if dataset_names:
         print('dataset names supplied: {}'.format(dataset_names))
-        migrate_collections_by_ds_names(source, target, source_db_name, target_db_name, dataset_names)
+        migrate_collections_by_ds_names(source, target, source_db_name, target_db_name, dataset_names, dryrun=dryrun)
     elif mt_names:
         print('mapping table names supplied: {}'.format(mt_names))
-        migrate_collections_by_mt_names(source, target, source_db_name, target_db_name, mt_names)
+        migrate_collections_by_mt_names(source, target, source_db_name, target_db_name, mt_names, dryrun=dryrun)
     else:
         # should not happen (-d/-m is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
@@ -441,9 +439,9 @@ def run(parsed_args: argparse.Namespace):
 if __name__ == '__main__':
     args = parse_args()
 
-    # script-global flags
-    # todo prefix g_? or reorganize somehow?
-    dryrun = args.dryrun
+    # globals script vars
+    migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
+    utc_now = datetime.now(timezone.utc)  # in order to have same timestamp for the whole script run
     verbose = args.verbose
 
     run(args)
