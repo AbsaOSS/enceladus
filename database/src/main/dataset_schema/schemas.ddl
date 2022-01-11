@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-DROP TABLE dataset_schema.schemas; -- TODO REMOVE
+-- DROP TABLE dataset_schema.schemas;
 
 CREATE TABLE dataset_schema.schemas
 (

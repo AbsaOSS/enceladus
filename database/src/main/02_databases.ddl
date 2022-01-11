@@ -12,20 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+CREATE DATABASE menas_db
+    WITH
+    ENCODING = 'UTF8'
+    CONNECTION LIMIT = -1;
 
--- DROP TABLE dataset_schema.heads;
-
-CREATE TABLE dataset_schema.heads
-(
-    schema_name             TEXT NOT NULL,
-    schema_latest_version   INTEGER NOT NULL,
-    created_by              TEXT NOT NULL,
-    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    locked_by               TEXT,
-    locked_when             TIMESTAMP WITH TIME ZONE,
-    disabled_by             TEXT,
-    disabled_when           TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT heads_pk PRIMARY KEY (schema_name)
-);
-
-ALTER TABLE dataset_schema.heads OWNER to enceladus;
+ ALTER DATABASE menas_db OWNER TO enceladus;

@@ -16,7 +16,7 @@
 DROP FUNCTION IF EXISTS dataset_schema.list_schemas(BOOLEAN);
 
 CREATE OR REPLACE FUNCTION dataset_schema.list_schemas(
-    IN  i_include_deleted       BOOLEAN DEFAULT FALSE,
+    IN  i_include_disabled      BOOLEAN DEFAULT FALSE,
     OUT schema_name             TEXT,
     OUT schema_latest_version   INTEGER
 ) RETURNS SETOF record AS
@@ -27,7 +27,7 @@ $$
 --      Returns a list of schemas with their latest versions
 --
 -- Parameters:
---      i_include_deleted       - flag indicating if to include deleted schemas too
+--      i_include_disabled       - flag indicating if to include disabled schemas too
 --
 -- Returns:
 --      schema_name             - name of the schema
@@ -39,7 +39,7 @@ BEGIN
     RETURN QUERY
     SELECT dsh.schema_name, dsh.schema_latest_version
     FROM dataset_schema.heads dsh
-    WHERE i_include_deleted OR dsh.deleted_when IS NULL
+    WHERE i_include_disabled OR dsh.disabled_when IS NULL
     ORDER BY schema_name; --TODO Include order by?
 END;
 $$

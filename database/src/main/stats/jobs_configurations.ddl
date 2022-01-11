@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 
+-- DROP TABLE stats.jobs_configurations
+
 CREATE TABLE stats.jobs_configurations
 (
     schema_count        INTEGER NOT NULL,

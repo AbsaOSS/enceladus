@@ -32,8 +32,8 @@ CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     OUT updated_when        TIMESTAMP WITH TIME ZONE,
     OUT locked_by           TEXT,
     OUT locked_when         TIMESTAMP WITH TIME ZONE,
-    OUT deleted_by          TEXT,
-    OUT deleted_when        TIMESTAMP WITH TIME ZONE
+    OUT disabled_by         TEXT,
+    OUT disabled_when       TIMESTAMP WITH TIME ZONE
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -55,13 +55,13 @@ $$
 --      schema_description  - description of the schema
 --      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
---      created_when        - time & date when the schema was deleted
+--      created_when        - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
 --      updated_when        - time & date when the this particular version of the schema was created
 --      locked_by           - if locked, who was the user who locked the schema
 --      locked_when         - if not NULL the schema is locked
---      deleted_by          - if deleted, who was the user who deleted the schema
---      deleted_when        - if not NULL the schema has been deleted
+--      disabled_by         - if disabled, who was the user who disabled the schema
+--      disabled_when       - if not NULL the schema has been disabled
 --
 -- Status codes:
 --      200     - OK
@@ -75,15 +75,15 @@ DECLARE
     _created_when   TIMESTAMP WITH TIME ZONE;
     _locked_by      TEXT;
     _locked_when    TIMESTAMP WITH TIME ZONE;
-    _deleted_by     TEXT;
-    _deleted_when   TIMESTAMP WITH TIME ZONE;
+    _disabled_by     TEXT;
+    _disabled_when   TIMESTAMP WITH TIME ZONE;
 BEGIN
     SELECT coalesce(i_schema_version, dsh.schema_latest_version), dsh.created_by, dsh.created_when,
-           dsh.locked_by, dsh.locked_when, dsh.deleted_by, dsh.locked_when
+           dsh.locked_by, dsh.locked_when, dsh.disabled_by, dsh.locked_when
     FROM dataset_schema.heads dsh
     WHERE dsh.schema_name = i_schema_name
     INTO _schema_version, _created_by, _created_when,
-        _locked_by, _locked_when, _deleted_by, _deleted_when;
+        _locked_by, _locked_when, _disabled_by, _disabled_when;
 
     IF NOT found THEN
         status := 404;
@@ -94,14 +94,14 @@ BEGIN
     SELECT 200, 'OK', dss.id_schema, dss.schema_name,
            dss.schema_description, dss.fields, _created_by, _created_when,
            dss.updated_by, dss.updated_when, _locked_by, _locked_when,
-           _deleted_by, _deleted_when
+           _disabled_by, _disabled_when
     FROM dataset_schema.schemas dss
     WHERE dss.schema_name = i_schema_name AND
           dss.schema_version = _schema_version
     INTO status, status_text, id_schema, schema_name,
          schema_description, fields, created_by, created_when,
          updated_by, updated_when, locked_by, locked_when,
-        deleted_by, deleted_when;
+        disabled_by, disabled_when;
 
     IF NOT found THEN
         status := 405;
@@ -130,8 +130,8 @@ CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     OUT updated_when        TIMESTAMP WITH TIME ZONE,
     OUT locked_by           TEXT,
     OUT locked_when         TIMESTAMP WITH TIME ZONE,
-    OUT deleted_by          TEXT,
-    OUT deleted_when        TIMESTAMP WITH TIME ZONE
+    OUT disabled_by         TEXT,
+    OUT disabled_when       TIMESTAMP WITH TIME ZONE
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -151,13 +151,13 @@ $$
 --      schema_description  - description of the schema
 --      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
---      created_when        - time & date when the schema was deleted
+--      created_when        - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
 --      updated_when        - time & date when the this particular version of the schema was created
 --      locked_by           - if locked, who was the user who locked the schema
 --      locked_when         - if not NULL the schema is locked
---      deleted_by          - if deleted, who was the user who deleted the schema
---      deleted_when        - if not NULL the schema has been deleted
+--      disabled_by         - if disabled, who was the user who disabled the schema
+--      disabled_when       - if not NULL the schema has been disabled
 --
 -- Status codes:
 --      200     - OK
@@ -183,11 +183,11 @@ BEGIN
 
 
     SELECT dsh.created_by, dsh.created_when, dsh.locked_by, dsh.locked_when,
-           dsh.deleted_by, dsh.locked_when
+           dsh.disabled_by, dsh.locked_when
     FROM dataset_schema.heads dsh
     WHERE dsh.schema_name = _schema_name
     INTO created_by, created_when, locked_by, locked_when,
-         deleted_by, deleted_when;
+         disabled_by, disabled_when;
 
     schema_name := _schema_name; -- used a local variable to avoid name disambiguaty
 
