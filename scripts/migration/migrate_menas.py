@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Copyright 2018 ABSA Group Limited
 #
@@ -16,7 +16,6 @@
 import argparse
 import secrets  # migration hash generation
 
-from minydra.dict import MinyDict  # dictionary with dot access
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.write_concern import WriteConcern
@@ -25,32 +24,15 @@ from pymongo.errors import DuplicateKeyError
 from typing import List
 from datetime import datetime, timezone
 
+from constants import *
 
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
 # pip install -r requirements.txt
 
-# Default configuration
-# =====================
-
-defaults = MinyDict({
-    'verbose': False,
-    'dryrun': False,
-    'target_db_name': "menas"
-})
-
 # initialized values common for the whole run
+# todo CAPS? move? mark as global?
 migration_hash = secrets.token_hex(3)  # e.g. 34d4e10f
 utc_now = datetime.now(timezone.utc)
-
-SOURCE_DB_NAME = "menas"
-LOCKING_USER = "migration"
-
-# Constants
-NOT_LOCKED_MONGO_FILTER = {"$or": [
-    {"locked": False},  # is not locked, or
-    {"locked": {"$exists": False}}  # or: there is no locking info at all
-]}
-EMPTY_MONGO_FILTER = {}
 
 
 def get_database(conn_str: str, db_name: str) -> Database:
@@ -171,7 +153,7 @@ def get_date_locked_structure(dt: datetime) -> dict:
                 "hour": dt.hour,
                 "minute": dt.minute,
                 "second": dt.second,
-                "nano": dt.microsecond*1000
+                "nano": dt.microsecond * 1000
             }
         },
         "offset": 0,
@@ -307,9 +289,10 @@ def describe_attachment_entity(item: dict) -> str:
     return "attachment for {} {} v{}".format(item["refCollection"], item["refName"], item["refVersion"])
 
 
-def migrate_collections_by_ds_names(source: str, target: str, target_db_name: str,
+def migrate_collections_by_ds_names(source: str, target: str,
+                                    source_db_name: str, target_db_name: str,
                                     supplied_ds_names: List[str]) -> None:
-    source_db = get_database(source, SOURCE_DB_NAME)
+    source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
 
     if verbose:
@@ -360,9 +343,10 @@ def migrate_collections_by_ds_names(source: str, target: str, target_db_name: st
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-def migrate_collections_by_mt_names(source: str, target: str, target_db_name: str,
+def migrate_collections_by_mt_names(source: str, target: str,
+                                    source_db_name: str, target_db_name: str,
                                     supplied_mt_names: List[str]) -> None:
-    source_db = get_database(source, SOURCE_DB_NAME)
+    source_db = get_database(source, source_db_name)
     target_db = get_database(target, target_db_name)
 
     if verbose:
@@ -398,9 +382,9 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter  # prints default values, too, on help (-h)
     )
 
-    parser.add_argument('-n', '--dryrun', action='store_true', default=defaults.dryrun,
+    parser.add_argument('-n', '--dryrun', action='store_true', default=DEFAULT_DRYRUN,
                         help="if specified, skip the actual synchronization, just print what would be copied over.")
-    parser.add_argument('-v', '--verbose', action="store_true", default=defaults.verbose,
+    parser.add_argument('-v', '--verbose', action="store_true", default=DEFAULT_VERBOSE,
                         help="prints extra information while running.")
 
     parser.add_argument('source', metavar="SOURCE",
@@ -408,8 +392,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('target', metavar="TARGET",
                         help="connection string for target MongoDB")
 
-    parser.add_argument('-t', '--target-database', dest="targetdb", default=defaults.target_db_name,
+    parser.add_argument('-t', '--target-database', dest="targetdb", default=DEFAULT_DB_NAME,
                         help="Name of db on target to migrate to.")
+
+    parser.add_argument('-s', '--source-database', dest="sourcedb", default=DEFAULT_DB_NAME,
+                        help="Name of db on source to migrate from.")
 
     input_options_group = parser.add_mutually_exclusive_group(required=True)
     input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
@@ -424,12 +411,14 @@ def run(parsed_args: argparse.Namespace):
     source = parsed_args.source
     target = parsed_args.target
     target_db_name = parsed_args.targetdb
+    source_db_name = parsed_args.sourcedb
+
 
     print('Menas mongo migration')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
     print("Using migration #: '{}' and locking timestamp {} (UTC)".format(migration_hash, utc_now))
     print('  source connection-string: {}'.format(source))
-    print('  source DB: {}'.format(SOURCE_DB_NAME))
+    print('  source DB: {}'.format(source_db_name))
     print('  target connection-string: {}'.format(target))
     print('  target DB: {}'.format(target_db_name))
 
@@ -437,10 +426,10 @@ def run(parsed_args: argparse.Namespace):
     mt_names = parsed_args.mtables
     if dataset_names:
         print('dataset names supplied: {}'.format(dataset_names))
-        migrate_collections_by_ds_names(source, target, target_db_name, dataset_names)
+        migrate_collections_by_ds_names(source, target, source_db_name, target_db_name, dataset_names)
     elif mt_names:
         print('mapping table names supplied: {}'.format(mt_names))
-        migrate_collections_by_mt_names(source, target, target_db_name, mt_names)
+        migrate_collections_by_mt_names(source, target, source_db_name, target_db_name, mt_names)
     else:
         # should not happen (-d/-m is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
@@ -452,6 +441,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     # script-global flags
+    # todo prefix g_? or reorganize somehow?
     dryrun = args.dryrun
     verbose = args.verbose
 
