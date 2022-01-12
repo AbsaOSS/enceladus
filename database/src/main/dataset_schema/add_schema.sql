@@ -48,20 +48,20 @@ $$
 --      201     - OK
 --      403     - Schema already exists
 --      404     - Schema version wrong
---      405     - Schema has been deleted
+--      405     - Schema has been disabled
 --      406     - Schema is locked
 --
 -------------------------------------------------------------------------------
 DECLARE
     _latest_version INTEGER;
     _locked         BOOLEAN;
-    _deleted        BOOLEAN;
+    _disabled       BOOLEAN;
 BEGIN
     SELECT dsh.schema_latest_version, dsh.locked_when IS NOT NULL, dsh.disabled_when IS NOT NULL
     FROM dataset_schema.heads dsh
     WHERE dsh.schema_name = i_schema_name
     FOR UPDATE
-    INTO _latest_version, _locked, _deleted;
+    INTO _latest_version, _locked, _disabled;
 
     IF NOT found THEN
         -- new schema, lock on stats will prevent racing insert of the same schema
@@ -70,9 +70,9 @@ BEGIN
         FOR UPDATE;
 
         _latest_version = 0;
-    ELSIF _deleted THEN
+    ELSIF _disabled THEN
         status := 405;
-        status_text := 'Schema has been deleted';
+        status_text := 'Schema has been disabled';
         RETURN ;
     ELSIF _locked THEN
         status := 406;
