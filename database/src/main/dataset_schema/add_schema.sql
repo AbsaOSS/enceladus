@@ -57,7 +57,7 @@ DECLARE
     _locked         BOOLEAN;
     _deleted        BOOLEAN;
 BEGIN
-    SELECT dsh.schema_latest_version, dsh.locked_when IS NOT NULL, dsh.deleted_when IS NOT NULL
+    SELECT dsh.schema_latest_version, dsh.locked_when IS NOT NULL, dsh.disabled_when IS NOT NULL
     FROM dataset_schema.heads dsh
     WHERE dsh.schema_name = i_schema_name
     FOR UPDATE
@@ -92,7 +92,7 @@ BEGIN
 
     INSERT INTO dataset_schema.schemas (schema_name, schema_version, schema_description, fields, updated_by)
     VALUES (i_schema_name, i_schema_version, i_schema_description, i_fields, i_user_name)
-    RETURNING id_schema
+    RETURNING dataset_schema.schemas.id_schema
     INTO id_schema;
 
     IF _latest_version = 0 THEN

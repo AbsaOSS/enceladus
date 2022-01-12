@@ -21,7 +21,7 @@ CREATE TABLE dataset_schema.schemas
     schema_name         TEXT NOT NULL,
     schema_version      INTEGER NOT NULL,
     schema_description  TEXT,
-    fields              JSONB NOT NULL,
+    fields              JSONB,
     updated_by          TEXT NOT NULL,
     updated_when        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT schemas_pk PRIMARY KEY (id_schema)

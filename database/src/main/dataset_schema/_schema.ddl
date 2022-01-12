@@ -14,3 +14,5 @@
  */
 
 CREATE SCHEMA IF NOT EXISTS dataset_schema AUTHORIZATION enceladus;
+
+GRANT USAGE ON SCHEMA dataset_schema TO menas;
