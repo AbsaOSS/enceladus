@@ -147,7 +147,6 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   }
 
   @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   @ResponseStatus(HttpStatus.OK)
   def disable(@PathVariable name: String,
       @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
@@ -163,16 +162,16 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @PutMapping(Array("/lock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   @ResponseStatus(HttpStatus.OK)
-  def lock(@PathVariable name: String,
-           @AuthenticationPrincipal principal: UserDetails): CompletableFuture[UpdateResult] = {
+  def lock(@AuthenticationPrincipal principal: UserDetails,
+           @PathVariable name: String): CompletableFuture[UpdateResult] = {
     versionedModelService.setLock(name, isLocked = true, principal)
   }
 
   @PutMapping(Array("/unlock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   @ResponseStatus(HttpStatus.OK)
-  def unlock(@PathVariable name: String,
-             @AuthenticationPrincipal principal: UserDetails): CompletableFuture[UpdateResult] = {
+  def unlock(@AuthenticationPrincipal principal: UserDetails,
+             @PathVariable name: String): CompletableFuture[UpdateResult] = {
     versionedModelService.setLock(name, isLocked = false, principal)
   }
 
