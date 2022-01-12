@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-DROP FUNCTION dataset_schema.get_schema(TEXT, INTEGER);
-DROP FUNCTION dataset_schema.get_schema(BIGINT);
+DROP FUNCTION IF EXISTS dataset_schema.get_schema(TEXT, INTEGER);
+DROP FUNCTION IF EXISTS dataset_schema.get_schema(BIGINT);
 
 CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     IN  i_schema_name       TEXT,
@@ -91,14 +91,14 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT 200, 'OK', dss.id_schema, dss.schema_name,
+    SELECT 200, 'OK', dss.id_schema, dss.schema_name, dss.schema_version,
            dss.schema_description, dss.fields, _created_by, _created_when,
            dss.updated_by, dss.updated_when, _locked_by, _locked_when,
            _disabled_by, _disabled_when
     FROM dataset_schema.schemas dss
     WHERE dss.schema_name = i_schema_name AND
           dss.schema_version = _schema_version
-    INTO status, status_text, id_schema, schema_name,
+    INTO status, status_text, id_schema, schema_name, schema_version,
          schema_description, fields, created_by, created_when,
          updated_by, updated_when, locked_by, locked_when,
         disabled_by, disabled_when;
@@ -168,11 +168,11 @@ DECLARE
     _schema_name    TEXT;
 BEGIN
 
-    SELECT 200, 'OK', dss.id_schema, dss.schema_name,
+    SELECT 200, 'OK', dss.id_schema, dss.schema_name, dss.schema_version,
            dss.schema_description, dss.fields, dss.updated_by, dss.updated_when
     FROM dataset_schema.schemas dss
     WHERE dss.id_schema = i_key_schema
-    INTO status, status_text, id_schema, _schema_name,
+    INTO status, status_text, id_schema, _schema_name, schema_version,
         schema_description, fields, updated_by, updated_when;
 
     IF NOT found THEN
@@ -189,7 +189,7 @@ BEGIN
     INTO created_by, created_when, locked_by, locked_when,
          disabled_by, disabled_when;
 
-    schema_name := _schema_name; -- used a local variable to avoid name disambiguaty
+    schema_name := _schema_name; -- used a local variable to avoid name disambiguity
 
     RETURN;
 END;

@@ -18,7 +18,8 @@ DROP FUNCTION IF EXISTS dataset_schema.list_schemas(BOOLEAN);
 CREATE OR REPLACE FUNCTION dataset_schema.list_schemas(
     IN  i_include_disabled      BOOLEAN DEFAULT FALSE,
     OUT schema_name             TEXT,
-    OUT schema_latest_version   INTEGER
+    OUT schema_latest_version   INTEGER,
+    OUT disabled                BOOLEAN
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
@@ -37,7 +38,7 @@ $$
 DECLARE
 BEGIN
     RETURN QUERY
-    SELECT dsh.schema_name, dsh.schema_latest_version
+    SELECT dsh.schema_name, dsh.schema_latest_version, dsh.disabled_when IS NOT NULL
     FROM dataset_schema.heads dsh
     WHERE i_include_disabled OR dsh.disabled_when IS NULL
     ORDER BY schema_name; --TODO Include order by?
