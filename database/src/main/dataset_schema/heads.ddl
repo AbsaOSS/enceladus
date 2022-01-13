@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
--- DROP TABLE dataset_schema.heads;
+-- DROP TABLE IF EXISTS dataset_schema.heads;
 
 CREATE TABLE dataset_schema.heads
 (

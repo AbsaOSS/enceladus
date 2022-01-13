@@ -46,10 +46,10 @@ $$
 --
 -- Status codes:
 --      201     - OK
---      403     - Schema already exists
+--      403     - Schema has been disabled
 --      404     - Schema version wrong
---      405     - Schema has been disabled
---      406     - Schema is locked
+--      409     - Schema already exists
+--      423     - Schema is locked
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -71,17 +71,17 @@ BEGIN
 
         _latest_version = 0;
     ELSIF _disabled THEN
-        status := 405;
+        status := 403;
         status_text := 'Schema has been disabled';
         RETURN ;
     ELSIF _locked THEN
-        status := 406;
+        status := 423;
         status_text := 'Schema is locked';
         RETURN;
     END IF;
 
     IF _latest_version >= i_schema_version THEN
-        status := 403;
+        status := 409;
         status_text := 'Schema already exists';
         RETURN;
     ELSIF _latest_version + 1 < i_schema_version THEN
@@ -99,7 +99,7 @@ BEGIN
         INSERT INTO dataset_schema.heads (schema_name, schema_latest_version, created_by)
         VALUES (i_schema_name, i_schema_version, i_user_name);
 
-        UPDATE stats.jobs_configurations
+        UPDATE stats.entities
         SET schema_count = schema_count + 1;
     ELSE
         UPDATE dataset_schema.heads

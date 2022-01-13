@@ -13,20 +13,20 @@
  * limitations under the License.
  */
 
--- DROP TABLE stats.jobs_configurations
+-- DROP TABLE IF EXISTS stats.entities
 
-CREATE TABLE stats.jobs_configurations
+CREATE TABLE stats.entities
 (
     schema_count        INTEGER NOT NULL,
     mapping_table_count INTEGER NOT NULL,
     dataset_count       INTEGER NOT NULL
 );
 
-ALTER TABLE stats.jobs_configurations
+ALTER TABLE stats.entities
     OWNER to enceladus;
 
-INSERT INTO stats.jobs_configurations (schema_count, mapping_table_count, dataset_count)
+INSERT INTO stats.entities (schema_count, mapping_table_count, dataset_count)
 VALUES (0, 0, 0);
 
-CREATE RULE jobs_configurations_del_protect AS ON DELETE TO stats.jobs_configurations DO INSTEAD NOTHING;
-CREATE RULE jobs_configurations_ins_protect AS ON INSERT TO stats.jobs_configurations DO INSTEAD NOTHING;
+CREATE RULE entities_del_protect AS ON DELETE TO stats.entities DO INSTEAD NOTHING;
+CREATE RULE entities_ins_protect AS ON INSERT TO stats.entities DO INSTEAD NOTHING;

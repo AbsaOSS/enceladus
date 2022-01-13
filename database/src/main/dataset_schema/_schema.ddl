@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
-CREATE SCHEMA IF NOT EXISTS dataset_schema AUTHORIZATION enceladus;
+CREATE SCHEMA IF NOT EXISTS dataset_schema;
+ALTER  SCHEMA dataset_schema OWNER TO enceladus;
 
 GRANT USAGE ON SCHEMA dataset_schema TO menas;

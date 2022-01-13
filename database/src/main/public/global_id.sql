@@ -14,14 +14,14 @@
  */
 
 
---DROP SEQUENCE IF  EXISTS public.global_id_seq
+--DROP SEQUENCE IF EXISTS public.global_id_seq
 
--- SERVER should be a unique number within your deployment between 0 and 9222
+-- DB_ID should be a unique number within your deployment between 0 and 9222
 CREATE SEQUENCE IF NOT EXISTS public.global_id_seq
     INCREMENT 1
-    START [SERVER_ID]*1000000000000000+1
-    MINVALUE [SERVER_ID]*1000000000000000+1
-    MAXVALUE [SERVER_ID] + 1)*1000000000000000
+    START [DB_ID]*1000000000000000+1
+    MINVALUE [DB_ID]*1000000000000000+1
+    MAXVALUE [DB_ID] + 1)*1000000000000000
     CACHE 1;
 
 CREATE OR REPLACE FUNCTION public.global_id() RETURNS BIGINT AS

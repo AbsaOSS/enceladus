@@ -13,4 +13,5 @@
  * limitations under the License.
  */
 
-CREATE SCHEMA IF NOT EXISTS stats AUTHORIZATION enceladus;
+CREATE SCHEMA IF NOT EXISTS stats;
+ALTER  SCHEMA stats OWNER TO enceladus;

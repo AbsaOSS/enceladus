@@ -101,7 +101,7 @@ BEGIN
     INTO status, status_text, id_schema, schema_name, schema_version,
          schema_description, fields, created_by, created_when,
          updated_by, updated_when, locked_by, locked_when,
-        disabled_by, disabled_when;
+         disabled_by, disabled_when;
 
     IF NOT found THEN
         status := 405;
