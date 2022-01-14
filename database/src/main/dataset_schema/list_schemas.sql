@@ -38,9 +38,9 @@ $$
 DECLARE
 BEGIN
     RETURN QUERY
-    SELECT dsh.schema_name, dsh.schema_latest_version, dsh.disabled_when IS NOT NULL
-    FROM dataset_schema.heads dsh
-    WHERE i_include_disabled OR dsh.disabled_when IS NULL
+    SELECT dss.schema_name, dss.schema_latest_version, dss.disabled_when IS NOT NULL
+    FROM dataset_schema.schemas dss
+    WHERE i_include_disabled OR dss.disabled_when IS NULL
     ORDER BY schema_name; --TODO Include order by?
 END;
 $$

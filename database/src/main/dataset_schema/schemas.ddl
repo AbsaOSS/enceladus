@@ -17,17 +17,15 @@
 
 CREATE TABLE dataset_schema.schemas
 (
-    id_schema           BIGINT NOT NULL DEFAULT global_id(),
-    schema_name         TEXT NOT NULL,
-    schema_version      INTEGER NOT NULL,
-    schema_description  TEXT,
-    fields              JSONB,
-    updated_by          TEXT NOT NULL,
-    updated_when        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT schemas_pk PRIMARY KEY (id_schema)
+    schema_name             TEXT NOT NULL,
+    schema_latest_version   INTEGER NOT NULL,
+    created_by              TEXT NOT NULL,
+    created_when            TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    locked_by               TEXT,
+    locked_when             TIMESTAMP WITH TIME ZONE,
+    disabled_by             TEXT,
+    disabled_when           TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT schemas_pk PRIMARY KEY (schema_name)
 );
-
-ALTER TABLE dataset_schema.schemas
-    ADD CONSTRAINT schemas_unq UNIQUE (schema_name, schema_version);
 
 ALTER TABLE dataset_schema.schemas OWNER to enceladus;

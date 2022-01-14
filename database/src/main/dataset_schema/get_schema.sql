@@ -21,7 +21,7 @@ CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     IN  i_schema_version    INTEGER DEFAULT NULL,
     OUT status              INTEGER,
     OUT status_text         TEXT,
-    OUT id_schema           BIGINT,
+    OUT id_schema_version   BIGINT,
     OUT schema_name         TEXT,
     OUT schema_version      INTEGER,
     OUT schema_description  TEXT,
@@ -78,10 +78,10 @@ DECLARE
     _disabled_by     TEXT;
     _disabled_when   TIMESTAMP WITH TIME ZONE;
 BEGIN
-    SELECT coalesce(i_schema_version, dsh.schema_latest_version), dsh.created_by, dsh.created_when,
-           dsh.locked_by, dsh.locked_when, dsh.disabled_by, dsh.locked_when
-    FROM dataset_schema.heads dsh
-    WHERE dsh.schema_name = i_schema_name
+    SELECT coalesce(i_schema_version, dss.schema_latest_version), dss.created_by, dss.created_when,
+           dss.locked_by, dss.locked_when, dss.disabled_by, dss.locked_when
+    FROM dataset_schema.schemas dss
+    WHERE dss.schema_name = i_schema_name
     INTO _schema_version, _created_by, _created_when,
         _locked_by, _locked_when, _disabled_by, _disabled_when;
 
@@ -91,14 +91,14 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT 200, 'OK', dss.id_schema, dss.schema_name, dss.schema_version,
-           dss.schema_description, dss.fields, _created_by, _created_when,
-           dss.updated_by, dss.updated_when, _locked_by, _locked_when,
+    SELECT 200, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
+           dsv.schema_description, dsv.fields, _created_by, _created_when,
+           dsv.updated_by, dsv.updated_when, _locked_by, _locked_when,
            _disabled_by, _disabled_when
-    FROM dataset_schema.schemas dss
-    WHERE dss.schema_name = i_schema_name AND
-          dss.schema_version = _schema_version
-    INTO status, status_text, id_schema, schema_name, schema_version,
+    FROM dataset_schema.versions dsv
+    WHERE dsv.schema_name = i_schema_name AND
+          dsv.schema_version = _schema_version
+    INTO status, status_text, id_schema_version, schema_name, schema_version,
          schema_description, fields, created_by, created_when,
          updated_by, updated_when, locked_by, locked_when,
          disabled_by, disabled_when;
@@ -116,22 +116,22 @@ LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
 
 CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
-    IN  i_key_schema        BIGINT,
-    OUT status              INTEGER,
-    OUT status_text         TEXT,
-    OUT id_schema           BIGINT,
-    OUT schema_name         TEXT,
-    OUT schema_version      INTEGER,
-    OUT schema_description  TEXT,
-    OUT fields              JSONB,
-    OUT created_by          TEXT,
-    OUT created_when        TIMESTAMP WITH TIME ZONE,
-    OUT updated_by          TEXT,
-    OUT updated_when        TIMESTAMP WITH TIME ZONE,
-    OUT locked_by           TEXT,
-    OUT locked_when         TIMESTAMP WITH TIME ZONE,
-    OUT disabled_by         TEXT,
-    OUT disabled_when       TIMESTAMP WITH TIME ZONE
+    IN  i_key_schema_version    BIGINT,
+    OUT status                  INTEGER,
+    OUT status_text             TEXT,
+    OUT id_schema_version       BIGINT,
+    OUT schema_name             TEXT,
+    OUT schema_version          INTEGER,
+    OUT schema_description      TEXT,
+    OUT fields                  JSONB,
+    OUT created_by              TEXT,
+    OUT created_when            TIMESTAMP WITH TIME ZONE,
+    OUT updated_by              TEXT,
+    OUT updated_when            TIMESTAMP WITH TIME ZONE,
+    OUT locked_by               TEXT,
+    OUT locked_when             TIMESTAMP WITH TIME ZONE,
+    OUT disabled_by             TEXT,
+    OUT disabled_when           TIMESTAMP WITH TIME ZONE
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -168,11 +168,11 @@ DECLARE
     _schema_name    TEXT;
 BEGIN
 
-    SELECT 200, 'OK', dss.id_schema, dss.schema_name, dss.schema_version,
-           dss.schema_description, dss.fields, dss.updated_by, dss.updated_when
-    FROM dataset_schema.schemas dss
-    WHERE dss.id_schema = i_key_schema
-    INTO status, status_text, id_schema, _schema_name, schema_version,
+    SELECT 200, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
+           dsv.schema_description, dsv.fields, dsv.updated_by, dsv.updated_when
+    FROM dataset_schema.versions dsv
+    WHERE dsv.id_schema_version = i_key_schema_version
+    INTO status, status_text, id_schema_version, _schema_name, schema_version,
         schema_description, fields, updated_by, updated_when;
 
     IF NOT found THEN
@@ -182,10 +182,10 @@ BEGIN
     END IF;
 
 
-    SELECT dsh.created_by, dsh.created_when, dsh.locked_by, dsh.locked_when,
-           dsh.disabled_by, dsh.locked_when
-    FROM dataset_schema.heads dsh
-    WHERE dsh.schema_name = _schema_name
+    SELECT dss.created_by, dss.created_when, dss.locked_by, dss.locked_when,
+           dss.disabled_by, dss.locked_when
+    FROM dataset_schema.schemas dss
+    WHERE dss.schema_name = _schema_name
     INTO created_by, created_when, locked_by, locked_when,
          disabled_by, disabled_when;
 

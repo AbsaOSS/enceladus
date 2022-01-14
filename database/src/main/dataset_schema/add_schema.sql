@@ -23,7 +23,7 @@ CREATE OR REPLACE FUNCTION dataset_schema.add_schema(
     IN i_user_name          TEXT,
     OUT status              INTEGER,
     OUT status_text         TEXT,
-    OUT id_schema           BIGINT
+    OUT id_schema_version   BIGINT
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -57,16 +57,16 @@ DECLARE
     _locked         BOOLEAN;
     _disabled       BOOLEAN;
 BEGIN
-    SELECT dsh.schema_latest_version, dsh.locked_when IS NOT NULL, dsh.disabled_when IS NOT NULL
-    FROM dataset_schema.heads dsh
-    WHERE dsh.schema_name = i_schema_name
+    SELECT dss.schema_latest_version, dss.locked_when IS NOT NULL, dss.disabled_when IS NOT NULL
+    FROM dataset_schema.schemas dss
+    WHERE dss.schema_name = i_schema_name
     FOR UPDATE
     INTO _latest_version, _locked, _disabled;
 
     IF NOT found THEN
         -- new schema, lock on stats will prevent racing insert of the same schema
         PERFORM
-        FROM stats.jobs_configurations
+        FROM stats.entities
         FOR UPDATE;
 
         _latest_version = 0;
@@ -90,19 +90,19 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO dataset_schema.schemas (schema_name, schema_version, schema_description, fields, updated_by)
+    INSERT INTO dataset_schema.versions (schema_name, schema_version, schema_description, fields, updated_by)
     VALUES (i_schema_name, i_schema_version, i_schema_description, i_fields, i_user_name)
-    RETURNING dataset_schema.schemas.id_schema
-    INTO id_schema;
+    RETURNING dataset_schema.versions.id_schema_version
+    INTO id_schema_version;
 
     IF _latest_version = 0 THEN
-        INSERT INTO dataset_schema.heads (schema_name, schema_latest_version, created_by)
+        INSERT INTO dataset_schema.schemas (schema_name, schema_latest_version, created_by)
         VALUES (i_schema_name, i_schema_version, i_user_name);
 
         UPDATE stats.entities
         SET schema_count = schema_count + 1;
     ELSE
-        UPDATE dataset_schema.heads
+        UPDATE dataset_schema.schemas
         SET schema_latest_version = i_schema_version
         WHERE schema_name = i_schema_name;
     END IF;
