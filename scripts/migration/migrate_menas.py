@@ -322,16 +322,38 @@ def ensure_menas_collections_exist(db: Database, alias: str = "") -> None:
     return ensure_collections_exist(MIGRATING_COLLECTIONS)
 
 
-def migrate_collections_by_ds_names(source: str, target: str,
-                                    source_db_name: str, target_db_name: str,
+# TODO when we have a menas db-initialization script (pre-migration), let's merge this with
+#  `ensure_menas_collections_exist` - to assess basic validity of source & target alike - Issue #2013
+def ensure_db_version(db: Database, alias: str = "") -> None:
+    """
+    Checks the db for having collection #DB_VERSION_COLLECTION with a record having version=1
+    :param db: database to check
+    :param alias: name for db to print, e.g. "source"
+    """
+    hint = f" ({alias})" if alias else ""
+
+    if DB_VERSION_COLLECTION in set(db.list_collection_names()):
+        #  check version record
+        collection = db[DB_VERSION_COLLECTION]
+
+        version_record = collection.find_one()
+        print(f"version record: {version_record}")
+        if version_record:
+            if version_record["version"] == 1:
+                print(f"{DB_VERSION_COLLECTION}{hint} version check successful.")
+            else:
+                raise Exception(f"This script requires {DB_VERSION_COLLECTION}{hint} record version=1, " +
+                                f"but found: {version_record}")  # deliberately the whole record
+
+        else:
+            raise Exception(f"No version record found in {DB_VERSION_COLLECTION}{hint}!")
+    else:
+        raise Exception(f"DB {db.name}{hint} does not contain collection {DB_VERSION_COLLECTION}!")
+
+
+def migrate_collections_by_ds_names(source_db: Database, target_db: Database,
                                     supplied_ds_names: List[str],
                                     dryrun: bool) -> None:
-    source_db = get_database(source, source_db_name)
-    target_db = get_database(target, target_db_name)
-
-    ensure_menas_collections_exist(source_db, alias="source db")
-    # todo do target checking, too when we have menas to create blank db (collections, indices, ...)
-
 
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
@@ -378,15 +400,9 @@ def migrate_collections_by_ds_names(source: str, target: str,
         print("*** Dryrun selected, no actual migration will take place.")
 
 
-def migrate_collections_by_mt_names(source: str, target: str,
-                                    source_db_name: str, target_db_name: str,
+def migrate_collections_by_mt_names(source_db: Database, target_db: Database,
                                     supplied_mt_names: List[str],
                                     dryrun: bool) -> None:
-    source_db = get_database(source, source_db_name)
-    target_db = get_database(target, target_db_name)
-
-    ensure_menas_collections_exist(source_db, alias="source db")
-
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
 
@@ -427,14 +443,22 @@ def run(parsed_args: argparse.Namespace):
     print('  target connection-string: {}'.format(target))
     print('  target DB: {}'.format(target_db_name))
 
+    source_db = get_database(source, source_db_name)
+    target_db = get_database(target, target_db_name)
+
+    # todo do target checking, too when we have menas to create blank db (collections, indices, ...) - Issue #2013
+    ensure_db_version(source_db, alias="source db")  # db initialized on source
+    ensure_db_version(target_db, alias="target db")  # db initialized on source
+    ensure_menas_collections_exist(source_db, alias="source db")  # migrating collections existence on source
+
     dataset_names = parsed_args.datasets
     mt_names = parsed_args.mtables
     if dataset_names:
         print('dataset names supplied: {}'.format(dataset_names))
-        migrate_collections_by_ds_names(source, target, source_db_name, target_db_name, dataset_names, dryrun=dryrun)
+        migrate_collections_by_ds_names(source_db, target_db, dataset_names, dryrun=dryrun)
     elif mt_names:
         print('mapping table names supplied: {}'.format(mt_names))
-        migrate_collections_by_mt_names(source, target, source_db_name, target_db_name, mt_names, dryrun=dryrun)
+        migrate_collections_by_mt_names(source_db, target_db, mt_names, dryrun=dryrun)
     else:
         # should not happen (-d/-m is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
