@@ -339,9 +339,7 @@ def ensure_db_version(db: Database, alias: str = "") -> None:
         version_record = collection.find_one()
         print(f"version record: {version_record}")
         if version_record:
-            if version_record["version"] == 1:
-                print(f"{DB_VERSION_COLLECTION}{hint} version check successful.")
-            else:
+            if version_record["version"] != 1:
                 raise Exception(f"This script requires {DB_VERSION_COLLECTION}{hint} record version=1, " +
                                 f"but found: {version_record}")  # deliberately the whole record
 
