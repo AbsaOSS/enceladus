@@ -21,7 +21,12 @@
         <customHeader>
             <Bar>
                 <contentMiddle>
-                    <Title text="Mapping Table: {/currentMappingTable/name} (v{/currentMappingTable/version})"/>
+                    <HBox alignItems="Center" justifyContent="End" renderType="Bare">
+                        <Title text="Mapping Table: {/currentMappingTable/name} (v{/currentMappingTable/version})">
+                        <core:Icon src="sap-icon://locked"
+                                   visible="{= ${/currentMappingTable/locked} === true}"
+                                   tooltip="Locked by {/currentMappingTable/userLocked} at {/currentMappingTable/dateLocked}"/>
+                    </HBox>
                 </contentMiddle>
                 <contentRight>
                     <core:Fragment type="XML" fragmentName="components.userInfo"/>
@@ -96,7 +101,7 @@
                             press="onAddDefaultPress"/>
                     <Button id="Edit" text="Edit" icon="sap-icon://edit" press="onEditPress"
                             enabled="{/editingEnabled}"
-                            tooltip="{= ${/editingEnabled} ? 'Edit current mapping table' : 'Editing old version is disabled'}" />
+                            tooltip="{= ${/editingEnabled} ? 'Edit current mapping table' : 'Editing old or locked version is not allowed'}" />
                 </contentRight>
             </Bar>
         </footer>

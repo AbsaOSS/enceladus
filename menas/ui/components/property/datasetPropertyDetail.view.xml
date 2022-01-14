@@ -21,7 +21,12 @@
         <customHeader>
             <Bar>
                 <contentMiddle>
-                    <Title text="Property: {/currentProperty/name} (v{/currentProperty/version})"/>
+                    <HBox alignItems="Center" justifyContent="End" renderType="Bare">
+                        <Title text="Property: {/currentProperty/name} (v{/currentProperty/version})"/>
+                        <core:Icon src="sap-icon://locked"
+                                   visible="{= ${/currentProperty/locked} === true}"
+                                   tooltip="Locked by {/currentProperty/userLocked} at {/currentProperty/dateLocked}"/>
+                    </HBox>
                 </contentMiddle>
                 <contentRight>
                     <core:Fragment type="XML" fragmentName="components.userInfo"/>
