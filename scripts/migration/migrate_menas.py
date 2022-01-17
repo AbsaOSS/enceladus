@@ -380,7 +380,7 @@ def run(parsed_args: argparse.Namespace):
     print('  target connection-string: {}'.format(target))
     print('  target DB: {}'.format(target_db_name))
 
-    from menas_db import MenasDb, MenasDb
+    from menas_db import MenasDb
     source_db = MenasDb.get_database(source, source_db_name)
     target_db = MenasDb.get_database(target, target_db_name)
 
