@@ -14,6 +14,8 @@
 # limitations under the License.
 
 # Defaults
+import pymongo
+
 DEFAULT_VERBOSE = False
 DEFAULT_DRYRUN = False
 DEFAULT_DB_NAME = "menas"  # both for source and target dbs
@@ -37,3 +39,26 @@ DB_VERSION_COLLECTION = "db_version"
 
 MIGRATING_COLLECTIONS = [SCHEMA_COLLECTION, DATASET_COLLECTION, MAPPING_TABLE_COLLECTION, RUN_COLLECTION,
                          ATTACHMENT_COLLECTION]
+
+# field names for the INDICES structure as well as keys used by result of <collection>.index_information()
+INDICES_FIELD_KEY = "key"
+INDICES_FIELD_UNIQUE = "unique"
+
+# Indices to be by default set on collections (with the unique option)
+_MOST_COMMON_INDEX_LIST = [
+    {
+        INDICES_FIELD_KEY: [("name", pymongo.ASCENDING), ("version", pymongo.ASCENDING)],
+        INDICES_FIELD_UNIQUE: True
+    }
+]
+INDICES = {
+    SCHEMA_COLLECTION: _MOST_COMMON_INDEX_LIST,
+    DATASET_COLLECTION: _MOST_COMMON_INDEX_LIST,
+    MAPPING_TABLE_COLLECTION: _MOST_COMMON_INDEX_LIST,
+    RUN_COLLECTION: [{
+        INDICES_FIELD_KEY: [
+            ("dataset", pymongo.ASCENDING), ("datasetVersion", pymongo.ASCENDING), ("runId", pymongo.ASCENDING)
+        ],
+        INDICES_FIELD_UNIQUE: True
+    }]
+}

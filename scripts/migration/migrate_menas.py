@@ -16,10 +16,7 @@
 import argparse
 import secrets  # migration hash generation
 
-from pymongo import MongoClient
 from pymongo.database import Database
-from pymongo.write_concern import WriteConcern
-from pymongo.read_concern import ReadConcern
 from pymongo.errors import DuplicateKeyError
 from typing import List
 from datetime import datetime, timezone
@@ -58,19 +55,6 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
-
-def get_database(conn_str: str, db_name: str) -> Database:
-    """
-    Gets db handle
-    :param db_name: string db name
-    :param conn_str: connection string, e.g. mongodb://username1:password213@my.domain.ext/adminOrAnotherDb
-    :return: MongoDB handle
-    """
-    client = MongoClient(conn_str)
-    majority_write_concern = WriteConcern(w="majority")
-    majority_read_concern = ReadConcern(level="majority")
-
-    return Database(client, db_name, write_concern=majority_write_concern, read_concern=majority_read_concern)
 
 
 def get_distinct_ds_names_from_ds_names(db: Database, ds_names: List[str], not_locked_only: bool) -> List[str]:
@@ -304,53 +288,6 @@ def describe_attachment_entity(item: dict) -> str:
     return "attachment for {} {} v{}".format(item["refCollection"], item["refName"], item["refVersion"])
 
 
-def ensure_menas_collections_exist(db: Database, alias: str = "") -> None:
-    """
-    Ensures given database contains expected collections to migrate (see #MIGRATING_COLLECTIONS).
-    Raises an exception with description if expected collections are not found in the db.
-    :param db: database to check
-    :param alias: name for db to print, e.g. "source"
-    """
-    def ensure_collections_exist(collection_names: List[str]) -> None:
-        existing_collections = db.list_collection_names()
-        for collection_name in collection_names:
-            if not(collection_name in existing_collections):
-                hint = " ({})".format(alias) if alias else ""
-                raise Exception("Collection '{}' not found in database '{}'{}. ".format(collection_name, db.name, hint)
-                                + "Are you sure your setup is correct?")
-
-    return ensure_collections_exist(MIGRATING_COLLECTIONS)
-
-
-# TODO when we have a menas db-initialization script (pre-migration), let's merge this with
-#  `ensure_menas_collections_exist` - to assess basic validity of source & target alike - Issue #2013
-def ensure_db_version(db: Database, alias: str = "") -> None:
-    """
-    Checks the db for having collection #DB_VERSION_COLLECTION with a record having version=1
-    :param db: database to check
-    :param alias: name for db to print, e.g. "source"
-    """
-    hint = f" ({alias})" if alias else ""
-
-    if DB_VERSION_COLLECTION in set(db.list_collection_names()):
-        #  check version record
-        collection = db[DB_VERSION_COLLECTION]
-
-        version_record = collection.find_one()
-        print(f"version record: {version_record}")
-        if version_record:
-            if version_record["version"] == 1:
-                print(f"{DB_VERSION_COLLECTION}{hint} version check successful.")
-            else:
-                raise Exception(f"This script requires {DB_VERSION_COLLECTION}{hint} record version=1, " +
-                                f"but found: {version_record}")  # deliberately the whole record
-
-        else:
-            raise Exception(f"No version record found in {DB_VERSION_COLLECTION}{hint}!")
-    else:
-        raise Exception(f"DB {db.name}{hint} does not contain collection {DB_VERSION_COLLECTION}!")
-
-
 def migrate_collections_by_ds_names(source_db: Database, target_db: Database,
                                     supplied_ds_names: List[str],
                                     dryrun: bool) -> None:
@@ -388,7 +325,7 @@ def migrate_collections_by_ds_names(source_db: Database, target_db: Database,
     print('Attachments of schemas to migrate: {}'.format(notlocked_attachment_names))
 
     if not dryrun:
-        print("\n")
+        print("")
         migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_notlocked_schemas, describe_default_entity, entity_name="schema")
         migrate_entities(source_db, target_db, DATASET_COLLECTION, notlocked_ds_names, describe_default_entity, entity_name="dataset")
         migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
@@ -417,7 +354,7 @@ def migrate_collections_by_mt_names(source_db: Database, target_db: Database,
     print('Attachments of schemas to migrate: {}'.format(notlocked_attachment_names))
 
     if not dryrun:
-        print("\n")
+        print("")
         migrate_entities(source_db, target_db, SCHEMA_COLLECTION, notlocked_mt_schema_names, describe_default_entity, entity_name="schema")
         migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
                          describe_default_entity, entity_name="mapping table")
@@ -443,13 +380,18 @@ def run(parsed_args: argparse.Namespace):
     print('  target connection-string: {}'.format(target))
     print('  target DB: {}'.format(target_db_name))
 
-    source_db = get_database(source, source_db_name)
-    target_db = get_database(target, target_db_name)
+    from menas_db import MenasDb, MenasDb
+    source_db = MenasDb.get_database(source, source_db_name)
+    target_db = MenasDb.get_database(target, target_db_name)
 
     # todo do target checking, too when we have menas to create blank db (collections, indices, ...) - Issue #2013
-    ensure_db_version(source_db, alias="source db")  # db initialized on source
-    ensure_db_version(target_db, alias="target db")  # db initialized on source
-    ensure_menas_collections_exist(source_db, alias="source db")  # migrating collections existence on source
+    # Checks raise MenasDbErrors
+    source_checker = MenasDb(source_db, alias="source db")
+    source_checker.check_db_version()
+    source_checker.check_menas_collections_exist()
+
+    target_checker = MenasDb(target_db, alias="target db")
+    target_checker.check_db_version()
 
     dataset_names = parsed_args.datasets
     mt_names = parsed_args.mtables
