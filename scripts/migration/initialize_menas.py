@@ -15,11 +15,9 @@
 
 import argparse
 
-import pymongo
 from pymongo.database import Database
 from typing import List
 
-import constants
 from menas_db import MenasDb
 from constants import *
 
@@ -80,7 +78,7 @@ def create_collections_if_not_exist(db: Database, collection_names: List[str]):
     print("")
 
 
-def initialize_collection_indices(db: Database, name: str, indices: list):
+def initialize_collection_indices(db: Database, name: str, indices: List[dict]):
     # db.create_collection(name) # may raise if exits, should not be needed? # todo test this
     col = db[name]
     if verbose:

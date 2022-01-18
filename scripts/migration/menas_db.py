@@ -43,11 +43,11 @@ class MenasDb(object):
         self.hint = f" ({self.alias})" if self.alias else ""  # " (alias)" or empty to append to stuff
         self.verbose = verbose
 
-    @classmethod
-    def from_connection_string(cls, connection_string: str, database_name: str, alias: str = None,
+    @staticmethod
+    def from_connection_string(connection_string: str, database_name: str, alias: str = None,
                                verbose: bool = False):
         db = MenasDb.get_database(connection_string, database_name)
-        return cls(db, alias, verbose)
+        return MenasDb(db, alias, verbose)
 
     def check_db_version(self) -> None:
         """
@@ -110,6 +110,86 @@ class MenasDb(object):
                                                  f"'{self.mongodb.name}'{self.hint}.")
 
         return ensure_collections_exist(MIGRATING_COLLECTIONS)
+
+    def get_distinct_ds_names_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(ds_names, DATASET_COLLECTION, not_locked_only)
+
+    def get_distinct_schema_names_from_schema_names(self, schema_names: List[str],
+                                                    not_locked_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(schema_names, SCHEMA_COLLECTION, not_locked_only)
+
+    def get_distinct_entities_ids(self, entity_names: List[str], collection_name: str, not_locked_only: bool,
+                                  entity_name_field: str = "name", distinct_field: object = "name") -> List[str]:
+        """ General way to retrieve distinct entity field values (names, ids, ...) from non-locked entities """
+        collection = self.mongodb[collection_name]
+        locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
+
+        entities = collection.distinct(
+            distinct_field,  # field to distinct on
+            {"$and": [
+                {entity_name_field: {"$in": entity_names}},  # filter on name (ds/mt)
+                locked_filter
+            ]}
+        )
+        return entities  # list of distinct names (in a single document)
+
+    def get_distinct_mapping_tables_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
+        ds_collection = self.mongodb[DATASET_COLLECTION]
+        locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
+
+        mapping_table_names = ds_collection.aggregate([
+            {"$match": {"$and": [  # selection based on:
+                {"name": {"$in": ds_names}},  # dataset name
+                {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}},  # having some MCRs
+                locked_filter
+            ]}},
+            {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
+            {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
+            {"$group": {
+                "_id": "notNeededButRequired",
+                "mts": {"$addToSet": "$conformance.mappingTable"}
+            }}  # grouping on fixed id (essentially distinct) and adding all MTs to a set
+        ])  # single doc with { _id: ... , "mts" : [mt1, mt2, ...]}
+
+        # if no MCRs are present, the result may be empty
+        mapping_table_names_list = list(mapping_table_names)  # cursor behaves one-iteration only.
+        if not list(mapping_table_names_list):
+            return []
+
+        extracted_list = mapping_table_names_list[0]['mts']
+        return extracted_list
+
+    def assemble_notlocked_runs_from_ds_names(self, ds_names: List[str]) -> List[str]:
+        return self.get_distinct_entities_ids(ds_names, RUN_COLLECTION, entity_name_field="dataset",
+                                              distinct_field="uniqueId", not_locked_only=True)
+
+    def assemble_schemas_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
+        return self._assemble_schemas(ds_names, DATASET_COLLECTION, "schemaName", not_locked_only)
+
+    def assemble_schemas_from_mt_names(self, mt_names: List[str], not_locked_only: bool) -> List[str]:
+        return self._assemble_schemas(mt_names, MAPPING_TABLE_COLLECTION, "schemaName", not_locked_only)
+
+    def _assemble_schemas(self, entity_names: List[str], collection_name: str,
+                          distinct_field: str, not_locked_only: bool) -> List[str]:
+        """ Common processing method for `assemble_schemas_from_ds_names` and `assemble_schemas_from_mt_names` """
+        # schema names from locked+notlocked (datasets/mts) (the schemas themselves may or may not be locked):
+        schema_names = self.get_distinct_entities_ids(entity_names, collection_name, distinct_field=distinct_field,
+                                                      not_locked_only=False)
+        # check schema collection which of these schemas are actually (not) locked:
+        return self.get_distinct_schema_names_from_schema_names(schema_names, not_locked_only)
+
+    def assemble_mapping_tables_from_mt_names(self, mt_names: List[str], not_locked_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(mt_names, MAPPING_TABLE_COLLECTION, not_locked_only)
+
+    def assemble_notlocked_mapping_tables_from_ds_names(self, ds_names: List[str]) -> List[str]:
+        # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
+        mt_names_from_ds_names = self.get_distinct_mapping_tables_from_ds_names(ds_names, not_locked_only=False)
+        # ids for not locked mapping tables
+        return self.get_distinct_entities_ids(mt_names_from_ds_names, MAPPING_TABLE_COLLECTION, not_locked_only=True)
+
+    def assemble_notlocked_attachments_from_schema_names(self, schema_names: List[str]) -> List[str]:
+        return self.get_distinct_entities_ids(schema_names, ATTACHMENT_COLLECTION, entity_name_field="refName",
+                                              distinct_field="refName", not_locked_only=True)
 
     @staticmethod
     def get_database(conn_str: str, db_name: str) -> Database:
