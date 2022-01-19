@@ -103,7 +103,6 @@ def create_collections_if_not_exist(db: Database, collection_names: List[str]):
 
 
 def initialize_collection_indices(db: Database, name: str, indices: List[dict]):
-    # db.create_collection(name) # may raise if exits, should not be needed? # todo test this
     col = db[name]
     if verbose:
         print(f"  BEFORE: index info: {col.index_information()}")
@@ -146,7 +145,7 @@ def run(parsed_args: argparse.Namespace):
         print(f"DB '{target_db_name}' does not seem as valid menas DB.")
         print(f"  {type(err).__name__}: {err}\n")
         if dryrun:
-            print("*** Dry run: no actual initialization performed.\n")  # todo sufficient?
+            print("*** Dry run: no actual initialization performed.\n")
         else:
             print(f"Initializing DB '{target_db_name}' for Menas...\n")
             initialize_menas_db(target_db)
@@ -165,4 +164,4 @@ if __name__ == '__main__':
     run(args)
 
     # example test-runs:
-    # TODO
+    # .\initialize_menas.py  mongodb://localhost:27017/admin -t mns2
