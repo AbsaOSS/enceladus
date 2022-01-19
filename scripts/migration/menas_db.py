@@ -70,33 +70,6 @@ class MenasDb(object):
         else:
             raise MenasDbVersionError(f"DB {self.mongodb.name}{self.hint} does not contain collection {DB_VERSION_COLLECTION}!")
 
-    def create_db_version(self, silent: bool = True) -> None:
-        """
-        Attempts to set collection #DB_VERSION_COLLECTION with a record having version=1
-        :param silent: prints information alongside
-        """
-        def sprint(string: str) -> None:
-            if not silent:
-                print(string)
-
-        collection = self.mongodb[DB_VERSION_COLLECTION]
-        version_record = collection.find_one()
-        if self.verbose:
-            sprint(f"  Version record retrieval attempt: {version_record}")
-
-        # either version=1 record exists, or create new
-        if version_record:
-            if version_record["version"] != 1:
-                # failing on incompatible version, because that may corrupt data
-                raise MenasDbVersionError(f"Existing incompatible version record has been found in"
-                                          f" {DB_VERSION_COLLECTION}{self.hint}: {version_record}")
-            else:
-                sprint("  Existing db_version version=1 record found.")
-        else:
-            insert_result = collection.insert_one({"version": 1})
-            sprint(f"  Created version=1 record with id {insert_result.inserted_id}")
-        sprint("")
-
     def check_menas_collections_exist(self) -> None:
         """
         Ensures given database contains expected collections to migrate (see #MIGRATING_COLLECTIONS).

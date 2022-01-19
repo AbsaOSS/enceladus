@@ -18,7 +18,7 @@ import argparse
 from pymongo.database import Database
 from typing import List
 
-from menas_db import MenasDb
+from menas_db import MenasDb, MenasDbVersionError
 from constants import *
 
 
@@ -46,7 +46,7 @@ def initialize_menas_db(menas_db: MenasDb) -> None:
 
     # create db_version record
     print("'db_version' initialization:")
-    menas_db.create_db_version(silent=False)
+    create_db_version(menas_db.mongodb)
 
     # create necessary collections
     create_collections_if_not_exist(menas_db.mongodb, MIGRATING_COLLECTIONS)
@@ -60,6 +60,30 @@ def initialize_menas_db(menas_db: MenasDb) -> None:
         else:
             print(f"Collection {collection} needs no index setup.")
         print("")
+
+
+def create_db_version(db: Database) -> None:
+    """
+    Attempts to set collection #DB_VERSION_COLLECTION with a record having version=1
+    """
+
+    collection = db[DB_VERSION_COLLECTION]
+    version_record = collection.find_one()
+    if verbose:
+        print(f"  Version record retrieval attempt: {version_record}")
+
+    # either version=1 record exists, or create new
+    if version_record:
+        if version_record["version"] != 1:
+            # failing on incompatible version, because that may corrupt data
+            raise MenasDbVersionError(f"Existing incompatible version record has been found in"
+                                      f" {DB_VERSION_COLLECTION}{self.hint}: {version_record}")
+        else:
+            print("  Existing db_version version=1 record found.")
+    else:
+        insert_result = collection.insert_one({"version": 1})
+        print(f"  Created version=1 record with id {insert_result.inserted_id}")
+    print("")
 
 
 def create_collections_if_not_exist(db: Database, collection_names: List[str]):
