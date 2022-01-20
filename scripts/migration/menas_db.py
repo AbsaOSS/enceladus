@@ -26,9 +26,18 @@ class MenasDbError(Exception):
     pass
 
 
+class MenasNoDbVersionRecordError(MenasDbError):
+    """Error meaning that there is no Menas db_version record (missing or empty collection)"""
+
+
 class MenasDbVersionError(MenasDbError):
-    """Error related to Menas db-version (set in collection db_version)"""
-    pass
+    """Error of Menas db-version record being present, but unsuitable (version!=1)"""
+
+    def __init__(self, message, found_version: int = None):
+        assert found_version != 1, "MenasDbVersionError cannot hold version=1, this would not result in an error"
+        self.found_version = found_version
+        self.message = message
+        super().__init__(self.message)
 
 
 class MenasDbCollectionError(MenasDbError):
@@ -61,14 +70,18 @@ class MenasDb(object):
             if self.verbose:
                 print(f"Version record retrieval attempt: {version_record}")
             if version_record:
-                if version_record["version"] != 1:
+                version_found = version_record.get("version", None)
+                if version_found is None:
                     raise MenasDbVersionError(f"This script requires {DB_VERSION_COLLECTION}{self.hint} record version=1, " +
-                                              f"but found: {version_record}")  # deliberately the whole record
-
+                                              f"but found record: {version_record}")  # deliberately the whole record
+                else:
+                    if version_found != 1:
+                        raise MenasDbVersionError(f"This script requires {DB_VERSION_COLLECTION}{self.hint} record version=1, " +
+                                                  f"but found version: {version_found}", found_version=version_found)
             else:
-                raise MenasDbVersionError(f"No version record found in {DB_VERSION_COLLECTION}{self.hint}!")
+                raise MenasNoDbVersionRecordError(f"No version record found in {DB_VERSION_COLLECTION}{self.hint}!")
         else:
-            raise MenasDbVersionError(f"DB {self.mongodb.name}{self.hint} does not contain collection {DB_VERSION_COLLECTION}!")
+            raise MenasNoDbVersionRecordError(f"DB {self.mongodb.name}{self.hint} does not contain collection {DB_VERSION_COLLECTION}!")
 
     def check_menas_collections_exist(self) -> None:
         """

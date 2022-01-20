@@ -18,7 +18,7 @@ import argparse
 from pymongo.database import Database
 from typing import List
 
-from menas_db import MenasDb, MenasDbVersionError
+from menas_db import MenasDb, MenasDbVersionError, MenasNoDbVersionRecordError
 from constants import *
 
 
@@ -43,13 +43,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def initialize_menas_db(menas_db: MenasDb) -> None:
-
-    # create db_version record
-    print("'db_version' initialization:")
-    create_db_version(menas_db.mongodb)
-
     # create necessary collections
-    create_collections_if_not_exist(menas_db.mongodb, MIGRATING_COLLECTIONS)
+    create_collections(menas_db.mongodb, MIGRATING_COLLECTIONS)
 
     # create necessary indices
     for collection in MIGRATING_COLLECTIONS:
@@ -60,6 +55,10 @@ def initialize_menas_db(menas_db: MenasDb) -> None:
         else:
             print(f"Collection {collection} needs no index setup.")
         print("")
+
+    # create db_version record - last as a sign of correctly initialized Menas DB
+    print("'db_version' initialization:")
+    create_db_version(menas_db.mongodb)
 
 
 def create_db_version(db: Database) -> None:
@@ -86,9 +85,11 @@ def create_db_version(db: Database) -> None:
     print("")
 
 
-def create_collections_if_not_exist(db: Database, collection_names: List[str]):
+def create_collections(db: Database, collection_names: List[str]):
     print("Initialization of migration-related collections")
     existing_collections = db.list_collection_names()
+    if len(existing_collections) != 0:
+        print(f"Warning, there are unexpected existing collections in the DB already: {existing_collections}")
     if verbose:
         print(f"  BEFORE: Aiming to create {collection_names}, found exising {existing_collections}.")
 
@@ -134,23 +135,32 @@ def run(parsed_args: argparse.Namespace):
     print('  target DB: {}'.format(target_db_name))
     print("")
 
-    from menas_db import MenasDbError, MenasDb
     target_db: MenasDb = MenasDb.from_connection_string(target, target_db_name, "target db", verbose)
 
     try:
         target_db.check_db_version()
-        target_db.check_menas_collections_exist()  # todo, check indexing, too?
-
-    except MenasDbError as err:
-        print(f"DB '{target_db_name}' does not seem as valid menas DB.")
-        print(f"  {type(err).__name__}: {err}\n")
+    except MenasNoDbVersionRecordError as version_record_err:  # empty (-like db)
+        print(f"DB '{target_db_name}' does not contain record version ({version_record_err})\n")
         if dryrun:
             print("*** Dry run: no actual initialization performed.\n")
         else:
             print(f"Initializing DB '{target_db_name}' for Menas...\n")
             initialize_menas_db(target_db)
+
+    except MenasDbVersionError as version_err:  # a record exists in collection
+        found_version = version_err.found_version
+        if found_version is None:
+            print(f"DB '{target_db_name}' contains version record, but it is invalid: {version_err}.\n")
+            exit(10)
+        else:
+            if found_version < 1:
+                print(f"DB '{target_db_name}' is too old (version={found_version}), run Menas to update it.")
+                exit(11)
+            else:
+                print(f"DB '{target_db_name}' is too new (version={found_version}), not supported by this script.")
+                exit(12)
     else:
-        print(f"Db '{target_db_name}' init check successful, no initialization needed.")
+        print(f"Db '{target_db_name}' db-version check successful, no initialization needed.")
 
     print("\nDone.")
 
