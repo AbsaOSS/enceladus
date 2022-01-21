@@ -44,10 +44,10 @@ def parse_args() -> argparse.Namespace:
 
 def initialize_menas_db(menas_db: MenasDb) -> None:
     # create necessary collections
-    create_collections(menas_db.mongodb, MIGRATING_COLLECTIONS)
+    create_collections(menas_db.mongodb, ALL_COLLECTIONS)
 
     # create necessary indices
-    for collection in MIGRATING_COLLECTIONS:
+    for collection in ALL_COLLECTIONS:
         indices = INDICES.get(collection, None)  # returns None if key is not found
         if indices:
             print(f"Initialization indices ({len(indices)}) on Menas collection '{collection}':")
@@ -115,9 +115,17 @@ def initialize_collection_indices(db: Database, name: str, indices: List[dict]):
     # existing indices = no-op
     for desired_index in indices:
         key = desired_index[INDICES_FIELD_KEY]
-        unique = desired_index[INDICES_FIELD_UNIQUE]
-        print(f"  creating index for key {key}, unique={unique}")
-        col.create_index(key, unique=unique)
+        unique = desired_index.get(INDICES_FIELD_UNIQUE, None)
+        sparse = desired_index.get(INDICES_FIELD_SPARSE, None)
+
+        kwargs = {}
+        if unique is not None:
+            kwargs[INDICES_FIELD_UNIQUE] = unique
+        if sparse is not None:
+            kwargs[INDICES_FIELD_SPARSE] = sparse
+
+        print(f"  creating index for key {key}, unique={unique}, sparse = {sparse}")
+        col.create_index(key, **kwargs)
 
     if verbose:
         print(f"  AFTER: index info: {col.index_information()}")

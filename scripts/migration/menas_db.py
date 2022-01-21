@@ -95,7 +95,8 @@ class MenasDb(object):
                     raise MenasDbCollectionError(f"Collection '{collection_name}' not found in database "
                                                  f"'{self.mongodb.name}'{self.hint}.")
 
-        return ensure_collections_exist(MIGRATING_COLLECTIONS)
+        # deliberately only checking migrating collections, not all (landing_page_statistics may not be present)
+        return ensure_collections_exist(DATA_MIGRATING_COLLECTIONS)
 
     def get_distinct_ds_names_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
         return self.get_distinct_entities_ids(ds_names, DATASET_COLLECTION, not_locked_only)
