@@ -159,6 +159,7 @@ def run(parsed_args: argparse.Namespace):
             print(f"DB '{target_db_name}' contains version record, but it is invalid: {version_err}.\n")
             exit(10)
         else:
+            assert found_version != 1  # this would not be a valid MenasDbVersionError
             if found_version < 1:
                 print(f"DB '{target_db_name}' is too old (version={found_version}), run Menas to update it.")
                 exit(11)
