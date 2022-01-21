@@ -18,7 +18,7 @@ import argparse
 from pymongo.database import Database
 from typing import List
 
-from menas_db import MenasDb, MenasDbVersionError, MenasNoDbVersionRecordError
+from menas_db import MenasDb, MenasDbVersionError, MenasNoDbVersionRecordError, MenasDbCollectionError
 from constants import *
 
 
@@ -63,40 +63,38 @@ def initialize_menas_db(menas_db: MenasDb) -> None:
 
 def create_db_version(db: Database) -> None:
     """
-    Attempts to set collection #DB_VERSION_COLLECTION with a record having version=1
+    Adds db-record having version=1 into collection #DB_VERSION_COLLECTION
+    throws assertion error if there already exits a version record
     """
 
     collection = db[DB_VERSION_COLLECTION]
     version_record = collection.find_one()
-    if verbose:
-        print(f"  Version record retrieval attempt: {version_record}")
+    assert version_record is None, \
+        "Precondition failed: MenasDb.create_db_version may only be run if the there is no db-record"
 
-    # either version=1 record exists, or create new
-    if version_record:
-        if version_record["version"] != 1:
-            # failing on incompatible version, because that may corrupt data
-            raise MenasDbVersionError(f"Existing incompatible version record has been found in"
-                                      f" {DB_VERSION_COLLECTION}{self.hint}: {version_record}")
-        else:
-            print("  Existing db_version version=1 record found.")
-    else:
-        insert_result = collection.insert_one({"version": 1})
-        print(f"  Created version=1 record with id {insert_result.inserted_id}")
-    print("")
+    insert_result = collection.insert_one({"version": 1})
+    print(f"  Created version=1 record with id {insert_result.inserted_id}")
 
 
 def create_collections(db: Database, collection_names: List[str]):
     print("Initialization of migration-related collections")
     existing_collections = db.list_collection_names()
-    if len(existing_collections) != 0:
-        print(f"Warning, there are unexpected existing collections in the DB already: {existing_collections}")
-    if verbose:
-        print(f"  BEFORE: Aiming to create {collection_names}, found exising {existing_collections}.")
+    existing_menas_collections = db.list_collection_names(filter={
+        "name": {"$in": ALL_COLLECTIONS}
+    })
 
-    left_to_create = list(filter(lambda col_name: not(col_name in existing_collections), collection_names))
-    print(f"  Creating missing collections {left_to_create} ...")
-    for missing_col in left_to_create:
-        db.create_collection(missing_col)
+    if len(existing_menas_collections) != 0:
+        raise MenasDbCollectionError("Failed to safely initialize Menas collections. The init script found existing "
+                                     f"menas collections in the uninitialized DB: {existing_menas_collections}")
+    if len(existing_collections) != 0:
+        print(f"  Warning, there are (non-conflicting) collections in the DB already: {existing_collections}")
+
+    if verbose:
+        print(f"  BEFORE: Aiming to create {collection_names}, found already exising {existing_collections}.")
+
+    print(f"  Creating collections {collection_names} ...")
+    for col_name in collection_names:
+        db.create_collection(col_name)
 
     if verbose:
         print(f"  AFTER: existing collections: {db.list_collection_names()}")

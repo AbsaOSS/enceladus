@@ -69,7 +69,7 @@ class MenasDb(object):
             version_record = collection.find_one()
             if self.verbose:
                 print(f"Version record retrieval attempt: {version_record}")
-            if version_record:
+            if version_record is not None:
                 version_found = version_record.get("version", None)
                 if version_found is None:
                     raise MenasDbVersionError(f"This script requires {DB_VERSION_COLLECTION}{self.hint} record version=1, " +
