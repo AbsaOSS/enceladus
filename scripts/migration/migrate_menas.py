@@ -232,6 +232,9 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
     migration_free_attachment_names = source_db.assemble_migration_free_attachments_from_schema_names(schemas_names_for_attachments)
     print('Attachments of schemas to migrate: {}'.format(migration_free_attachment_names))
 
+    migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_ds_names(ds_names)
+    print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
+
     if not dryrun:
         print("")
         migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_migration_free_schemas, describe_default_entity, entity_name="schema", locking=True)
@@ -241,6 +244,8 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
         migrate_entities(source_db, target_db, RUN_COLLECTION, run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
         migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names,
                          describe_attachment_entity, entity_name="attachment", name_field="refName")
+        migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
+                         describe_default_entity, entity_name="property definition", locking=True)
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
