@@ -109,12 +109,6 @@ var Formatters = new function() {
     calendarType: sap.ui.core.CalendarType.Gregorian
   });
 
-  this.infoDateToString = function (oDate) {
-    if (!oDate)
-      return "";
-    return this.infoDateFormat.format(oDate)
-  };
-
   this.toStringInfoDate = function(oDate) {
     return this.infoDateFormat.format(oDate);
   };
