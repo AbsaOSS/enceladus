@@ -98,37 +98,37 @@ class MenasDb(object):
         # deliberately only checking migrating collections, not all (landing_page_statistics may not be present)
         return ensure_collections_exist(DATA_MIGRATING_COLLECTIONS)
 
-    def get_distinct_ds_names_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
-        return self.get_distinct_entities_ids(ds_names, DATASET_COLLECTION, not_locked_only)
+    def get_distinct_ds_names_from_ds_names(self, ds_names: List[str], migration_free_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(ds_names, DATASET_COLLECTION, migration_free_only)
 
     def get_distinct_schema_names_from_schema_names(self, schema_names: List[str],
-                                                    not_locked_only: bool) -> List[str]:
-        return self.get_distinct_entities_ids(schema_names, SCHEMA_COLLECTION, not_locked_only)
+                                                    migration_free_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(schema_names, SCHEMA_COLLECTION, migration_free_only)
 
-    def get_distinct_entities_ids(self, entity_names: List[str], collection_name: str, not_locked_only: bool,
+    def get_distinct_entities_ids(self, entity_names: List[str], collection_name: str, migration_free_only: bool,
                                   entity_name_field: str = "name", distinct_field: object = "name") -> List[str]:
-        """ General way to retrieve distinct entity field values (names, ids, ...) from non-locked entities """
+        """ General way to retrieve distinct entity field values (names, ids, ...) entities (optionally migration-free) """
         collection = self.mongodb[collection_name]
-        locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
+        migrating_filter = MIGRATIONFREE_MONGO_FILTER if migration_free_only else EMPTY_MONGO_FILTER
 
         entities = collection.distinct(
             distinct_field,  # field to distinct on
             {"$and": [
                 {entity_name_field: {"$in": entity_names}},  # filter on name (ds/mt)
-                locked_filter
+                migrating_filter
             ]}
         )
         return entities  # list of distinct names (in a single document)
 
-    def get_distinct_mapping_tables_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
+    def get_distinct_mapping_tables_from_ds_names(self, ds_names: List[str], migration_free_only: bool) -> List[str]:
         ds_collection = self.mongodb[DATASET_COLLECTION]
-        locked_filter = NOT_LOCKED_MONGO_FILTER if not_locked_only else EMPTY_MONGO_FILTER
+        migrating_filter = MIGRATIONFREE_MONGO_FILTER if migration_free_only else EMPTY_MONGO_FILTER
 
         mapping_table_names = ds_collection.aggregate([
             {"$match": {"$and": [  # selection based on:
                 {"name": {"$in": ds_names}},  # dataset name
                 {"conformance": {"$elemMatch": {"_t": "MappingConformanceRule"}}},  # having some MCRs
-                locked_filter
+                migrating_filter
             ]}},
             {"$unwind": "$conformance"},  # explodes each doc into multiple - each having single conformance rule
             {"$match": {"conformance._t": "MappingConformanceRule"}},  # filtering only MCRs, other CR are irrelevant
@@ -146,37 +146,37 @@ class MenasDb(object):
         extracted_list = mapping_table_names_list[0]['mts']
         return extracted_list
 
-    def assemble_notlocked_runs_from_ds_names(self, ds_names: List[str]) -> List[str]:
+    def assemble_migration_free_runs_from_ds_names(self, ds_names: List[str]) -> List[str]:
         return self.get_distinct_entities_ids(ds_names, RUN_COLLECTION, entity_name_field="dataset",
-                                              distinct_field="uniqueId", not_locked_only=True)
+                                              distinct_field="uniqueId", migration_free_only=True)
 
-    def assemble_schemas_from_ds_names(self, ds_names: List[str], not_locked_only: bool) -> List[str]:
-        return self._assemble_schemas(ds_names, DATASET_COLLECTION, "schemaName", not_locked_only)
+    def assemble_schemas_from_ds_names(self, ds_names: List[str], migration_free_only: bool) -> List[str]:
+        return self._assemble_schemas(ds_names, DATASET_COLLECTION, "schemaName", migration_free_only)
 
-    def assemble_schemas_from_mt_names(self, mt_names: List[str], not_locked_only: bool) -> List[str]:
-        return self._assemble_schemas(mt_names, MAPPING_TABLE_COLLECTION, "schemaName", not_locked_only)
+    def assemble_schemas_from_mt_names(self, mt_names: List[str], migration_free_only: bool) -> List[str]:
+        return self._assemble_schemas(mt_names, MAPPING_TABLE_COLLECTION, "schemaName", migration_free_only)
 
     def _assemble_schemas(self, entity_names: List[str], collection_name: str,
-                          distinct_field: str, not_locked_only: bool) -> List[str]:
+                          distinct_field: str, migration_free_only: bool) -> List[str]:
         """ Common processing method for `assemble_schemas_from_ds_names` and `assemble_schemas_from_mt_names` """
-        # schema names from locked+notlocked (datasets/mts) (the schemas themselves may or may not be locked):
+        # schema names from migration-bearing + migration-free (datasets/mts) (the schemas themselves may or may not be migrated):
         schema_names = self.get_distinct_entities_ids(entity_names, collection_name, distinct_field=distinct_field,
-                                                      not_locked_only=False)
-        # check schema collection which of these schemas are actually (not) locked:
-        return self.get_distinct_schema_names_from_schema_names(schema_names, not_locked_only)
+                                                      migration_free_only=False)
+        # check schema collection which of these schemas are actually migration-free:
+        return self.get_distinct_schema_names_from_schema_names(schema_names, migration_free_only)
 
-    def assemble_mapping_tables_from_mt_names(self, mt_names: List[str], not_locked_only: bool) -> List[str]:
-        return self.get_distinct_entities_ids(mt_names, MAPPING_TABLE_COLLECTION, not_locked_only)
+    def assemble_mapping_tables_from_mt_names(self, mt_names: List[str], migration_free_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(mt_names, MAPPING_TABLE_COLLECTION, migration_free_only)
 
-    def assemble_notlocked_mapping_tables_from_ds_names(self, ds_names: List[str]) -> List[str]:
-        # mt names from locked+notlocked datasets (the mts themselves may or may not be locked)
-        mt_names_from_ds_names = self.get_distinct_mapping_tables_from_ds_names(ds_names, not_locked_only=False)
-        # ids for not locked mapping tables
-        return self.get_distinct_entities_ids(mt_names_from_ds_names, MAPPING_TABLE_COLLECTION, not_locked_only=True)
+    def assemble_migration_free_mapping_tables_from_ds_names(self, ds_names: List[str]) -> List[str]:
+        # mt names from migration-bearing + migration-free datasets (the mts themselves may or may not be migration-bearing)
+        mt_names_from_ds_names = self.get_distinct_mapping_tables_from_ds_names(ds_names, migration_free_only=False)
+        # ids for migration-free mapping tables
+        return self.get_distinct_entities_ids(mt_names_from_ds_names, MAPPING_TABLE_COLLECTION, migration_free_only=True)
 
-    def assemble_notlocked_attachments_from_schema_names(self, schema_names: List[str]) -> List[str]:
+    def assemble_migration_free_attachments_from_schema_names(self, schema_names: List[str]) -> List[str]:
         return self.get_distinct_entities_ids(schema_names, ATTACHMENT_COLLECTION, entity_name_field="refName",
-                                              distinct_field="refName", not_locked_only=True)
+                                              distinct_field="refName", migration_free_only=True)
 
     @staticmethod
     def get_database(conn_str: str, db_name: str) -> Database:

@@ -56,7 +56,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _get_date_locked_structure(dt: datetime) -> dict:
+def _date_locked_structure(dt: datetime) -> dict:
     return {
         "dateTime": {
             "date": {"year": dt.year, "month": dt.month, "day": dt.day},
@@ -68,7 +68,7 @@ def _get_date_locked_structure(dt: datetime) -> dict:
 
 
 def migrate_entities(source_db: MenasDb, target_db: MenasDb, collection_name: str, entity_names_list: List[str],
-                     describe_fn, entity_name: str = "entity", name_field: str = "name") -> None:
+                     describe_fn, entity_name: str = "entity", name_field: str = "name", locking: bool = False) -> None:
     if not entity_names_list:
         print("No {}s to migrate in {}, skipping.".format(entity_name, collection_name))
         return
@@ -76,39 +76,40 @@ def migrate_entities(source_db: MenasDb, target_db: MenasDb, collection_name: st
     print("Migration of collection {} started".format(collection_name))
     dataset_collection = source_db.mongodb[collection_name]
 
-    # mark as locked first in source
-    locking_update_result = dataset_collection.update_many(
+    # mark as migration-bearing first in source
+    migrating_update_result = dataset_collection.update_many(
         {"$and": [
             {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
-            NOT_LOCKED_MONGO_FILTER
+            MIGRATIONFREE_MONGO_FILTER
         ]},
         {"$set": {
             "migrationHash": migration_hash,  # script-global var
             "locked": True,
             "userLocked": LOCKING_USER,
-            "dateLocked": _get_date_locked_structure(utc_now)  # script-global var
+            "dateLocked": _date_locked_structure(utc_now)  # script-global var
+        } if locking else {
+            "migrationHash": migration_hash
         }}
     )
 
-    locked_count = locking_update_result.modified_count
-    if locking_update_result.acknowledged:
+    migrating_count = migrating_update_result.modified_count
+    if migrating_update_result.acknowledged:
         if verbose:
-            print("Successfully locked {}s: {}. Migrating ... ".format(entity_name, locked_count))
+            print("Successfully marked {}s for migration: {}. Migrating ... ".format(entity_name, migrating_count))
     else:
-        raise Exception("Locking unsuccessful: {}, matched={}, modified={}"
-                        .format(locking_update_result.acknowledged, locking_update_result.matched_count, locking_update_result.modified_count))
+        raise Exception("Migration marking unsuccessful: {}, matched={}, modified={}"
+                        .format(migrating_update_result.acknowledged, migrating_update_result.matched_count, migrating_update_result.modified_count))
 
-    # This relies on the locking-update being complete on mongo-cluster, thus using majority r/w concerns.
+    # This relies on the migrating-update being complete on mongo-cluster, thus using majority r/w concerns.
     # https://docs.mongodb.com/manual/core/causal-consistency-read-write-concerns/#std-label-causal-rc-majority-wc-majority
     docs = dataset_collection.find(
         {"$and": [
             {name_field: {"$in": entity_names_list}},  # dataset name
-            {"migrationHash": migration_hash},  # belongs to this migration # script-global var
-            {"locked": True}  # is successfully locked (previous step)
+            {"migrationHash": migration_hash}  # belongs to this migration # script-global var
         ]}
     )
 
-    # migrate locked entities from source to target
+    # migrate migration-marked entities from source to target
     target_dataset_collection = target_db.mongodb[collection_name]
     migrated_count = 0
     dupe_kvs = []  # keeping the dupe-ids here
@@ -117,10 +118,11 @@ def migrate_entities(source_db: MenasDb, target_db: MenasDb, collection_name: st
         if verbose:
             print("Migrating {}: {}.".format(entity_name, describe_fn(item)))
 
-        # the original is locked (+ has user/datetime info) + migration #, target carries has migration #.
-        del item["locked"]
-        del item["userLocked"]
-        del item["dateLocked"]
+        # the original may be locked (+ has user/datetime info) + migration #, target carries has migration #.
+        if locking:
+            del item["locked"]
+            del item["userLocked"]
+            del item["dateLocked"]
 
         try:
             target_dataset_collection.insert_one(item)
@@ -133,30 +135,29 @@ def migrate_entities(source_db: MenasDb, target_db: MenasDb, collection_name: st
 
     dupe_count = len(dupe_kvs)
     # mark migrated/existing duplicates as migrated or report problems
-    if locked_count == migrated_count + dupe_count:
+    if migrating_count == migrated_count + dupe_count:
         migration_tagging_update_result = dataset_collection.update_many(
             {"$and": [
                 {name_field: {"$in": entity_names_list}},  # dataset/schema/mt name or run uniqueId
-                {"migrationHash": migration_hash},  # script-global var
-                {"locked": True}
+                {"migrationHash": migration_hash}  # script-global var
             ]},
             {"$set": {
                 "migrated": True
             }}
         )
         migration_tagging_count = migration_tagging_update_result.modified_count
-        if migration_tagging_update_result.acknowledged and migration_tagging_count == locked_count:
+        if migration_tagging_update_result.acknowledged and migration_tagging_count == migrating_count:
             if verbose:
                 print("Successfully marked {}s as migrated: {}. ".format(entity_name, migration_tagging_count))
         else:
             raise Exception("Migration tagging unsuccessful: {}, matched={}, modified={}"
                             .format(migration_tagging_update_result.acknowledged,
                                     migration_tagging_update_result.matched_count,
-                                    locking_update_result.modified_count))
+                                    migrating_update_result.modified_count))
 
     else:
-        raise Exception("Locked {} {}s, but managed to migrate only {} of them (dupe skipped: {})!"
-                        .format(locked_count, entity_name, migrated_count, dupe_count))
+        raise Exception("Migration-marked {} {}s, but managed to migrate only {} of them (dupe skipped: {})!"
+                        .format(migrating_count, entity_name, migrated_count, dupe_count))
 
     if dupe_count == 0:
         print("Migration of collection {} finished, migrated {} {}s.\n"
@@ -202,43 +203,43 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
     if verbose:
         print("Dataset names given: {}".format(supplied_ds_names))
 
-    ds_names = source_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, not_locked_only=False)
-    notlocked_ds_names = source_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, not_locked_only=True)
-    print('Dataset names to migrate: {}'.format(notlocked_ds_names))
+    ds_names = source_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, migration_free_only=False)
+    migration_free_ds_names = source_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, migration_free_only=True)
+    print('Dataset names to migrate: {}'.format(migration_free_ds_names))
 
-    ds_schema_names = source_db.assemble_schemas_from_ds_names(ds_names, not_locked_only=False)
-    notlocked_ds_schema_names = source_db.assemble_schemas_from_ds_names(ds_names, not_locked_only=True)
-    print('DS schemas to migrate: {}'.format(notlocked_ds_schema_names))
+    ds_schema_names = source_db.assemble_schemas_from_ds_names(ds_names, migration_free_only=False)
+    migration_free_ds_schema_names = source_db.assemble_schemas_from_ds_names(ds_names, migration_free_only=True)
+    print('DS schemas to migrate: {}'.format(migration_free_ds_schema_names))
 
-    notlocked_mapping_table_names = source_db.assemble_notlocked_mapping_tables_from_ds_names(ds_names)
-    mapping_table_names = source_db.get_distinct_mapping_tables_from_ds_names(ds_names, not_locked_only=False)
-    print('MTs to migrate: {}'.format(notlocked_mapping_table_names))
+    migration_free_mapping_table_names = source_db.assemble_migration_free_mapping_tables_from_ds_names(ds_names)
+    mapping_table_names = source_db.get_distinct_mapping_tables_from_ds_names(ds_names, migration_free_only=False)
+    print('MTs to migrate: {}'.format(migration_free_mapping_table_names))
 
-    mt_schema_names = source_db.assemble_schemas_from_mt_names(mapping_table_names, not_locked_only=False)
-    # final MT schemas must be retrieved from locked MTs, too, not just notlocked_mapping_table_names
-    notlocked_mt_schema_names = source_db.assemble_schemas_from_mt_names(mapping_table_names, not_locked_only=True)
-    print('MT schemas to migrate: {}'.format(notlocked_mt_schema_names))
+    mt_schema_names = source_db.assemble_schemas_from_mt_names(mapping_table_names, migration_free_only=False)
+    # final MT schemas must be retrieved from migration-bearing MTs, too, not just migration_free_mapping_table_names
+    migration_free_mt_schema_names = source_db.assemble_schemas_from_mt_names(mapping_table_names, migration_free_only=True)
+    print('MT schemas to migrate: {}'.format(migration_free_mt_schema_names))
 
-    run_unique_ids = source_db.assemble_notlocked_runs_from_ds_names(ds_names)
+    run_unique_ids = source_db.assemble_migration_free_runs_from_ds_names(ds_names)
     print('Runs to migrate: {}'.format(run_unique_ids))
 
-    all_notlocked_schemas = list(set.union(set(notlocked_ds_schema_names), set(notlocked_mt_schema_names)))
+    all_migration_free_schemas = list(set.union(set(migration_free_ds_schema_names), set(migration_free_mt_schema_names)))
     if verbose:
-        print('All schemas (DS & MT) to migrate: {}'.format(all_notlocked_schemas))
+        print('All schemas (DS & MT) to migrate: {}'.format(all_migration_free_schemas))
 
-    # attachments from locked schemas, too:
-    schemas_names_for_attachments = list(set.union(set(ds_schema_names), set(mt_schema_names)))  # locked+unlocked
-    notlocked_attachment_names = source_db.assemble_notlocked_attachments_from_schema_names(schemas_names_for_attachments)
-    print('Attachments of schemas to migrate: {}'.format(notlocked_attachment_names))
+    # attachments from migration-bearing schemas, too:
+    schemas_names_for_attachments = list(set.union(set(ds_schema_names), set(mt_schema_names)))  # migration-free & migration-bearing
+    migration_free_attachment_names = source_db.assemble_migration_free_attachments_from_schema_names(schemas_names_for_attachments)
+    print('Attachments of schemas to migrate: {}'.format(migration_free_attachment_names))
 
     if not dryrun:
         print("")
-        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_notlocked_schemas, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, DATASET_COLLECTION, notlocked_ds_names, describe_default_entity, entity_name="dataset")
-        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
-                         describe_default_entity, entity_name="mapping table")
+        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_migration_free_schemas, describe_default_entity, entity_name="schema", locking=True)
+        migrate_entities(source_db, target_db, DATASET_COLLECTION, migration_free_ds_names, describe_default_entity, entity_name="dataset", locking=True)
+        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, migration_free_mapping_table_names,
+                         describe_default_entity, entity_name="mapping table", locking=True)
         migrate_entities(source_db, target_db, RUN_COLLECTION, run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
-        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, notlocked_attachment_names,
+        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names,
                          describe_attachment_entity, entity_name="attachment", name_field="refName")
     else:
         print("*** Dryrun selected, no actual migration will take place.")
@@ -250,22 +251,22 @@ def migrate_collections_by_mt_names(source_db: MenasDb, target_db: MenasDb,
     if verbose:
         print("MT names given: {}".format(supplied_mt_names))
 
-    notlocked_mapping_table_names = source_db.assemble_mapping_tables_from_mt_names(supplied_mt_names, not_locked_only=True)
-    print('MTs to migrate: {}'.format(notlocked_mapping_table_names))
+    migration_free_mapping_table_names = source_db.assemble_mapping_tables_from_mt_names(supplied_mt_names, migration_free_only=True)
+    print('MTs to migrate: {}'.format(migration_free_mapping_table_names))
 
-    notlocked_mt_schema_names = source_db.assemble_schemas_from_mt_names(supplied_mt_names, not_locked_only=True)
-    print('MT schemas to migrate: {}'.format(notlocked_mt_schema_names))
+    migration_free_mt_schema_names = source_db.assemble_schemas_from_mt_names(supplied_mt_names, migration_free_only=True)
+    print('MT schemas to migrate: {}'.format(migration_free_mt_schema_names))
 
-    mt_schema_names = source_db.assemble_schemas_from_mt_names(supplied_mt_names, not_locked_only=False)
-    notlocked_attachment_names = source_db.assemble_notlocked_attachments_from_schema_names(mt_schema_names)
-    print('Attachments of schemas to migrate: {}'.format(notlocked_attachment_names))
+    mt_schema_names = source_db.assemble_schemas_from_mt_names(supplied_mt_names, migration_free_only=False)
+    migration_free_attachment_names = source_db.assemble_migration_free_attachments_from_schema_names(mt_schema_names)
+    print('Attachments of schemas to migrate: {}'.format(migration_free_attachment_names))
 
     if not dryrun:
         print("")
-        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, notlocked_mt_schema_names, describe_default_entity, entity_name="schema")
-        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, notlocked_mapping_table_names,
-                         describe_default_entity, entity_name="mapping table")
-        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, notlocked_attachment_names, describe_attachment_entity,
+        migrate_entities(source_db, target_db, SCHEMA_COLLECTION, migration_free_mt_schema_names, describe_default_entity, entity_name="schema", locking=True)
+        migrate_entities(source_db, target_db, MAPPING_TABLE_COLLECTION, migration_free_mapping_table_names,
+                         describe_default_entity, entity_name="mapping table", locking=True)
+        migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names, describe_attachment_entity,
                          entity_name="attachment", name_field="refName")
     else:
         print("*** Dryrun selected, no actual migration will take place.")

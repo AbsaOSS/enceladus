@@ -23,10 +23,7 @@ DEFAULT_DB_NAME = "menas"  # both for source and target dbs
 # Other constants
 LOCKING_USER = "migration"
 
-NOT_LOCKED_MONGO_FILTER = {"$or": [
-    {"locked": False},  # is not locked, or
-    {"locked": {"$exists": False}}  # or: there is no locking info at all
-]}
+MIGRATIONFREE_MONGO_FILTER = {"migrationHash": {"$exists": False}}
 EMPTY_MONGO_FILTER = {}
 
 SCHEMA_COLLECTION = "schema_v1"
