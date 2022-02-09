@@ -49,9 +49,11 @@ def parse_args() -> argparse.Namespace:
 
     input_options_group = parser.add_mutually_exclusive_group(required=True)
     input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
+                                     nargs="+", help='list datasets names to migrate')
     input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
+                                     nargs="+", help='list mapping tables names to migrate')
+    input_options_group.add_argument('-p', '--property-definitions', dest="propdefs", metavar="PROP_NAME", default=[],
+                                     nargs="+", help='list property definition names to migrate (use * for all)')
 
     return parser.parse_args()
 
@@ -232,8 +234,9 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
     migration_free_attachment_names = source_db.assemble_migration_free_attachments_from_schema_names(schemas_names_for_attachments)
     print('Attachments of schemas to migrate: {}'.format(migration_free_attachment_names))
 
-    migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_ds_names(ds_names)
-    print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
+    # TODO make configurable
+    # migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_ds_names(ds_names)
+    # print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
 
     if not dryrun:
         print("")
@@ -244,8 +247,10 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
         migrate_entities(source_db, target_db, RUN_COLLECTION, run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
         migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names,
                          describe_attachment_entity, entity_name="attachment", name_field="refName")
-        migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
-                         describe_default_entity, entity_name="property definition", locking=True)
+
+        # todo reenable when decision is clear
+        # migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
+        #                  describe_default_entity, entity_name="property definition", locking=True)
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
@@ -273,6 +278,27 @@ def migrate_collections_by_mt_names(source_db: MenasDb, target_db: MenasDb,
                          describe_default_entity, entity_name="mapping table", locking=True)
         migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names, describe_attachment_entity,
                          entity_name="attachment", name_field="refName")
+    else:
+        print("*** Dryrun selected, no actual migration will take place.")
+
+
+def migrate_propdefs_by_propdef_names(source_db: MenasDb, target_db: MenasDb, supplied_propdef_names: List[str],
+                                      dryrun: bool):
+    if verbose:
+        print("Property definition names given: {}".format(supplied_propdef_names))
+
+    if supplied_propdef_names == ["*"]:
+        migration_free_propdef_names = source_db.assemble_all_migration_free_propdefs()
+        print('All property definitions to migrate ("*"): {}'.format(migration_free_propdef_names))
+    else:
+        migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_prop_names(supplied_propdef_names)
+        print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
+
+    if not dryrun:
+        print("")
+        migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
+                     describe_default_entity, entity_name="property definition", locking=True)
+
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
@@ -307,15 +333,20 @@ def run(parsed_args: argparse.Namespace):
 
     dataset_names = parsed_args.datasets
     mt_names = parsed_args.mtables
+    propdef_names = parsed_args.propdefs
     if dataset_names:
         print('Dataset names supplied: {}'.format(dataset_names))
         migrate_collections_by_ds_names(source_db, target_db, dataset_names, dryrun=dryrun)
     elif mt_names:
         print('Mapping table names supplied: {}'.format(mt_names))
         migrate_collections_by_mt_names(source_db, target_db, mt_names, dryrun=dryrun)
+    elif propdef_names:
+        print('Property definition names supplied: {}'.format(propdef_names))
+        migrate_propdefs_by_propdef_names(source_db, target_db, propdef_names, dryrun=dryrun)
     else:
         # should not happen (-d/-m is exclusive and required)
-        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
+        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...)..,  MT names (-m mt1 mt2 ... ), "
+                        "or prop defs (-p prop1 prop2 ...) must be given.")
 
     print("Done.")
 
