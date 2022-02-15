@@ -213,16 +213,11 @@ class MenasDb(object):
         return self.get_distinct_entities_ids(schema_names, ATTACHMENT_COLLECTION, entity_name_field="refName",
                                               distinct_field="refName", migration_free_only=True)
 
-    def assemble_migration_free_propdefs_from_ds_names(self, ds_names: List[str]) -> List[str]:
-        prop_names = self.get_property_names_from_ds_names(ds_names)
-        # migration-free prop names
-        return self.get_distinct_entities_ids(prop_names, PROPERTY_DEF_COLLECTION, migration_free_only=True)
-
     def assemble_migration_free_propdefs_from_prop_names(self, prop_names: List[str]) -> List[str]:
         return self.get_distinct_entities_ids(prop_names, PROPERTY_DEF_COLLECTION, migration_free_only=True)
 
-    def assemble_all_migration_free_propdefs(self) -> List[str]:
-        return self.get_all_distinct_entities_ids(PROPERTY_DEF_COLLECTION, migration_free_only=True)
+    def assemble_all_propdefs(self, migration_free_only=True) -> List[str]:
+        return self.get_all_distinct_entities_ids(PROPERTY_DEF_COLLECTION, migration_free_only=migration_free_only)
 
     @staticmethod
     def get_database(conn_str: str, db_name: str) -> Database:

@@ -21,7 +21,7 @@ from typing import List
 from datetime import datetime, timezone
 
 from constants import *
-from menas_db import MenasDb
+from menas_db import MenasDb, MenasDbCollectionError
 
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
 # pip install -r requirements.txt
@@ -234,10 +234,6 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
     migration_free_attachment_names = source_db.assemble_migration_free_attachments_from_schema_names(schemas_names_for_attachments)
     print('Attachments of schemas to migrate: {}'.format(migration_free_attachment_names))
 
-    # TODO make configurable
-    # migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_ds_names(ds_names)
-    # print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
-
     if not dryrun:
         print("")
         migrate_entities(source_db, target_db, SCHEMA_COLLECTION, all_migration_free_schemas, describe_default_entity, entity_name="schema", locking=True)
@@ -247,10 +243,6 @@ def migrate_collections_by_ds_names(source_db: MenasDb, target_db: MenasDb,
         migrate_entities(source_db, target_db, RUN_COLLECTION, run_unique_ids, describe_run_entity, entity_name="run", name_field="uniqueId")
         migrate_entities(source_db, target_db, ATTACHMENT_COLLECTION, migration_free_attachment_names,
                          describe_attachment_entity, entity_name="attachment", name_field="refName")
-
-        # todo reenable when decision is clear
-        # migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
-        #                  describe_default_entity, entity_name="property definition", locking=True)
     else:
         print("*** Dryrun selected, no actual migration will take place.")
 
@@ -283,12 +275,12 @@ def migrate_collections_by_mt_names(source_db: MenasDb, target_db: MenasDb,
 
 
 def migrate_propdefs_by_propdef_names(source_db: MenasDb, target_db: MenasDb, supplied_propdef_names: List[str],
-                                      dryrun: bool):
+                                      dryrun: bool) -> None:
     if verbose:
         print("Property definition names given: {}".format(supplied_propdef_names))
 
     if supplied_propdef_names == ["*"]:
-        migration_free_propdef_names = source_db.assemble_all_migration_free_propdefs()
+        migration_free_propdef_names = source_db.assemble_all_propdefs()
         print('All property definitions to migrate ("*"): {}'.format(migration_free_propdef_names))
     else:
         migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_prop_names(supplied_propdef_names)
@@ -301,6 +293,17 @@ def migrate_propdefs_by_propdef_names(source_db: MenasDb, target_db: MenasDb, su
 
     else:
         print("*** Dryrun selected, no actual migration will take place.")
+
+
+def check_compatible_property_definitions(source_db: MenasDb, target_db: MenasDb) -> None:
+    source_propdefs = source_db.assemble_all_propdefs(migration_free_only=False)
+    target_propdefs = target_db.assemble_all_propdefs(migration_free_only=False)
+
+    diff = set(source_propdefs).difference(set(target_propdefs))
+    if len(diff) != 0:
+        raise MenasDbCollectionError(f"Property definitions missing on target: {diff},"
+                                     " cannot continue dataset migration! "
+                                     "Migrate property definitions first (-p * or -p PDname1 PDname2 ...)")
 
 
 def run(parsed_args: argparse.Namespace):
@@ -335,6 +338,8 @@ def run(parsed_args: argparse.Namespace):
     mt_names = parsed_args.mtables
     propdef_names = parsed_args.propdefs
     if dataset_names:
+        check_compatible_property_definitions(source_db, target_db)
+
         print('Dataset names supplied: {}'.format(dataset_names))
         migrate_collections_by_ds_names(source_db, target_db, dataset_names, dryrun=dryrun)
     elif mt_names:
