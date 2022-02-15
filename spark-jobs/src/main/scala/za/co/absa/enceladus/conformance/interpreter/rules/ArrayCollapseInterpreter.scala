@@ -20,7 +20,8 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, Interpreter
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
+import za.co.absa.spark.commons.utils.ExplodeTools
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
 
 /**
   * This conformance interpreter collapses previously exploded array(s) back.

@@ -25,7 +25,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 trait CsvFileFixture extends MockitoSugar with TempFileFixture with SparkTestBase {
   private implicit val dao: MenasDAO = mock[MenasDAO]

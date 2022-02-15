@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.utils.implicits
 
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
   import spark.implicits._

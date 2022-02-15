@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class SchemaCheckerSuite extends AnyFunSuite with SparkTestBase {
   test("Bug") {

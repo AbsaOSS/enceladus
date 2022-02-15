@@ -20,7 +20,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class JoinMappingRuleInterpreterSuite extends AnyFunSuite with SparkTestBase {
   test("Mapping rule fields existence validation test") {

@@ -24,8 +24,9 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, Feature
 import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 

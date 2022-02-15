@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 import scala.io.Source.fromFile
 import scala.util.control.NonFatal

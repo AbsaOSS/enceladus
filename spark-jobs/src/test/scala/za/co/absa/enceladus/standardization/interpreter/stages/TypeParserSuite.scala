@@ -17,11 +17,11 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
 import za.co.absa.enceladus.utils.types.parsers.NumericParser
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFResult}
+import za.co.absa.spark.commons.test.SparkTestBase
 
 import scala.util.Success
 

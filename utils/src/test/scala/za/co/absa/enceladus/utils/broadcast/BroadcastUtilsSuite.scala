@@ -19,7 +19,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 import scala.collection.mutable
 

@@ -25,6 +25,7 @@ import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.types.TypedStructField.DateTimeTypeStructField
 import za.co.absa.enceladus.utils.types.parsers.DateTimeParser
+import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldMetadataEnhancements
 
 import scala.util.control.NonFatal
 
@@ -40,8 +41,8 @@ abstract class DateTimeFieldValidator extends FieldValidator {
   private def validateDateTimeTypeStructField(field: DateTimeTypeStructField[_]): Seq[ValidationIssue] = {
     val result = for {
       parser <- field.parser
-      defaultValue: Option[String] = field.getMetadataString(MetadataKeys.DefaultValue)
-      defaultTimeZone: Option[String] = field.getMetadataString(MetadataKeys.DefaultTimeZone)
+      defaultValue: Option[String] = field.structField.metadata.getOptString(MetadataKeys.DefaultValue)
+      defaultTimeZone: Option[String] = field.structField.metadata.getOptString(MetadataKeys.DefaultTimeZone)
     } yield patternConversionIssues(field, parser).toSeq ++
       defaultTimeZoneIssues(defaultTimeZone) ++
       patternAnalysisIssues(parser.pattern, defaultValue, defaultTimeZone)

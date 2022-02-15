@@ -19,7 +19,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.SparkSessionConfConformanceRule
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class SparkSessionRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit

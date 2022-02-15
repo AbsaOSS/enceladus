@@ -24,7 +24,8 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, Feature
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 
 case class TestInputRow(id: Int, mandatoryString: String, nullableString: Option[String])

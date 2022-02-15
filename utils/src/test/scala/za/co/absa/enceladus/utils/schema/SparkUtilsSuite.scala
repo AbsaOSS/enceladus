@@ -19,11 +19,11 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
 
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private def getDummyDataFrame: DataFrame = {
     import spark.implicits._

@@ -25,8 +25,8 @@ import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
 

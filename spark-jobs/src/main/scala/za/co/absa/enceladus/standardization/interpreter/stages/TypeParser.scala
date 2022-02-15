@@ -27,13 +27,16 @@ import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.schema.MetadataValues
 import za.co.absa.enceladus.utils.schema.SchemaUtils.FieldWithSource
-import za.co.absa.enceladus.utils.schema.{MetadataValues, SchemaUtils}
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.TypedStructField._
 import za.co.absa.enceladus.utils.types.{Defaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.{UDFBuilder, UDFLibrary, UDFNames}
+import za.co.absa.spark.commons.implicits.ColumnImplicits.ColumnEnhancements
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.spark.hofs.transform
 
 import scala.reflect.runtime.universe._
@@ -115,7 +118,7 @@ sealed trait TypeParser[T] {
 }
 
 object TypeParser {
-  import za.co.absa.enceladus.utils.implicits.ColumnImplicits.ColumnEnhancements
+  import za.co.absa.enceladus.utils.implicits.EnceladusColumnImplicits.EnceladusColumnEnhancements
 
   private val decimalType = DecimalType(30,9) // scalastyle:ignore magic.number
   private implicit val logger: Logger = LoggerFactory.getLogger(this.getClass)
@@ -131,7 +134,7 @@ object TypeParser {
                  (implicit udfLib: UDFLibrary, defaults: Defaults): ParseOutput = {
     // udfLib implicit is present for error column UDF implementation
     val sourceName = SchemaUtils.appendPath(path, field.sourceName)
-    val origField = SchemaUtils.getField(sourceName, origSchema)
+    val origField = origSchema.getField(sourceName)
     val origFieldType = origField.map(_.dataType).getOrElse(NullType)
     val column = origField.fold(nullColumn)(_ => col(sourceName))
     TypeParser(field, path, column, origFieldType, failOnInputNotPerSchema).standardize()
@@ -194,7 +197,7 @@ object TypeParser {
       logger.info(s"Creating standardization plan for Array $inputFullPathName")
       val origArrayType = origType.asInstanceOf[ArrayType] // this should never throw an exception because of `checkSetupForFailure`
       val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull, field.structField.metadata)
-      val lambdaVariableName = s"${SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
+      val lambdaVariableName = s"${za.co.absa.enceladus.utils.schema.SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
       val lambda = (forCol: Column) => TypeParser(arrayField, path, forCol, origArrayType.elementType, failOnInputNotPerSchema, isArrayElement = true)
         .standardize()
 

@@ -18,8 +18,8 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.NumericType
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
 

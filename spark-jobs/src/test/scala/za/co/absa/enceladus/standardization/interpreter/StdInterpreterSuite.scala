@@ -16,13 +16,15 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
+
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.test.SparkTestBase
 
 case class ErrorPreserve(a: String, b: String, errCol: List[ErrorMessage])
 case class ErrorPreserveStd(a: String, b: Int, errCol: List[ErrorMessage])

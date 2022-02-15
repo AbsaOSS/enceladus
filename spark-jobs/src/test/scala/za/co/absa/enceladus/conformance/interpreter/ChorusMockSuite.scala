@@ -22,7 +22,8 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
+import za.co.absa.spark.commons.test.SparkTestBase
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
 case class MyMappingTableInner(description: String, name: String)

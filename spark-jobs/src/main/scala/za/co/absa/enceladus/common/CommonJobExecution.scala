@@ -326,11 +326,13 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addInfoColumns(intoDf: DataFrame, reportDate: String, reportVersion: Int): DataFrame = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+    import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+    val function: (DataFrame, String) => DataFrame = (df: DataFrame, _) =>
+      df.withColumn("errCol", lit(Array.emptyIntArray))
     intoDf
-      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
-      .withColumnIfDoesNotExist(InfoDateColumnString, lit(reportDate))
-      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(function)(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(function)(InfoDateColumnString, lit(reportDate))
+      .withColumnIfDoesNotExist(function)(InfoVersionColumn, lit(reportVersion))
   }
 
   private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit hadoopConf: Configuration): Int = {

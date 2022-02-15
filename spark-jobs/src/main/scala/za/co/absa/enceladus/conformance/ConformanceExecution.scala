@@ -37,7 +37,7 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -118,7 +118,7 @@ trait ConformanceExecution extends CommonJobExecution {
         spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
-        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
+        if (conformedDF.schema.fieldExists(Constants.EnceladusRecordId)) {
           conformedDF // no new id regeneration
         } else {
           RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)

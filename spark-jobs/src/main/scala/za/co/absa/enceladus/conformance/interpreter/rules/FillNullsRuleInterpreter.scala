@@ -22,7 +22,7 @@ import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, FillNullsConformanceRule}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.hats.Extensions._
 
 import scala.util.{Failure, Success}
@@ -45,7 +45,7 @@ case class FillNullsRuleInterpreter(rule: FillNullsConformanceRule) extends Rule
       rule.outputColumn
     )
 
-    val dataType: DataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val dataType: DataType = df.schema.getFieldType(rule.inputColumn).get
     val default: Column = simpleLiteralCast(rule.value, dataType) match {
       case Success(value) => value
       case Failure(exception) =>

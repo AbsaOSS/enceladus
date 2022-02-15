@@ -26,8 +26,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 case class XPadTestInputRow(intField: Int, stringField: Option[String])
 case class XPadTestOutputRow(intField: Int, stringField: Option[String], targetField: String)

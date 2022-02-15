@@ -21,6 +21,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 
@@ -41,8 +42,8 @@ object SparkUtils {
     * @return the field name set
     */
   def setUniqueColumnNameOfCorruptRecord(spark: SparkSession, schema: StructType): String = {
-    val result = if (SchemaUtils.fieldExists(DefaultColumnNameOfCorruptRecord, schema)) {
-     SchemaUtils.getClosestUniqueName(DefaultColumnNameOfCorruptRecord, schema)
+    val result = if (schema.fieldExists(DefaultColumnNameOfCorruptRecord)) {
+     schema.getClosestUniqueName(DefaultColumnNameOfCorruptRecord)
     } else {
       DefaultColumnNameOfCorruptRecord
     }
@@ -82,8 +83,8 @@ object SparkUtils {
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
 
-    val tmpColumn = SchemaUtils.getUniqueName("tmpColumn", Some(df.schema))
-    val tmpErrColumn = SchemaUtils.getUniqueName("tmpErrColumn", Some(df.schema))
+    val tmpColumn = df.schema.getClosestUniqueName("tmpColumn")
+    val tmpErrColumn = df.schema.getClosestUniqueName("tmpErrColumn")
     val litErrUdfCall = callUDF("confLitErr", lit(colName), col(tmpColumn))
 
     // Rename the original column to a temporary name. We need it for comparison.
