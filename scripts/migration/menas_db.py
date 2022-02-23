@@ -105,16 +105,24 @@ class MenasDb(object):
                                                     migration_free_only: bool) -> List[str]:
         return self.get_distinct_entities_ids(schema_names, SCHEMA_COLLECTION, migration_free_only)
 
+    def get_all_distinct_entities_ids(self, collection_name: str, migration_free_only: bool,
+                                      distinct_field: str = "name") -> List[str]:
+        """Special case of get_distinct_entities_ids without supplying list of entity names - yields all"""
+        return self.get_distinct_entities_ids(entity_names=None, collection_name=collection_name,
+                                              migration_free_only=migration_free_only, entity_name_field=None,
+                                              distinct_field=distinct_field)
+
     def get_distinct_entities_ids(self, entity_names: List[str], collection_name: str, migration_free_only: bool,
-                                  entity_name_field: str = "name", distinct_field: object = "name") -> List[str]:
+                                  entity_name_field: str = "name", distinct_field: str = "name") -> List[str]:
         """ General way to retrieve distinct entity field values (names, ids, ...) entities (optionally migration-free) """
         collection = self.mongodb[collection_name]
         migrating_filter = MIGRATIONFREE_MONGO_FILTER if migration_free_only else EMPTY_MONGO_FILTER
+        name_filter = {entity_name_field: {"$in": entity_names}} if entity_names is not None else {}
 
         entities = collection.distinct(
             distinct_field,  # field to distinct on
             {"$and": [
-                {entity_name_field: {"$in": entity_names}},  # filter on name (ds/mt)
+                name_filter,
                 migrating_filter
             ]}
         )
@@ -144,6 +152,33 @@ class MenasDb(object):
             return []
 
         extracted_list = mapping_table_names_list[0]['mts']
+        return extracted_list
+
+    def get_property_names_from_ds_names(self, ds_names: List[str]) -> List[str]:
+        ds_collection = self.mongodb[DATASET_COLLECTION]
+        props_agg_result = ds_collection.aggregate([
+            {"$match": {"$and": [  # selection based on:
+                {"name": {"$in": ds_names}},  # dataset name
+                {"properties": {"$ne": None}},  # having some properties
+                {"properties": {"$ne": {}}}
+                # no "migration_filter" - we always want property names from all matching datasets
+            ]}},
+            {"$project": {
+                "props": {"$objectToArray": "$properties"}   # turns object into map with "k" and "v" fields.
+            }},
+            {"$unwind": "$props"},  # explodes each doc into multiple - each having prop key/val
+            {"$group": {
+                "_id": "notNeededButRequired",
+                "propkeys": {"$addToSet": "$props.k"}
+            }}
+        ])  # single doc with { _id: ... , "propkeys" : [propKey1, propKey2, ...]}
+
+        # if no props are present, the result may be empty
+        propdef_names_list = list(props_agg_result)  # cursor behaves one-iteration only.
+        if not list(propdef_names_list):
+            return []
+
+        extracted_list = propdef_names_list[0]['propkeys']
         return extracted_list
 
     def assemble_migration_free_runs_from_ds_names(self, ds_names: List[str]) -> List[str]:
@@ -177,6 +212,12 @@ class MenasDb(object):
     def assemble_migration_free_attachments_from_schema_names(self, schema_names: List[str]) -> List[str]:
         return self.get_distinct_entities_ids(schema_names, ATTACHMENT_COLLECTION, entity_name_field="refName",
                                               distinct_field="refName", migration_free_only=True)
+
+    def assemble_migration_free_propdefs_from_prop_names(self, prop_names: List[str]) -> List[str]:
+        return self.get_distinct_entities_ids(prop_names, PROPERTY_DEF_COLLECTION, migration_free_only=True)
+
+    def assemble_all_propdefs(self, migration_free_only=True) -> List[str]:
+        return self.get_all_distinct_entities_ids(PROPERTY_DEF_COLLECTION, migration_free_only=migration_free_only)
 
     @staticmethod
     def get_database(conn_str: str, db_name: str) -> Database:
