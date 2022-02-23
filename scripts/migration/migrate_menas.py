@@ -301,8 +301,8 @@ def check_compatible_property_definitions(source_db: MenasDb, target_db: MenasDb
 
     diff = set(source_propdefs).difference(set(target_propdefs))
     if len(diff) != 0:
-        raise MenasDbCollectionError(f"Property definitions missing on target: {diff},"
-                                     " cannot continue dataset migration! "
+        raise MenasDbCollectionError("Property definition need to be migrated before Datasets are migrated. "
+                                     f"These PDs are missing on target: {diff}."
                                      "Migrate property definitions first (-p * or -p PDname1 PDname2 ...)")
 
 
