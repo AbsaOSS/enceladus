@@ -197,7 +197,8 @@ object TypeParser {
       logger.info(s"Creating standardization plan for Array $inputFullPathName")
       val origArrayType = origType.asInstanceOf[ArrayType] // this should never throw an exception because of `checkSetupForFailure`
       val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull, field.structField.metadata)
-      val lambdaVariableName = s"${za.co.absa.enceladus.utils.schema.SchemaUtils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
+      import za.co.absa.enceladus.utils.schema.{SchemaUtil => EnceladusSchemautils} // import rename
+      val lambdaVariableName = s"${EnceladusSchemautils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
       val lambda = (forCol: Column) => TypeParser(arrayField, path, forCol, origArrayType.elementType, failOnInputNotPerSchema, isArrayElement = true)
         .standardize()
 
