@@ -38,6 +38,7 @@ import za.co.absa.spark.commons.implicits.ColumnImplicits.ColumnEnhancements
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.spark.hofs.transform
+import za.co.absa.enceladus.utils.schema.{SchemaUtils => EnceladusSchemautils}
 
 import scala.reflect.runtime.universe._
 import scala.util.{Random, Try}
@@ -197,7 +198,6 @@ object TypeParser {
       logger.info(s"Creating standardization plan for Array $inputFullPathName")
       val origArrayType = origType.asInstanceOf[ArrayType] // this should never throw an exception because of `checkSetupForFailure`
       val arrayField = StructField(fieldInputName, fieldType.elementType, fieldType.containsNull, field.structField.metadata)
-      import za.co.absa.enceladus.utils.schema.{SchemaUtil => EnceladusSchemautils} // import rename
       val lambdaVariableName = s"${EnceladusSchemautils.unpath(inputFullPathName)}_${Random.nextLong().abs}"
       val lambda = (forCol: Column) => TypeParser(arrayField, path, forCol, origArrayType.elementType, failOnInputNotPerSchema, isArrayElement = true)
         .standardize()
