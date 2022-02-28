@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import java.text.SimpleDateFormat
 import java.util.Date
+
 import org.apache.commons.configuration2.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
@@ -35,6 +36,7 @@ import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import za.co.absa.enceladus.utils.schema.SparkUtils.ifExistsErrorFunction
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
@@ -78,13 +80,12 @@ class HyperConformance (menasBaseUrls: List[String],
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
     implicit val hdfsUtils: HadoopFsUtils = HadoopFsUtils.getOrCreate(hdfs)
-    val function: (DataFrame, String) => DataFrame = (df: DataFrame, _) =>
-      df.withColumn("errCol", lit(Array.emptyIntArray))
-
+    val dataFormat = coalesce(date_format(infoDateColumn, "yyyy-MM-dd"), lit(""))
+    val currentDateColumn = current_date()
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(function)(InfoDateColumn, coalesce(infoDateColumn, current_date()))
-      .withColumnIfDoesNotExist(function)(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(function)(InfoVersionColumn, infoVersionColumn)
+      .withColumnIfDoesNotExist(ifExistsErrorFunction(currentDateColumn))(InfoDateColumn, coalesce(infoDateColumn, currentDateColumn))
+      .withColumnIfDoesNotExist(ifExistsErrorFunction(dataFormat))(InfoDateColumnString, dataFormat)
+      .withColumnIfDoesNotExist(ifExistsErrorFunction(infoVersionColumn))(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 

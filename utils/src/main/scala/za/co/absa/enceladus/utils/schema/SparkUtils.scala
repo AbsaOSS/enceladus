@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -29,7 +28,6 @@ import za.co.absa.spark.hats.transformations.NestedArrayTransformations
   * General Spark utils
   */
 object SparkUtils {
-  private val log: Logger = LogManager.getLogger(this.getClass)
   private final val DefaultColumnNameOfCorruptRecord = "_corrupt_record"
 
   final val ColumnNameOfCorruptRecordConf = "spark.sql.columnNameOfCorruptRecord"
@@ -49,23 +47,6 @@ object SparkUtils {
     }
     spark.conf.set(ColumnNameOfCorruptRecordConf, result)
     result
-  }
-
-  /**
-    * Adds a column to a dataframe if it does not exist
-    *
-    * @param df      A dataframe
-    * @param colName A column to add if it does not exist already
-    * @param colExpr An expression for the column to add
-    * @return a new dataframe with the new column
-    */
-  def withColumnIfDoesNotExist(df: DataFrame, colName: String, colExpr: Column): DataFrame = {
-    if (df.schema.exists(field => field.name.equalsIgnoreCase(colName))) {
-      log.warn(s"Column '$colName' already exists. The content of the column will be overwritten.")
-      overwriteWithErrorColumn(df, colName, colExpr)
-    } else {
-      df.withColumn(colName, colExpr)
-    }
   }
 
   /**
@@ -104,5 +85,8 @@ object SparkUtils {
     // Drop the temporary column
     dfWithAggregatedErrColumn.drop(tmpColumn)
   }
+
+  def ifExistsErrorFunction(colExpr: Column): (DataFrame, String) => DataFrame =
+    (df: DataFrame, colName: String) => overwriteWithErrorColumn(df, colName, colExpr)
 
 }

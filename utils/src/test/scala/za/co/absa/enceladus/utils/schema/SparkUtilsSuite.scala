@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
@@ -45,6 +45,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
     assert(spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf) == expected2)
   }
 
+  private val colExpression: Column = lit(1)
   test("Test withColumnIfNotExist() when the column does not exist") {
     val expectedOutput =
       """+-----+---+
@@ -60,7 +61,8 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "foo", lit(1))
+
+    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("foo", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfOut.schema.length == 2)
@@ -84,7 +86,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "value", lit(1))
+    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("value", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfIn.schema.length == 1)
@@ -107,7 +109,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "vAlUe", lit(1))
+    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("vAlUe", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfIn.schema.length == 1)
