@@ -28,6 +28,12 @@
       - name: string - regular expression
         description: 'Regular expression specifying which user roles to include in JWT. E.g.:
         <code>^menas_</code>. If the expression filters out the admin role (<code><a href="#menas.auth.admin.role">menas.auth.admin.role</a></code>), account won''t be recognized as admin.'
+  - name: menas.auth.ad.server
+    options:
+      - name: string - space-separated AD server domains
+        description: 'ActiveDirectory server domain(s) - multiple values are supported as fallback options.
+        DN (e.g. <code>dc=example,dc=com</code>) should not be included as this is supplied in <code>menas.auth.ldap.search.base</code>.
+        Example: <code>menas.auth.ad.server=ldaps://first.ldap.here ldaps://second.ldap.here ldaps://third.ldap.here</code> (notice no quotes)'
   - name: menas.schemaRegistry.baseUrl
     options:
       - name: string with URL
