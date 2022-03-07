@@ -39,11 +39,17 @@ class SpringFoxConfig extends ProjectMetadata {
   }
 
   private def filteredPaths: Predicate[String] =
-    or[String](regex("/api/dataset.*"), regex("/api/schema.*"),
+    or[String](
+      // api v2
+      regex("/api/dataset.*"), regex("/api/schema.*"),
       regex("/api/mappingTable.*"), regex("/api/properties.*"),
       regex("/api/monitoring.*"),regex("/api/runs.*"),
       regex("/api/user.*"), regex("/api/spark.*"),
-      regex("/api/configuration.*")
+      regex("/api/configuration.*"),
+
+      // api v3
+        regex("/api-v3/datasets.*")
+
     )
 
   private def apiInfo =

@@ -13,8 +13,22 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.versionedModel
+package za.co.absa.enceladus.rest_api.controllers.v3
 
-case class VersionedSummary(_id: String, latestVersion: Int)
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.rest_api.services.DatasetService
 
-case class VersionsList(_id: String, versions: Seq[Int])
+@RestController
+@RequestMapping(path = Array("/api-v3/datasets"))
+class DatasetControllerV3 @Autowired()(datasetService: DatasetService)
+  extends VersionedModelControllerV3(datasetService) {
+
+  // TODO
+  // /{datasetName}/{version}/rules
+  // /{datasetName}/{version}/rules/{index}
+  // /{datasetName}/{version}/rules
+
+}
+
+

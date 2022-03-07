@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.repositories
 
 import java.time.ZonedDateTime
-
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -28,7 +27,7 @@ import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionsList}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -91,6 +90,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
     collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
+  }
+
+  def getAllVersionsValues(name: String): Future[Seq[Int]] = {
+    val pipeline = Seq(
+      filter(getNameFilter(name)),
+      Aggregates.sort(Sorts.ascending("version")),
+      Aggregates.group("$name", Accumulators.push("versions", "$version")) // all versions into single array
+    )
+    collection.aggregate[VersionsList](pipeline).headOption().map {
+      case None => Seq.empty
+      case Some(verList) => verList.versions
+    }
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
