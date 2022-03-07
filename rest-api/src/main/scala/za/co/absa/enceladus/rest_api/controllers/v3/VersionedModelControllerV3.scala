@@ -46,8 +46,11 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionsList(@PathVariable name: String): CompletableFuture[Seq[Int]] = {
-    versionedModelService.getAllVersionsValues(name)
+  def getVersionsList(@PathVariable name: String): CompletableFuture[VersionsList] = {
+    versionedModelService.getAllVersionsValues(name) map {
+      case Some(entity) => entity
+      case None => throw notFound()
+    }
   }
 
   @GetMapping(Array("/{name}/{version}"))
@@ -126,7 +129,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
-      case Some(entity) => entity
+      case Some(entity) => entity // todo change not to return conent
       case None         => throw notFound()
     }
   }

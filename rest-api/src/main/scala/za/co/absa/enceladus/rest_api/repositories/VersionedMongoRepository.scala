@@ -92,16 +92,13 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
   }
 
-  def getAllVersionsValues(name: String): Future[Seq[Int]] = {
+  def getAllVersionsValues(name: String): Future[Option[VersionsList]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       Aggregates.sort(Sorts.ascending("version")),
       Aggregates.group("$name", Accumulators.push("versions", "$version")) // all versions into single array
     )
-    collection.aggregate[VersionsList](pipeline).headOption().map {
-      case None => Seq.empty
-      case Some(verList) => verList.versions
-    }
+    collection.aggregate[VersionsList](pipeline).headOption().map(_.map(vlist => VersionsList("versions", vlist.versions)))
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {

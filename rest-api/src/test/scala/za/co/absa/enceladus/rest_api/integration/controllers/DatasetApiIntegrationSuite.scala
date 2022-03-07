@@ -35,7 +35,7 @@ import za.co.absa.enceladus.rest_api.integration.fixtures._
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
