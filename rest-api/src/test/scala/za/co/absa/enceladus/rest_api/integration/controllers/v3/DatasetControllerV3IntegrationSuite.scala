@@ -56,15 +56,33 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dataset = DatasetFactory.getDummyDataset("dummyDs",
             properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
 
-          val response = sendPost[Dataset, Dataset](s"$apiUrl", bodyOpt = Some(dataset))
+          val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
           assertCreated(response)
 
           val actual = response.getBody
           val expected = toExpected(dataset, actual).copy(properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))) // keyC stripped
           assert(actual == expected)
+
+          // todo change this with location header
         }
       }
     }
+    "the dataset is disabled (i.e. all version are disabled)" should {
+      "create a new version of Dataset" in {
+        val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
+        val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
+        datasetFixture.add(dataset1, dataset2)
+
+        val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
+        val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset3))
+
+        // todo change this with location header
+        val actual = response.getBody
+        val expected = toExpected(dataset3.copy(version = 3, parent = Some(DatasetFactory.toParent(dataset2))), actual)
+        assert(actual == expected)
+      }
+    }
+    // todo what to do if  "the last dataset version is disabled"
   }
 
   s"PUT $apiUrl" can {
