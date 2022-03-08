@@ -36,7 +36,6 @@ import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.schema.SparkUtils.ifExistsErrorFunction
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
@@ -82,10 +81,11 @@ class HyperConformance (menasBaseUrls: List[String],
     implicit val hdfsUtils: HadoopFsUtils = HadoopFsUtils.getOrCreate(hdfs)
     val dataFormat = coalesce(date_format(infoDateColumn, "yyyy-MM-dd"), lit(""))
     val currentDateColumn = current_date()
+    import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(currentDateColumn))(InfoDateColumn, coalesce(infoDateColumn, currentDateColumn))
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(dataFormat))(InfoDateColumnString, dataFormat)
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(infoVersionColumn))(InfoVersionColumn, infoVersionColumn)
+      .withColumnOverwriteIfExists(InfoDateColumn, coalesce(infoDateColumn, currentDateColumn))
+      .withColumnOverwriteIfExists(InfoDateColumnString, dataFormat)
+      .withColumnOverwriteIfExists(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 

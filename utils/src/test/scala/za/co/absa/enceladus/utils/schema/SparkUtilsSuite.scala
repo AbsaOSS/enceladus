@@ -20,6 +20,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
 
 class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
 
@@ -46,7 +47,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
   }
 
   private val colExpression: Column = lit(1)
-  test("Test withColumnIfNotExist() when the column does not exist") {
+  test("Test withColumnOverwriteIfExists() when the column does not exist") {
     val expectedOutput =
       """+-----+---+
         ||value|foo|
@@ -62,7 +63,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
 
     val dfIn = getDummyDataFrame
 
-    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("foo", colExpression)
+    val dfOut = dfIn.withColumnOverwriteIfExists("foo", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfOut.schema.length == 2)
@@ -71,7 +72,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
     assert(actualOutput == expectedOutput)
   }
 
-  test("Test withColumnIfNotExist() when the column exists") {
+  test("Test withColumnOverwriteIfExists() when the column exists") {
     val expectedOutput =
       """+-----+----------------------------------------------------------------------------------------------+
         ||value|errCol                                                                                        |
@@ -86,7 +87,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val dfIn = getDummyDataFrame
-    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("value", colExpression)
+    val dfOut = dfIn.withColumnOverwriteIfExists("value", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfIn.schema.length == 1)
@@ -94,7 +95,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
     assert(actualOutput == expectedOutput)
   }
 
-  test("Test withColumnIfNotExist() when the column exists, but has a different case") {
+  test("Test withColumnOverwriteIfExists() when the column exists, but has a different case") {
     val expectedOutput =
       """+-----+----------------------------------------------------------------------------------------------+
         ||vAlUe|errCol                                                                                        |
@@ -109,7 +110,7 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
         |""".stripMargin.replace("\r\n", "\n")
 
     val dfIn = getDummyDataFrame
-    val dfOut = dfIn.withColumnIfDoesNotExist(SparkUtils.ifExistsErrorFunction(colExpression))("vAlUe", colExpression)
+    val dfOut = dfIn.withColumnOverwriteIfExists("vAlUe", colExpression)
     val actualOutput = dfOut.dataAsString(truncate = false)
 
     assert(dfIn.schema.length == 1)

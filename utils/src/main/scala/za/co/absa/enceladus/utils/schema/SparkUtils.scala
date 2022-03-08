@@ -21,6 +21,7 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 
@@ -86,7 +87,11 @@ object SparkUtils {
     dfWithAggregatedErrColumn.drop(tmpColumn)
   }
 
-  def ifExistsErrorFunction(colExpr: Column): (DataFrame, String) => DataFrame =
-    (df: DataFrame, colName: String) => overwriteWithErrorColumn(df, colName, colExpr)
+  implicit class DataFrameWithEnhancements(val df: DataFrame) {
+    def withColumnOverwriteIfExists(colName: String, colExpr: Column): DataFrame = {
+      val overwrite: (DataFrame, String) => DataFrame = overwriteWithErrorColumn(_, _, colExpr)
+      df.withColumnIfDoesNotExist(overwrite)(colName, colExpr)
+    }
+  }
 
 }

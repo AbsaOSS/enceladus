@@ -40,7 +40,6 @@ import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
-import za.co.absa.enceladus.utils.schema.SparkUtils.ifExistsErrorFunction
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import scala.util.control.NonFatal
@@ -324,12 +323,11 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addInfoColumns(intoDf: DataFrame, reportDate: String, reportVersion: Int): DataFrame = {
-    import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
-    val dateLitWithFormat = to_date(lit(reportDate), ReportDateFormat)
+    import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
     intoDf
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(dateLitWithFormat))(InfoDateColumn, dateLitWithFormat)
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(lit(reportDate)))(InfoDateColumnString, lit(reportDate))
-      .withColumnIfDoesNotExist(ifExistsErrorFunction(lit(reportVersion)))(InfoVersionColumn, lit(reportVersion))
+      .withColumnOverwriteIfExists(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
+      .withColumnOverwriteIfExists(InfoDateColumnString, lit(reportDate))
+      .withColumnOverwriteIfExists(InfoVersionColumn, lit(reportVersion))
   }
 
   private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit hadoopConf: Configuration): Int = {
