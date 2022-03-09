@@ -19,11 +19,11 @@ import java.util.UUID
 
 import com.typesafe.config.{Config, ConfigException, ConfigFactory, ConfigValueFactory}
 import za.co.absa.enceladus.common.RecordIdGenerationSuite.{SomeData, SomeDataWithId}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import RecordIdGeneration._
 import IdType._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class RecordIdGenerationSuite extends AnyFlatSpec with Matchers with SparkTestBase {
   import spark.implicits._

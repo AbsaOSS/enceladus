@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.interpreter
 
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.fixtures.NestedStructsFixture
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 /**
   * The purpose of these tests is to ensure Catalyst optimizer issue is handled.

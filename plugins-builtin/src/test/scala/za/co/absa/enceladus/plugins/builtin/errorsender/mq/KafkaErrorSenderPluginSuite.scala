@@ -32,7 +32,7 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPlugi
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 
 class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {

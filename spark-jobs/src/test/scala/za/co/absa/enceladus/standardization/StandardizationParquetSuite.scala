@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.standardization
 
 import java.util.UUID
+
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
@@ -29,17 +30,17 @@ import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
 import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
 
 
   import spark.implicits._
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]

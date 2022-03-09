@@ -23,10 +23,10 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.test.SparkTestBase
 
 trait TypeParserSuiteTemplate extends AnyFunSuite with SparkTestBase {
 

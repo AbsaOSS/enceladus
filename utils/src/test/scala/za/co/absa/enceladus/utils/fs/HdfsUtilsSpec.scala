@@ -20,7 +20,8 @@ import java.io.FileNotFoundException
 import org.apache.hadoop.fs.Path
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 /**
   * Unit tests for File system utils

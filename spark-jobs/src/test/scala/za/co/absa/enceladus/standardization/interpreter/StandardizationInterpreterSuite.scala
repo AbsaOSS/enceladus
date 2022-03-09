@@ -20,10 +20,11 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreterSuite._
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class StandardizationInterpreterSuite  extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._

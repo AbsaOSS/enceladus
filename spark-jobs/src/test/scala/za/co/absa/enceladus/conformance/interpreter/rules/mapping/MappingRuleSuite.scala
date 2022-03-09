@@ -21,7 +21,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
   private val testCaseFactory = new SimpleTestCaseFactory()

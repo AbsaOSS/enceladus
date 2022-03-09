@@ -16,9 +16,10 @@
 package za.co.absa.enceladus.utils.transformations
 
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+
 import scala.util.Random
 import org.apache.spark.sql.functions._
+import za.co.absa.spark.commons.test.SparkTestBase
 
 case class InnerStruct(a: Int, b: String = null)
 case class OuterStruct(id: Int, vals: Seq[InnerStruct])

@@ -26,7 +26,8 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 case class MyCustomRule(
   order:             Int,

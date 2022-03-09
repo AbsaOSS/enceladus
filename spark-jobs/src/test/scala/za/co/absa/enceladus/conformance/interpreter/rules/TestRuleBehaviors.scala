@@ -23,8 +23,9 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.test.SparkTestBase
 
 trait TestRuleBehaviors  extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
 

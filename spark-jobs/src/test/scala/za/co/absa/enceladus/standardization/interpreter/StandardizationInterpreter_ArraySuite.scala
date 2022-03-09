@@ -19,13 +19,14 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.common.error.ErrorMessageFactory
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers {
   import spark.implicits._

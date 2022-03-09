@@ -15,12 +15,11 @@
 
 package za.co.absa.enceladus.utils.testUtils
 
-import java.io.ByteArrayOutputStream
-
 import org.apache.spark.sql.DataFrame
 import org.slf4j.{Logger, LoggerFactory}
 import org.slf4j.event.Level
 import org.slf4j.event.Level._
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 trait LoggerTestBase {
 
@@ -37,7 +36,6 @@ trait LoggerTestBase {
   }
 
   protected def logDataFrameContent(df: DataFrame, logLevel: Level = DEBUG): Unit = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
 
     val logFnc = logLevelToLogFunction(logLevel)
     logFnc(df.schema.treeString)

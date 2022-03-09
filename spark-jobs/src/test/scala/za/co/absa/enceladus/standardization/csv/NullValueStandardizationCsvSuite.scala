@@ -18,6 +18,7 @@ package za.co.absa.enceladus.standardization.csv
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
+import za.co.absa.atum.utils.SparkTestBase
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
@@ -25,8 +26,7 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 

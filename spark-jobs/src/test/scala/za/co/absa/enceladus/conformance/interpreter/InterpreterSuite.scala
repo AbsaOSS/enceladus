@@ -27,8 +27,9 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 

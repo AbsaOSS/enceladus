@@ -17,6 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import java.io.File
 import java.nio.file.Files
+
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
@@ -42,8 +43,9 @@ import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.spark.commons.test.SparkTestBase
 
 import scala.util.control.NonFatal
 

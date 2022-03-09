@@ -19,9 +19,10 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
   import spark.implicits._

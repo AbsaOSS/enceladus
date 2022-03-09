@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
 

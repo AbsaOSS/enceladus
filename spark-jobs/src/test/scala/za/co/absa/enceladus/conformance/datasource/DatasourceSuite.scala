@@ -19,7 +19,7 @@ import org.apache.spark.sql.types.IntegerType
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 class DatasourceSuite extends AnyFunSuite with SparkTestBase {
 

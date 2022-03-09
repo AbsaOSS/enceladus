@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.spark.commons.test.SparkTestBase
 
 trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
   private val menasBaseUrls = List.empty[String]
