@@ -20,11 +20,12 @@ import org.apache.spark.sql.functions.{col, explode, lit, size, struct, typedLit
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import KafkaErrorSenderPluginImpl._
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
@@ -146,6 +147,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
       .withOptionalKafkaSecurityParams(connectionParams.security)
+      .withOptionalSchemaRegistrySecurityParams(connectionParams.schemaRegistrySecurityParams)
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
   }
@@ -201,6 +203,17 @@ object KafkaErrorSenderPluginImpl {
       optSecParams match {
         case None => dataFrameWriter
         case Some(secParams) => dataFrameWriter.options(secParams.toMap)
+      }
+    }
+
+    def withOptionalSchemaRegistrySecurityParams(optSrParams: Option[SchemaRegistrySecurityParams]): DataFrameWriter[T] = {
+      optSrParams match {
+        case None => dataFrameWriter
+        case Some(srParams) =>
+          val srOptions = Map(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE -> srParams.credentialsSource) ++
+            srParams.userInfo.map(info => Map(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG -> info)).getOrElse(Map.empty)
+
+          dataFrameWriter.options(srOptions)
       }
     }
   }
