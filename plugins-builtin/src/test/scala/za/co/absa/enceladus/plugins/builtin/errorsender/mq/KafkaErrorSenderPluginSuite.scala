@@ -129,14 +129,20 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> testTopicName,
       SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataErrorKey",
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.key.schema")
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.key.schema",
+      "basic.auth.credentials.source" -> "USER_INFO",
+      "basic.auth.user.info" -> "svc-account:SVC-P4SSW0RD"
+    )
 
     errorPlugin.valueSchemaRegistryConfig shouldBe Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> testSchemaRegUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> testTopicName,
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataError",
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema",
+      "basic.auth.credentials.source" -> "USER_INFO",
+      "basic.auth.user.info" -> "svc-account:SVC-P4SSW0RD"
+    )
   }
 
   it should "skip sending 0 errors to kafka" in {

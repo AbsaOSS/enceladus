@@ -147,7 +147,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       .option("topic", connectionParams.topicName)
       .option("kafka.client.id", connectionParams.clientId)
       .withOptionalKafkaSecurityParams(connectionParams.security)
-      .withOptionalSchemaRegistrySecurityParams(connectionParams.schemaRegistrySecurityParams)
+//      .withOptionalSchemaRegistrySecurityParams(connectionParams.schemaRegistrySecurityParams) // todo check if this is needed
       .option("path", "notReallyUsedButAtumExpectsItToBePresent") // TODO Atum issue #32
       .save()
   }
@@ -206,16 +206,16 @@ object KafkaErrorSenderPluginImpl {
       }
     }
 
-    def withOptionalSchemaRegistrySecurityParams(optSrParams: Option[SchemaRegistrySecurityParams]): DataFrameWriter[T] = {
-      optSrParams match {
-        case None => dataFrameWriter
-        case Some(srParams) =>
-          val srOptions = Map(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE -> srParams.credentialsSource) ++
-            srParams.userInfo.map(info => Map(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG -> info)).getOrElse(Map.empty)
-
-          dataFrameWriter.options(srOptions)
-      }
-    }
+//    def withOptionalSchemaRegistrySecurityParams(optSrParams: Option[SchemaRegistrySecurityParams]): DataFrameWriter[T] = {
+//      optSrParams match {
+//        case None => dataFrameWriter
+//        case Some(srParams) =>
+//          val srOptions = Map(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE -> srParams.credentialsSource) ++
+//            srParams.userInfo.map(info => Map(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG -> info)).getOrElse(Map.empty)
+//
+//          dataFrameWriter.options(srOptions)
+//      }
+//    }
   }
 
 }
