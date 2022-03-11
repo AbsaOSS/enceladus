@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import java.time.Instant
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
@@ -26,7 +25,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
@@ -101,19 +100,29 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
   val testClientId = "errorId1"
   val testTopicName = "errorTopicName1"
   val testKafkaUrl = "http://example.com:9092"
+  val testSecurityProtocol = "SASL_SSL"
+  val testSaslMechanism = "GSSAPI"
   val testSchemaRegUrl = "http://example.com:8081"
+  val testSchemaRegAuthSource = "USER_INFO"
+  val testSchemaRegAuthUserInfo = "svc-account:SVC-P4SSW0RD"
 
   private val testConfig = ConfigFactory.empty()
     .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef(testClientId))
     .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
     .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
+    .withValue("kafka.security.protocol", ConfigValueFactory.fromAnyRef(testSecurityProtocol))
+    .withValue("kafka.sasl.mechanism", ConfigValueFactory.fromAnyRef(testSaslMechanism))
     .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
+    .withValue("kafka.schema.registry.basic.auth.credentials.source", ConfigValueFactory.fromAnyRef(testSchemaRegAuthSource))
+    .withValue("kafka.schema.registry.basic.auth.user.info", ConfigValueFactory.fromAnyRef(testSchemaRegAuthUserInfo))
 
   it should "correctly create the error plugin from config" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
 
-    errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl, schemaRegistryUrl = testSchemaRegUrl,
-      clientId = testClientId, security = None, topicName = testTopicName, schemaRegistrySecurityParams = None)
+    errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl,
+      schemaRegistryUrl = testSchemaRegUrl, clientId = testClientId,
+      security = Some(KafkaSecurityParams(testSecurityProtocol, Some(testSaslMechanism))), topicName = testTopicName,
+      schemaRegistrySecurityParams = Some(SchemaRegistrySecurityParams(testSchemaRegAuthSource, Some(testSchemaRegAuthUserInfo))))
 
     errorPlugin.keySchemaRegistryConfig shouldBe Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> testSchemaRegUrl,
@@ -163,12 +172,12 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Ma
 
   Seq(
     SourcePhase.Standardization -> Seq(
-      "standardizaton,stdCastError,E00000,Standardization Error - Type cast",
-      "standardizaton,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute"
+      "Standardization,stdCastError,E00000,Standardization Error - Type cast",
+      "Standardization,stdNullError,E00002,Standardization Error - Null detected in non-nullable attribute"
     ),
     SourcePhase.Conformance -> Seq(
-      "conformance,confNegErr,E00004,Conformance Negation Error",
-      "conformance,confLitErr,E00005,Conformance Literal Error"
+      "Conformance,confNegErr,E00004,Conformance Negation Error",
+      "Conformance,confLitErr,E00005,Conformance Literal Error"
     )
   ).foreach { case (source, specificErrorParts) =>
     it should s"send $source errors to kafka as confluent_avro" in {
