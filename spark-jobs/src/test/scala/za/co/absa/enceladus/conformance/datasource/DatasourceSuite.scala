@@ -19,9 +19,9 @@ import org.apache.spark.sql.types.IntegerType
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class DatasourceSuite extends AnyFunSuite with SparkTestBase {
+class DatasourceSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   test("Data Source loads all data needed for test sample") {
 

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.{Date, Timestamp}
-
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalatest.funsuite.AnyFunSuite
@@ -24,15 +23,14 @@ import za.co.absa.enceladus.standardization.interpreter.stages.SchemaChecker
 import za.co.absa.enceladus.standardization.samples.TestSamples
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.LoggerTestBase
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.field.FieldValidationFailure
 import za.co.absa.enceladus.utils.validation.{SchemaValidator, ValidationError, ValidationException, ValidationWarning}
-import za.co.absa.spark.commons.test.SparkTestBase
 
 
-class DateTimeSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+class DateTimeSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
   import spark.implicits._
 
   private implicit val defaults: Defaults = GlobalDefaults

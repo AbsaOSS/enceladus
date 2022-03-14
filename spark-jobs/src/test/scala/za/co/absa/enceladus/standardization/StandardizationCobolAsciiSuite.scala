@@ -24,11 +24,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+
 import java.nio.charset.StandardCharsets
 
-import za.co.absa.spark.commons.test.SparkTestBase
-
-class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
   type FixtureParam = String
 

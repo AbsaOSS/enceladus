@@ -23,11 +23,10 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 
-class ArrayConformanceSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with HadoopFsTestBase {
+class ArrayConformanceSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with HadoopFsTestBase {
 
   import spark.implicits._
   // spark.enableControlFrameworkTracking()

@@ -18,9 +18,9 @@ package za.co.absa.enceladus.dao.rest.auth
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
 import za.co.absa.enceladus.utils.fs.LocalFsUtils
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class MenasPlainCredentialsSuite extends AnyWordSpec with SparkTestBase {
+class MenasPlainCredentialsSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
 
   "MenasPlainCredentials" should {
     "be read from *.conf" in {

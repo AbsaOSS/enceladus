@@ -19,10 +19,10 @@ import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.spark.commons.test.SparkTestBase
 import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class SparkUtilsSuite extends AnyFunSuite with SparkTestBase {
+class SparkUtilsSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 

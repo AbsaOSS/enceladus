@@ -23,9 +23,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class SparkMenasSchemaConvertorSuite extends AnyFunSuite with SparkTestBase {
+class SparkMenasSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())

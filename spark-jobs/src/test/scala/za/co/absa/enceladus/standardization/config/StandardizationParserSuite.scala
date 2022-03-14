@@ -16,14 +16,13 @@
 package za.co.absa.enceladus.standardization.config
 
 import java.time.ZonedDateTime
-
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class StandardizationParserSuite extends AnyFunSuite with SparkTestBase {
+class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   private val year = "2018"
   private val month = "12"

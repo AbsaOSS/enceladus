@@ -22,15 +22,14 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 
 case class MyMappingTable(id: Int, mappedAttr: MyMappingTableInner)
 case class MyMappingTableInner(description: String, name: String)
 case class MyData(id: Int, toJoin: Int)
 case class MyDataConfd(id: Int, toJoin: Int, confMapping: MyMappingTableInner)
 
-class ChorusMockSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
+class ChorusMockSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   def testChorusMockData(useExperimentalMappingRule: Boolean): Unit = {
     val d = Seq(
