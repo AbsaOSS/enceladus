@@ -19,10 +19,9 @@ import org.apache.commons.io.IOUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase}
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 
-trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase{
+trait MappingInterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase{
 
   protected val simpleTestCaseFactory = new SimpleTestCaseFactory()
   protected val nestedTestCaseFactory = new NestedTestCaseFactory()

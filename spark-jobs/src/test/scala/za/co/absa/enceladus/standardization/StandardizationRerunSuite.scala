@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization
 
 import java.nio.charset.StandardCharsets
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
@@ -29,12 +28,12 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
-import za.co.absa.spark.commons.test.SparkTestBase
 
-class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
   import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 

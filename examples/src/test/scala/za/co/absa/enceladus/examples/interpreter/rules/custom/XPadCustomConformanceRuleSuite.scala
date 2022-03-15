@@ -26,8 +26,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 case class XPadTestInputRow(intField: Int, stringField: Option[String])
 case class XPadTestOutputRow(intField: Int, stringField: Option[String], targetField: String)
@@ -35,7 +34,7 @@ object XPadTestOutputRow {
   def apply(input: XPadTestInputRow, targetField: String): XPadTestOutputRow = XPadTestOutputRow(input.intField, input.stringField, targetField)
 }
 
-class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with MockitoSugar with HadoopFsTestBase {
+class LpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with HadoopFsTestBase {
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
@@ -179,7 +178,7 @@ class LpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with
 }
 
 
-class RpadCustomConformanceRuleSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase {
+class RpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with HadoopFsTestBase {
 
   import spark.implicits._
 

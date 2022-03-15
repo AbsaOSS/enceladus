@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
-
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.spark.sql.{DataFrame, SaveMode}
 import org.mockito.Mockito.{mock, when => mockWhen}
@@ -27,12 +26,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.spark.commons.test.SparkTestBase
 
 import scala.util.control.NonFatal
 
-trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
+trait NestedStructsFixture extends BeforeAndAfterAll with TZNormalizedSparkTestBase {
 
   this: Suite =>
 

@@ -30,9 +30,9 @@ import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.spark.commons.test.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
+trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
   private val menasBaseUrls = List.empty[String]
   implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1), reportDate = "2020-03-23")
 
