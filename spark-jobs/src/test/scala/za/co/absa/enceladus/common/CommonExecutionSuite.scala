@@ -77,28 +77,32 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
     result shouldBe df
   }
 
-  "prepareSecureKafkaExecutorEnvironmentOptions" should "pass stripped secure options to SparkConf" in {
+  "javaOptsStringFromConfigMap" should "convert config map to -Dx=y string" in {
+    val driverEnvMap = Map(
+      "javax.net.ssl.keyStore" -> "/path/to/my-keystore.jks",
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1",
+      "somethingElse" -> "whatever"
+    )
+
+    CommonJobExecution.javaOptsStringFromConfigMap(driverEnvMap) shouldBe
+      "-Djavax.net.ssl.keyStore=/path/to/my-keystore.jks -Djavax.net.ssl.keyStorePassword=ksPassword1 -DsomethingElse=whatever"
+  }
+
+  "prepareSecureKafkaExecutorEnvironmentOptions" should "strip secure paths prefixes" in {
     val driverEnvMap = Map(
       "java.security.auth.login.config" -> "path/to/jaas.config",
       "javax.net.ssl.keyStore" -> "/path/to/my-keystore.jks",
       "javax.net.ssl.keyStorePassword" -> "ksPassword1",
       "javax.net.ssl.trustStore" -> "/path/to/my-truststore.jks",
-      "javax.net.ssl.trustStorePassword" -> "tsPassword1"
+      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes"
     )
-
-    val jobExecution = new CommonJobExecution {
-      override protected def validatePaths(pathConfig: PathConfig): Unit = {}
-    }
-
-    // expecting:
-    //  - all keys prefixed by "spark.executorEnv."
-    //  - path prefix stripped for non-passwords
-    jobExecution.prepareSecureKafkaExecutorEnvironmentOptions(driverEnvMap).getAll.toMap shouldBe Map(
-      "spark.executorEnv.java.security.auth.login.config" -> "jaas.config",
-      "spark.executorEnv.javax.net.ssl.keyStore" -> "my-keystore.jks",
-      "spark.executorEnv.javax.net.ssl.keyStorePassword" -> "ksPassword1",
-      "spark.executorEnv.javax.net.ssl.trustStore" -> "my-truststore.jks",
-      "spark.executorEnv.javax.net.ssl.trustStorePassword" -> "tsPassword1"
+    // expecting path prefix stripped for non-passwords
+    CommonJobExecution.stripSecureJavaPrefixPaths(driverEnvMap) shouldBe Map(
+      "java.security.auth.login.config" -> "jaas.config", // path stripped
+      "javax.net.ssl.keyStore" -> "my-keystore.jks", // path stripped
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1", //untouched
+      "javax.net.ssl.trustStore" -> "my-truststore.jks", // path stripped
+      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes" //untouched
     )
   }
 

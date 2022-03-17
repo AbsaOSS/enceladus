@@ -67,31 +67,12 @@ trait CommonJobExecution extends ProjectMetadata {
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
 
-    val sparkConf4SecureKafka = prepareSecureKafkaExecutorEnvironmentOptions(secureConfig)
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
-      .config(sparkConf4SecureKafka)
+      .config("spark.executor.extraJavaOptions", CommonJobExecution.javaOptsStringFromConfigMap(CommonJobExecution.stripSecureJavaPrefixPaths(secureConfig)))
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
-  }
-
-  def prepareSecureKafkaExecutorEnvironmentOptions(secureConfig: Map[String, String]): SparkConf = {
-    if (secureConfig.isEmpty) {
-      log.warn(s"Kafka secure config is empty!")
-    }
-
-    def stripLeadingPath(fullFileName: String): String = fullFileName.split('/').last
-    import SecureConfig.Keys._
-    val strippedSecuredConfig = secureConfig.map {
-      case (key, value) if Seq(javaxNetSslTrustStore, javaxNetSslKeyStore, javaSecurityAuthLoginConfig).contains(key) =>
-        (key, stripLeadingPath(value)) // e.g. /path/to/my-keystore.jks => my-keystore.jsk
-      case other => other
-    }
-
-    // prefix `spark.executorEnv.` causes values to be registered as env properties on executors
-    val executorSecureConf = strippedSecuredConfig.map { case (key, value) => ("spark.executorEnv." + key, value) }
-    new SparkConf().setAll(executorSecureConf)
   }
 
   protected def initialValidation(): Unit = {
@@ -131,7 +112,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
-          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
+        s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
       )
       case _ => //validation passed
     }
@@ -319,7 +300,9 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
-    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+    val keyPrefix = Try {
+      conf.getString("control.info.dataset.properties.prefix")
+    }.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
     data.foreach { case (key, value) =>
@@ -369,5 +352,39 @@ trait CommonJobExecution extends ProjectMetadata {
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
     }
+  }
+}
+
+object CommonJobExecution {
+
+  /**
+   * Strips values of "java.security.auth.login.config", "javax.net.ssl.trustStore", and "javax.net.ssl.keyStore"
+   * to only contain file names without path prefix. Other fields are untouched
+   *
+   * @param secureConfig
+   * @return
+   */
+  def stripSecureJavaPrefixPaths(secureConfigMap: Map[String, String]): Map[String, String] = {
+    def stripLeadingPath(fullFileName: String): String = fullFileName.split('/').last
+
+    import SecureConfig.Keys._
+    secureConfigMap
+      .map {
+        case (key, value) if Seq(javaxNetSslTrustStore, javaxNetSslKeyStore, javaSecurityAuthLoginConfig).contains(key) =>
+          (key, stripLeadingPath(value)) // e.g. /path/to/my-keystore.jks => my-keystore.jsk
+        case other => other
+      }
+  }
+
+  /**
+   * will create java opts string e.g. "-Dkey.one=value.one -Dkey.two=value.two"
+   *
+   * @param configMap
+   * @return
+   */
+  def javaOptsStringFromConfigMap(configMap: Map[String, String]): String = {
+    configMap
+      .map { case (key, value) => s"-D$key=$value" } // java opts looks like this -Dval.name=val.value
+      .mkString(" ")
   }
 }
