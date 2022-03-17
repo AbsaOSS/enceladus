@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.common
 
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.mockito.Mockito
@@ -34,9 +35,11 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
     def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {
       prepareJob()
     }
+
     override protected def validatePaths(pathConfig: PathConfig): Unit = {}
-    override def repartitionDataFrame(df:  DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
-                                               (implicit spark: SparkSession): DataFrame =
+
+    override def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                     (implicit spark: SparkSession): DataFrame =
       super.repartitionDataFrame(df, minBlockSize, maxBlockSize)
   }
 
@@ -72,6 +75,31 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
     val commonJob = new CommonJobExecutionTest
     val result = commonJob.repartitionDataFrame(df, Option(1), Option(2))
     result shouldBe df
+  }
+
+  "prepareSecureKafkaExecutorEnvironmentOptions" should "pass stripped secure options to SparkConf" in {
+    val driverEnvMap = Map(
+      "java.security.auth.login.config" -> "path/to/jaas.config",
+      "javax.net.ssl.keyStore" -> "/path/to/my-keystore.jks",
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1",
+      "javax.net.ssl.trustStore" -> "/path/to/my-truststore.jks",
+      "javax.net.ssl.trustStorePassword" -> "tsPassword1"
+    )
+
+    val jobExecution = new CommonJobExecution {
+      override protected def validatePaths(pathConfig: PathConfig): Unit = {}
+    }
+
+    // expecting:
+    //  - all keys prefixed by "spark.executorEnv."
+    //  - path prefix stripped for non-passwords
+    jobExecution.prepareSecureKafkaExecutorEnvironmentOptions(driverEnvMap).getAll.toMap shouldBe Map(
+      "spark.executorEnv.java.security.auth.login.config" -> "jaas.config",
+      "spark.executorEnv.javax.net.ssl.keyStore" -> "my-keystore.jks",
+      "spark.executorEnv.javax.net.ssl.keyStorePassword" -> "ksPassword1",
+      "spark.executorEnv.javax.net.ssl.trustStore" -> "my-truststore.jks",
+      "spark.executorEnv.javax.net.ssl.trustStorePassword" -> "tsPassword1"
+    )
   }
 
 }

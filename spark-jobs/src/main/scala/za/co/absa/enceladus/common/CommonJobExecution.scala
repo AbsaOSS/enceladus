@@ -19,7 +19,7 @@ import java.text.MessageFormat
 import java.time.Instant
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.SPARK_VERSION
+import org.apache.spark.{SPARK_VERSION, SparkConf}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
@@ -60,22 +60,45 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
+  protected var secureConfig: Map[String, String] = Map.empty
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
+
+    val sparkConf4SecureKafka = prepareSecureKafkaExecutorEnvironmentOptions(secureConfig)
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
+      .config(sparkConf4SecureKafka)
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
   }
 
+  def prepareSecureKafkaExecutorEnvironmentOptions(secureConfig: Map[String, String]): SparkConf = {
+    if (secureConfig.isEmpty) {
+      log.warn(s"Kafka secure config is empty!")
+    }
+
+    def stripLeadingPath(fullFileName: String): String = fullFileName.split('/').last
+    import SecureConfig.Keys._
+    val strippedSecuredConfig = secureConfig.map {
+      case (key, value) if Seq(javaxNetSslTrustStore, javaxNetSslKeyStore, javaSecurityAuthLoginConfig).contains(key) =>
+        (key, stripLeadingPath(value)) // e.g. /path/to/my-keystore.jks => my-keystore.jsk
+      case other => other
+    }
+
+    // prefix `spark.executorEnv.` causes values to be registered as env properties on executors
+    val executorSecureConf = strippedSecuredConfig.map { case (key, value) => ("spark.executorEnv." + key, value) }
+    new SparkConf().setAll(executorSecureConf)
+  }
+
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(configReader.config)
+    val secConf = SecureConfig.setSecureKafkaProperties(configReader.config)
+    secureConfig = secConf
   }
 
   protected def prepareJob[T]()

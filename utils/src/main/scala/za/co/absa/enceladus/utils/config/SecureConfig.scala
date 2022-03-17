@@ -36,10 +36,11 @@ object SecureConfig {
    * This is needed to be executed at least once to initialize secure Kafka when running from Spark.
    *
    * @param conf A configuration.
+   * @return configuration to be set
    */
-  def setSecureKafkaProperties(conf: Config): Unit = {
-    setTrustStoreProperties(conf)
-    setKeyStoreProperties(conf)
+  def setSecureKafkaProperties(conf: Config): Map[String, String] = {
+    setTrustStoreProperties(conf) ++
+    setKeyStoreProperties(conf) ++
     ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaSecurityAuthLoginConfig)
   }
 
@@ -47,9 +48,10 @@ object SecureConfig {
    * Sets `javax.net.ssl.trustStore` and `javax.net.ssl.trustStorePassword` system properties from the same-name values
    * in the `conf`
    * @param conf config to lookup values form
+   * @return configuration to be set
    */
-  def setTrustStoreProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslTrustStore)
+  def setTrustStoreProperties(conf: Config): Map[String, String] = {
+    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslTrustStore) ++
     ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslTrustStorePassword)
   }
 
@@ -62,9 +64,10 @@ object SecureConfig {
    * Sets `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties from the same-name values
    * in the `conf`
    * @param conf config to lookup values form
+   * @return configuration to be set
    */
-  def setKeyStoreProperties(conf: Config): Unit = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslKeyStore)
+  def setKeyStoreProperties(conf: Config): Map[String, String] = {
+    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslKeyStore) ++
     ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslKeyStorePassword)
   }
 

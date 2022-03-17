@@ -29,10 +29,17 @@ object ConfigUtils {
    *
    * @param conf  A configuration.
    * @param key   Configuration key.
+   * @return configuration to be set
    */
-  def setSystemPropertyStringFallback(conf: Config, key: String): Unit = {
-    if (System.getProperty(key) == null && conf.hasPath(key)) {
-      System.setProperty(key, conf.getString(key))
+  def setSystemPropertyStringFallback(conf: Config, key: String): Map[String, String] = {
+    if (conf.hasPath(key)) {
+      val value = conf.getString(key)
+      if (System.getProperty(key) == null) {
+        System.setProperty(key, value)
+      }
+      Map(key -> value)
+    } else {
+      Map.empty
     }
   }
 
@@ -47,23 +54,32 @@ object ConfigUtils {
    *
    * @param conf  A configuration.
    * @param key   Configuration key.
+   * @return configuration to be set
    */
-  def setSystemPropertyFileFallback(conf: Config, key: String): Unit = {
-    if (System.getProperty(key) == null && conf.hasPath(key)) {
-      val pathFileName = conf.getString(key)
-      if (Files.exists(Paths.get(pathFileName))) {
-        log.info(s"File exists: $pathFileName")
-        System.setProperty(key, pathFileName)
-      } else {
-        log.info(s"File does not exist: $pathFileName")
-        val fileNameInCurDir = Paths.get(pathFileName).getFileName
-        if (Files.exists(fileNameInCurDir)) {
-          log.info(s"File exists: ${fileNameInCurDir.toString} (in the current directory, not in $pathFileName)")
-          System.setProperty(key, fileNameInCurDir.toString)
+  def setSystemPropertyFileFallback(conf: Config, key: String): Map[String, String] = {
+    if (conf.hasPath(key)) {
+
+        val pathFileName = conf.getString(key)
+        if (Files.exists(Paths.get(pathFileName))) {
+          log.info(s"File exists: $pathFileName")
+          if (System.getProperty(key) == null) {
+            System.setProperty(key, pathFileName)
+          }
         } else {
-          log.error(s"File does not exist: $pathFileName (nor ${fileNameInCurDir.toString} in the current directory)")
+          log.info(s"File does not exist: $pathFileName")
+          val fileNameInCurDir = Paths.get(pathFileName).getFileName
+          if (Files.exists(fileNameInCurDir)) {
+            log.info(s"File exists: ${fileNameInCurDir.toString} (in the current directory, not in $pathFileName)")
+            if (System.getProperty(key) == null) {
+              System.setProperty(key, fileNameInCurDir.toString)
+            }
+          } else {
+            log.error(s"File does not exist: $pathFileName (nor ${fileNameInCurDir.toString} in the current directory)")
+          }
         }
-      }
+      Map(key -> pathFileName)
+    } else {
+      Map.empty
     }
   }
 
