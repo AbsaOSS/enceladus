@@ -33,19 +33,20 @@ import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
 import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import StandardizationParquetSuite._
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import org.apache.spark.sql.functions.{col, to_timestamp}
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
-class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer  {
+class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture
+  with MockitoSugar with DatasetComparer {
   type FixtureParam = String
 
 
   import spark.implicits._
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
@@ -437,5 +438,4 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
 
 object StandardizationParquetSuite {
   private case class FooClass(bar: Boolean)
-
 }

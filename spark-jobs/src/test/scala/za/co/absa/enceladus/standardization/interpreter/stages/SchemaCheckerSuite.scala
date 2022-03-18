@@ -18,9 +18,9 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class SchemaCheckerSuite extends AnyFunSuite with SparkTestBase {
+class SchemaCheckerSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
   test("Bug") {
     val sourceFile = FileReader.readFileAsString("src/test/resources/data/bug.json")
     val schema = DataType.fromJson(sourceFile).asInstanceOf[StructType]
