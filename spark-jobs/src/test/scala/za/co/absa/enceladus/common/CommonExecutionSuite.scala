@@ -88,22 +88,4 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
       "-Djavax.net.ssl.keyStore=/path/to/my-keystore.jks -Djavax.net.ssl.keyStorePassword=ksPassword1 -DsomethingElse=whatever"
   }
 
-  "prepareSecureKafkaExecutorEnvironmentOptions" should "strip secure paths prefixes" in {
-    val driverEnvMap = Map(
-      "java.security.auth.login.config" -> "path/to/jaas.config",
-      "javax.net.ssl.keyStore" -> "/path/to/my-keystore.jks",
-      "javax.net.ssl.keyStorePassword" -> "ksPassword1",
-      "javax.net.ssl.trustStore" -> "/path/to/my-truststore.jks",
-      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes"
-    )
-    // expecting path prefix stripped for non-passwords
-    CommonJobExecution.stripSecureJavaPrefixPaths(driverEnvMap) shouldBe Map(
-      "java.security.auth.login.config" -> "jaas.config", // path stripped
-      "javax.net.ssl.keyStore" -> "my-keystore.jks", // path stripped
-      "javax.net.ssl.keyStorePassword" -> "ksPassword1", //untouched
-      "javax.net.ssl.trustStore" -> "my-truststore.jks", // path stripped
-      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes" //untouched
-    )
-  }
-
 }

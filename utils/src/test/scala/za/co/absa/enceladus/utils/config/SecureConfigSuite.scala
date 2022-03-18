@@ -45,4 +45,40 @@ class SecureConfigSuite extends AnyFlatSpec with Matchers {
     SecureConfig.getTrustStoreProperties(trustStoreNoPassConfig) shouldBe Some(StoreDef("/path/to/trustStore", None))
     SecureConfig.getTrustStoreProperties(trustStoreConfig) shouldBe Some(StoreDef("/path/to/trustStore", Some("tsPwd1")))
   }
+
+  it should "getSslProperties with checked-path usage" in {
+    val testConf = ConfigFactory.empty
+      .withAnyRefValue("java.security.auth.login.config", "src/test/resources/config/existingFile.ext")
+      .withAnyRefValue("javax.net.ssl.keyStore", "/non/existing/path/to/nonExistingFile.ext")
+      .withAnyRefValue("javax.net.ssl.keyStorePassword", "ksPassword1")
+      .withAnyRefValue("javax.net.ssl.trustStore", "/path/to/pom.xml") // file not on given path, but on current-dir
+      .withAnyRefValue("javax.net.ssl.trustStorePassword", "tsPassword1/with/slashes")
+
+    SecureConfig.getSslProperties(testConf) shouldBe Map(
+      "java.security.auth.login.config" -> "src/test/resources/config/existingFile.ext", // exists as defined
+      // path for does "javax.net.ssl.keyStore" not exits at all -> no record
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1", //untouched
+      "javax.net.ssl.trustStore" -> "pom.xml", // exists in current dir, so stripped
+      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes" //untouched
+    )
+  }
+
+  it should "getSslProperties with current-directory usage" in {
+    val testConf = ConfigFactory.empty
+      .withAnyRefValue("java.security.auth.login.config", "/path/to/jaas.config")
+      .withAnyRefValue("javax.net.ssl.keyStore", "/path/to/my-keystore.jks")
+      .withAnyRefValue("javax.net.ssl.keyStorePassword", "ksPassword1")
+      .withAnyRefValue("javax.net.ssl.trustStore", "/path/to/my-truststore.jks")
+      .withAnyRefValue("javax.net.ssl.trustStorePassword", "tsPassword1/with/slashes")
+
+    SecureConfig.getSslProperties(testConf, useCurrentDirectoryPaths = true) shouldBe Map(
+      // expecting path prefix stripped for non-passwords
+      "java.security.auth.login.config" -> "jaas.config", // path stripped
+      "javax.net.ssl.keyStore" -> "my-keystore.jks", // path stripped
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1", //untouched
+      "javax.net.ssl.trustStore" -> "my-truststore.jks", // path stripped
+      "javax.net.ssl.trustStorePassword" -> "tsPassword1/with/slashes" //untouched
+    )
+  }
+
 }

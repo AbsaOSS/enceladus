@@ -67,9 +67,12 @@ trait CommonJobExecution extends ProjectMetadata {
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
 
+    // ssl paths stripped paths for current directory usage (expecting files distributed via spark-submit's "--files"
+    val executorSecConfig = SecureConfig.getSslProperties(configReader.config, useCurrentDirectoryPaths = true)
+
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
-      .config("spark.executor.extraJavaOptions", CommonJobExecution.javaOptsStringFromConfigMap(CommonJobExecution.stripSecureJavaPrefixPaths(secureConfig)))
+      .config("spark.executor.extraJavaOptions", CommonJobExecution.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -78,8 +81,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    val secConf = SecureConfig.setSecureKafkaProperties(configReader.config)
-    secureConfig = secConf
+    val secConf = SecureConfig.getSslProperties(configReader.config)
+    SecureConfig.setSystemProperties(secConf)
   }
 
   protected def prepareJob[T]()
@@ -356,25 +359,6 @@ trait CommonJobExecution extends ProjectMetadata {
 }
 
 object CommonJobExecution {
-
-  /**
-   * Strips values of "java.security.auth.login.config", "javax.net.ssl.trustStore", and "javax.net.ssl.keyStore"
-   * to only contain file names without path prefix. Other fields are untouched
-   *
-   * @param secureConfig
-   * @return
-   */
-  def stripSecureJavaPrefixPaths(secureConfigMap: Map[String, String]): Map[String, String] = {
-    def stripLeadingPath(fullFileName: String): String = fullFileName.split('/').last
-
-    import SecureConfig.Keys._
-    secureConfigMap
-      .map {
-        case (key, value) if Seq(javaxNetSslTrustStore, javaxNetSslKeyStore, javaSecurityAuthLoginConfig).contains(key) =>
-          (key, stripLeadingPath(value)) // e.g. /path/to/my-keystore.jks => my-keystore.jsk
-        case other => other
-      }
-  }
 
   /**
    * will create java opts string e.g. "-Dkey.one=value.one -Dkey.two=value.two"

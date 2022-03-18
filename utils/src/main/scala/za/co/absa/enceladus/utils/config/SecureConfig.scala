@@ -29,51 +29,55 @@ object SecureConfig {
 
   case class StoreDef(path: String, password: Option[String])
 
+  def setSystemProperties(props: Map[String, String], overrideExisting: Boolean = false): Unit = {
+    props.foreach { case (key, value) =>
+      ConfigUtils.setSystemProperty(key, value, overrideExisting)
+    }
+  }
+
   /**
-   * Moves Kafka security configuration from the config to system properties
-   * if it is not defined there already (regarding trustStore, keyStore and auth login config).
+   * Reads SSL security configuration from the - trustStore, keyStore and auth login config
+   * (e.g. can be used for Secure Kafka connections)
    *
-   * This is needed to be executed at least once to initialize secure Kafka when running from Spark.
-   *
-   * @param conf A configuration.
-   * @return configuration to be set
+   * @param conf
+   * @return
    */
-  def setSecureKafkaProperties(conf: Config): Map[String, String] = {
-    setTrustStoreProperties(conf) ++
-    setKeyStoreProperties(conf) ++
-    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaSecurityAuthLoginConfig)
+  def getSslProperties(conf: Config, useCurrentDirectoryPaths: Boolean = false): Map[String, String] = {
+
+    // either use existing-checked files or directly stripped to current-directory files
+    def getConfigFilePath: (Config, String) => Option[(String, String)] =
+      if (useCurrentDirectoryPaths) getConfigKeyValueForStrippedFile else getConfigKeyValueForExistingFile
+
+    Map.empty ++
+      getConfigFilePath(conf, Keys.javaxNetSslTrustStore) ++ // all: Some(key -> value) or None
+      getConfigKeyValue(conf, Keys.javaxNetSslTrustStorePassword) ++
+      getConfigFilePath(conf, Keys.javaxNetSslKeyStore) ++
+      getConfigKeyValue(conf, Keys.javaxNetSslKeyStorePassword) ++
+      getConfigFilePath(conf, Keys.javaSecurityAuthLoginConfig)
+  }
+
+  private def getConfigKeyValue(conf: Config, key: String): Option[(String, String)] = {
+    conf.getOptionString(key).map(key -> _)
   }
 
   /**
-   * Sets `javax.net.ssl.trustStore` and `javax.net.ssl.trustStorePassword` system properties from the same-name values
-   * in the `conf`
-   * @param conf config to lookup values form
-   * @return configuration to be set
+   * Path of the file is checked and only if found, the key-value pair is defined
    */
-  def setTrustStoreProperties(conf: Config): Map[String, String] = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslTrustStore) ++
-    ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslTrustStorePassword)
-  }
-
-  def hasTrustStoreProperties(conf: Config): Boolean = {
-    conf.hasPath(Keys.javaxNetSslTrustStore) &&
-      conf.hasPath(Keys.javaxNetSslTrustStorePassword)
+  private def getConfigKeyValueForExistingFile(conf: Config, key: String): Option[(String, String)] = {
+    for {
+      tsPath <- conf.getOptionString(key)
+      tsExistingPath <- ConfigUtils.getExistingFilePathWithCurrentDirFallback(tsPath)
+    } yield (key -> tsExistingPath)
   }
 
   /**
-   * Sets `javax.net.ssl.keyStore` and `javax.net.ssl.keyStorePassword` system properties from the same-name values
-   * in the `conf`
-   * @param conf config to lookup values form
-   * @return configuration to be set
+   * Path of the file is not checked -> the path is stripped for current-directory usage (e.g. with --files)
    */
-  def setKeyStoreProperties(conf: Config): Map[String, String] = {
-    ConfigUtils.setSystemPropertyFileFallback(conf, Keys.javaxNetSslKeyStore) ++
-    ConfigUtils.setSystemPropertyStringFallback(conf, Keys.javaxNetSslKeyStorePassword)
-  }
-
-  def hasKeyStoreProperties(conf: Config): Boolean = {
-    conf.hasPath(Keys.javaxNetSslKeyStore) &&
-      conf.hasPath(Keys.javaxNetSslKeyStorePassword)
+  private def getConfigKeyValueForStrippedFile(conf: Config, key: String): Option[(String, String)] = {
+    for {
+      tsPath <- conf.getOptionString(key)
+      strippedPath = tsPath.split('/').last
+    } yield (key -> strippedPath)
   }
 
   /** Common logic to retrieve any store path with its optional password */
@@ -88,6 +92,7 @@ object SecureConfig {
   /**
    * Will yield optional KeyStore definition from `conf` from `Keys.javaxNetSslKeyStore` and
    * `Keys.javaxNetSslKeyStorePassword` (password is optional)
+   *
    * @param conf config
    * @return Defined KeyStore definition if `Keys.javaxNetSslKeyStore` exists
    */
@@ -97,6 +102,7 @@ object SecureConfig {
   /**
    * Will yield optional TrustStore definition from `conf` from `Keys.javaxNetSslTrustStore` and
    * `Keys.javaxNetSslTrustStorePassword` (password is optional)
+   *
    * @param conf config
    * @return Defined TrustStore definition if `Keys.javaxNetSslKeyStore` exists
    */
