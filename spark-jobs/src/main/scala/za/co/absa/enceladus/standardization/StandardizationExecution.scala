@@ -17,11 +17,13 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
@@ -36,7 +38,7 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -149,8 +151,8 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
                               (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
     //scalastyle:on parameter.number
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(conf)
-    val errColNullability = ErrorColNormalization.getErrorColNullabilityFromConfig(conf)
+    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
+    val errColNullability = ErrorColNormalization.getErrorColNullabilityFromConfig(configReader.config)
 
     try {
       handleControlInfoValidation()

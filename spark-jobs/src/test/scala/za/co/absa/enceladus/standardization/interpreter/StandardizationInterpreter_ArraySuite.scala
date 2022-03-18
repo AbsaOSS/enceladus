@@ -24,14 +24,15 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.common.error.ErrorMessageFactory
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
-import za.co.absa.enceladus.utils.general.JsonUtils
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.spark.commons.utils.JsonUtils
 
-class StandardizationInterpreter_ArraySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers with DatasetComparer {
+class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase
+  with Matchers with DatasetComparer {
   import spark.implicits._
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary

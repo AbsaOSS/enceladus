@@ -16,14 +16,17 @@
 package za.co.absa.enceladus.utils.schema
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
 
-class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with DatasetComparer {
+class SparkUtilsSuite extends AnyFunSuite with TZNormalizedSparkTestBase with DatasetComparer {
+
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private def getDummyDataFrame: DataFrame = {
     import spark.implicits._
@@ -45,9 +48,11 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with DatasetCompare
     assert(spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf) == expected2)
   }
 
-  test("Test withColumnIfNotExist() when the column does not exist") {
+  private val colExpression: Column = lit(1)
+  test("Test withColumnOverwriteIfExists() when the column does not exist") {
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "foo", lit(1))
+
+    val dfOut = dfIn.withColumnOverwriteIfExists("foo", colExpression)
 
     // checking schema first
     assert(dfOut.schema.length == 2)
@@ -65,9 +70,9 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with DatasetCompare
     assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
-  test("Test withColumnIfNotExist() when the column exists") {
+  test("Test withColumnOverwriteIfExists() when the column exists") {
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "value", lit(1))
+    val dfOut = dfIn.withColumnOverwriteIfExists("value", colExpression)
 
     // checking schema first
     assert(dfIn.schema.length == 1)
@@ -86,9 +91,9 @@ class SparkUtilsSuite extends AnyFunSuite with SparkTestBase with DatasetCompare
     assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
-  test("Test withColumnIfNotExist() when the column exists, but has a different case") {
+  test("Test withColumnOverwriteIfExists() when the column exists, but has a different case") {
     val dfIn = getDummyDataFrame
-    val dfOut = SparkUtils.withColumnIfDoesNotExist(dfIn, "vAlUe", lit(1))
+    val dfOut = dfIn.withColumnOverwriteIfExists("vAlUe", colExpression)
 
     // checking schema first
     assert(dfIn.schema.length == 1)
