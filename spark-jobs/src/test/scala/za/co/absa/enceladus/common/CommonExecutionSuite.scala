@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.common
 
 import org.apache.spark.sql.types.{StringType, StructType}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.mockito.Mockito
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
@@ -25,11 +24,11 @@ import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.spark.commons.test.SparkTestBase
 import za.co.absa.spark.partition.sizing.DataFramePartitioner.DataFrameFunctions
 
-class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
+class CommonExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with MockitoSugar {
 
   private class CommonJobExecutionTest extends CommonJobExecution {
     def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {

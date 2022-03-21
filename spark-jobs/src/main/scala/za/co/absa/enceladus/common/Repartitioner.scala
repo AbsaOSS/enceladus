@@ -34,38 +34,46 @@ class Repartitioner(configReader: ConfigReader) {
     val maybeString = configReader.getStringOption(CommonConfConstants.partitionStrategy)
     maybeString match {
       case Some("plan") => df.repartitionByPlanSize(minPartition, maxPartition)
-      case Some("recordCount") => {
-        val maybeInt = configReader.getLongOption(CommonConfConstants.maxRecordsPerPartitionKey)
-        maybeInt match {
-          case None => df
-          case Some(x) => df.repartitionByRecordCount(x)
-        }
-      }
-      case Some("schema") => {
-        val sizer = new FromSchemaSizer()
-        df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
-      }
-      case Some("dataframe") => {
-        val sizer = new FromDataframeSizer()
-        df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
-      }
-      case Some("sample") => {
-
-        val maybeInt = configReader.getIntOption(CommonConfConstants.partitionSampleSizeKey)
-        maybeInt match {
-          case None => df
-          case Some(x) => {
-            val sizer = new FromDataframeSampleSizer(x)
-            df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
-          }
-        }
-      }
-      case Some("schemaSummaries") => {
-        val sizer = new FromSchemaWithSummariesSizer()
-        df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
-      }
+      case Some("recordCount") => repartitionByRecordCount(df)
+      case Some("schema") => repartitionBySchema(df)
+      case Some("dataframe") => repartitionByDf(df)
+      case Some("sample") => repartitionBySample(df)
+      case Some("schemaSummaries") => repartitionBySchemaWithSummaries(df)
       case _ => df
     }
   }
 
+  private def repartitionBySchemaWithSummaries(df: DataFrame): DataFrame = {
+    val sizer = new FromSchemaWithSummariesSizer()
+    df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
+  }
+
+  private def repartitionBySample(df: DataFrame): DataFrame = {
+    val maybeInt = configReader.getIntOption(CommonConfConstants.partitionSampleSizeKey)
+    maybeInt match {
+      case None => df
+      case Some(x) => {
+        val sizer = new FromDataframeSampleSizer(x)
+        df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
+      }
+    }
+  }
+
+  private def repartitionByDf(df: DataFrame): DataFrame = {
+    val sizer = new FromDataframeSizer()
+    df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
+  }
+
+  private def repartitionBySchema(df: DataFrame): DataFrame = {
+    val sizer = new FromSchemaSizer()
+    df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
+  }
+
+  private def repartitionByRecordCount(df: DataFrame): DataFrame = {
+    val maybeInt = configReader.getLongOption(CommonConfConstants.maxRecordsPerPartitionKey)
+    maybeInt match {
+      case None => df
+      case Some(x) => df.repartitionByRecordCount(x)
+    }
+  }
 }
