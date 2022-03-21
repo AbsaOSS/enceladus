@@ -253,4 +253,6 @@ abstract class BaseRestApiTest(apiPath: String) extends BaseRepositoryTest {
     assert(responseEntity.getStatusCode == HttpStatus.CREATED)
   }
 
+  def stripBaseUrl(fullUrl: String): String = fullUrl.stripPrefix(baseUrl)
+
 }

@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.integration.controllers.v3
 
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -33,10 +34,12 @@ import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTest, BaseRestApiTestV3, toExpected}
 
+import scala.collection.JavaConverters._
+
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAndAfterAll {
+class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAndAfterAll with Matchers {
 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
@@ -49,6 +52,33 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture)
 
+
+  s"GET $apiUrl/{name}" should {
+    "return 200" when {
+      "a Dataset with the given name exists - so it gives versions" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
+          version = 2,
+          parent = Some(DatasetFactory.toParent(datasetV1)))
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[VersionsList](s"$apiUrl/datasetA")
+        assertOk(response)
+        assert(response.getBody == VersionsList("versions", Seq(1, 2)))
+      }
+    }
+
+    "return 404" when {
+      "a Dataset with the given name does not exist" in {
+        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(dataset)
+
+        val response = sendGet[String](s"$apiUrl/anotherDatasetName")
+        assertNotFound(response)
+      }
+    }
+  }
+
   s"POST $apiUrl" can {
     "return 201" when {
       "a Dataset is created" should {
@@ -58,12 +88,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
           val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
           assertCreated(response)
+          val locationHeaders = response.getHeaders.get("location").asScala
+          locationHeaders should have size 1
+          val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
 
-          val actual = response.getBody
+          val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
+          assertOk(response2)
+
+          val actual = response2.getBody
           val expected = toExpected(dataset, actual).copy(properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))) // keyC stripped
-          assert(actual == expected)
 
-          // todo change this with location header
+          assert(actual == expected)
         }
       }
     }
@@ -75,10 +110,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
         val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset3))
+        assertCreated(response)
+        val locationHeaders = response.getHeaders.get("location").asScala
+        locationHeaders should have size 1
+        val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
 
-        // todo change this with location header
-        val actual = response.getBody
+        val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
+        assertOk(response2)
+
+        val actual = response2.getBody
         val expected = toExpected(dataset3.copy(version = 3, parent = Some(DatasetFactory.toParent(dataset2))), actual)
+
         assert(actual == expected)
       }
     }
@@ -140,31 +182,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  s"GET $apiUrl/{name}" should {
-    "return 200" when {
-      "a Dataset with the given name exists - so it gives versions" in {
-        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
-          version = 2,
-          parent = Some(DatasetFactory.toParent(datasetV1)))
-        datasetFixture.add(datasetV1, datasetV2)
 
-        val response = sendGet[VersionsList](s"$apiUrl/datasetA")
-        assertOk(response)
-        assert(response.getBody == VersionsList("versions", Seq(1, 2)))
-      }
-    }
-
-    "return 404" when {
-      "a Dataset with the given name does not exist" in {
-        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        datasetFixture.add(dataset)
-
-        val response = sendGet[String](s"$apiUrl/anotherDatasetName")
-        assertNotFound(response)
-      }
-    }
-  }
 
   s"GET $apiUrl/{name}/{version}/export" should {
     "return 404" when {

@@ -16,10 +16,11 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import com.mongodb.client.result.UpdateResult
-import org.springframework.http.HttpStatus
+import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
@@ -27,8 +28,10 @@ import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
+import java.net.URI
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import javax.servlet.http.HttpServletRequest
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelService[C]) extends BaseController {
@@ -111,7 +114,9 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
+  def create(@AuthenticationPrincipal principal: UserDetails,
+             @RequestBody item: C,
+             request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
     versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
       if (isDisabled) {
         versionedModelService.recreate(principal.getUsername, item)
@@ -119,8 +124,15 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         versionedModelService.create(item, principal.getUsername)
       }
     }.map {
-      case Some(entity) => entity // todo redo to have header Location present
-      case None         => throw notFound()
+      case Some(entity) =>
+        val location: URI = ServletUriComponentsBuilder
+          .fromRequest(request)
+          .path("/{name}/{version}")
+          .buildAndExpand(entity.name, entity.version.toString)
+          .toUri() // will create location e.g. /api/dataset/MyExampleDataset/1
+
+        ResponseEntity.created(location).build()
+      case None => throw notFound()
     }
   }
 
@@ -129,7 +141,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
-      case Some(entity) => entity // todo change not to return conent
+      case Some(entity) => entity // todo change not to return content
       case None         => throw notFound()
     }
   }
