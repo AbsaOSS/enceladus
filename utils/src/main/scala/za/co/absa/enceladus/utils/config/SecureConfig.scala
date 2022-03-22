@@ -109,4 +109,16 @@ object SecureConfig {
   def getTrustStoreProperties(conf: Config): Option[StoreDef] =
     getStoreProperties(conf, Keys.javaxNetSslTrustStore, Keys.javaxNetSslTrustStorePassword)
 
+  /**
+   * will create java opts string e.g. "-Dkey.one=value.one -Dkey.two=value.two"
+   *
+   * @param configMap
+   * @return
+   */
+  def javaOptsStringFromConfigMap(configMap: Map[String, String]): String = {
+    configMap
+      .map { case (key, value) => s"-D$key=$value" } // java opts looks like this -Dval.name=val.value
+      .mkString(" ")
+  }
+
 }

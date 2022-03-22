@@ -72,7 +72,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
-      .config("spark.executor.extraJavaOptions", CommonJobExecution.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
+      .config("spark.executor.extraJavaOptions", SecureConfig.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -355,20 +355,5 @@ trait CommonJobExecution extends ProjectMetadata {
         log.warn(" -> It may not work as desired when there are gaps in the versions of the data being landed.")
         newVersion
     }
-  }
-}
-
-object CommonJobExecution {
-
-  /**
-   * will create java opts string e.g. "-Dkey.one=value.one -Dkey.two=value.two"
-   *
-   * @param configMap
-   * @return
-   */
-  def javaOptsStringFromConfigMap(configMap: Map[String, String]): String = {
-    configMap
-      .map { case (key, value) => s"-D$key=$value" } // java opts looks like this -Dval.name=val.value
-      .mkString(" ")
   }
 }

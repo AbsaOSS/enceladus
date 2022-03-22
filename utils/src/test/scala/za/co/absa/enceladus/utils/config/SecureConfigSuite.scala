@@ -81,4 +81,15 @@ class SecureConfigSuite extends AnyFlatSpec with Matchers {
     )
   }
 
+  "it" should "javaOptsStringFromConfigMap to convert config map to -Dx=y string" in {
+    val driverEnvMap = Map(
+      "javax.net.ssl.keyStore" -> "/path/to/my-keystore.jks",
+      "javax.net.ssl.keyStorePassword" -> "ksPassword1",
+      "somethingElse" -> "whatever"
+    )
+
+    SecureConfig.javaOptsStringFromConfigMap(driverEnvMap) shouldBe
+      "-Djavax.net.ssl.keyStore=/path/to/my-keystore.jks -Djavax.net.ssl.keyStorePassword=ksPassword1 -DsomethingElse=whatever"
+  }
+
 }
