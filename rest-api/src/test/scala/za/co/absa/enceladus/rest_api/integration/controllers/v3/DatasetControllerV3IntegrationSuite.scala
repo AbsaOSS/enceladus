@@ -23,7 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.conformanceRule.{LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
@@ -179,6 +179,45 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
+    s"GET $apiUrl/{name}/export" should {
+      "return 404" when {
+        "when the name does not exist" in {
+          val response = sendGet[String](s"$apiUrl/notFoundDataset/export")
+          assertNotFound(response)
+        }
+      }
+
+      "return 200" when {
+        "there is a correct Dataset" should {
+          "return the exported Dataset representation for the latest version" in {
+            val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
+            val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
+              properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
+              conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
+            )
+            datasetFixture.add(dataset1, dataset2)
+            val response = sendGet[String](s"$apiUrl/dataset/export")
+
+            assertOk(response)
+
+            val body = response.getBody
+            assert(body ==
+              """{"metadata":{"exportVersion":1},"item":{
+                |"name":"dataset",
+                |"description":"Hi, I am the latest version",
+                |"hdfsPath":"/dummy/path",
+                |"hdfsPublishPath":"/dummy/publish/path",
+                |"schemaName":"dummySchema",
+                |"schemaVersion":1,
+                |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
+                |"properties":{"key2":"val2","key1":"val1"}
+                |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
+          }
+        }
+      }
+
+    }
+
     "return 405" when {
       "a Dataset with the given name and version" should {
         "fail when version/name in the URL and payload is mismatched" in {
@@ -210,9 +249,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "there is a correct Dataset version" should {
         "return the exported Dataset representation" in {
-          val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 2,
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2,
             properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
-          datasetFixture.add(dataset)
+          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset", version = 3, description = Some("showing non-latest export"))
+          datasetFixture.add(dataset2, dataset3)
           val response = sendGet[String](s"$apiUrl/dataset/2/export")
 
           assertOk(response)
