@@ -89,10 +89,11 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
           val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
           assertCreated(response)
-          val locationHeaders = response.getHeaders.get("location").asScala
-          locationHeaders should have size 1
-          val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
+          val locationHeader = response.getHeaders.get("location").asScala.headOption
+          locationHeader shouldBe defined
+          locationHeader.get should endWith("/api-v3/datasets/dummyDs/1")
 
+          val relativeLocation = stripBaseUrl(locationHeader.get) // because locationHeader contains domain, port, etc.
           val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
           assertOk(response2)
 
@@ -168,54 +169,21 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           )
 
           val response = sendPut[Dataset, String](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
-          response.getStatusCode shouldBe HttpStatus.NO_CONTENT
+          assertCreated(response)
+          val locationHeader = response.getHeaders.get("location").asScala.headOption
+          locationHeader shouldBe defined
+          locationHeader.get should endWith("/api-v3/datasets/datasetA/3")
 
-          val response2 = sendGet[Dataset](s"$apiUrl/datasetA/3") // next version
+          val relativeLocation = stripBaseUrl(locationHeader.get) // because locationHeader contains domain, port, etc.
+          val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
           assertOk(response2)
+
           val actual = response2.getBody
           val expected = toExpected(datasetA3.copy(version = 3, parent = Some(DatasetFactory.toParent(datasetA2)), properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))), actual) // blank property stripped
+
           assert(actual == expected)
         }
       }
-    }
-
-    s"GET $apiUrl/{name}/export" should {
-      "return 404" when {
-        "when the name does not exist" in {
-          val response = sendGet[String](s"$apiUrl/notFoundDataset/export")
-          assertNotFound(response)
-        }
-      }
-
-      "return 200" when {
-        "there is a correct Dataset" should {
-          "return the exported Dataset representation for the latest version" in {
-            val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
-            val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
-              properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
-              conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
-            )
-            datasetFixture.add(dataset1, dataset2)
-            val response = sendGet[String](s"$apiUrl/dataset/export")
-
-            assertOk(response)
-
-            val body = response.getBody
-            assert(body ==
-              """{"metadata":{"exportVersion":1},"item":{
-                |"name":"dataset",
-                |"description":"Hi, I am the latest version",
-                |"hdfsPath":"/dummy/path",
-                |"hdfsPublishPath":"/dummy/publish/path",
-                |"schemaName":"dummySchema",
-                |"schemaVersion":1,
-                |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
-                |"properties":{"key2":"val2","key1":"val1"}
-                |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
-          }
-        }
-      }
-
     }
 
     "return 405" when {
@@ -236,6 +204,100 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
+  }
+
+  s"GET $apiUrl/{name}/export" should {
+    "return 404" when {
+      "when the name does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/export")
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a correct Dataset" should {
+        "return the exported Dataset representation for the latest version" in {
+          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
+            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
+            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
+          )
+          datasetFixture.add(dataset1, dataset2)
+          val response = sendGet[String](s"$apiUrl/dataset/export")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body ==
+            """{"metadata":{"exportVersion":1},"item":{
+              |"name":"dataset",
+              |"description":"Hi, I am the latest version",
+              |"hdfsPath":"/dummy/path",
+              |"hdfsPublishPath":"/dummy/publish/path",
+              |"schemaName":"dummySchema",
+              |"schemaVersion":1,
+              |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
+              |"properties":{"key2":"val2","key1":"val1"}
+              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
+        }
+      }
+    }
+
+  }
+
+  s"POST $apiUrl/{name}/import" should {
+    val importableDs =
+      """{"metadata":{"exportVersion":1},"item":{
+        |"name":"datasetXYZ",
+        |"description":"Hi, I am the latest version",
+        |"hdfsPath":"/dummy/path",
+        |"hdfsPublishPath":"/dummy/publish/path",
+        |"schemaName":"dummySchema",
+        |"schemaVersion":1,
+        |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
+        |"properties":{"key2":"val2","key1":"val1"}
+        |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+
+    "return 405" when {
+      "a Dataset with the given name" should {
+        "fail when name in the URL and payload is mismatched" in {
+          val response = sendPost[String, String](s"$apiUrl/datasetABC/import",
+            bodyOpt = Some(importableDs))
+          response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+          response.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
+        }
+      }
+    }
+
+//    "return 201" when { // todo create+update
+//      "there is a correct Dataset" should {
+//        "return the exported Dataset representation for the latest version" in {
+//          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
+//          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
+//            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
+//            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
+//          )
+//          datasetFixture.add(dataset1, dataset2)
+//          val response = sendGet[String](s"$apiUrl/dataset/export")
+//
+//          assertOk(response)
+//
+//          val body = response.getBody
+//          assert(body ==
+//            """{"metadata":{"exportVersion":1},"item":{
+//              |"name":"dataset",
+//              |"description":"Hi, I am the latest version",
+//              |"hdfsPath":"/dummy/path",
+//              |"hdfsPublishPath":"/dummy/publish/path",
+//              |"schemaName":"dummySchema",
+//              |"schemaVersion":1,
+//              |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
+//              |"properties":{"key2":"val2","key1":"val1"}
+//              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
+//        }
+//      }
+//    }
+
   }
 
   s"GET $apiUrl/{name}/{version}/export" should {

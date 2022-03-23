@@ -105,11 +105,17 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @ResponseStatus(HttpStatus.CREATED)
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
-                         @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
-    // todo check that the name pathVar and object conform
-    versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
-      case Some(entity) => entity // todo redo to have header Location present
-      case None => throw notFound()
+                         @RequestBody importObject: ExportableObject[C],
+                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+    if (name != importObject.item.name) {
+      Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$name' != '${importObject.item.name}'"))
+    } else {
+      versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
+        case Some(entity) =>
+          // stripping two last segments, instead of /api-v3/dastasets/dsName/import + /dsName/dsVersion we want /api-v3/dastasets + /dsName/dsVersion
+          createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 2)
+        case None => throw notFound()
+      }
     }
   }
 
@@ -125,14 +131,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         versionedModelService.create(item, principal.getUsername)
       }
     }.map {
-      case Some(entity) =>
-        val location: URI = ServletUriComponentsBuilder
-          .fromRequest(request)
-          .path("/{name}/{version}")
-          .buildAndExpand(entity.name, entity.version.toString)
-          .toUri() // will create location e.g. /api/dataset/MyExampleDataset/1
-
-        ResponseEntity.created(location).build()
+      case Some(entity) => createdWithNameVersionLocation(entity.name, entity.version, request)
       case None => throw notFound()
     }
   }
@@ -142,7 +141,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def edit(@AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
-           @RequestBody item: C): CompletableFuture[ResponseEntity[Nothing]] = {
+           @RequestBody item: C,
+           request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
 
     if (name != item.name) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$name' != '${item.name}'"))
@@ -150,7 +150,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
       Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
     } else {
       versionedModelService.update(user.getUsername, item).map {
-        case Some(entity) => ResponseEntity.noContent().build()
+        case Some(entity) => createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 2)
         case None => throw notFound()
       }
     }
@@ -167,6 +167,19 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
       None
     }
     versionedModelService.disableVersion(name, v)
+  }
+
+  def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
+                                     stripLastSegments: Int = 0): ResponseEntity[Nothing] = {
+    val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
+
+    val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+        .path(s"$strippingPrefix/{name}/{version}")
+        .buildAndExpand(name, version.toString)
+        .normalize() // will normalize `/one/two/../three` into `/one/tree`
+        .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
+
+    ResponseEntity.created(location).build()
   }
 
 }
