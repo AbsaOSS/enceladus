@@ -20,6 +20,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
@@ -109,7 +110,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(dataset1, dataset2)
 
         val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
-        val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset3))
+        val response = sendPost[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
         assertCreated(response)
         val locationHeaders = response.getHeaders.get("location").asScala
         locationHeaders should have size 1
@@ -129,11 +130,14 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
   s"PUT $apiUrl" can {
     "return 200" when {
-      "a Schema with the given name and version is the latest that exists" should {
-        "return the updated Schema (with empty properties stripped)" in {
+      "a Dataset with the given name and version is the latest that exists" should {
+        "update the dataset (with empty properties stripped)" in {
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("init version"), properties = Some(Map("keyA" -> "valA")))
-          datasetFixture.add(datasetA1)
+          val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+            description = Some("second version"), properties = Some(Map("keyA" -> "valA")), version = 2)
+
+          datasetFixture.add(datasetA1, datasetA2)
 
           val exampleMappingCr = MappingConformanceRule(0,
             controlCheckpoint = true,
@@ -156,33 +160,44 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             overrideMappingTableOwnFilter = Some(true)
           )
 
-          val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+          val datasetA3 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("updated"),
             properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")),
-            conformance = List(exampleMappingCr)
+            conformance = List(exampleMappingCr),
+            version = 2 // update references the last version
           )
 
-          val response = sendPut[Dataset, Dataset](s"$apiUrl", bodyOpt = Some(datasetA2))
-          assertOk(response)
+          val response = sendPut[Dataset, String](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
+          response.getStatusCode shouldBe HttpStatus.NO_CONTENT
 
-          // todo should be ok/no content and then actually no content -> run get again
-          val actual = response.getBody
-          val expectedDs = DatasetFactory.getDummyDataset(
-              name = "datasetA",
-              version = 2,
-              description = Some("updated"),
-              parent = Some(DatasetFactory.toParent(datasetA1)),
-              properties = Some(Map("keyA" -> "valA", "keyB" -> "valB")),
-              conformance = List(exampleMappingCr)
-          )
-          val expected = toExpected(expectedDs, actual)
+          val response2 = sendGet[Dataset](s"$apiUrl/datasetA/3") // next version
+          assertOk(response2)
+          val actual = response2.getBody
+          val expected = toExpected(datasetA3.copy(version = 3, parent = Some(DatasetFactory.toParent(datasetA2)), properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))), actual) // blank property stripped
           assert(actual == expected)
         }
       }
     }
+
+    "return 405" when {
+      "a Dataset with the given name and version" should {
+        "fail when version/name in the URL and payload is mismatched" in {
+          val datasetA1 = DatasetFactory.getDummyDataset("datasetA", description = Some("init version"))
+          datasetFixture.add(datasetA1)
+
+          val response = sendPut[Dataset, String](s"$apiUrl/datasetA/7",
+            bodyOpt = Some(DatasetFactory.getDummyDataset("datasetA", version = 5)))
+          response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+          response.getBody should include("version mismatch: 7 != 5")
+
+          val response2 = sendPut[Dataset, String](s"$apiUrl/datasetABC/4",
+            bodyOpt = Some(DatasetFactory.getDummyDataset("datasetXYZ", version = 4)))
+          response2.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+          response2.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
+        }
+      }
+    }
   }
-
-
 
   s"GET $apiUrl/{name}/{version}/export" should {
     "return 404" when {

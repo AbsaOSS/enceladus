@@ -32,6 +32,7 @@ import java.net.URI
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
+import scala.concurrent.Future
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelService[C]) extends BaseController {
@@ -71,7 +72,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def getLatestDetail(@PathVariable name: String): CompletableFuture[C] = {
     versionedModelService.getLatestVersion(name).map {
       case Some(entity) => entity
-      case None         => throw NotFoundException()
+      case None => throw NotFoundException()
     }
   }
 
@@ -84,7 +85,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @GetMapping(Array("/{name}/{version}/used-in"))
   @ResponseStatus(HttpStatus.OK)
   def usedIn(@PathVariable name: String,
-      @PathVariable version: Int): CompletableFuture[UsedIn] = {
+             @PathVariable version: Int): CompletableFuture[UsedIn] = {
     versionedModelService.getUsedIn(name, Some(version))
   }
 
@@ -108,7 +109,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     // todo check that the name pathVar and object conform
     versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
       case Some(entity) => entity // todo redo to have header Location present
-      case None         => throw notFound()
+      case None => throw notFound()
     }
   }
 
@@ -136,20 +137,29 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     }
   }
 
-  @PutMapping(Array(""))
-  @ResponseStatus(HttpStatus.OK)
+  @PutMapping(Array("/{name}/{version}"))
+  @ResponseStatus(HttpStatus.NO_CONTENT)
   def edit(@AuthenticationPrincipal user: UserDetails,
-      @RequestBody item: C): CompletableFuture[C] = {
-    versionedModelService.update(user.getUsername, item).map {
-      case Some(entity) => entity // todo change not to return content
-      case None         => throw notFound()
+           @PathVariable name: String,
+           @PathVariable version: Int,
+           @RequestBody item: C): CompletableFuture[ResponseEntity[Nothing]] = {
+
+    if (name != item.name) {
+      Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$name' != '${item.name}'"))
+    } else if (version != item.version) {
+      Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
+    } else {
+      versionedModelService.update(user.getUsername, item).map {
+        case Some(entity) => ResponseEntity.noContent().build()
+        case None => throw notFound()
+      }
     }
   }
 
   @DeleteMapping(Array("/{name}", "/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def disable(@PathVariable name: String,
-      @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
+              @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
     val v = if (version.isPresent) {
       // For some reason Spring reads the Optional[Int] param as a Optional[String] and then throws ClassCastException
       Some(version.get.toInt)
