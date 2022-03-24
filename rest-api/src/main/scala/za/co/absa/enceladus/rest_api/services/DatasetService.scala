@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import DatasetService._
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future
@@ -93,7 +94,15 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    Future.successful(UsedIn())
+    val existingEntityF = version match {
+      case Some(version) => getVersion(name, version)
+      case None          => getLatestVersion(name)
+    }
+
+    existingEntityF.flatMap {
+      case Some(_) => Future.successful(UsedIn()) // empty usedIn for existing datasets
+      case None => Future.failed(NotFoundException(s"Dataset '$name' in version ${version.getOrElse("any")}' nof found"))
+    }
   }
 
   override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {

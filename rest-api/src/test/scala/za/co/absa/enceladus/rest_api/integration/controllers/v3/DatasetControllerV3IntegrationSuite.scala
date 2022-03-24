@@ -31,7 +31,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.VersionsList
-import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTest, BaseRestApiTestV3, toExpected}
 
@@ -466,7 +466,50 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
+  }
 
+  s"GET $apiUrl/{name}/{version}/export" should {
+    "return 404" when {
+      "when the dataset of latest version does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/latest/used-in")
+        assertNotFound(response)
+      }
+    }
+
+    "return 404" when {
+      "when the dataset of name/version does not exist" in {
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetA)
+
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/1/used-in")
+        assertNotFound(response)
+
+        val response2 = sendGet[String](s"$apiUrl/datasetA/7/used-in")
+        assertNotFound(response2)
+      }
+    }
+
+    "return 200" when {
+      "any exiting latest dataset" in {
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetA)
+        val response = sendGet[UsedIn](s"$apiUrl/datasetA/latest/used-in")
+        assertOk(response)
+
+        response.getBody shouldBe UsedIn(None, None)
+      }
+    }
+
+    "return 200" when {
+      "for existing name+version for dataset" in {
+        val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2)
+        datasetFixture.add(dataset2)
+        val response = sendGet[UsedIn](s"$apiUrl/dataset/2/used-in")
+
+        assertOk(response)
+        response.getBody shouldBe UsedIn(None, None)
+      }
+    }
   }
 
   // todo properties test for datasets or in general for any VersionedModel

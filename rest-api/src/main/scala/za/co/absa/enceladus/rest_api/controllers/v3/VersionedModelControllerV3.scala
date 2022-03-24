@@ -70,7 +70,6 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   }
 
 
-
   @GetMapping(Array("/{name}/audit-trail"))
   @ResponseStatus(HttpStatus.OK)
   def getAuditTrail(@PathVariable name: String): CompletableFuture[AuditTrail] = {
@@ -80,8 +79,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @GetMapping(Array("/{name}/{version}/used-in"))
   @ResponseStatus(HttpStatus.OK)
   def usedIn(@PathVariable name: String,
-             @PathVariable version: Int): CompletableFuture[UsedIn] = {
-    versionedModelService.getUsedIn(name, Some(version)) // todo use forVersionExpression, too
+             @PathVariable version: String): CompletableFuture[UsedIn] = {
+    forVersionExpression(name, version) { case (name, versionInt) => versionedModelService.getUsedIn(name, Some(versionInt)) }
   }
 
   @GetMapping(Array("/{name}/{version}/export"))
