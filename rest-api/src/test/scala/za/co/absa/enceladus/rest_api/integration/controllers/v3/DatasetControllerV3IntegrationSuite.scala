@@ -57,32 +57,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture)
 
 
-  s"GET $apiUrl/{name}" should {
-    "return 200" when {
-      "a Dataset with the given name exists - so it gives versions" in {
-        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
-          version = 2,
-          parent = Some(DatasetFactory.toParent(datasetV1)))
-        datasetFixture.add(datasetV1, datasetV2)
-
-        val response = sendGet[VersionsList](s"$apiUrl/datasetA")
-        assertOk(response)
-        assert(response.getBody == VersionsList("versions", Seq(1, 2)))
-      }
-    }
-
-    "return 404" when {
-      "a Dataset with the given name does not exist" in {
-        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        datasetFixture.add(dataset)
-
-        val response = sendGet[String](s"$apiUrl/anotherDatasetName")
-        assertNotFound(response)
-      }
-    }
-  }
-
   s"POST $apiUrl" can {
     "return 201" when {
       "a Dataset is created" should {
@@ -132,7 +106,94 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     // todo what to do if  "the last dataset version is disabled"
   }
 
-  s"PUT $apiUrl" can {
+  s"GET $apiUrl/{name}" should {
+    "return 200" when {
+      "a Dataset with the given name exists - so it gives versions" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
+          version = 2,
+          parent = Some(DatasetFactory.toParent(datasetV1)))
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[VersionsList](s"$apiUrl/datasetA")
+        assertOk(response)
+        assert(response.getBody == VersionsList("versions", Seq(1, 2)))
+      }
+    }
+
+    "return 404" when {
+      "a Dataset with the given name does not exist" in {
+        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(dataset)
+
+        val response = sendGet[String](s"$apiUrl/anotherDatasetName")
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/latest" should {
+    "return 200" when {
+      "a Dataset with the given name exists - gives latest version entity" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
+          version = 2, parent = Some(DatasetFactory.toParent(datasetV1)))
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[Dataset](s"$apiUrl/datasetA/latest")
+        assertOk(response)
+
+        val actual = response.getBody
+        val expected = toExpected(datasetV2, actual)
+
+        assert(actual == expected)
+      }
+    }
+
+    "return 404" when {
+      "a Dataset with the given name does not exist" in {
+        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(dataset)
+
+        val response = sendGet[String](s"$apiUrl/anotherDatasetName/latest")
+        assertNotFound(response)
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/{version}" should {
+    "return 200" when {
+      "a Dataset with the given name and version exists - gives specified version of entity" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, description = Some("second"))
+        val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3, description = Some("third"))
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[Dataset](s"$apiUrl/datasetA/2")
+        assertOk(response)
+
+        val actual = response.getBody
+        val expected = toExpected(datasetV2, actual)
+
+        assert(actual == expected)
+      }
+    }
+
+    "return 404" when {
+      "a Dataset with the given name/version does not exist" in {
+        val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(dataset)
+
+        val response = sendGet[String](s"$apiUrl/anotherDatasetName/1")
+        assertNotFound(response)
+
+        val response2 = sendGet[String](s"$apiUrl/datasetA/7")
+        assertNotFound(response2)
+      }
+    }
+  }
+
+  s"PUT $apiUrl/{name}/{version}" can {
     "return 200" when {
       "a Dataset with the given name and version is the latest that exists" should {
         "update the dataset (with empty properties stripped)" in {
