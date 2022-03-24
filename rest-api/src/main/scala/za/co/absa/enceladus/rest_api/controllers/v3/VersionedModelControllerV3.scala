@@ -25,6 +25,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
+import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
@@ -33,6 +34,7 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelService[C]) extends BaseController {
@@ -60,19 +62,27 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @GetMapping(Array("/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   def getVersionDetail(@PathVariable name: String,
-                       @PathVariable version: Int): CompletableFuture[C] = {
-    versionedModelService.getVersion(name, version).map {
+                       @PathVariable version: String): CompletableFuture[C] = {
+    forVersionExpression(version) { actualVersion: Int =>
+      versionedModelService.getVersion(name, actualVersion)
+    }(versionedModelService.getLatestVersion(name)).map {
       case Some(entity) => entity
       case None => throw notFound()
     }
   }
 
-  @GetMapping(Array("/{name}/latest"))
-  @ResponseStatus(HttpStatus.OK)
-  def getLatestDetail(@PathVariable name: String): CompletableFuture[C] = {
-    versionedModelService.getLatestVersion(name).map {
-      case Some(entity) => entity
-      case None => throw NotFoundException()
+  protected def forVersionExpression(versionStr: String)
+                                    (doForNumberedVersion: Int => Future[Option[C]])
+                                    (doForLatest: Future[Option[C]]): Future[Option[C]] = {
+    if (versionStr.toLowerCase == LatestVersionKey) {
+      doForLatest
+    } else {
+      Try(versionStr.toInt) match {
+        case Success(actualVersion) => doForNumberedVersion(actualVersion)
+        case Failure(exception) =>
+          Future.failed(new IllegalArgumentException(s"Cannot convert '$versionStr' to a valid version expression. " +
+            s"Either use 'latest' or an actual version number. Underlying problem: ${exception.getMessage}"))
+      }
     }
   }
 
@@ -170,18 +180,22 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   }
 
   protected def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
-                                     stripLastSegments: Int = 0): ResponseEntity[Nothing] = {
+                                               stripLastSegments: Int = 0): ResponseEntity[Nothing] = {
     val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
 
     val location: URI = ServletUriComponentsBuilder.fromRequest(request)
-        .path(s"$strippingPrefix/{name}/{version}")
-        .buildAndExpand(name, version.toString)
-        .normalize() // will normalize `/one/two/../three` into `/one/tree`
-        .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
+      .path(s"$strippingPrefix/{name}/{version}")
+      .buildAndExpand(name, version.toString)
+      .normalize() // will normalize `/one/two/../three` into `/one/tree`
+      .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
 
     // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
 
     ResponseEntity.created(location).build()
   }
 
+}
+
+object VersionedModelControllerV3 {
+  val LatestVersionKey = "latest"
 }
