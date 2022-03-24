@@ -270,6 +270,49 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
+  s"GET $apiUrl/{name}/audit-trail" should {
+    "return 404" when {
+      "when the name does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/audit-trail")
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a correct Dataset" should {
+        "return an audit trail for the dataset" in {
+          val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA")
+          val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
+            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")),
+            parent = Some(DatasetFactory.toParent(dataset1))
+          )
+          val dataset3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
+            properties = Some(Map("key1" -> "val1")),
+            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")), // untouched
+            parent = Some(DatasetFactory.toParent(dataset2))
+          )
+
+          datasetFixture.add(dataset1, dataset2)
+          val response = sendGet[String](s"$apiUrl/datasetA/audit-trail")
+
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body ==
+            """{"entries":[{
+              |"menasRef":{"collection":null,"name":"datasetA","version":2},
+              |"updatedBy":"dummyUser","updated":"2017-12-04T16:19:17Z",
+              |"changes":[{"field":"conformance","oldValue":null,"newValue":"LiteralConformanceRule(0,outputCol1,false,litValue1)","message":"Conformance rule added."}]
+              |},{
+              |"menasRef":{"collection":null,"name":"datasetA","version":1},
+              |"updatedBy":"dummyUser","updated":"2017-12-04T16:19:17Z",
+              |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"Dataset datasetA created."}]
+              |}]}""".stripMargin.replaceAll("[\\r\\n]", ""))
+        }
+      }
+    }
+  }
+
   s"GET $apiUrl/{name}/export" should {
     "return 404" when {
       "when the name does not exist" in {
