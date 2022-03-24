@@ -29,7 +29,7 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.VersionsList
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
@@ -46,12 +46,15 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   private val datasetFixture: DatasetFixtureService = null
 
   @Autowired
+  private val schemaFixture: SchemaFixtureService = null
+
+  @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
 
   private val apiUrl = "/datasets"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture)
+  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture)
 
 
   s"GET $apiUrl/{name}" should {
@@ -249,7 +252,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     val importableDs =
       """{"metadata":{"exportVersion":1},"item":{
         |"name":"datasetXYZ",
-        |"description":"Hi, I am the latest version",
+        |"description":"Hi, I am the import",
         |"hdfsPath":"/dummy/path",
         |"hdfsPublishPath":"/dummy/publish/path",
         |"schemaName":"dummySchema",
@@ -269,34 +272,60 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
-//    "return 201" when { // todo create+update
-//      "there is a correct Dataset" should {
-//        "return the exported Dataset representation for the latest version" in {
-//          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
-//          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
-//            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
-//            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
-//          )
-//          datasetFixture.add(dataset1, dataset2)
-//          val response = sendGet[String](s"$apiUrl/dataset/export")
-//
-//          assertOk(response)
-//
-//          val body = response.getBody
-//          assert(body ==
-//            """{"metadata":{"exportVersion":1},"item":{
-//              |"name":"dataset",
-//              |"description":"Hi, I am the latest version",
-//              |"hdfsPath":"/dummy/path",
-//              |"hdfsPublishPath":"/dummy/publish/path",
-//              |"schemaName":"dummySchema",
-//              |"schemaVersion":1,
-//              |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
-//              |"properties":{"key2":"val2","key1":"val1"}
-//              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
-//        }
-//      }
-//    }
+    "return 201" when {
+      "there is a existing Dataset" should {
+        "a +1 version of dataset is added" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // import feature checks schema presence
+          val dataset1 = DatasetFactory.getDummyDataset(name = "datasetXYZ", description = Some("init version"))
+          datasetFixture.add(dataset1)
+
+          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          assertCreated(response)
+          val locationHeader = response.getHeaders.get("location").asScala.headOption
+          locationHeader shouldBe defined
+          locationHeader.get should endWith("/api-v3/datasets/datasetXYZ/2")
+
+          val relativeLocation = stripBaseUrl(locationHeader.get) // because locationHeader contains domain, port, etc.
+          val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
+          assertOk(response2)
+
+          val actual = response2.getBody
+          val expectedDsBase = DatasetFactory.getDummyDataset(name = "datasetXYZ", version = 2, description = Some("Hi, I am the import"),
+            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
+            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")),
+            parent = Some(DatasetFactory.toParent(dataset1))
+          )
+          val expected = toExpected(expectedDsBase, actual)
+
+          assert(actual == expected)
+        }
+      }
+
+      "there is no such Dataset, yet" should {
+        "a the version of dataset created" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // import feature checks schema presence
+
+          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          assertCreated(response)
+          val locationHeader = response.getHeaders.get("location").asScala.headOption
+          locationHeader shouldBe defined
+          locationHeader.get should endWith("/api-v3/datasets/datasetXYZ/1") // this is the first version
+
+          val relativeLocation = stripBaseUrl(locationHeader.get) // because locationHeader contains domain, port, etc.
+          val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
+          assertOk(response2)
+
+          val actual = response2.getBody
+          val expectedDsBase = DatasetFactory.getDummyDataset(name = "datasetXYZ", description = Some("Hi, I am the import"),
+            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
+            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
+          )
+          val expected = toExpected(expectedDsBase, actual)
+
+          assert(actual == expected)
+        }
+      }
+    }
 
   }
 

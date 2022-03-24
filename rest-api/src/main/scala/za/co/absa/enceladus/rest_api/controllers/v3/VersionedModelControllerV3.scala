@@ -169,7 +169,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     versionedModelService.disableVersion(name, v)
   }
 
-  def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
+  protected def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
                                      stripLastSegments: Int = 0): ResponseEntity[Nothing] = {
     val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
 
@@ -178,6 +178,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         .buildAndExpand(name, version.toString)
         .normalize() // will normalize `/one/two/../three` into `/one/tree`
         .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
+
+    // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
 
     ResponseEntity.created(location).build()
   }
