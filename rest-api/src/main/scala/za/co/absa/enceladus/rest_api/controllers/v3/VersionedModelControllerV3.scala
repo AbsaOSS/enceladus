@@ -63,28 +63,13 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @ResponseStatus(HttpStatus.OK)
   def getVersionDetail(@PathVariable name: String,
                        @PathVariable version: String): CompletableFuture[C] = {
-    forVersionExpression(version) { actualVersion: Int =>
-      versionedModelService.getVersion(name, actualVersion)
-    }(versionedModelService.getLatestVersion(name)).map {
+    forVersionExpression(name, version)(versionedModelService.getVersion).map {
       case Some(entity) => entity
       case None => throw notFound()
     }
   }
 
-  protected def forVersionExpression(versionStr: String)
-                                    (doForNumberedVersion: Int => Future[Option[C]])
-                                    (doForLatest: Future[Option[C]]): Future[Option[C]] = {
-    if (versionStr.toLowerCase == LatestVersionKey) {
-      doForLatest
-    } else {
-      Try(versionStr.toInt) match {
-        case Success(actualVersion) => doForNumberedVersion(actualVersion)
-        case Failure(exception) =>
-          Future.failed(new IllegalArgumentException(s"Cannot convert '$versionStr' to a valid version expression. " +
-            s"Either use 'latest' or an actual version number. Underlying problem: ${exception.getMessage}"))
-      }
-    }
-  }
+
 
   @GetMapping(Array("/{name}/audit-trail"))
   @ResponseStatus(HttpStatus.OK)
@@ -96,19 +81,19 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @ResponseStatus(HttpStatus.OK)
   def usedIn(@PathVariable name: String,
              @PathVariable version: Int): CompletableFuture[UsedIn] = {
-    versionedModelService.getUsedIn(name, Some(version))
+    versionedModelService.getUsedIn(name, Some(version)) // todo use forVersionExpression, too
   }
 
   @GetMapping(Array("/{name}/{version}/export"))
   @ResponseStatus(HttpStatus.OK)
-  def exportSingleEntity(@PathVariable name: String, @PathVariable version: Int): CompletableFuture[String] = {
-    versionedModelService.exportSingleItem(name, version)
+  def exportSingleEntity(@PathVariable name: String, @PathVariable version: String): CompletableFuture[String] = {
+    forVersionExpression(name, version)(versionedModelService.exportSingleItem)
   }
 
   @GetMapping(Array("/{name}/export"))
   @ResponseStatus(HttpStatus.OK)
   def exportLatestEntity(@PathVariable name: String): CompletableFuture[String] = {
-    versionedModelService.exportLatestItem(name)
+    versionedModelService.exportLatestItem(name) // todo: remove in favor of the above? (that supports /{name}/latest/export)
   }
 
   @PostMapping(Array("/{name}/import"))
@@ -177,6 +162,31 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
       None
     }
     versionedModelService.disableVersion(name, v)
+  }
+
+  /**
+   * For entity's name and version expression (either a number or 'latest'), the forVersionFn is called.
+   *
+   * @param name
+   * @param versionStr
+   * @param forVersionFn
+   * @return
+   */
+  protected def forVersionExpression[T](name: String, versionStr: String)
+                                       (forVersionFn: (String, Int) => Future[T]): Future[T] = {
+    versionStr.toLowerCase match {
+      case LatestVersionKey =>
+        versionedModelService.getLatestVersionValue(name).flatMap {
+          case None => Future.failed(notFound())
+          case Some(actualLatestVersion) => forVersionFn(name, actualLatestVersion)
+        }
+      case nonLatestVersionString => Try(nonLatestVersionString.toInt) match {
+        case Success(actualVersion) => forVersionFn(name, actualVersion)
+        case Failure(exception) =>
+          Future.failed(new IllegalArgumentException(s"Cannot convert '$versionStr' to a valid version expression. " +
+            s"Either use 'latest' or an actual version number. Underlying problem: ${exception.getMessage}"))
+      }
+    }
   }
 
   protected def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
