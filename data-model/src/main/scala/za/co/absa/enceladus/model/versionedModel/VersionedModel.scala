@@ -35,6 +35,10 @@ trait VersionedModel extends Exportable {
   val dateDisabled: Option[ZonedDateTime]
   val userDisabled: Option[String]
 
+  val locked: Option[Boolean]
+  val dateLocked: Option[ZonedDateTime]
+  val userLocked: Option[String]
+
   val parent: Option[MenasReference]
 
   def setVersion(value: Int): VersionedModel
@@ -46,7 +50,12 @@ trait VersionedModel extends Exportable {
   def setDescription(desc: Option[String]): VersionedModel
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
+  def setLocked(locked: Option[Boolean]): VersionedModel
   def setParent(newParent: Option[MenasReference]): VersionedModel
+  def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel
+  def setUserLocked(userLocked: Option[String]): VersionedModel
+
+  def lockedWithDefault: Boolean = locked.getOrElse(false)
 
   def exportItem(): String
 
