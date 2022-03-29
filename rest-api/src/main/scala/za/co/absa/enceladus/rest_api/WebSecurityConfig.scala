@@ -68,16 +68,8 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
         .anyRequest()
           .authenticated()
         .and()
-           // v2 login
           .formLogin()
           .loginProcessingUrl("/api/login")
-          .successHandler(authenticationSuccessHandler)
-          .failureHandler(authenticationFailureHandler)
-          .permitAll()
-        .and()
-           // v3 login
-          .formLogin()
-          .loginProcessingUrl("/api-v3/login")
           .successHandler(authenticationSuccessHandler)
           .failureHandler(authenticationFailureHandler)
           .permitAll()

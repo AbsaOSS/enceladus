@@ -24,12 +24,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
-import za.co.absa.enceladus.rest_api.controllers.BaseController
+import za.co.absa.enceladus.rest_api.controllers.{BaseController}
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
 import java.net.URI
+import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
@@ -189,11 +189,11 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   }
 
   protected def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
-                                               stripLastSegments: Int = 0): ResponseEntity[Nothing] = {
+                                               stripLastSegments: Int = 0, suffix: String = ""): ResponseEntity[Nothing] = {
     val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
 
     val location: URI = ServletUriComponentsBuilder.fromRequest(request)
-      .path(s"$strippingPrefix/{name}/{version}")
+      .path(s"$strippingPrefix/{name}/{version}$suffix")
       .buildAndExpand(name, version.toString)
       .normalize() // will normalize `/one/two/../three` into `/one/tree`
       .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1

@@ -16,13 +16,52 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.rest_api.services.DatasetService
+import za.co.absa.enceladus.rest_api.utils.implicits._
+
+import java.net.URI
+import java.util.concurrent.CompletableFuture
+import javax.servlet.http.HttpServletRequest
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
 @RequestMapping(path = Array("/api-v3/datasets"))
 class DatasetControllerV3 @Autowired()(datasetService: DatasetService)
   extends VersionedModelControllerV3(datasetService) {
+
+  @GetMapping(Array("/{name}/{version}/properties"))
+  @ResponseStatus(HttpStatus.OK)
+  def getAllPropertiesForVersion(@PathVariable name: String,
+                                 @PathVariable version: String): CompletableFuture[Map[String, String]] = {
+    forVersionExpression(name, version)(datasetService.getVersion).map {
+      case Some(entity) => entity.propertiesAsMap
+      case None => throw notFound()
+    }
+  }
+
+  @PutMapping(Array("/{name}/{version}/properties"))
+  @ResponseStatus(HttpStatus.OK)
+  def updateProperties(@AuthenticationPrincipal principal: UserDetails,
+                       @PathVariable name: String,
+                       @PathVariable version: String,
+                       @RequestBody newProperties: java.util.Map[String, String],
+                       request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+    forVersionExpression(name, version) { case (dsName, dsVersion) =>
+      datasetService.updateProperties(principal.getUsername, dsName, dsVersion, newProperties.toScalaMap).map {
+
+        case Some(entity) =>
+          // stripping last 3 segments (/dsName/dsVersion/properties), instead of /api-v3/dastasets/dsName/dsVersion/properties we want /api-v3/dastasets/dsName/dsVersion/properties
+          createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 3, suffix = "/properties")
+        case None => throw notFound()
+      }
+    }
+  }
+
+  // todo putIntoInfoFile switch needed?
 
   // TODO
   // /{datasetName}/{version}/rules

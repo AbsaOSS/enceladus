@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import DatasetService._
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future
@@ -123,8 +123,24 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  def replaceProperties(username: String, datasetName: String,
-                        updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
+  def updateProperties(username: String, datasetName: String, datasetVersion: Int,
+                       updatedProperties: Map[String, String]): Future[Option[Dataset]] = {
+    for {
+      s <- validateProperties(updatedProperties).flatMap {
+        case validation if !validation.isValid => Future.failed(ValidationException(validation)) // warnings are ok for update
+        case _ => Future.successful(()) // todo perhaps communicate warnings as result?
+      }
+
+      // updateFuture includes latest-check and version increase
+      update <- updateFuture(username, datasetName, datasetVersion) { latest =>
+        Future.successful(latest.copy(properties = Some(removeBlankProperties(updatedProperties))))
+      }
+    } yield update
+  }
+
+  // kept for API v2 usage only
+  def updatePropertiesV2(username: String, datasetName: String,
+                         updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
     for {
       latestVersion <- getLatestVersionNumber(datasetName)
       update <- update(username, datasetName, latestVersion) { latest =>
@@ -205,7 +221,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  def validateProperties(properties: Map[String, String], forRun: Boolean): Future[Validation] = {
+  def validateProperties(properties: Map[String, String], forRun: Boolean = false): Future[Validation] = {
 
     datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
       val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
@@ -437,8 +453,18 @@ object DatasetService {
    */
   def removeBlankProperties(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
     properties.map {
-      _.filter { case (_, propValue) => propValue.nonEmpty }
+      removeBlankProperties
     }
+  }
+
+  /**
+   * Removes properties having empty-string value. Effectively mapping such properties' values from Some("") to None.
+   * This is Backend-implementation related to DatasetService.replaceBlankProperties(dataset) on Frontend
+   * @param properties original properties
+   * @return properties without empty-string value entries
+   */
+  def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
+      properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
   private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {

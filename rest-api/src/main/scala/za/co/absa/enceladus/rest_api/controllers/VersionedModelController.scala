@@ -17,7 +17,6 @@ package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import com.mongodb.client.result.UpdateResult
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -28,6 +27,8 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
+
+import scala.concurrent.Future
 
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
@@ -69,7 +70,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @GetMapping(Array("/detail/{name}/latestVersion"))
   @ResponseStatus(HttpStatus.OK)
-  def getLatestVersionNumber(@PathVariable name: String): CompletableFuture[Int] = {
+  def getLatestVersionNumber(@PathVariable name: String): Future[Int] = {
     versionedModelService.getLatestVersionNumber(name)
   }
 

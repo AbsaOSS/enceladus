@@ -468,7 +468,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  s"GET $apiUrl/{name}/{version}/export" should {
+  s"GET $apiUrl/{name}/{version}/used-in" should {
     "return 404" when {
       "when the dataset of latest version does not exist" in {
         val response = sendGet[String](s"$apiUrl/notFoundDataset/latest/used-in")
@@ -512,6 +512,110 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  // todo properties test for datasets or in general for any VersionedModel
+  s"GET $apiUrl/{name}/{version}/properties" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/456/properties")
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "there is a specific Dataset version" should {
+        Seq(
+          ("empty1", Some(Map.empty[String, String])),
+          ("empty2", None),
+          ("non-empty", Some(Map("key1" -> "val1", "key2" -> "val2")))
+        ).foreach { case (propertiesCaseName, propertiesData) =>
+          s"return dataset properties ($propertiesCaseName)" in {
+            val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+            val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = propertiesData)
+            val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3, properties = Some(Map("other" -> "prop")))
+            datasetFixture.add(datasetV1, datasetV2, datasetV3)
+
+            val response = sendGet[Map[String, String]](s"$apiUrl/datasetA/2/properties")
+            assertOk(response)
+
+            val expectedProperties = propertiesData.getOrElse(Map.empty[String, String])
+            val body = response.getBody
+            assert(body == expectedProperties)
+          }
+        }
+      }
+    }
+
+    "return 200" when {
+      "there is a latest Dataset version" should {
+        s"return dataset properties" in {
+          val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+          val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
+          datasetFixture.add(datasetV1, datasetV2)
+
+          val response = sendGet[Map[String, String]](s"$apiUrl/datasetA/latest/properties")
+          assertOk(response)
+
+          val body = response.getBody
+          assert(body == Map("key1" -> "val1", "key2" -> "val2"))
+        }
+      }
+    }
+  }
+
+
+  s"PUT $apiUrl/{name}/{version}/properties" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendPut[Map[String, String], String](s"$apiUrl/notFoundDataset/456/properties", bodyOpt = Some(Map.empty))
+        assertNotFound(response)
+      }
+    }
+
+    "return 400" when {
+      "when version is not the latest (only last version can be updated)" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
+        val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+        datasetFixture.add(datasetV1, datasetV2, datasetV3)
+
+        val response = sendPut[Map[String, String], String](s"$apiUrl/datasetA/2/properties", bodyOpt = Some(Map.empty))
+        assertBadRequest(response)
+      }
+    }
+
+    // todo add update-validation failing case
+    // todo check validity and refuse if not valid (open: both not having proper propDef, and also not valid for a propdef?)
+
+
+    "201 Created with location" when {
+      Seq(
+        ("non-empty properties map", """{"keyA":"valA","keyB":"valB","keyC":""}""", Some(Map("keyA" -> "valA", "keyB" -> "valB"))), // empty string property would get removed (defined "" => undefined)
+        ("empty properties map", "{}", Some(Map.empty))
+      ).foreach { case (testCaseName, payload, expectedPropertiesSet) =>
+        s"properties are replaced with a new version ($testCaseName)" in {
+          val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+          datasetFixture.add(datasetV1)
+
+          propertyDefinitionFixture.add(
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
+          )
+
+          val response1 = sendPut[String, String](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
+          assertCreated(response1)
+          val headers1 = response1.getHeaders
+          assert(headers1.getFirst("Location").endsWith("/api-v3/datasets/datasetA/2/properties"))
+
+
+          val response2 = sendGet[Map[String, String]](s"$apiUrl/datasetA/2/properties")
+          assertOk(response2)
+          val responseBody = response2.getBody
+          responseBody shouldBe expectedPropertiesSet.getOrElse(Map.empty)
+        }
+      }
+    }
+  }
+
+  // todo CR tests
 
 }

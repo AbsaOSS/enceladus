@@ -113,7 +113,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
                         @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
+    datasetService.updatePropertiesV2(principal.getUsername, datasetName, newProperties.toScalaOption).map {
       case None => throw notFound()
       case Some(dataset) =>
         val location: URI = new URI(s"/api/dataset/${dataset.name}/${dataset.version}")
