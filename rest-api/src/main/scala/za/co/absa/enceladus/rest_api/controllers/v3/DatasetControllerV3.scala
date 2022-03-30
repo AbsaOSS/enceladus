@@ -20,17 +20,16 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.rest_api.services.DatasetService
+import za.co.absa.enceladus.rest_api.services.v3.DatasetServiceV3
 import za.co.absa.enceladus.rest_api.utils.implicits._
 
-import java.net.URI
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
 
 @RestController
 @RequestMapping(path = Array("/api-v3/datasets"))
-class DatasetControllerV3 @Autowired()(datasetService: DatasetService)
+class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
   extends VersionedModelControllerV3(datasetService) {
 
   @GetMapping(Array("/{name}/{version}/properties"))

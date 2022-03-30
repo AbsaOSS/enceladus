@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.menas.audit._
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
+import VersionedModelService._
 
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
   (versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
@@ -195,7 +196,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[rest_api] def create(item: C, username: String): Future[Option[C]] = {
     for {
-      validation <- validate(item)
+      validation <- for {
+        generalValidation <- validate(item)
+        creationValidation <- validateForCreation(item)
+      } yield generalValidation.merge(creationValidation)
       _ <- if (validation.isValid) {
         versionedMongoRepository.create(item, username)
           .recover {
@@ -270,30 +274,58 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.isDisabled(name)
   }
 
+  /**
+   * Retrieves model@version and calls
+   * [[za.co.absa.enceladus.rest_api.services.VersionedModelService#validate(java.lang.Object)]]
+   *
+   * In order to extend this behavior, override the mentioned method instead. (that's why this is `final`)
+   * @param name
+   * @param version
+   * @return
+   */
+  final def validate(name: String, version: Int): Future[Validation] = {
+    getVersion(name, version).flatMap({
+      case Some(entity) => validate(entity)
+      case _ => Future.failed(NotFoundException(s"Entity by name=$name, version=$version is not found!"))
+    })
+  }
+
+  /**
+   * Provides common validation (currently entity name validation). Override to extend for further specific validations.
+   * @param item
+   * @return
+   */
   def validate(item: C): Future[Validation] = {
     validateName(item.name)
   }
 
-  protected[services] def validateName(name: String): Future[Validation] = {
-    val validation = Validation()
-
-    if (hasWhitespace(name)) {
-      Future.successful(validation.withError("name", s"name contains whitespace: '$name'"))
-    } else {
-      isUniqueName(name).map { isUnique =>
-        if (isUnique) {
-          validation
-        } else {
-          validation.withError("name", s"entity with name already exists: '$name'")
-        }
+  def validateForCreation(item: C): Future[Validation] = {
+    isUniqueName(item.name).map { isUnique =>
+      if (isUnique) {
+        Validation.empty
+      } else {
+        Validation.empty.withError("name", s"entity with name already exists: '${item.name}'")
       }
     }
   }
 
+  protected[services] def validateName(name: String): Future[Validation] = {
+    if (hasWhitespace(name)) {
+      Future.successful(Validation.empty.withError("name", s"name contains whitespace: '$name'"))
+    } else {
+      Future.successful(Validation.empty)
+    }
+  }
+
+}
+
+object VersionedModelService {
   private[services] def hasWhitespace(name: String): Boolean =
     Option(name).exists(definedName => !definedName.matches("""\w+"""))
+
   private[services] def hasValidNameChars(name: String): Boolean =
     Option(name).exists(definedName => definedName.matches("""[a-zA-Z0-9._-]+"""))
+
   private[services] def hasValidApiVersion(version: Option[String]): Boolean = version.contains(ModelVersion.toString)
 
 }

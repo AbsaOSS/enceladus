@@ -285,6 +285,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
+  // CR-related methods:
   private def validateConformanceRules(conformanceRules: List[ConformanceRule],
                                        maybeSchema: Future[Option[Schema]]): Future[Validation] = {
 

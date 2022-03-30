@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
-import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
-import za.co.absa.enceladus.rest_api.controllers.{BaseController}
+import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
@@ -111,6 +111,13 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         case None => throw notFound()
       }
     }
+  }
+
+  @GetMapping(Array("/{name}/{version}/validation"))
+  @ResponseStatus(HttpStatus.OK)
+  def validation(@PathVariable name: String,
+                 @PathVariable version: String): CompletableFuture[Validation] = {
+    forVersionExpression(name, version)(versionedModelService.validate)
   }
 
   @PostMapping(Array(""))
