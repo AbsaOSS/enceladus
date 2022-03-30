@@ -32,6 +32,7 @@ import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, Pro
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.VersionsList
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTest, BaseRestApiTestV3, toExpected}
 
@@ -577,14 +578,52 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
         datasetFixture.add(datasetV1, datasetV2, datasetV3)
 
-        val response = sendPut[Map[String, String], String](s"$apiUrl/datasetA/2/properties", bodyOpt = Some(Map.empty))
+        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/2/properties", bodyOpt = Some(Map.empty))
+
         assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("version" ->
+          List("Version 2 of datasetA is not the latest version, therefore cannot be edited")
+        ))
+      }
+
+      "when properties are not backed by propDefs" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetV1)
+        propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"))
+
+        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+          bodyOpt = Some(Map("undefinedProperty1" -> "someValue")))
+
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
+      }
+
+      "when properties are not valid (based on propDefs)" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetV1)
+
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("mandatoryA", essentiality = Essentiality.Mandatory),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("AorB", propertyType = EnumPropertyType("a", "b"))
+        )
+
+        val response1 = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+          bodyOpt = Some(Map("AorB" -> "a"))) // this is ok, but mandatoryA is missing
+
+        assertBadRequest(response1)
+        response1.getBody shouldBe Validation(Map("mandatoryA" -> List("Dataset property 'mandatoryA' is mandatory, but does not exist!")))
+
+        val response2 = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+          bodyOpt = Some(Map("mandatoryA" -> "valueA", "AorB" -> "c"))) // mandatoryA is ok, but AorB has invalid value
+
+        assertBadRequest(response2)
+        response2.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
       }
     }
 
-    // todo add update-validation failing case
-    // todo check validity and refuse if not valid (open: both not having proper propDef, and also not valid for a propdef?)
-
+    // todo: maybe pass through validation warnings on update?
 
     "201 Created with location" when {
       Seq(
