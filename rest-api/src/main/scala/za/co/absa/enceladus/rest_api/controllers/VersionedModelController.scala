@@ -70,7 +70,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @GetMapping(Array("/detail/{name}/latestVersion"))
   @ResponseStatus(HttpStatus.OK)
-  def getLatestVersionNumber(@PathVariable name: String): Future[Int] = {
+  def getLatestVersionNumber(@PathVariable name: String): CompletableFuture[Int] = {
     versionedModelService.getLatestVersionNumber(name)
   }
 
