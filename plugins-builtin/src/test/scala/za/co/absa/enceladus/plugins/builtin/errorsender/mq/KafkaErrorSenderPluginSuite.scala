@@ -108,6 +108,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
     .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
     .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
 
+  //TODO to be fixed in #2042
  /* it should "correctly create the error plugin from config" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
 

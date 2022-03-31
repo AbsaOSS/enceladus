@@ -76,7 +76,7 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
       }
     }
 
-    //
+    //TODO to be fixed in #2043
     /*"throw SchemaParsingException at parse avro" when {
       "given unparsable avsc content" in {
         val caughtException = the[SchemaParsingException] thrownBy {

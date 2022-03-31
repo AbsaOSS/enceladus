@@ -82,6 +82,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
+  //TODO to be fixed in #2045
   //fix info file
   /*"StandardizationExecution" should "write dataset properties into info file" in {
     implicit val dao: MenasDAO = mock[MenasDAO]

@@ -63,6 +63,7 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
     KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorKafkaTopicKey)
   }
 
+  //TODO to be fixed in 2042
   def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): ToAvroConfig = {
     // generate schema
 //    val allColumns = struct(df.columns.map(c => df(c)): _*)

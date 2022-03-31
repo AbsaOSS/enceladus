@@ -19,7 +19,6 @@ import org.json4s._
 import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.Eventually
 import org.scalatest.concurrent.Eventually.eventually
 import org.scalatest.concurrent.Waiters.{interval, scaled, timeout}
 import org.scalatest.funsuite.AnyFunSuite
@@ -179,6 +178,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
     }
   }
 
+  //TODO to be fixed in #2044
   ignore("End to end dynamic conformance test") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = false)
   }
