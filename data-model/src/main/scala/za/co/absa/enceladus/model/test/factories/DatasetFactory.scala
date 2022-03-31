@@ -42,7 +42,7 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       userDisabled: Option[String] = None,
                       conformance: List[ConformanceRule] = List(),
                       parent: Option[MenasReference] = None,
-                      properties: Option[Map[String, String]] = None): Dataset = {
+                      properties: Option[Map[String, String]] = Some(Map())): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,
       schemaVersion, dateCreated, userCreated, lastUpdated, userUpdated,

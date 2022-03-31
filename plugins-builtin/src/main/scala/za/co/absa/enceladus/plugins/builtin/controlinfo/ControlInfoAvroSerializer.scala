@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.plugins.builtin.controlinfo
 
-import java.util
-
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.commons.io.IOUtils

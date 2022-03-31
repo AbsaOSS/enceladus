@@ -61,6 +61,11 @@
             <version>${mongo.scala.driver.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-ext_${scala.compat.version}</artifactId>
+            <version>3.7.0-M11</version>
+        </dependency>
+        <dependency>
             <groupId>io.github.cbartosiak</groupId>
             <artifactId>bson-codecs-jsr310</artifactId>
             <version>${bson.codec.jsr310.version}</version>

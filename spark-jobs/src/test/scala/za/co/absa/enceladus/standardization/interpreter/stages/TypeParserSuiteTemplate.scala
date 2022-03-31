@@ -225,7 +225,7 @@ trait TypeParserSuiteTemplate extends AnyFunSuite with TZNormalizedSparkTestBase
       case None => "NULL"
     }
 
-    s"CASE WHEN (size($errorExpression) > 0) THEN $default ELSE CASE WHEN ($srcField IS NOT NULL) THEN $castExpression END END AS `${target.name}`"
+    s"CASE WHEN (size($errorExpression) > 0) THEN $default ELSE CASE WHEN ($srcField IS NOT NULL) THEN $castExpression END END AS ${target.name}"
   }
 
   private def assembleErrorExpression(srcField: String, target: StructField, castS: String): String = {

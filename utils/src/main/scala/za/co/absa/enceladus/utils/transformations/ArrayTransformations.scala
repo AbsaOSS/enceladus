@@ -226,7 +226,7 @@ object ArrayTransformations {
           }
         }, arrType.elementType)
 
-        nestedWithColumn(df)(colName, callUDF(udfName, col(colName)))
+        nestedWithColumn(df)(colName, call_udf(udfName, col(colName)))
       }
     }
 
