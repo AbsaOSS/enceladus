@@ -55,57 +55,66 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture)
 
 
-  s"POST $apiUrl" can {
-    // todo 400 if validation of entity does not pass
-
+  s"POST $apiUrl" should {
     "return 201" when {
-      "a Dataset is created" should {
-        "return the created Dataset (with empty properties stripped)" in {
-          val dataset = DatasetFactory.getDummyDataset("dummyDs",
-            properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
+      "a Dataset is created" in {
+        val dataset = DatasetFactory.getDummyDataset("dummyDs",
+          properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
 
-          propertyDefinitionFixture.add(
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
-          )
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
+        )
 
-          val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
+        val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
+        assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("location")
+        locationHeader should endWith("/api-v3/datasets/dummyDs/1")
+
+        val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
+        val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
+        assertOk(response2)
+
+        val actual = response2.getBody
+        val expected = toExpected(dataset, actual).copy(properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))) // keyC stripped
+
+        assert(actual == expected)
+      }
+      "create a new version of Dataset" when {
+        "the dataset is disabled (i.e. all version are disabled)" in {
+          val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
+          val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
+          datasetFixture.add(dataset1, dataset2)
+
+          val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
+          val response = sendPost[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
           assertCreated(response)
-          val locationHeader = response.getHeaders.getFirst("location")
-          locationHeader should endWith("/api-v3/datasets/dummyDs/1")
+          val locationHeaders = response.getHeaders.get("location").asScala
+          locationHeaders should have size 1
+          val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
 
-          val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
           val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
           assertOk(response2)
 
           val actual = response2.getBody
-          val expected = toExpected(dataset, actual).copy(properties = Some(Map("keyA" -> "valA", "keyB" -> "valB"))) // keyC stripped
+          val expected = toExpected(dataset3.copy(version = 3, parent = Some(DatasetFactory.toParent(dataset2))), actual)
 
           assert(actual == expected)
         }
       }
     }
-    "the dataset is disabled (i.e. all version are disabled)" should {
-      "create a new version of Dataset" in {
-        val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
-        val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
-        datasetFixture.add(dataset1, dataset2)
 
-        val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
-        val response = sendPost[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
-        assertCreated(response)
-        val locationHeaders = response.getHeaders.get("location").asScala
-        locationHeaders should have size 1
-        val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
+    "return 400" when {
+      "datasets properties are not backed by propDefs (undefined properties)" in {
+        val dataset = DatasetFactory.getDummyDataset("dummyDs", properties = Some(Map("undefinedProperty1" -> "value1")))
+        // propdefs are empty
 
-        val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
-        assertOk(response2)
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
 
-        val actual = response2.getBody
-        val expected = toExpected(dataset3.copy(version = 3, parent = Some(DatasetFactory.toParent(dataset2))), actual)
-
-        assert(actual == expected)
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
     }
     // todo what to do if  "the last dataset version is disabled"
@@ -599,7 +608,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         ))
       }
 
-      "when properties are not backed by propDefs" in {
+      "when properties are not backed by propDefs (undefined properties)" in {
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         datasetFixture.add(datasetV1)
         // propdefs are empty
@@ -634,8 +643,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         response2.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
       }
     }
-
-    // todo check behavior on undefined property being added
 
     "201 Created with location" when {
       Seq(
@@ -679,7 +686,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     // todo name validation - common for versioned entities
 
     "return 200" when {
-      "when properties are not backed by propDefs" in {
+      "when properties are not backed by propDefs (undefined properties)" in {
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("undefinedProperty1" -> "someValue")))
         datasetFixture.add(datasetV1)
         // propdefs are empty
@@ -716,9 +723,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         assertOk(response)
         response.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
       }
-
-      // todo check behavior on undefined property being added
-
     }
 
     // todo: maybe pass through validation warnings on update?
