@@ -23,7 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.conformanceRule.{LiteralConformanceRule, MappingConformanceRule}
+import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
@@ -672,6 +672,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
+    // todo: maybe pass through validation warnings on update?
   }
 
   // similar to put-properties validation
@@ -724,39 +725,140 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         response.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
       }
     }
+  }
 
-    // todo: maybe pass through validation warnings on update?
+  private val exampleMcrRule0 = MappingConformanceRule(0,
+    controlCheckpoint = true,
+    mappingTable = "CurrencyMappingTable",
+    mappingTableVersion = 9, //scalastyle:ignore magic.number
+    attributeMappings = Map("InputValue" -> "STRING_VAL"),
+    targetAttribute = "CCC",
+    outputColumn = "ConformedCCC",
+    isNullSafe = true,
+    mappingTableFilter = Some(
+      AndJoinedFilters(Set(
+        OrJoinedFilters(Set(
+          EqualsFilter("column1", "soughtAfterValue"),
+          EqualsFilter("column1", "alternativeSoughtAfterValue")
+        )),
+        DiffersFilter("column2", "anotherValue"),
+        NotFilter(IsNullFilter("col3"))
+      ))
+    ),
+    overrideMappingTableOwnFilter = Some(true)
+  )
 
-    "201 Created with location" when {
-      Seq(
-        ("non-empty properties map", """{"keyA":"valA","keyB":"valB","keyC":""}""", Some(Map("keyA" -> "valA", "keyB" -> "valB"))), // empty string property would get removed (defined "" => undefined)
-        ("empty properties map", "{}", Some(Map.empty))
-      ).foreach { case (testCaseName, payload, expectedPropertiesSet) =>
-        s"properties are replaced with a new version ($testCaseName)" in {
-          val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-          datasetFixture.add(datasetV1)
+  private val exampleLitRule1 = LiteralConformanceRule(order = 1, controlCheckpoint = true, outputColumn = "something", value = "1.01")
+  private val dsWithRules1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
+    exampleMcrRule0, exampleLitRule1
+  ))
 
-          propertyDefinitionFixture.add(
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
-          )
+  s"GET $apiUrl/{name}/{version}/rules" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/456/rules")
+        assertNotFound(response)
+      }
+    }
 
-          val response1 = sendPut[String, String](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
-          assertCreated(response1)
-          val headers1 = response1.getHeaders
-          assert(headers1.getFirst("Location").endsWith("/api-v3/datasets/datasetA/2/properties"))
+    "return 200" when {
+      "when there are no conformance rules" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetV1)
 
+        val response = sendGet[Array[ConformanceRule]](s"$apiUrl/datasetA/1/rules")
 
-          val response2 = sendGet[Map[String, String]](s"$apiUrl/datasetA/2/properties")
-          assertOk(response2)
-          val responseBody = response2.getBody
-          responseBody shouldBe expectedPropertiesSet.getOrElse(Map.empty)
-        }
+        assertOk(response)
+        response.getBody shouldBe Seq()
+      }
+
+      "when there are some conformance rules" in {
+        datasetFixture.add(dsWithRules1)
+
+        val response = sendGet[Array[ConformanceRule]](s"$apiUrl/datasetA/1/rules")
+        assertOk(response)
+        response.getBody shouldBe dsWithRules1.conformance.toArray
       }
     }
   }
 
-  // todo CR tests
+  s"POST $apiUrl/{name}/{version}/rules" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, String](s"$apiUrl/notFoundDataset/456/rules",
+          bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
+        assertNotFound(response)
+      }
+    }
+
+    "return 400" when {
+      "when the there is a conflicting conf rule #" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
+          LiteralConformanceRule(order = 0,"column1", true, "ABC"))
+        )
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, String](s"$apiUrl/datasetA/1/rules",
+          bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
+        assertBadRequest(response)
+
+        response.getBody should include("Rule with order 0 cannot be added, another rule with this order already exists.")
+      }
+    }
+
+    "return 201" when {
+      "when conf rule is added" in {
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
+          LiteralConformanceRule(order = 0,"column1", true, "ABC"))
+        )
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, String](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
+        assertCreated(response)
+
+        val locationHeader = response.getHeaders.getFirst("location")
+        locationHeader should endWith("/api-v3/datasets/datasetA/2/rules/1") // increased version in the url and added rule #1
+
+        val response2 = sendGet[Dataset](s"$apiUrl/datasetA/2")
+        assertOk(response2)
+
+        val actual = response2.getBody
+        val expectedDsBase = datasetV1.copy(version = 2, parent = Some(DatasetFactory.toParent(datasetV1)),
+          conformance = List(datasetV1.conformance.head, exampleLitRule1))
+        val expected = toExpected(expectedDsBase, actual)
+
+        assert(actual == expected)
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/{version}/rules/{index}" should {
+    "return 404" when {
+      "when the name+version does not exist" in {
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/456/rules/1")
+        assertNotFound(response)
+      }
+
+      "when the rule with # does not exist" in {
+        datasetFixture.add(dsWithRules1)
+
+        val response = sendGet[String](s"$apiUrl/datasetA/1/rules/345")
+        assertNotFound(response)
+      }
+    }
+
+    "return 200" when {
+      "when there is a conformance rule with the order#" in {
+        datasetFixture.add(dsWithRules1)
+
+        val response = sendGet[ConformanceRule](s"$apiUrl/datasetA/1/rules/1")
+        assertOk(response)
+        response.getBody shouldBe LiteralConformanceRule(order = 1, controlCheckpoint = true, outputColumn = "something", value = "1.01")
+      }
+    }
+  }
 
 }

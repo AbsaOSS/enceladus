@@ -20,6 +20,8 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
+import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.rest_api.services.v3.DatasetServiceV3
 import za.co.absa.enceladus.rest_api.utils.implicits._
 
@@ -62,10 +64,46 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
 
   // todo putIntoInfoFile switch needed?
 
-  // TODO
-  // /{datasetName}/{version}/rules
-  // /{datasetName}/{version}/rules/{index}
-  // /{datasetName}/{version}/rules
+  @GetMapping(Array("/{name}/{version}/rules"))
+  @ResponseStatus(HttpStatus.OK)
+  def getConformanceRules(@PathVariable name: String,
+                          @PathVariable version: String): CompletableFuture[Seq[ConformanceRule]] = {
+    forVersionExpression(name, version)(datasetService.getVersion).map {
+      case Some(entity) => entity.conformance
+      case None => throw notFound()
+    }
+  }
+
+  @PostMapping(Array("/{name}/{version}/rules"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
+                         @PathVariable name: String,
+                         @PathVariable version: String,
+                         @RequestBody rule: ConformanceRule,
+                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+    forVersionExpression(name, version)(datasetService.getVersion).flatMap {
+      case Some(entity) => datasetService.addConformanceRule(user.getUsername, name, entity.version, rule).map {
+        case Some(updatedDs) =>
+          val addedRuleOrder = updatedDs.conformance.last.order
+          createdWithNameVersionLocation(name, updatedDs.version, request, stripLastSegments = 3, // strip: /{name}/{version}/rules
+            suffix = s"/rules/$addedRuleOrder")
+        case _ => throw notFound()
+      }
+      case None => throw notFound()
+    }
+  }
+
+  @GetMapping(Array("/{name}/{version}/rules/{order}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getConformanceRuleByOrder(@PathVariable name: String,
+                                @PathVariable version: String,
+                                @PathVariable order: Int): CompletableFuture[ConformanceRule] = {
+    for {
+      optDs <- forVersionExpression(name, version)(datasetService.getVersion)
+      ds = optDs.getOrElse(throw notFound())
+      rule = ds.conformance.find(_.order == order).getOrElse(throw notFound())
+    } yield rule
+  }
 
 }
 

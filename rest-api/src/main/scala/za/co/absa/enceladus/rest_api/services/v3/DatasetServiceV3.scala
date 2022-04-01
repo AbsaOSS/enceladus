@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.services.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.rest_api.services.{DatasetService, PropertyDefinitionService}
@@ -43,6 +44,17 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
     } yield originalValidation.merge(dsSpecificValidation)
   }
 
+  override def addConformanceRule(username: String, datasetName: String,
+                                  datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+    update(username, datasetName, datasetVersion) { dataset =>
+      val existingRuleOrders = dataset.conformance.map(_.order).toSet
+      if (!existingRuleOrders.contains(rule.order)) {
+        dataset.copy(conformance = dataset.conformance :+ rule) // adding the rule
+      } else {
+        throw new IllegalArgumentException(s"Rule with order ${rule.order} cannot be added, another rule with this order already exists.")
+      }
+    }
+  }
 
 }
 
