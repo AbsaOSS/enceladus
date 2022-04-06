@@ -52,7 +52,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionsList(@PathVariable name: String): CompletableFuture[VersionsList] = {
+  def getVersionsList(@PathVariable name: String): CompletableFuture[VersionList] = {
     versionedModelService.getAllVersionsValues(name) map {
       case Some(entity) => entity
       case None => throw notFound()

@@ -94,14 +94,14 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    val existingEntityF = version match {
+    val existingEntity = version match {
       case Some(version) => getVersion(name, version)
       case None          => getLatestVersion(name)
     }
 
-    existingEntityF.flatMap {
+    existingEntity.flatMap {
       case Some(_) => Future.successful(UsedIn()) // empty usedIn for existing datasets
-      case None => Future.failed(NotFoundException(s"Dataset '$name' in version ${version.getOrElse("any")}' nof found"))
+      case None => Future.failed(NotFoundException(s"Dataset '$name' in version ${version.getOrElse("any")}' not found"))
     }
   }
 

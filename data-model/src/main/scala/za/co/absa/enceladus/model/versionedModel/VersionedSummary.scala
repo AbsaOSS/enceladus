@@ -17,4 +17,4 @@ package za.co.absa.enceladus.model.versionedModel
 
 case class VersionedSummary(_id: String, latestVersion: Int)
 
-case class VersionsList(_id: String, versions: Seq[Int])
+case class VersionList(_id: String, versions: Seq[Int])

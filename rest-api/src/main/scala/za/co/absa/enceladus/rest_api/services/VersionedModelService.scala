@@ -21,7 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionsList}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionList}
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
@@ -57,7 +57,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getAllVersionsValues(name: String): Future[Option[VersionsList]] = {
+  def getAllVersionsValues(name: String): Future[Option[VersionList]] = {
     versionedMongoRepository.getAllVersionsValues(name)
   }
 
