@@ -45,7 +45,7 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
   }
 
   override def addConformanceRule(username: String, datasetName: String,
-                                  datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+                                  datasetVersion: Int, rule: ConformanceRule): Future[Option[(Dataset, Validation)]] = {
     update(username, datasetName, datasetVersion) { dataset =>
       val existingRuleOrders = dataset.conformance.map(_.order).toSet
       if (!existingRuleOrders.contains(rule.order)) {

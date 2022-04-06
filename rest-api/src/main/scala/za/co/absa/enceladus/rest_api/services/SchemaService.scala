@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest_api.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{Schema, UsedIn}
+import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 
 import scala.concurrent.Future
@@ -39,13 +39,13 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
-  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[Schema]] = {
+  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[(Schema, Validation)]] = {
     super.update(username, schemaName, schemaVersion)({ oldSchema =>
       oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
     })
   }
 
-  override def recreate(username: String, schema: Schema): Future[Option[Schema]] = {
+  override def recreate(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
     for {
       latestVersion <- getLatestVersionNumber(schema.name)
       update <- super.update(username, schema.name, latestVersion) { latest =>
@@ -56,19 +56,19 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield update
   }
 
-  override def update(username: String, schema: Schema): Future[Option[Schema]] = {
+  override def update(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
     super.update(username, schema.name, schema.version) { latest =>
       latest.setDescription(schema.description).asInstanceOf[Schema]
     }
   }
 
-  override def create(newSchema: Schema, username: String): Future[Option[Schema]] = {
+  override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
     val schema = Schema(name = newSchema.name,
       description = newSchema.description)
     super.create(schema, username)
   }
 
-  override def importItem(item: Schema, username: String): Future[Option[Schema]] = {
+  override def importItem(item: Schema, username: String): Future[Option[(Schema, Validation)]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
       case None => super.create(item.copy(version = 1), username)

@@ -30,8 +30,9 @@ import scala.concurrent.Future
 import com.mongodb.MongoWriteException
 import VersionedModelService._
 
+// scalastyle:off number.of.methods
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
-  (versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
+(versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -93,7 +94,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     })
   }
 
-  def importSingleItem(item: C, username: String, metadata: Map[String, String]): Future[Option[C]] = {
+  // v2 has external validate validation applied only to imports (not create/edits) via validateSingleImport
+  def importSingleItemV2(item: C, username: String, metadata: Map[String, String]): Future[Option[C]] = {
     for {
       validation <- validateSingleImport(item, metadata)
       result <- {
@@ -103,7 +105,12 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
           throw ValidationException(validation)
         }
       }
-    } yield result
+    } yield result.map(_._1) // v disregards internal common update-based validation
+  }
+
+  // v3 has internal validation on importItem (because it is based on update
+  def importSingleItemV3(item: C, username: String, metadata: Map[String, String]): Future[Option[(C, Validation)]] = {
+    importItem(item, username)
   }
 
   private[services] def validateSingleImport(item: C, metadata: Map[String, String]): Future[Validation] = {
@@ -127,7 +134,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
       )
   }
 
-  private[services] def importItem(item: C, username: String): Future[Option[C]]
+  private[services] def importItem(item: C, username: String): Future[Option[(C, Validation)]]
 
   private[services] def validateSchema(schemaName: String,
                                        schemaVersion: Int,
@@ -173,11 +180,11 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     val allParents = getParents(name)
 
     allParents.flatMap({ parents =>
-      val msgs = if(parents.size < 2) Seq() else {
+      val msgs = if (parents.size < 2) Seq() else {
         val pairs = parents.sliding(2)
         pairs.map(p => p.head.getAuditMessages(p(1))).toSeq
       }
-      if(parents.isEmpty) {
+      if (parents.isEmpty) {
         this.getLatestVersion(name).map({
           case Some(entity) => AuditTrail(msgs.reverse :+ entity.createdMessage)
           case None => throw NotFoundException()
@@ -194,7 +201,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
   }
 
-  private[rest_api] def create(item: C, username: String): Future[Option[C]] = {
+  private[rest_api] def create(item: C, username: String): Future[Option[(C, Validation)]] = {
     for {
       validation <- for {
         generalValidation <- validate(item)
@@ -210,39 +217,45 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         throw ValidationException(validation)
       }
       detail <- getLatestVersion(item.name)
-    } yield detail
+    } yield detail.map(d => (d, validation)) // valid validation may contain warnings
   }
 
-  def recreate(username: String, item: C): Future[Option[C]] = {
+  def recreate(username: String, item: C): Future[Option[(C, Validation)]] = {
     for {
       latestVersion <- getLatestVersionNumber(item.name)
       update <- update(username, item.setVersion(latestVersion).asInstanceOf[C])
     } yield update
   }
 
-  def update(username: String, item: C): Future[Option[C]]
+  def update(username: String, item: C): Future[Option[(C, Validation)]]
 
-  private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[C]] = {
+  private[services] def updateFuture(username: String, itemName: String, itemVersion: Int)(transform: C => Future[C]): Future[Option[(C, Validation)]] = {
     for {
       versionToUpdate <- getLatestVersion(itemName)
-      transformed <- if (versionToUpdate.isEmpty) {
+      (transformed, transformedValidation) <- if (versionToUpdate.isEmpty) {
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
-      }
-      else {
-        transform(versionToUpdate.get)
+      } else {
+        for {
+          updatedEntity <- transform(versionToUpdate.get)
+          validation <- validate(updatedEntity)
+        } yield if (validation.isValid) {
+          (updatedEntity, validation) // successful outcome, validation may still hold warnings
+        } else {
+          throw ValidationException(validation)
+        }
       }
       update <- versionedMongoRepository.update(username, transformed)
         .recover {
           case e: MongoWriteException =>
             throw ValidationException(Validation().withError("version", s"entity '$itemName' with this version already exists: ${itemVersion + 1}"))
         }
-    } yield Some(update)
+    } yield Some((update, transformedValidation))
   }
 
-  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[C]] = {
-    this.updateFuture(username, itemName, itemVersion){ item: C =>
+  private[services] def update(username: String, itemName: String, itemVersion: Int)(transform: C => C): Future[Option[(C, Validation)]] = {
+    this.updateFuture(username, itemName, itemVersion) { item: C =>
       Future {
         transform(item)
       }
@@ -279,6 +292,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
    * [[za.co.absa.enceladus.rest_api.services.VersionedModelService#validate(java.lang.Object)]]
    *
    * In order to extend this behavior, override the mentioned method instead. (that's why this is `final`)
+   *
    * @param name
    * @param version
    * @return
@@ -292,6 +306,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   /**
    * Provides common validation (currently entity name validation). Override to extend for further specific validations.
+   *
    * @param item
    * @return
    */

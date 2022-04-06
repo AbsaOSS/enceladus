@@ -44,7 +44,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
+  override def update(username: String, dataset: Dataset): Future[Option[(Dataset, Validation)]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
       updateSchedule(dataset, latest).map({ withSchedule =>
         withSchedule
@@ -105,7 +105,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
+  override def create(newDataset: Dataset, username: String): Future[Option[(Dataset, Validation)]] = {
     val dataset = Dataset(name = newDataset.name,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,
@@ -117,18 +117,19 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     super.create(dataset, username)
   }
 
-  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int,
+                         rule: ConformanceRule): Future[Option[(Dataset, Validation)]] = {
     update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }
 
   def updateProperties(username: String, datasetName: String, datasetVersion: Int,
-                       updatedProperties: Map[String, String]): Future[Option[Dataset]] = {
+                       updatedProperties: Map[String, String]): Future[Option[(Dataset, Validation)]] = {
     for {
-      s <- validateProperties(updatedProperties).flatMap {
+      successfulValidation <- validateProperties(updatedProperties).flatMap {
         case validation if !validation.isValid => Future.failed(ValidationException(validation)) // warnings are ok for update
-        case _ => Future.successful(()) // todo perhaps communicate warnings as result?
+        case validation => Future.successful(validation) // empty or with warnings
       }
 
       // updateFuture includes latest-check and version increase
@@ -146,7 +147,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       update <- update(username, datasetName, latestVersion) { latest =>
         latest.copy(properties = removeBlankProperties(updatedProperties))
       }
-    } yield update
+    } yield update.map(_._1) // v2 does not expect validation on update
   }
 
   private def validateExistingProperty(key: String, value: String,
@@ -244,7 +245,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[Dataset]] =
     datasetMongoRepository.getLatestVersions(missingProperty)
 
-  override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {
+  override def importItem(item: Dataset, username: String): Future[Option[(Dataset, Validation)]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
       case None => super.create(item.copy(version = 1), username)

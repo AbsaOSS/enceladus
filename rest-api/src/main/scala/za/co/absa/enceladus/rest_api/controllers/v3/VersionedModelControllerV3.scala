@@ -100,14 +100,14 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
                          @RequestBody importObject: ExportableObject[C],
-                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     if (name != importObject.item.name) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$name' != '${importObject.item.name}'"))
     } else {
-      versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
-        case Some(entity) =>
+      versionedModelService.importSingleItemV3(importObject.item, principal.getUsername, importObject.metadata).map {
+        case Some((entity, validation)) =>
           // stripping two last segments, instead of /api-v3/dastasets/dsName/import + /dsName/dsVersion we want /api-v3/dastasets + /dsName/dsVersion
-          createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 2)
+          createdWithNameVersionLocationBuilder(entity.name, entity.version, request, stripLastSegments = 2).body(validation)
         case None => throw notFound()
       }
     }
@@ -124,7 +124,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @ResponseStatus(HttpStatus.CREATED)
   def create(@AuthenticationPrincipal principal: UserDetails,
              @RequestBody item: C,
-             request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+             request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
       if (isDisabled) {
         versionedModelService.recreate(principal.getUsername, item)
@@ -132,7 +132,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         versionedModelService.create(item, principal.getUsername)
       }
     }.map {
-      case Some(entity) => createdWithNameVersionLocation(entity.name, entity.version, request)
+      case Some((entity, validation)) => createdWithNameVersionLocationBuilder(entity.name, entity.version, request).body(validation)
       case None => throw notFound()
     }
   }
@@ -143,7 +143,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
            @PathVariable name: String,
            @PathVariable version: Int,
            @RequestBody item: C,
-           request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+           request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
     if (name != item.name) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$name' != '${item.name}'"))
@@ -151,7 +151,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
       Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
     } else {
       versionedModelService.update(user.getUsername, item).map {
-        case Some(entity) => createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 2)
+        case Some((updatedEntity, validation)) =>
+          createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
         case None => throw notFound()
       }
     }
@@ -195,8 +196,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     }
   }
 
-  protected def createdWithNameVersionLocation(name: String, version: Int, request: HttpServletRequest,
-                                               stripLastSegments: Int = 0, suffix: String = ""): ResponseEntity[Nothing] = {
+  protected def createdWithNameVersionLocationBuilder(name: String, version: Int, request: HttpServletRequest,
+                                                      stripLastSegments: Int = 0, suffix: String = ""): ResponseEntity.BodyBuilder = {
     val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
 
     val location: URI = ServletUriComponentsBuilder.fromRequest(request)
@@ -207,7 +208,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
     // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
 
-    ResponseEntity.created(location).build()
+    ResponseEntity.created(location)
   }
 
 }

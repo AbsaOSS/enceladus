@@ -20,7 +20,7 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.model.Validation
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.rest_api.services.v3.DatasetServiceV3
 import za.co.absa.enceladus.rest_api.utils.implicits._
@@ -50,13 +50,14 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
                        @PathVariable name: String,
                        @PathVariable version: String,
                        @RequestBody newProperties: java.util.Map[String, String],
-                       request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+                       request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     forVersionExpression(name, version) { case (dsName, dsVersion) =>
       datasetService.updateProperties(principal.getUsername, dsName, dsVersion, newProperties.toScalaMap).map {
 
-        case Some(entity) =>
+        case Some((entity, validation)) =>
           // stripping last 3 segments (/dsName/dsVersion/properties), instead of /api-v3/dastasets/dsName/dsVersion/properties we want /api-v3/dastasets/dsName/dsVersion/properties
-          createdWithNameVersionLocation(entity.name, entity.version, request, stripLastSegments = 3, suffix = "/properties")
+          createdWithNameVersionLocationBuilder(entity.name, entity.version, request, stripLastSegments = 3, suffix = "/properties")
+            .body(validation) // todo include in tests
         case None => throw notFound()
       }
     }
@@ -80,13 +81,13 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
                          @PathVariable name: String,
                          @PathVariable version: String,
                          @RequestBody rule: ConformanceRule,
-                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Nothing]] = {
+                         request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     forVersionExpression(name, version)(datasetService.getVersion).flatMap {
       case Some(entity) => datasetService.addConformanceRule(user.getUsername, name, entity.version, rule).map {
-        case Some(updatedDs) =>
+        case Some((updatedDs, validation)) =>
           val addedRuleOrder = updatedDs.conformance.last.order
-          createdWithNameVersionLocation(name, updatedDs.version, request, stripLastSegments = 3, // strip: /{name}/{version}/rules
-            suffix = s"/rules/$addedRuleOrder")
+          createdWithNameVersionLocationBuilder(name, updatedDs.version, request, stripLastSegments = 3, // strip: /{name}/{version}/rules
+            suffix = s"/rules/$addedRuleOrder").body(validation)
         case _ => throw notFound()
       }
       case None => throw notFound()

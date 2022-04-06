@@ -64,7 +64,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
       latestVersion <- datasetService.getLatestVersionValue(datasetName)
       res <- latestVersion match {
         case Some(version) => datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
-          case Some(ds) => ds
+          case Some((ds, validation)) => ds // v2 disregarding validation
           case _        => throw notFound()
         }
         case _ => throw notFound()

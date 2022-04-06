@@ -207,6 +207,8 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
+  // todo add/adjust check for each situation where validation with warning should get trough
+
   s"PUT $apiUrl/{name}/{version}" can {
     "return 200" when {
       "a Dataset with the given name and version is the latest that exists" should {
@@ -217,6 +219,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             description = Some("second version"), properties = Some(Map("keyA" -> "valA")), version = 2)
 
           datasetFixture.add(datasetA1, datasetA2)
+
+          Seq("keyA", "keyB", "keyC").foreach {propName => propertyDefinitionFixture.add(
+            PropertyDefinitionFactory.getDummyPropertyDefinition(propName, essentiality = Essentiality.Optional)
+          )}
 
           val exampleMappingCr = MappingConformanceRule(0,
             controlCheckpoint = true,
@@ -247,7 +253,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           )
 
           val response = sendPut[Dataset, String](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
-          assertCreated(response)
+          assertCreated(response) //v3 - prop def exist failing here
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetA/3")
 
@@ -261,6 +267,21 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           assert(actual == expected)
         }
       }
+    }
+
+    "when properties are not backed by propDefs (undefined properties)" in {
+      val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+      datasetFixture.add(datasetA1)
+      // propdefs are empty
+
+      val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+        description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
+
+      val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
+
+      assertBadRequest(response)
+      val responseBody = response.getBody
+      responseBody shouldBe Validation(Map("keyA" -> List("There is no property definition for key 'keyA'.")))
     }
 
     "return 405" when {
@@ -298,11 +319,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
             conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")),
             parent = Some(DatasetFactory.toParent(dataset1))
-          )
-          val dataset3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
-            properties = Some(Map("key1" -> "val1")),
-            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")), // untouched
-            parent = Some(DatasetFactory.toParent(dataset2))
           )
 
           datasetFixture.add(dataset1, dataset2)
@@ -362,7 +378,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
-
   }
 
   s"POST $apiUrl/{name}/import" should {

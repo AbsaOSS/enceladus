@@ -148,7 +148,7 @@ class SchemaController @Autowired()(
         // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
         update <- schemaService.schemaUpload(username, menasAttachment.refName, menasAttachment.refVersion - 1, sparkStruct)
         _ <- attachmentService.uploadAttachment(menasAttachment)
-      } yield update
+      } yield update.map(_._1) // v2 disregarding the validation
     } catch {
       case e: SchemaParsingException => throw e.copy(schemaType = schemaType) //adding schema type
     }
