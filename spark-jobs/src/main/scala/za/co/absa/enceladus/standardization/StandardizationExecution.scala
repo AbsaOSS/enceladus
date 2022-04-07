@@ -199,7 +199,7 @@ trait StandardizationExecution extends CommonJobExecution {
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-      val repartitioner = new Repartitioner(configReader)
+      val repartitioner = new Repartitioner(configReader, log)
       repartitioner.repartition(standardizedDF)
     } else {
       standardizedDF

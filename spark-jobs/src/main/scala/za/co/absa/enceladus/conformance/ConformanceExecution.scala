@@ -154,7 +154,7 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    val repartitioner = new Repartitioner(configReader)
+    val repartitioner = new Repartitioner(configReader, log)
     val withRepartitioning = repartitioner.repartition(withPartCols)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)

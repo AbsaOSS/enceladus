@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.common
 
 import org.apache.spark.sql.DataFrame
+import org.slf4j.Logger
 import za.co.absa.enceladus.common.config.CommonConfConstants
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.spark.partition.sizing.DataFramePartitioner.DataFrameFunctions
@@ -23,7 +24,7 @@ import za.co.absa.spark.partition.sizing.sizer._
 import za.co.absa.spark.partition.sizing.types.DataTypeSizes
 import za.co.absa.spark.partition.sizing.types.DataTypeSizes.DefaultDataTypeSizes
 
-class Repartitioner(configReader: ConfigReader) {
+class Repartitioner(configReader: ConfigReader, log: Logger) {
 
   val minPartition: Option[Long] = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
   val maxPartition: Option[Long] = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
@@ -31,27 +32,26 @@ class Repartitioner(configReader: ConfigReader) {
   implicit val dataTypeSizes: DataTypeSizes = DefaultDataTypeSizes
 
   def repartition(df: DataFrame): DataFrame = {
-    val maybeString = configReader.getStringOption(CommonConfConstants.partitionStrategy)
-    maybeString match {
+    val partitionStrategy = configReader.getStringOption(CommonConfConstants.partitionStrategy)
+    if (minPartition.isEmpty && maxPartition.isEmpty) {
+      log.warn(s"No partitioning applied doe to missing: ${CommonConfConstants.minPartitionSizeKey}, " +
+        s"${CommonConfConstants.minPartitionSizeKey} keys")
+    }
+    partitionStrategy match {
       case Some("plan") => df.repartitionByPlanSize(minPartition, maxPartition)
-      case Some("recordCount") => repartitionByRecordCount(df)
-      case Some("schema") => repartitionBySchema(df)
       case Some("dataframe") => repartitionByDf(df)
       case Some("sample") => repartitionBySample(df)
-      case Some("schemaSummaries") => repartitionBySchemaWithSummaries(df)
       case _ => df
     }
-  }
-
-  private def repartitionBySchemaWithSummaries(df: DataFrame): DataFrame = {
-    val sizer = new FromSchemaWithSummariesSizer()
-    df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
   }
 
   private def repartitionBySample(df: DataFrame): DataFrame = {
     val maybeInt = configReader.getIntOption(CommonConfConstants.partitionSampleSizeKey)
     maybeInt match {
-      case None => df
+      case None => {
+        log.warn(s"No repartitioning applied due to missing ${CommonConfConstants.partitionSampleSizeKey} key")
+        df
+      }
       case Some(x) => {
         val sizer = new FromDataframeSampleSizer(x)
         df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
@@ -64,16 +64,4 @@ class Repartitioner(configReader: ConfigReader) {
     df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
   }
 
-  private def repartitionBySchema(df: DataFrame): DataFrame = {
-    val sizer = new FromSchemaSizer()
-    df.repartitionByDesiredSize(sizer)(minPartition, maxPartition)
-  }
-
-  private def repartitionByRecordCount(df: DataFrame): DataFrame = {
-    val maybeInt = configReader.getLongOption(CommonConfConstants.maxRecordsPerPartitionKey)
-    maybeInt match {
-      case None => df
-      case Some(x) => df.repartitionByRecordCount(x)
-    }
-  }
 }
