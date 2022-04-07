@@ -28,7 +28,6 @@ import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
 
-import scala.concurrent.Future
 
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {

@@ -64,11 +64,13 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         propertyDefinitionFixture.add(
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
-          PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
+          PropertyDefinitionFactory.getDummyPropertyDefinition("keyC"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
         )
 
-        val response = sendPost[Dataset, Dataset](apiUrl, bodyOpt = Some(dataset))
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
         assertCreated(response)
+        response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
         val locationHeader = response.getHeaders.getFirst("location")
         locationHeader should endWith("/api-v3/datasets/dummyDs/1")
 
@@ -223,6 +225,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           Seq("keyA", "keyB", "keyC").foreach {propName => propertyDefinitionFixture.add(
             PropertyDefinitionFactory.getDummyPropertyDefinition(propName, essentiality = Essentiality.Optional)
           )}
+          // this will cause missing property 'keyD' to issue a warning if not present
+          propertyDefinitionFixture.add(
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
+          )
 
           val exampleMappingCr = MappingConformanceRule(0,
             controlCheckpoint = true,
@@ -252,8 +258,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             version = 2 // update references the last version
           )
 
-          val response = sendPut[Dataset, String](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
-          assertCreated(response) //v3 - prop def exist failing here
+          val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
+          assertCreated(response)
+          response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetA/3")
 
@@ -415,13 +422,15 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
           propertyDefinitionFixture.add(
             PropertyDefinitionFactory.getDummyPropertyDefinition("key1"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
+            PropertyDefinitionFactory.getDummyPropertyDefinition("key2"),
+            PropertyDefinitionFactory.getDummyPropertyDefinition("key3", essentiality = Essentiality.Recommended)
           )
 
-          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
           assertCreated(response)
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/2")
+          response.getBody shouldBe Validation.empty.withWarning("key3", "Property 'key3' is recommended to be present, but was not found!")
 
           val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
           val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
@@ -671,11 +680,13 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           propertyDefinitionFixture.add(
             PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
             PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
-            PropertyDefinitionFactory.getDummyPropertyDefinition("keyC")
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyC"),
+            PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
           )
 
-          val response1 = sendPut[String, String](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
+          val response1 = sendPut[String, Validation](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
           assertCreated(response1)
+          response1.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
           val headers1 = response1.getHeaders
           assert(headers1.getFirst("Location").endsWith("/api-v3/datasets/datasetA/2/properties"))
 
@@ -831,8 +842,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         )
         datasetFixture.add(datasetV1)
 
-        val response = sendPost[ConformanceRule, String](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
+        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
         assertCreated(response)
+        // if, in the future, there can be a rule update resulting in a warning, let's reflect that here
+        response.getBody shouldBe Validation.empty
 
         val locationHeader = response.getHeaders.getFirst("location")
         locationHeader should endWith("/api-v3/datasets/datasetA/2/rules/1") // increased version in the url and added rule #1
