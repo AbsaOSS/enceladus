@@ -209,8 +209,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  // todo add/adjust check for each situation where validation with warning should get trough
-
   s"PUT $apiUrl/{name}/{version}" can {
     "return 200" when {
       "a Dataset with the given name and version is the latest that exists" should {
@@ -411,7 +409,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
-    // todo 400 when validation of imported entity does not pass
+    "return 400" when {
+        "imported Dataset fails validation" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+          propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
+
+          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+
+          response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+          response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
+        }
+    }
 
     "return 201" when {
       "there is a existing Dataset" should {
@@ -698,7 +706,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
-    // todo: maybe pass through validation warnings on update?
   }
 
   // similar to put-properties validation
