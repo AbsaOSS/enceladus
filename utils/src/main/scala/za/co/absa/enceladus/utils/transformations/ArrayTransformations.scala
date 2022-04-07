@@ -18,11 +18,11 @@ package za.co.absa.enceladus.utils.transformations
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.api.java.UDF1
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.api.java.UDF2
 import org.slf4j.LoggerFactory
 import org.apache.spark.storage.StorageLevel
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 
 object ArrayTransformations {
 
@@ -59,7 +59,7 @@ object ArrayTransformations {
 
     def helper(tokens: List[String], pathAcc: Seq[String]): Column = {
       val currPath = (pathAcc :+ tokens.head).mkString(".")
-      val topType = SchemaUtils.getFieldType(currPath, ds.schema)
+      val topType = ds.schema.getFieldType(currPath)
 
       // got a match
       if (currPath == columnName) {
@@ -90,7 +90,7 @@ object ArrayTransformations {
   }
 
   private def getArraySchema(field: String, schema: StructType): ArrayType = {
-    val arrType = SchemaUtils.getFieldType(field, schema)
+    val arrType = schema.getFieldType(field)
     if (arrType.isEmpty || !arrType.get.isInstanceOf[ArrayType]) {
       throw new IllegalStateException(s"Column $field either does not exist or is not of type ArrayType")
     } else {
@@ -151,8 +151,8 @@ object ArrayTransformations {
     val list = withInd.groupBy(arrCol(groupField)).agg(collect_list(col(arrayCol)) as arrayCol)
     val tmp2 = if (tokens.length > 1) nestedWithColumn(list)(arrayCol, col(s"`$arrayCol`")).drop(col(s"`$arrayCol`")) else list
 
-    val origArraySchema = SchemaUtils.getFieldType(arrayCol, ds.schema).getOrElse(throw new IllegalStateException(s"The field $arrayCol not found in the transformed schema.")).asInstanceOf[ArrayType]
-    val arrayChildSchema = SchemaUtils.getFieldType(arrayCol, transformed.schema).getOrElse(throw new IllegalStateException(s"The field $arrayCol not found in the transformed schema."))
+    val origArraySchema = ds.schema.getFieldType(arrayCol).getOrElse(throw new IllegalStateException(s"The field $arrayCol not found in the transformed schema.")).asInstanceOf[ArrayType]
+    val arrayChildSchema = transformed.schema.getFieldType(arrayCol).getOrElse(throw new IllegalStateException(s"The field $arrayCol not found in the transformed schema."))
     val arraySchema = ArrayType.apply(arrayChildSchema, origArraySchema.containsNull)
 
     spark.udf.register(s"${groupField}_handleNullAndEmpty", new UDF2[Int, Seq[Row], Seq[Row]] {
@@ -180,10 +180,10 @@ object ArrayTransformations {
   def nestedDrop(df: Dataset[Row], colName: String): Dataset[Row] = {
     val toks = colName.split("\\.")
     if (toks.size == 1) df.drop(colName) else {
-      if (SchemaUtils.getFirstArrayPath(colName, df.schema) != "") throw new IllegalStateException(s"Array Type fields in the path of $colName - dropping arrays children is not supported")
+      if (df.schema.getFirstArrayPath(colName) != "") throw new IllegalStateException(s"Array Type fields in the path of $colName - dropping arrays children is not supported")
       val parentPath = toks.init.mkString(".")
       logger.info(s"Nested Drop: parent path $parentPath")
-      val parentType = SchemaUtils.getFieldType(parentPath, df.schema)
+      val parentType = df.schema.getFieldType(parentPath)
       logger.info(s"Nested Drop: parent type $parentType")
       val parentCols = if (parentType.isEmpty) throw new IllegalStateException(s"Field $colName does not exist in \n ${df.printSchema()}") else parentType.get.asInstanceOf[StructType].fields
       val replace = struct(parentCols.filter(_.name != toks.last).map(x => arrCol(s"$parentPath.${x.name}") as x.name): _*)
@@ -192,7 +192,7 @@ object ArrayTransformations {
   }
 
   def flattenArrays(df: Dataset[Row], colName: String)(implicit spark: SparkSession): Dataset[Row] = {
-    val typ = SchemaUtils.getFieldType(colName, df.schema).getOrElse(throw new Error(s"Field $colName does not exist in ${df.schema.printTreeString()}"))
+    val typ = df.schema.getFieldType(colName).getOrElse(throw new Error(s"Field $colName does not exist in ${df.schema.printTreeString()}"))
     if (!typ.isInstanceOf[ArrayType]) {
       logger.info(s"Field $colName is not an ArrayType, returning the original dataset!")
       df
@@ -216,7 +216,7 @@ object ArrayTransformations {
 
   def handleArrays(targetColumn: String, df: Dataset[Row])(fn: Dataset[Row] => Dataset[Row])(implicit spark: SparkSession): Dataset[Row] = {
     logger.info(s"handleArrays: Finding first array for $targetColumn")
-    val firstArr = SchemaUtils.getFirstArrayPath(targetColumn, df.schema)
+    val firstArr = df.schema.getFirstArrayPath(targetColumn)
     logger.info(s"handleArrays: First array field $firstArr")
     firstArr match {
       case "" => fn(df)

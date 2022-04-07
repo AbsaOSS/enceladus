@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Component
 import java.io.ByteArrayOutputStream
 
+import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 
 import scala.util.control.NonFatal
 

@@ -24,10 +24,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.utils.{ExplodeTools, SchemaUtils}
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,

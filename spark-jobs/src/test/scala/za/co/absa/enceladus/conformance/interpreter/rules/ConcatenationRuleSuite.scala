@@ -20,9 +20,9 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{ConcatenationConformanceRule, UppercaseConformanceRule}
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class ConcatenationRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
+class ConcatenationRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with TestRuleBehaviors {
   private val concatRule = ConcatenationConformanceRule(order = 1, outputColumn = "CombinedName",
     controlCheckpoint = false, Seq("name", "city", "address"))
   private val concatArrayRule = ConcatenationConformanceRule(order = 2, outputColumn = "rooms.CombinedLabel",

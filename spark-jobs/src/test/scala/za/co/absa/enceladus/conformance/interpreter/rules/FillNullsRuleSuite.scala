@@ -20,9 +20,9 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.samples.DeepArraySamples
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.FillNullsConformanceRule
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class FillNullsRuleSuite extends AnyFunSuite with SparkTestBase with TestRuleBehaviors {
+class FillNullsRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with TestRuleBehaviors {
   // scalastyle:off line.size.limit
 
   private val fillNullsRule = FillNullsConformanceRule(
