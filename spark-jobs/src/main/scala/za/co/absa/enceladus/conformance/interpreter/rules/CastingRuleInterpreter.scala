@@ -23,8 +23,9 @@ import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.spark.commons.implicits.DataTypeImplicits.DataTypeEnhancements
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInterpreter {
@@ -41,13 +42,13 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
     RuleValidators.validateOutputField(progArgs.datasetName, ruleName, df.schema, rule.outputColumn)
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumn, rule.outputColumn)
 
-    SchemaUtils.getFieldType(rule.inputColumn, df.schema)
+    df.schema.getFieldType(rule.inputColumn)
       .foreach(dt => RuleValidators.validateTypeCompatibility(ruleName, rule.inputColumn, dt, rule.outputDataType))
 
-    val sourceDataType = SchemaUtils.getFieldType(rule.inputColumn, df.schema).get
+    val sourceDataType = df.schema.getFieldType(rule.inputColumn).get
     val targetDataType = CatalystSqlParser.parseDataType(rule.outputDataType)
 
-    if (SchemaUtils.isCastAlwaysSucceeds(sourceDataType, targetDataType)) {
+    if (sourceDataType.doesCastAlwaysSucceed(targetDataType)) {
       // Casting to string does not generate errors
       df.nestedMapColumn(rule.inputColumn, rule.outputColumn, c =>
         c.cast(rule.outputDataType)

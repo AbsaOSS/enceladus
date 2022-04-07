@@ -17,11 +17,11 @@ package za.co.absa.enceladus.utils.validation.field
 
 import java.util.Base64
 
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits._
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues}
 import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.types.TypedStructField.BinaryTypeStructField
 import za.co.absa.enceladus.utils.validation.{ValidationError, ValidationIssue, ValidationWarning}
+import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldMetadataEnhancements
 
 import scala.util.{Failure, Success, Try}
 
@@ -32,7 +32,7 @@ object BinaryFieldValidator extends FieldValidator {
   }
 
   private def validateExplicitBase64DefaultValue(field: BinaryTypeStructField): Seq[ValidationIssue] = {
-    val defaultValue: Option[String] = field.structField.getMetadataString(MetadataKeys.DefaultValue)
+    val defaultValue: Option[String] = field.structField.metadata.getOptString(MetadataKeys.DefaultValue)
 
     (field.normalizedEncoding, defaultValue) match {
       case (None, Some(encodedDefault)) =>

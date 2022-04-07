@@ -16,16 +16,15 @@
 package za.co.absa.enceladus.utils.fs
 
 import java.io.FileNotFoundException
-
 import org.apache.hadoop.fs.Path
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 /**
   * Unit tests for File system utils
   */
-class HdfsUtilsSpec extends AnyWordSpec with Matchers with SparkTestBase with HadoopFsTestBase {
+class HdfsUtilsSpec extends AnyWordSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase {
 
   "splitUriPath" should {
     "split URI and path" in {

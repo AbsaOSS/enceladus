@@ -33,11 +33,11 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.general.Algorithms
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 
 case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -72,7 +72,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
 
   private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
                                                    schema: StructType): Seq[ConformanceRule] = {
-    steps.filter(rule => SchemaUtils.fieldExists(rule.outputColumn, schema))
+    steps.filter(rule => schema.fieldExists(rule.outputColumn))
   }
 
   /**
@@ -182,7 +182,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
       if (isGroupExplosionUsable(rules) &&
         ictx.featureSwitches.experimentalMappingRuleEnabled) {
         // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
-        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
+        val optArray = schema.getDeepestArrayPath(rules.head.outputColumn)
         optArray match {
           case Some(arrayColumn) =>
             new ArrayExplodeInterpreter(arrayColumn) :: (interpreters :+ new ArrayCollapseInterpreter())
@@ -402,7 +402,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
     Algorithms.stableGroupByOption[ConformanceRule, String](rules, {
-      case m: MappingConformanceRule => SchemaUtils.getDeepestArrayPath(schema, m.outputColumn)
+      case m: MappingConformanceRule => schema.getDeepestArrayPath(m.outputColumn)
       case _                         => None
     }).map(_.toList).toList
   }
