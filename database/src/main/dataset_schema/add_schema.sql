@@ -45,11 +45,11 @@ $$
 --      id_schema           - id of the newly created schema record
 --
 -- Status codes:
---      201     - OK
---      403     - Schema has been disabled
---      404     - Schema version wrong
---      409     - Schema already exists
---      423     - Schema is locked
+--      11                  - OK
+--      31                  - Schema has been disabled
+--      32                  - Schema is locked
+--      50                  - Schema version wrong
+--      51                  - Schema already exists
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -71,21 +71,21 @@ BEGIN
 
         _latest_version = 0;
     ELSIF _disabled THEN
-        status := 403;
+        status := 31;
         status_text := 'Schema has been disabled';
         RETURN ;
     ELSIF _locked THEN
-        status := 423;
+        status := 32;
         status_text := 'Schema is locked';
         RETURN;
     END IF;
 
     IF _latest_version >= i_schema_version THEN
-        status := 409;
+        status := 51;
         status_text := 'Schema already exists';
         RETURN;
     ELSIF _latest_version + 1 < i_schema_version THEN
-        status := 404;
+        status := 50;
         status_text := 'Schema version wrong';
         RETURN;
     END IF;
@@ -107,7 +107,7 @@ BEGIN
         WHERE schema_name = i_schema_name;
     END IF;
 
-    status := 201;
+    status := 11;
     status_text := 'OK';
     RETURN;
 END;

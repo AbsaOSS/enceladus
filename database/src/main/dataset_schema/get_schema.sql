@@ -64,9 +64,9 @@ $$
 --      disabled_when       - if not NULL the schema has been disabled
 --
 -- Status codes:
---      200     - OK
---      404     - Schema does not exist
---      405     - Schema of the given version does not exist
+--      10                  - OK
+--      40                  - Schema does not exist
+--      43                  - Schema of the given version does not exist
 --
 -------------------------------------------------------------------------------
 DECLARE
@@ -86,12 +86,12 @@ BEGIN
         _locked_by, _locked_when, _disabled_by, _disabled_when;
 
     IF NOT found THEN
-        status := 404;
+        status := 40;
         status_text := 'Schema does not exist';
         RETURN;
     END IF;
 
-    SELECT 200, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
+    SELECT 10, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
            dsv.schema_description, dsv.fields, _created_by, _created_when,
            dsv.updated_by, dsv.updated_when, _locked_by, _locked_when,
            _disabled_by, _disabled_when
@@ -104,7 +104,7 @@ BEGIN
          disabled_by, disabled_when;
 
     IF NOT found THEN
-        status := 405;
+        status := 43;
         status_text := 'Schema of the given version does not exist';
         RETURN;
     END IF;
@@ -160,15 +160,15 @@ $$
 --      disabled_when       - if not NULL the schema has been disabled
 --
 -- Status codes:
---      200     - OK
---      404     - Schema does not exist
+--      10                  - OK
+--      40                  - Schema does not exist
 --
 -------------------------------------------------------------------------------
 DECLARE
     _schema_name    TEXT;
 BEGIN
 
-    SELECT 200, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
+    SELECT 10, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
            dsv.schema_description, dsv.fields, dsv.updated_by, dsv.updated_when
     FROM dataset_schema.versions dsv
     WHERE dsv.id_schema_version = i_key_schema_version
@@ -176,7 +176,7 @@ BEGIN
         schema_description, fields, updated_by, updated_when;
 
     IF NOT found THEN
-        status := 404;
+        status := 40;
         status_text := 'Schema does not exist';
         RETURN;
     END IF;
