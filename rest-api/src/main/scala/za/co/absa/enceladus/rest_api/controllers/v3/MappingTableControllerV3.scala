@@ -21,14 +21,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.rest_api.services.MappingTableService
+import za.co.absa.enceladus.rest_api.services.v3.MappingTableServiceV3
 
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping(Array("/api-v3/mapping-tables"))
-class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableService)
+class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableServiceV3)
   extends VersionedModelControllerV3(mappingTableService) {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

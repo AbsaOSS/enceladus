@@ -22,10 +22,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.{DefaultValue, Validation}
-import za.co.absa.enceladus.model.test.factories.MappingTableFactory
+import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Validation}
+import za.co.absa.enceladus.model.test.factories.{MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
 import za.co.absa.enceladus.rest_api.integration.fixtures._
+import za.co.absa.enceladus.rest_api.integration.controllers.toExpected
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -43,9 +44,45 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(mappingTableFixture, schemaFixture)
 
-  // todo create/update to show that schema presence is checked
+  s"POST $apiUrl" should {
+    "return 400" when {
+      "referenced schema does not exits" in {
+        val mtA = MappingTableFactory.getDummyMappingTable("mtA", schemaName = "mtSchemaA", schemaVersion = 1)
 
-  // only MT-specific endpoints are covered here
+        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
+
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("schema" -> List("Schema mtSchemaA v1 not found!")))
+      }
+    }
+
+    "return 201" when {
+      "a MappingTables is created" in {
+        val mtA = MappingTableFactory.getDummyMappingTable("mtA", schemaName = "mtSchema1", schemaVersion = 1)
+        schemaFixture.add(SchemaFactory.getDummySchema("mtSchema1"))
+
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
+
+        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
+        assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("location")
+        locationHeader should endWith("/api-v3/mapping-tables/mtA/1")
+
+        val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
+        val response2 = sendGet[MappingTable](stripBaseUrl(relativeLocation))
+        assertOk(response2)
+
+        val actual = response2.getBody
+        val expected = toExpected(mtA, actual)
+
+        assert(actual == expected)
+      }
+
+    }
+  }
+
+  // only MT-specific endpoints are covered further on:
   s"GET $apiUrl/{name}/{version}/defaults" should {
     "return 404" when {
       "when the name/version does not exist" in {
@@ -122,6 +159,8 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
           mappingTableFixture.add(mtAv1)
 
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
+
           val response1 = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(bothPayloadAndExpectedResult))
           assertCreated(response1)
           response1.getBody shouldBe Validation.empty
@@ -171,6 +210,8 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       s"defaults are replaced with a new version" in {
         val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
         mappingTableFixture.add(mtAv1)
+
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
         val response1 = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
         assertCreated(response1)

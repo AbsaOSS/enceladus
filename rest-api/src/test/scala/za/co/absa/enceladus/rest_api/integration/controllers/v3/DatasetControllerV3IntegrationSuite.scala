@@ -698,7 +698,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val headers1 = response1.getHeaders
           assert(headers1.getFirst("Location").endsWith("/api-v3/datasets/datasetA/2/properties"))
 
-
           val response2 = sendGet[Map[String, String]](s"$apiUrl/datasetA/2/properties")
           assertOk(response2)
           val responseBody = response2.getBody
