@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, LiteralConfo
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.VersionList
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
@@ -49,18 +49,21 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
 
+  @Autowired
+  private val mappingTableFixture: MappingTableFixtureService = null
+
   private val apiUrl = "/datasets"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture)
+  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture, mappingTableFixture)
 
 
   s"POST $apiUrl" should {
     "return 201" when {
       "a Dataset is created" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset = DatasetFactory.getDummyDataset("dummyDs",
           properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
-
         propertyDefinitionFixture.add(
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
@@ -85,6 +88,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
       "create a new version of Dataset" when {
         "the dataset is disabled (i.e. all version are disabled)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
           val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
           datasetFixture.add(dataset1, dataset2)
@@ -108,7 +112,19 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
 
     "return 400" when {
+      "dataset schema does not exits" in {
+        val dataset = DatasetFactory.getDummyDataset("dummyDs")
+        // there are schemas defined
+
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("schema" -> List("Schema dummySchema v1 not found!")))
+      }
+
       "datasets properties are not backed by propDefs (undefined properties)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset = DatasetFactory.getDummyDataset("dummyDs", properties = Some(Map("undefinedProperty1" -> "value1")))
         // propdefs are empty
 
@@ -119,12 +135,13 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
     }
-    // todo what to do if  "the last dataset version is disabled"
+    // todo what to do if  "the last dataset version is disabled"?
   }
 
   s"GET $apiUrl/{name}" should {
     "return 200" when {
       "a Dataset with the given name exists - so it gives versions" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
           version = 2,
@@ -139,6 +156,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 404" when {
       "a Dataset with the given name does not exist" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         datasetFixture.add(dataset)
 
@@ -151,6 +169,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   s"GET $apiUrl/{name}/latest" should {
     "return 200" when {
       "a Dataset with the given name exists - gives latest version entity" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA",
           version = 2, parent = Some(DatasetFactory.toParent(datasetV1)))
@@ -168,6 +187,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 404" when {
       "a Dataset with the given name does not exist" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         datasetFixture.add(dataset)
 
@@ -180,10 +200,11 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   s"GET $apiUrl/{name}/{version}" should {
     "return 200" when {
       "a Dataset with the given name and version exists - gives specified version of entity" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, description = Some("second"))
         val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3, description = Some("third"))
-        datasetFixture.add(datasetV1, datasetV2)
+        datasetFixture.add(datasetV1, datasetV2, datasetV3)
 
         val response = sendGet[Dataset](s"$apiUrl/datasetA/2")
         assertOk(response)
@@ -209,15 +230,37 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
+  private val exampleMappingCr = MappingConformanceRule(0,
+    controlCheckpoint = true,
+    mappingTable = "CurrencyMappingTable",
+    mappingTableVersion = 9, //scalastyle:ignore magic.number
+    attributeMappings = Map("InputValue" -> "STRING_VAL"),
+    targetAttribute = "CCC",
+    outputColumn = "ConformedCCC",
+    isNullSafe = true,
+    mappingTableFilter = Some(
+      AndJoinedFilters(Set(
+        OrJoinedFilters(Set(
+          EqualsFilter("column1", "soughtAfterValue"),
+          EqualsFilter("column1", "alternativeSoughtAfterValue")
+        )),
+        DiffersFilter("column2", "anotherValue"),
+        NotFilter(IsNullFilter("col3"))
+      ))
+    ),
+    overrideMappingTableOwnFilter = Some(true)
+  )
+
   s"PUT $apiUrl/{name}/{version}" can {
     "return 200" when {
       "a Dataset with the given name and version is the latest that exists" should {
         "update the dataset (with empty properties stripped)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("init version"), properties = Some(Map("keyA" -> "valA")))
           val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("second version"), properties = Some(Map("keyA" -> "valA")), version = 2)
-
           datasetFixture.add(datasetA1, datasetA2)
 
           Seq("keyA", "keyB", "keyC").foreach {propName => propertyDefinitionFixture.add(
@@ -228,26 +271,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
           )
 
-          val exampleMappingCr = MappingConformanceRule(0,
-            controlCheckpoint = true,
-            mappingTable = "CurrencyMappingTable",
-            mappingTableVersion = 9, //scalastyle:ignore magic.number
-            attributeMappings = Map("InputValue" -> "STRING_VAL"),
-            targetAttribute = "CCC",
-            outputColumn = "ConformedCCC",
-            isNullSafe = true,
-            mappingTableFilter = Some(
-              AndJoinedFilters(Set(
-                OrJoinedFilters(Set(
-                  EqualsFilter("column1", "soughtAfterValue"),
-                  EqualsFilter("column1", "alternativeSoughtAfterValue")
-                )),
-                DiffersFilter("column2", "anotherValue"),
-                NotFilter(IsNullFilter("col3"))
-              ))
-            ),
-            overrideMappingTableOwnFilter = Some(true)
-          )
+          mappingTableFixture.add(MappingTableFactory.getDummyMappingTable("CurrencyMappingTable", version = 9)) //scalastyle:ignore magic.number
 
           val datasetA3 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("updated"),
@@ -274,24 +298,29 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
-    "when properties are not backed by propDefs (undefined properties)" in {
-      val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-      datasetFixture.add(datasetA1)
-      // propdefs are empty
+    "return 400" when {
+      "when properties are not backed by propDefs (undefined properties) and schema does not exist" in {
+        val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetA1)
+        // propdefs are empty, schemas not defined
 
-      val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
-        description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
+        val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+          description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
 
-      val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
+        val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
 
-      assertBadRequest(response)
-      val responseBody = response.getBody
-      responseBody shouldBe Validation(Map("keyA" -> List("There is no property definition for key 'keyA'.")))
-    }
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe
+          Validation(Map(
+            "schema" -> List("Schema dummySchema v1 not found!"),
+            "keyA" -> List("There is no property definition for key 'keyA'.")
+          ))
+      }
 
-    "return 405" when {
       "a Dataset with the given name and version" should {
         "fail when version/name in the URL and payload is mismatched" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA", description = Some("init version"))
           datasetFixture.add(datasetA1)
 
@@ -320,6 +349,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "there is a correct Dataset" should {
         "return an audit trail for the dataset" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA")
           val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2,
             conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1")),
@@ -358,6 +388,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "there is a correct Dataset" should {
         "return the exported Dataset representation for the latest version" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
             properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
@@ -498,6 +529,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "there is a correct Dataset version" should {
         "return the exported Dataset representation" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2,
             properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
           val dataset3 = DatasetFactory.getDummyDataset(name = "dataset", version = 3, description = Some("showing non-latest export"))
@@ -532,6 +564,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 404" when {
       "when the dataset of name/version does not exist" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetA)
 
@@ -545,6 +578,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 200" when {
       "any exiting latest dataset" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetA)
         val response = sendGet[UsedIn](s"$apiUrl/datasetA/latest/used-in")
@@ -556,6 +590,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 200" when {
       "for existing name+version for dataset" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2)
         datasetFixture.add(dataset2)
         val response = sendGet[UsedIn](s"$apiUrl/dataset/2/used-in")
@@ -582,6 +617,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           ("non-empty", Some(Map("key1" -> "val1", "key2" -> "val2")))
         ).foreach { case (propertiesCaseName, propertiesData) =>
           s"return dataset properties ($propertiesCaseName)" in {
+            schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
             val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
             val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = propertiesData)
             val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3, properties = Some(Map("other" -> "prop")))
@@ -601,6 +637,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "there is a latest Dataset version" should {
         s"return dataset properties" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
           val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
           datasetFixture.add(datasetV1, datasetV2)
@@ -626,6 +663,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 400" when {
       "when version is not the latest (only last version can be updated)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
         val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
@@ -641,6 +679,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when properties are not backed by propDefs (undefined properties)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         datasetFixture.add(datasetV1)
         // propdefs are empty
@@ -654,6 +693,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when properties are not valid (based on propDefs)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
         datasetFixture.add(datasetV1)
 
@@ -682,6 +722,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         ("empty properties map", "{}", Some(Map.empty))
       ).foreach { case (testCaseName, payload, expectedPropertiesSet) =>
         s"properties are replaced with a new version ($testCaseName)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
           datasetFixture.add(datasetV1)
 
@@ -719,19 +760,23 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     // todo name validation - common for versioned entities
 
     "return 200" when {
-      "when properties are not backed by propDefs (undefined properties)" in {
+      "when properties are not backed by propDefs (undefined properties) and schema is missing" in {
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("undefinedProperty1" -> "someValue")))
         datasetFixture.add(datasetV1)
-        // propdefs are empty
+        // propdefs are empty, schemas not defined
 
         val response = sendGet[Validation](s"$apiUrl/datasetA/1/validation")
 
         assertOk(response)
         response.getBody shouldBe
-          Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
+          Validation(Map(
+            "undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'."),
+            "schema" -> List("Schema dummySchema v1 not found!")
+          ))
       }
 
       "when properties are not valid (based on propDefs) - mandatoriness check" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = None) // prop 'mandatoryA' not present
         datasetFixture.add(datasetV1)
 
@@ -745,6 +790,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when properties are not valid (based on propDefs) - property conformance" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("AorB" -> "c")))
         datasetFixture.add(datasetV1)
 
@@ -795,6 +841,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 200" when {
       "when there are no conformance rules" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetV1)
 
@@ -805,6 +852,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when there are some conformance rules" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         datasetFixture.add(dsWithRules1)
 
         val response = sendGet[Array[ConformanceRule]](s"$apiUrl/datasetA/1/rules")
@@ -817,6 +865,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   s"POST $apiUrl/{name}/{version}/rules" should {
     "return 404" when {
       "when the name+version does not exist" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetV1)
 
@@ -828,9 +877,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 400" when {
       "when the there is a conflicting conf rule #" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
-          LiteralConformanceRule(order = 0,"column1", true, "ABC"))
-        )
+          LiteralConformanceRule(order = 0,"column1", true, "ABC")
+        ))
         datasetFixture.add(datasetV1)
 
         val response = sendPost[ConformanceRule, String](s"$apiUrl/datasetA/1/rules",
@@ -841,8 +891,23 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
+    "return 400" when {
+      "when rule is not valid (missing MT)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules",
+          bodyOpt = Some(exampleMcrRule0))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("mapping-table", "Mapping table CurrencyMappingTable v9 not found!")
+      }
+    }
+
     "return 201" when {
       "when conf rule is added" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
           LiteralConformanceRule(order = 0,"column1", true, "ABC"))
         )
@@ -877,6 +942,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when the rule with # does not exist" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         datasetFixture.add(dsWithRules1)
 
         val response = sendGet[String](s"$apiUrl/datasetA/1/rules/345")
@@ -886,6 +952,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 200" when {
       "when there is a conformance rule with the order#" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         datasetFixture.add(dsWithRules1)
 
         val response = sendGet[ConformanceRule](s"$apiUrl/datasetA/1/rules/1")
