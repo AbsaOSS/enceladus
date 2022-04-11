@@ -61,6 +61,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val dataset = DatasetFactory.getDummyDataset("dummyDs",
           properties = Some(Map("keyA" -> "valA", "keyB" -> "valB", "keyC" -> "")))
 
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         propertyDefinitionFixture.add(
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"),
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyB"),
@@ -85,6 +86,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
       "create a new version of Dataset" when {
         "the dataset is disabled (i.e. all version are disabled)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
           val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
           val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
           datasetFixture.add(dataset1, dataset2)
@@ -108,7 +110,19 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
 
     "return 400" when {
+      "dataset schema does not exits" in {
+        val dataset = DatasetFactory.getDummyDataset("dummyDs")
+        // there are schemas defined
+
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("schema" -> List("Schema dummySchema v1 not found!")))
+      }
+
       "datasets properties are not backed by propDefs (undefined properties)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset = DatasetFactory.getDummyDataset("dummyDs", properties = Some(Map("undefinedProperty1" -> "value1")))
         // propdefs are empty
 
@@ -213,11 +227,12 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 200" when {
       "a Dataset with the given name and version is the latest that exists" should {
         "update the dataset (with empty properties stripped)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("init version"), properties = Some(Map("keyA" -> "valA")))
           val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
             description = Some("second version"), properties = Some(Map("keyA" -> "valA")), version = 2)
-
           datasetFixture.add(datasetA1, datasetA2)
 
           Seq("keyA", "keyB", "keyC").foreach {propName => propertyDefinitionFixture.add(
@@ -274,22 +289,26 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
-    "when properties are not backed by propDefs (undefined properties)" in {
-      val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-      datasetFixture.add(datasetA1)
-      // propdefs are empty
+    "return 400" when {
+      "when properties are not backed by propDefs (undefined properties) and schema does not exist" in {
+        val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetA1)
+        // propdefs are empty
 
-      val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
-        description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
+        val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
+          description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
 
-      val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
+        val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
 
-      assertBadRequest(response)
-      val responseBody = response.getBody
-      responseBody shouldBe Validation(Map("keyA" -> List("There is no property definition for key 'keyA'.")))
-    }
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe
+          Validation(Map(
+            "schema" -> List("Schema dummySchema v1 not found!"),
+            "keyA" -> List("There is no property definition for key 'keyA'.")
+          ))
+      }
 
-    "return 405" when {
       "a Dataset with the given name and version" should {
         "fail when version/name in the URL and payload is mismatched" in {
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA", description = Some("init version"))
@@ -682,6 +701,8 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         ("empty properties map", "{}", Some(Map.empty))
       ).foreach { case (testCaseName, payload, expectedPropertiesSet) =>
         s"properties are replaced with a new version ($testCaseName)" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+
           val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
           datasetFixture.add(datasetV1)
 
@@ -720,7 +741,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     // todo name validation - common for versioned entities
 
     "return 200" when {
-      "when properties are not backed by propDefs (undefined properties)" in {
+      "when properties are not backed by propDefs (undefined properties) and schema is missing" in {
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("undefinedProperty1" -> "someValue")))
         datasetFixture.add(datasetV1)
         // propdefs are empty
@@ -729,10 +750,14 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         assertOk(response)
         response.getBody shouldBe
-          Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
+          Validation(Map(
+            "undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'."),
+            "schema" -> List("Schema dummySchema v1 not found!")
+          ))
       }
 
       "when properties are not valid (based on propDefs) - mandatoriness check" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = None) // prop 'mandatoryA' not present
         datasetFixture.add(datasetV1)
 
@@ -746,6 +771,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
 
       "when properties are not valid (based on propDefs) - property conformance" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("AorB" -> "c")))
         datasetFixture.add(datasetV1)
 
@@ -844,6 +870,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
     "return 201" when {
       "when conf rule is added" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
           LiteralConformanceRule(order = 0,"column1", true, "ABC"))
         )

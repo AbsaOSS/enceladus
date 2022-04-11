@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.rest_api.services.{DatasetService, PropertyDefinitionService}
+import za.co.absa.enceladus.rest_api.services.{DatasetService, MappingTableService, PropertyDefinitionService, SchemaService}
 
 import scala.concurrent.Future
 
@@ -29,19 +29,22 @@ import scala.concurrent.Future
 @Service
 class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoRepository,
                                     oozieRepository: OozieRepository,
-                                    datasetPropertyDefinitionService: PropertyDefinitionService)
-  extends DatasetService(datasetMongoRepository, oozieRepository, datasetPropertyDefinitionService) {
+                                    datasetPropertyDefinitionService: PropertyDefinitionService,
+                                    val schemaService: SchemaService)
+  extends DatasetService(datasetMongoRepository, oozieRepository, datasetPropertyDefinitionService)
+  with HavingSchemaService {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   // general entity validation is extendable for V3 - here with properties validation
   override def validate(item: Dataset): Future[Validation] = {
-    // todo check schema presence same way as for import
 
     for {
       originalValidation <- super.validate(item)
-      dsSpecificValidation <- validateProperties(item.propertiesAsMap)
-    } yield originalValidation.merge(dsSpecificValidation)
+      propertiesValidation <- validateProperties(item.propertiesAsMap)
+      schemaValidation <- validateSchemaExists(item.schemaName, item.schemaVersion)
+      // todo validate CR rule existing MT
+    } yield originalValidation.merge(propertiesValidation).merge(schemaValidation)
   }
 
   override def addConformanceRule(username: String, datasetName: String,
