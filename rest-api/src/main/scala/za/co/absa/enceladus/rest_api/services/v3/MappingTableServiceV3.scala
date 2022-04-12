@@ -26,17 +26,10 @@ import scala.concurrent.Future
 @Service
 class MappingTableServiceV3 @Autowired()(mappingTableMongoRepository: MappingTableMongoRepository,
                                          datasetMongoRepository: DatasetMongoRepository,
-                                         schemaService: SchemaService)
-  extends MappingTableService(mappingTableMongoRepository, datasetMongoRepository) {
+                                         val schemaService: SchemaService)
+  extends MappingTableService(mappingTableMongoRepository, datasetMongoRepository) with HavingSchemaService {
 
   import scala.concurrent.ExecutionContext.Implicits.global
-
-  private def validateSchemaExists(schemaName: String, schemaVersion: Int): Future[Validation] = {
-    schemaService.getVersion(schemaName, schemaVersion).map {
-      case None => Validation.empty.withError("schema", s"Schema $schemaName v$schemaVersion not found!")
-      case Some(_) => Validation.empty
-    }
-  }
 
   override def validate(item: MappingTable): Future[Validation] = {
     for {
@@ -45,5 +38,4 @@ class MappingTableServiceV3 @Autowired()(mappingTableMongoRepository: MappingTab
     } yield originalValidation.merge(mtSchemaValidation)
 
   }
-
 }
