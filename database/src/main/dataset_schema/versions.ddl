@@ -23,7 +23,7 @@ CREATE TABLE dataset_schema.versions
     schema_description  TEXT,
     fields              JSONB,
     updated_by          TEXT NOT NULL,
-    updated_when        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT versions_pk PRIMARY KEY (id_schema_version)
 );
 

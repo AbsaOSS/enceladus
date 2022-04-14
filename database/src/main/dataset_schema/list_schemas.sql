@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS dataset_schema.list_schemas(BOOLEAN);
-
 CREATE OR REPLACE FUNCTION dataset_schema.list_schemas(
     IN  i_include_disabled      BOOLEAN DEFAULT FALSE,
     OUT schema_name             TEXT,
@@ -38,9 +36,9 @@ $$
 DECLARE
 BEGIN
     RETURN QUERY
-    SELECT dss.schema_name, dss.schema_latest_version, dss.disabled_when IS NOT NULL
+    SELECT dss.schema_name, dss.schema_latest_version, dss.disabled_at IS NOT NULL
     FROM dataset_schema.schemas dss
-    WHERE i_include_disabled OR dss.disabled_when IS NULL
+    WHERE i_include_disabled OR dss.disabled_at IS NULL
     ORDER BY schema_name; --TODO Include order by?
 END;
 $$

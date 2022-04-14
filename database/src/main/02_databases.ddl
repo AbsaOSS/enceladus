@@ -18,4 +18,3 @@ CREATE DATABASE menas_db
     ENCODING = 'UTF8'
     CONNECTION LIMIT = -1;
 
- ALTER DATABASE menas_db OWNER TO enceladus;

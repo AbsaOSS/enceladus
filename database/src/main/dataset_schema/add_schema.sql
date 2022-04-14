@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS dataset_schema.add_schema(TEXT, INTEGER, TEXT, JSONB, TEXT);
-
 CREATE OR REPLACE FUNCTION dataset_schema.add_schema(
     IN i_schema_name        TEXT,
     IN i_schema_version     INTEGER,
@@ -57,7 +55,7 @@ DECLARE
     _locked         BOOLEAN;
     _disabled       BOOLEAN;
 BEGIN
-    SELECT dss.schema_latest_version, dss.locked_when IS NOT NULL, dss.disabled_when IS NOT NULL
+    SELECT dss.schema_latest_version, dss.locked_at IS NOT NULL, dss.disabled_at IS NOT NULL
     FROM dataset_schema.schemas dss
     WHERE dss.schema_name = i_schema_name
     FOR UPDATE

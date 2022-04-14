@@ -13,19 +13,6 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS dataset_schema.schemas;
+ALTER DATABASE menas_db OWNER TO enceladus;
 
-CREATE TABLE dataset_schema.schemas
-(
-    schema_name             TEXT NOT NULL,
-    schema_latest_version   INTEGER NOT NULL,
-    created_by              TEXT NOT NULL,
-    created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    locked_by               TEXT,
-    locked_at               TIMESTAMP WITH TIME ZONE,
-    disabled_by             TEXT,
-    disabled_at             TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT schemas_pk PRIMARY KEY (schema_name)
-);
-
-ALTER TABLE dataset_schema.schemas OWNER to enceladus;
+CREATE EXTENSION IF NOT EXISTS hstore;

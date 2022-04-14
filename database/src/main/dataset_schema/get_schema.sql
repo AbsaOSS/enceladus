@@ -13,9 +13,6 @@
  * limitations under the License.
  */
 
-DROP FUNCTION IF EXISTS dataset_schema.get_schema(TEXT, INTEGER);
-DROP FUNCTION IF EXISTS dataset_schema.get_schema(BIGINT);
-
 CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     IN  i_schema_name       TEXT,
     IN  i_schema_version    INTEGER DEFAULT NULL,
@@ -27,13 +24,13 @@ CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     OUT schema_description  TEXT,
     OUT fields              JSONB,
     OUT created_by          TEXT,
-    OUT created_when        TIMESTAMP WITH TIME ZONE,
+    OUT created_at          TIMESTAMP WITH TIME ZONE,
     OUT updated_by          TEXT,
-    OUT updated_when        TIMESTAMP WITH TIME ZONE,
+    OUT updated_at          TIMESTAMP WITH TIME ZONE,
     OUT locked_by           TEXT,
-    OUT locked_when         TIMESTAMP WITH TIME ZONE,
+    OUT locked_at           TIMESTAMP WITH TIME ZONE,
     OUT disabled_by         TEXT,
-    OUT disabled_when       TIMESTAMP WITH TIME ZONE
+    OUT disabled_at         TIMESTAMP WITH TIME ZONE
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -55,13 +52,13 @@ $$
 --      schema_description  - description of the schema
 --      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
---      created_when        - time & date when the schema was disabled
+--      created_at          - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
---      updated_when        - time & date when the this particular version of the schema was created
+--      updated_at          - time & date when the this particular version of the schema was created
 --      locked_by           - if locked, who was the user who locked the schema
---      locked_when         - if not NULL the schema is locked
+--      locked_at           - if not NULL the schema is locked
 --      disabled_by         - if disabled, who was the user who disabled the schema
---      disabled_when       - if not NULL the schema has been disabled
+--      disabled_at         - if not NULL the schema has been disabled
 --
 -- Status codes:
 --      10                  - OK
@@ -72,18 +69,18 @@ $$
 DECLARE
     _schema_version INTEGER;
     _created_by     TEXT;
-    _created_when   TIMESTAMP WITH TIME ZONE;
+    _created_at     TIMESTAMP WITH TIME ZONE;
     _locked_by      TEXT;
-    _locked_when    TIMESTAMP WITH TIME ZONE;
+    _locked_at      TIMESTAMP WITH TIME ZONE;
     _disabled_by     TEXT;
-    _disabled_when   TIMESTAMP WITH TIME ZONE;
+    _disabled_at     TIMESTAMP WITH TIME ZONE;
 BEGIN
-    SELECT coalesce(i_schema_version, dss.schema_latest_version), dss.created_by, dss.created_when,
-           dss.locked_by, dss.locked_when, dss.disabled_by, dss.locked_when
+    SELECT coalesce(i_schema_version, dss.schema_latest_version), dss.created_by, dss.created_at,
+           dss.locked_by, dss.locked_at, dss.disabled_by, dss.locked_at
     FROM dataset_schema.schemas dss
     WHERE dss.schema_name = i_schema_name
-    INTO _schema_version, _created_by, _created_when,
-        _locked_by, _locked_when, _disabled_by, _disabled_when;
+    INTO _schema_version, _created_by, _created_at  ,
+        _locked_by, _locked_at  , _disabled_by, _disabled_at  ;
 
     IF NOT found THEN
         status := 40;
@@ -92,16 +89,16 @@ BEGIN
     END IF;
 
     SELECT 10, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
-           dsv.schema_description, dsv.fields, _created_by, _created_when,
-           dsv.updated_by, dsv.updated_when, _locked_by, _locked_when,
-           _disabled_by, _disabled_when
+           dsv.schema_description, dsv.fields, _created_by, _created_at,
+           dsv.updated_by, dsv.updated_at  , _locked_by, _locked_at,
+           _disabled_by, _disabled_at
     FROM dataset_schema.versions dsv
     WHERE dsv.schema_name = i_schema_name AND
           dsv.schema_version = _schema_version
     INTO status, status_text, id_schema_version, schema_name, schema_version,
-         schema_description, fields, created_by, created_when,
-         updated_by, updated_when, locked_by, locked_when,
-         disabled_by, disabled_when;
+         schema_description, fields, created_by, created_at,
+         updated_by, updated_at, locked_by, locked_at,
+         disabled_by, disabled_at;
 
     IF NOT found THEN
         status := 43;
@@ -125,13 +122,13 @@ CREATE OR REPLACE FUNCTION dataset_schema.get_schema(
     OUT schema_description      TEXT,
     OUT fields                  JSONB,
     OUT created_by              TEXT,
-    OUT created_when            TIMESTAMP WITH TIME ZONE,
+    OUT created_at              TIMESTAMP WITH TIME ZONE,
     OUT updated_by              TEXT,
-    OUT updated_when            TIMESTAMP WITH TIME ZONE,
+    OUT updated_at              TIMESTAMP WITH TIME ZONE,
     OUT locked_by               TEXT,
-    OUT locked_when             TIMESTAMP WITH TIME ZONE,
+    OUT locked_at               TIMESTAMP WITH TIME ZONE,
     OUT disabled_by             TEXT,
-    OUT disabled_when           TIMESTAMP WITH TIME ZONE
+    OUT disabled_at             TIMESTAMP WITH TIME ZONE
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -151,13 +148,13 @@ $$
 --      schema_description  - description of the schema
 --      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
---      created_when        - time & date when the schema was disabled
+--      created_at          - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
---      updated_when        - time & date when the this particular version of the schema was created
+--      updated_at          - time & date when the this particular version of the schema was created
 --      locked_by           - if locked, who was the user who locked the schema
---      locked_when         - if not NULL the schema is locked
+--      locked_at           - if not NULL the schema is locked
 --      disabled_by         - if disabled, who was the user who disabled the schema
---      disabled_when       - if not NULL the schema has been disabled
+--      disabled_at         - if not NULL the schema has been disabled
 --
 -- Status codes:
 --      10                  - OK
@@ -169,11 +166,11 @@ DECLARE
 BEGIN
 
     SELECT 10, 'OK', dsv.id_schema_version, dsv.schema_name, dsv.schema_version,
-           dsv.schema_description, dsv.fields, dsv.updated_by, dsv.updated_when
+           dsv.schema_description, dsv.fields, dsv.updated_by, dsv.updated_at
     FROM dataset_schema.versions dsv
     WHERE dsv.id_schema_version = i_key_schema_version
     INTO status, status_text, id_schema_version, _schema_name, schema_version,
-        schema_description, fields, updated_by, updated_when;
+        schema_description, fields, updated_by, updated_at;
 
     IF NOT found THEN
         status := 40;
@@ -182,12 +179,12 @@ BEGIN
     END IF;
 
 
-    SELECT dss.created_by, dss.created_when, dss.locked_by, dss.locked_when,
-           dss.disabled_by, dss.locked_when
+    SELECT dss.created_by, dss.created_at  , dss.locked_by, dss.locked_at  ,
+           dss.disabled_by, dss.locked_at
     FROM dataset_schema.schemas dss
     WHERE dss.schema_name = _schema_name
-    INTO created_by, created_when, locked_by, locked_when,
-         disabled_by, disabled_when;
+    INTO created_by, created_at, locked_by, locked_at,
+         disabled_by, disabled_at;
 
     schema_name := _schema_name; -- used a local variable to avoid name disambiguity
 
