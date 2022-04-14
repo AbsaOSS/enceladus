@@ -41,7 +41,7 @@ import scala.util.{Failure, Success, Try}
 
 
 @RestController
-@RequestMapping(Array("/api/schema"))
+@RequestMapping(Array("/api-v3/schemas"))
 class SchemaControllerV3 @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
@@ -76,10 +76,10 @@ class SchemaControllerV3 @Autowired()(
 
   @GetMapping(path = Array("/{name}/{version}/original"))
   @ResponseStatus(HttpStatus.OK)
-  def exportSchema(@AuthenticationPrincipal principal: UserDetails,
-                   @PathVariable name: String,
-                   @PathVariable version: String,
-                   response: HttpServletResponse): CompletableFuture[Array[Byte]] = {
+  def exportOriginalSchemaFile(@AuthenticationPrincipal principal: UserDetails,
+                               @PathVariable name: String,
+                               @PathVariable version: String,
+                               response: HttpServletResponse): CompletableFuture[Array[Byte]] = {
     forVersionExpression(name, version)(attachmentService.getSchemaByNameAndVersion).map { attachment =>
         response.addHeader("mime-type", attachment.fileMIMEType)
         attachment.fileContent
@@ -92,12 +92,12 @@ class SchemaControllerV3 @Autowired()(
                        @PathVariable name: String,
                        @PathVariable version: Int,
                        @RequestParam file: MultipartFile,
-                       @RequestParam format: Optional[String],
+                       @RequestParam format: String,
                        request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
     val fileContent = new String(file.getBytes)
 
-    val schemaType = SchemaType.fromOptSchemaName(format.toScalaOption)
+    val schemaType = SchemaType.fromSchemaName(format)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
 
     // for avro schema type, always force the same mime-type to be persisted
@@ -127,10 +127,10 @@ class SchemaControllerV3 @Autowired()(
                        @PathVariable name: String,
                        @PathVariable version: Int,
                        @RequestParam remoteUrl: String,
-                       @RequestParam format: Optional[String],
+                       @RequestParam format: String,
                        request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
-    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format.toScalaOption)
+    val schemaType = SchemaType.fromSchemaName(format)
     val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
     val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
@@ -154,11 +154,10 @@ class SchemaControllerV3 @Autowired()(
                     @PathVariable name: String,
                     @PathVariable version: Int,
                     @RequestParam subject: String,
-                    @RequestParam format: Optional[String],
+                    @RequestParam format: String,
                     request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
-    val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format.toScalaOption)
-
+    val schemaType = SchemaType.fromSchemaName(format)
     val valueSchemaResponse = Try {
       schemaRegistryService.loadSchemaBySubjectName(s"$subject")
     } match {
