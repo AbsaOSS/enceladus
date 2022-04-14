@@ -39,10 +39,10 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
-  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[(Schema, Validation)]] = {
+  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[(Schema, Validation)] = {
     super.update(username, schemaName, schemaVersion)({ oldSchema =>
       oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
-    })
+    }).map(_.getOrElse(throw new IllegalArgumentException("Failed to derive new schema from file!")))
   }
 
   override def recreate(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
