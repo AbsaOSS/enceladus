@@ -15,12 +15,13 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 
@@ -28,7 +29,6 @@ import za.co.absa.spark.hats.transformations.NestedArrayTransformations
   * General Spark utils
   */
 object SparkUtils {
-  private val log: Logger = LogManager.getLogger(this.getClass)
   private final val DefaultColumnNameOfCorruptRecord = "_corrupt_record"
 
   final val ColumnNameOfCorruptRecordConf = "spark.sql.columnNameOfCorruptRecord"
@@ -41,30 +41,13 @@ object SparkUtils {
     * @return the field name set
     */
   def setUniqueColumnNameOfCorruptRecord(spark: SparkSession, schema: StructType): String = {
-    val result = if (SchemaUtils.fieldExists(DefaultColumnNameOfCorruptRecord, schema)) {
-     SchemaUtils.getClosestUniqueName(DefaultColumnNameOfCorruptRecord, schema)
+    val result = if (schema.fieldExists(DefaultColumnNameOfCorruptRecord)) {
+     schema.getClosestUniqueName(DefaultColumnNameOfCorruptRecord)
     } else {
       DefaultColumnNameOfCorruptRecord
     }
     spark.conf.set(ColumnNameOfCorruptRecordConf, result)
     result
-  }
-
-  /**
-    * Adds a column to a dataframe if it does not exist
-    *
-    * @param df      A dataframe
-    * @param colName A column to add if it does not exist already
-    * @param colExpr An expression for the column to add
-    * @return a new dataframe with the new column
-    */
-  def withColumnIfDoesNotExist(df: DataFrame, colName: String, colExpr: Column): DataFrame = {
-    if (df.schema.exists(field => field.name.equalsIgnoreCase(colName))) {
-      log.warn(s"Column '$colName' already exists. The content of the column will be overwritten.")
-      overwriteWithErrorColumn(df, colName, colExpr)
-    } else {
-      df.withColumn(colName, colExpr)
-    }
   }
 
   /**
@@ -82,8 +65,8 @@ object SparkUtils {
     implicit val udfLib: UDFLibrary = new UDFLibrary
 
 
-    val tmpColumn = SchemaUtils.getUniqueName("tmpColumn", Some(df.schema))
-    val tmpErrColumn = SchemaUtils.getUniqueName("tmpErrColumn", Some(df.schema))
+    val tmpColumn = df.schema.getClosestUniqueName("tmpColumn")
+    val tmpErrColumn = df.schema.getClosestUniqueName("tmpErrColumn")
     val litErrUdfCall = callUDF("confLitErr", lit(colName), col(tmpColumn))
 
     // Rename the original column to a temporary name. We need it for comparison.
@@ -102,6 +85,13 @@ object SparkUtils {
 
     // Drop the temporary column
     dfWithAggregatedErrColumn.drop(tmpColumn)
+  }
+
+  implicit class DataFrameWithEnhancements(val df: DataFrame) {
+    def withColumnOverwriteIfExists(colName: String, colExpr: Column): DataFrame = {
+      val overwrite: (DataFrame, String) => DataFrame = overwriteWithErrorColumn(_, _, colExpr)
+      df.withColumnIfDoesNotExist(overwrite)(colName, colExpr)
+    }
   }
 
 }

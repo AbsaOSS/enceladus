@@ -25,13 +25,13 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class Person(id: String, first_name: String, last_name: String)
 
-class WhiteSpaceStandardizationCsvSuite  extends AnyFunSuite with SparkTestBase with MockitoSugar {
+class WhiteSpaceStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
   private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")

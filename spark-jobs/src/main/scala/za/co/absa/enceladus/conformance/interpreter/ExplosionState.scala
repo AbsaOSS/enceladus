@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import za.co.absa.enceladus.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
 
 /**
   * This class is used to encapsulate a state of exploded arrays during processing of dynamic conformance steps

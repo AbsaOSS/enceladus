@@ -19,7 +19,6 @@ import java.sql.{Date, Timestamp}
 import java.util.Base64
 
 import org.apache.spark.sql.types._
-import za.co.absa.enceladus.utils.implicits.StructFieldImplicits.StructFieldEnhancements
 import za.co.absa.enceladus.utils.numeric._
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, MetadataValues}
 import za.co.absa.enceladus.utils.time.DateTimePattern
@@ -27,6 +26,8 @@ import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.parsers._
 import za.co.absa.enceladus.utils.validation.ValidationIssue
 import za.co.absa.enceladus.utils.validation.field._
+import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldEnhancements
+import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldMetadataEnhancements
 
 import scala.util.{Failure, Success, Try}
 
@@ -76,7 +77,7 @@ sealed abstract class TypedStructField(structField: StructField)(implicit defaul
    *          inner Option - the actual default value or None in case the default is null
    */
   def ownDefaultValue: Try[Option[Option[BaseType]]] = {
-    if (hasMetadataKey(MetadataKeys.DefaultValue)) {
+    if (structField.metadata.hasKey(MetadataKeys.DefaultValue)) {
       for {
         defaultValueString <- Try{structField.metadata.getString(MetadataKeys.DefaultValue)}
         defaultValueTyped <- stringToTyped(defaultValueString)
@@ -187,7 +188,7 @@ object TypedStructField {
   final class BinaryTypeStructField private[TypedStructField](structField: StructField)
                                                              (implicit defaults: Defaults)
     extends TypedStructFieldTagged[Array[Byte]](structField) {
-    val normalizedEncoding: Option[String] = structField.getMetadataString(MetadataKeys.Encoding).map(_.toLowerCase)
+    val normalizedEncoding: Option[String] = structField.metadata.getOptString(MetadataKeys.Encoding).map(_.toLowerCase)
 
     // used to convert the default value from metadata's [[MetadataKeys.DefaultValue]]
     override protected def convertString(string: String): Try[Array[Byte]] = {
@@ -238,7 +239,7 @@ object TypedStructField {
     }
 
     private def readNumericPatternFromMetadata: Option[NumericPattern] = {
-      val stringPatternOpt = getMetadataString(MetadataKeys.Pattern)
+      val stringPatternOpt = structField.metadata.getOptString(MetadataKeys.Pattern)
       val decimalSymbolsOpt = readDecimalSymbolsFromMetadata()
 
       if (stringPatternOpt.nonEmpty) {
@@ -250,9 +251,9 @@ object TypedStructField {
 
     private def readDecimalSymbolsFromMetadata(): Option[DecimalSymbols] = {
       val ds = defaults.getDecimalSymbols
-      val minusSign = getMetadataChar(MetadataKeys.MinusSign).getOrElse(ds.minusSign)
-      val decimalSeparator = getMetadataChar(MetadataKeys.DecimalSeparator).getOrElse(ds.decimalSeparator)
-      val groupingSeparator = getMetadataChar(MetadataKeys.GroupingSeparator).getOrElse(ds.groupingSeparator)
+      val minusSign = structField.metadata.getOptChar(MetadataKeys.MinusSign).getOrElse(ds.minusSign)
+      val decimalSeparator = structField.metadata.getOptChar(MetadataKeys.DecimalSeparator).getOrElse(ds.decimalSeparator)
+      val groupingSeparator = structField.metadata.getOptChar(MetadataKeys.GroupingSeparator).getOrElse(ds.groupingSeparator)
 
       if ((ds.minusSign != minusSign) || (ds.decimalSeparator != decimalSeparator) || (ds.groupingSeparator != groupingSeparator)) {
         Option(ds.copy(minusSign = minusSign, decimalSeparator = decimalSeparator, groupingSeparator = groupingSeparator))
@@ -291,7 +292,7 @@ object TypedStructField {
     }
 
     private def readRadixFromMetadata:Radix = {
-      Try(getMetadataString(MetadataKeys.Radix).map(Radix(_))).toOption.flatten.getOrElse(Radix.DefaultRadix)
+      Try(structField.metadata.getOptString(MetadataKeys.Radix).map(Radix(_))).toOption.flatten.getOrElse(Radix.DefaultRadix)
     }
   }
 
@@ -314,7 +315,7 @@ object TypedStructField {
                                                                                           (implicit defaults: Defaults)
     extends NumericTypeStructField[D](structField, typeMin, typeMax) {
 
-    override val allowInfinity: Boolean = getMetadataStringAsBoolean(MetadataKeys.AllowInfinity).getOrElse(false)
+    override val allowInfinity: Boolean = structField.metadata.getOptStringAsBoolean(MetadataKeys.AllowInfinity).getOrElse(false)
 
     override val parser: Try[NumericParser[D]] = {
       pattern.map {patternOpt =>
@@ -349,7 +350,7 @@ object TypedStructField {
       DecimalTypeStructField.minPossible(dataType),
       DecimalTypeStructField.maxPossible(dataType)
     ){
-    val strictParsing: Boolean = getMetadataStringAsBoolean(MetadataKeys.StrictParsing).getOrElse(false)
+    val strictParsing: Boolean = structField.metadata.getOptStringAsBoolean(MetadataKeys.StrictParsing).getOrElse(false)
 
     override val parser: Try[DecimalParser] = {
       val maxScale = if(strictParsing) Some(scale) else None
@@ -400,7 +401,7 @@ object TypedStructField {
     }
 
     def defaultTimeZone: Option[String] = {
-      getMetadataString(MetadataKeys.DefaultTimeZone)
+      structField.metadata.getOptString(MetadataKeys.DefaultTimeZone)
     }
 
     override def validate(): Seq[ValidationIssue] = {
@@ -408,8 +409,8 @@ object TypedStructField {
     }
 
     private def readDateTimePattern: DateTimePattern = {
-      getMetadataString(MetadataKeys.Pattern).map { pattern =>
-        val timeZoneOpt = getMetadataString(MetadataKeys.DefaultTimeZone)
+      structField.metadata.getOptString(MetadataKeys.Pattern).map { pattern =>
+        val timeZoneOpt = structField.metadata.getOptString(MetadataKeys.DefaultTimeZone)
         DateTimePattern(pattern, timeZoneOpt)
       }.getOrElse(
         DateTimePattern.asDefault(defaults.getStringPattern(structField.dataType), None)

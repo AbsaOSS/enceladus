@@ -16,10 +16,10 @@
 package za.co.absa.enceladus.utils.implicits
 
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-class DataFrameImplicitsSuite extends AnyFunSuite with SparkTestBase  {
+class DataFrameImplicitsSuite extends AnyFunSuite with TZNormalizedSparkTestBase  {
   import spark.implicits._
 
   private val columnName = "data"

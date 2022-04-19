@@ -20,9 +20,9 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class JoinMappingRuleInterpreterSuite extends AnyFunSuite with SparkTestBase {
+class JoinMappingRuleInterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
   test("Mapping rule fields existence validation test") {
 
     val df = DataSource.getDataFrame(EmployeeConformance.employeeDS.hdfsPath, "2017-11-01", "{0}/{1}/{2}")

@@ -18,14 +18,14 @@ package za.co.absa.enceladus.standardization.interpreter
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 case class Root(ConformedParty: Party, errCol: Seq[ErrorMessage] = Seq.empty)
 case class Party(key: Integer, clientKeys1: Seq[String], clientKeys2: Seq[String])
 
-class CounterPartySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase {
+class CounterPartySuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
 
   private implicit val defaults: Defaults = GlobalDefaults
 

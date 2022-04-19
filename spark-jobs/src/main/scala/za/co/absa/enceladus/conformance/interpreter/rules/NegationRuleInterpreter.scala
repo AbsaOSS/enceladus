@@ -22,10 +22,10 @@ import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, NegationConformanceRule}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.types.GlobalDefaults
 import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {
@@ -37,7 +37,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
                        progArgs: InterpreterContextArgs): Dataset[Row] = {
     NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
 
-    val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
+    val field = df.schema.getField(rule.inputColumn).get
 
     val negationErrUdfCall = callUDF(UDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
