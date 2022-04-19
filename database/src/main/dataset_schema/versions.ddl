@@ -17,7 +17,7 @@
 
 CREATE TABLE dataset_schema.versions
 (
-    fields              JSONB,
+    fields              JSON,
     CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
 )
     INHERITS (entity_base.versions);

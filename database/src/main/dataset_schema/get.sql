@@ -22,7 +22,6 @@ CREATE OR REPLACE FUNCTION dataset_schema.get(
     OUT entity_name         TEXT,
     OUT entity_version      INTEGER,
     OUT entity_description  TEXT,
-    OUT fields              JSONB,
     OUT created_by          TEXT,
     OUT created_at          TIMESTAMP WITH TIME ZONE,
     OUT updated_by          TEXT,
@@ -30,7 +29,8 @@ CREATE OR REPLACE FUNCTION dataset_schema.get(
     OUT locked_by           TEXT,
     OUT locked_at           TIMESTAMP WITH TIME ZONE,
     OUT disabled_by         TEXT,
-    OUT disabled_at         TIMESTAMP WITH TIME ZONE
+    OUT disabled_at         TIMESTAMP WITH TIME ZONE,
+    OUT fields              JSON
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -50,7 +50,6 @@ $$
 --      entity_name         - name of the schema
 --      entity_version      - the version of the schema
 --      entity_description  - description of the schema
---      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
 --      created_at          - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
@@ -59,6 +58,7 @@ $$
 --      locked_at           - if not NULL the schema is locked
 --      disabled_by         - if disabled, who was the user who disabled the schema
 --      disabled_at         - if not NULL the schema has been disabled
+--      fields              - the fields the schema consist of
 --
 -- Status codes:
 --      10                  - OK
@@ -120,7 +120,6 @@ CREATE OR REPLACE FUNCTION dataset_schema.get(
     OUT entity_name             TEXT,
     OUT entity_version          INTEGER,
     OUT entity_description      TEXT,
-    OUT fields                  JSONB,
     OUT created_by              TEXT,
     OUT created_at              TIMESTAMP WITH TIME ZONE,
     OUT updated_by              TEXT,
@@ -128,7 +127,8 @@ CREATE OR REPLACE FUNCTION dataset_schema.get(
     OUT locked_by               TEXT,
     OUT locked_at               TIMESTAMP WITH TIME ZONE,
     OUT disabled_by             TEXT,
-    OUT disabled_at             TIMESTAMP WITH TIME ZONE
+    OUT disabled_at             TIMESTAMP WITH TIME ZONE,
+    OUT fields                  JSON
 ) RETURNS record AS
 $$
 -------------------------------------------------------------------------------
@@ -146,7 +146,6 @@ $$
 --      entity_name         - name of the schema
 --      entity_version      - the version of the schema
 --      entity_description  - description of the schema
---      fields              - the fields the schema consist of
 --      created_by          - user who created the schema
 --      created_at          - time & date when the schema was disabled
 --      updated_by          - user who updated the schema to this particular version
@@ -155,6 +154,7 @@ $$
 --      locked_at           - if not NULL the schema is locked
 --      disabled_by         - if disabled, who was the user who disabled the schema
 --      disabled_at         - if not NULL the schema has been disabled
+--      fields              - the fields the schema consist of
 --
 -- Status codes:
 --      10                  - OK
@@ -162,14 +162,13 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
-    _entity_name    TEXT;
 BEGIN
 
     SELECT 10, 'OK', dsv.id_entity_version, dsv.entity_name, dsv.entity_version,
            dsv.entity_description, dsv.fields, dsv.updated_by, dsv.updated_at
     FROM dataset_schema.versions dsv
     WHERE dsv.id_entity_version = i_key_entity_version
-    INTO status, status_text, get.id_entity_version, _entity_name, get.entity_version,
+    INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
         get.entity_description, get.fields, get.updated_by, get.updated_at;
 
     IF NOT found THEN
@@ -182,11 +181,9 @@ BEGIN
     SELECT E.created_by, E.created_at  , E.locked_by, E.locked_at  ,
            E.disabled_by, E.locked_at
     FROM dataset_schema.entities E
-    WHERE E.entity_name = _entity_name
+    WHERE E.entity_name = get.entity_name
     INTO get.created_by, get.created_at, get.locked_by, get.locked_at,
          get.disabled_by, get.disabled_at;
-
-    entity_name := _entity_name; -- used a local variable to avoid name disambiguity
 
     RETURN;
 END;
