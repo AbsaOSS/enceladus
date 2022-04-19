@@ -17,21 +17,16 @@
 
 CREATE TABLE mapping_table.versions
 (
-    id_mapping_table_version    BIGINT NOT NULL DEFAULT global_id(),
-    mapping_table_name          TEXT NOT NULL,
-    mapping_table_version       INTEGER NOT NULL,
-    mapping_table_description   TEXT,
     path                        TEXT NOT NULL ,
     key_schema                  BIGINT NOT NULL,
     default_mapping_values      HSTORE,
-    table_filter                JSONB,
-    updated_by                  TEXT NOT NULL,
-    updated_at                  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT versions_pk PRIMARY KEY (id_mapping_table_version)
-);
+    table_filter                JSON,
+    CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
+)
+    INHERITS (entity_base.versions);
 
 ALTER TABLE mapping_table.versions
-    ADD CONSTRAINT versions_unq UNIQUE (mapping_table_name, mapping_table_version);
+    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
 
 CREATE INDEX versions_idx ON mapping_table.versions (key_schema);
 

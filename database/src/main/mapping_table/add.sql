@@ -14,9 +14,9 @@
  */
 
 CREATE OR REPLACE FUNCTION mapping_table.add(
-    IN  i_mapping_table_name        TEXT,
-    IN  i_mapping_table_version     INTEGER,
-    IN  i_mapping_table_description TEXT,
+    IN  i_entity_name               TEXT,
+    IN  i_entity_version            INTEGER,
+    IN  i_entity_description        TEXT,
     IN  i_path                      TEXT,
     IN  i_key_schema                BIGINT,
     IN  i_default_mapping_values    HSTORE,
@@ -34,13 +34,13 @@ $$
 --      The i_mapping table_version has to be an increment of the latest version of an existing mapping table or 1
 --
 -- Parameters:
---      i_mapping_table_name        - name of the mapping table
---      i_mapping_table_version     - version of the mapping table
---      i_mapping_table_description - description of the mapping table
+--      i_entity_name               - name of the mapping table
+--      i_entity_version            - version of the mapping table
+--      i_entity_description        - description of the mapping table
 --      i_path                      - path, where the mapping table data are saved
 --      i_key_schema                - reference to the schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
---      i_table_filter                    - filter on the data of the mapping table
+--      i_table_filter              - filter on the data of the mapping table
 --      i_user_name                 - the user who submitted the changes
 --
 -- Returns:
@@ -61,7 +61,7 @@ DECLARE
 BEGIN
     PERFORM 1
     FROM dataset_schema.versions V
-    WHERE V.id_schema_version = i_key_schema;
+    WHERE V.id_entity_version = i_key_schema;
 
     IF NOT found THEN
         status := 42;
@@ -70,7 +70,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_mapping_table_name, i_mapping_table_version, i_mapping_table_description, i_path,
+    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_path,
                             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 
@@ -83,9 +83,9 @@ ALTER FUNCTION mapping_table.add(TEXT, INTEGER, TEXT, TEXT, BIGINT, HSTORE, JSON
 GRANT EXECUTE ON FUNCTION mapping_table.add(TEXT, INTEGER, TEXT, TEXT, BIGINT, HSTORE, JSON, TEXT) TO menas;
 
 CREATE OR REPLACE FUNCTION mapping_table.add(
-    IN  i_mapping_table_name        TEXT,
-    IN  i_mapping_table_version     INTEGER,
-    IN  i_mapping_table_description TEXT,
+    IN  i_entity_name               TEXT,
+    IN  i_entity_version            INTEGER,
+    IN  i_entity_description        TEXT,
     IN  i_path                      TEXT,
     IN  i_schema_name               TEXT,
     IN  i_schema_version            INTEGER,
@@ -104,9 +104,9 @@ $$
 --      The i_mapping table_version has to be an increment of the latest version of an existing mapping table or 1
 --
 -- Parameters:
---      i_mapping_table_name        - name of the mapping table
---      i_mapping_table_version     - version of the mapping table
---      i_mapping_table_description - description of the mapping table
+--      i_entity_name               - name of the mapping table
+--      i_entity_version            - version of the mapping table
+--      i_entity_description        - description of the mapping table
 --      i_path                      - path, where the mapping table data are saved
 --      i_schema_name               - name of the referenced schema of the mapping table
 --      i_schema_version            - version of the referenced schema of the mapping table
@@ -131,10 +131,10 @@ $$
 DECLARE
     _key_schema BIGINT;
 BEGIN
-    SELECT id_schema_version
+    SELECT V.id_entity_version
     FROM dataset_schema.versions V
-    WHERE V.schema_name = i_schema_name AND
-          V.schema_version = i_schema_version
+    WHERE V.entity_name = i_schema_name AND
+          V.entity_version = i_schema_version
     INTO _key_schema;
 
     IF NOT found THEN
@@ -144,7 +144,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_mapping_table_name, i_mapping_table_version, i_mapping_table_description, i_path,
+    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_path,
                             _key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 

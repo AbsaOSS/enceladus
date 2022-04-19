@@ -39,10 +39,10 @@ $$
 DECLARE
 BEGIN
     RETURN QUERY
-    SELECT mt.entity_name, mt.entity_latest_version, mt.locked_at IS NOT NULL, mt.disabled_at IS NOT NULL
-    FROM mapping_table.entities mt
-    WHERE i_include_disabled OR mt.disabled_at IS NULL
-    ORDER BY mt.entity_name; --TODO Include order by?
+    SELECT E.entity_name, E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
+    FROM mapping_table.entities E
+    WHERE i_include_disabled OR E.disabled_at IS NULL
+    ORDER BY E.entity_name; --TODO Include order by?
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;

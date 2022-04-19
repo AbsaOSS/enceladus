@@ -17,15 +17,9 @@
 
 CREATE TABLE mapping_table.entities
 (
-    entity_name                     TEXT NOT NULL,
-    entity_latest_version           INTEGER NOT NULL,
-    created_by                      TEXT NOT NULL,
-    created_at                      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    locked_by                       TEXT,
-    locked_at                       TIMESTAMP WITH TIME ZONE,
-    disabled_by                     TEXT,
-    disabled_at                     TIMESTAMP WITH TIME ZONE,
+    entity_type             CHAR NOT NULL DEFAULT 'M',
     CONSTRAINT entities_pk PRIMARY KEY (entity_name)
-);
+)
+    INHERITS (entity_base.entities);
 
 ALTER TABLE mapping_table.entities OWNER to enceladus;

@@ -14,9 +14,9 @@
  */
 
 CREATE OR REPLACE FUNCTION mapping_table._add(
-    IN  i_mapping_table_name        TEXT,
-    IN  i_mapping_table_version     INTEGER,
-    IN  i_mapping_table_description TEXT,
+    IN  i_entity_name               TEXT,
+    IN  i_entity_version            INTEGER,
+    IN  i_entity_description        TEXT,
     IN  i_path                      TEXT,
     IN  i_key_schema                BIGINT,
     IN  i_default_mapping_values    HSTORE,
@@ -34,9 +34,9 @@ $$
 --      The i_mapping table_version has to be an increment of the latest version of an existing mapping table or 1
 --
 -- Parameters:
---      i_mapping_table_name        - name of the mapping table
---      i_mapping_table_version     - version of the mapping table
---      i_mapping_table_description - description of the mapping table
+--      i_entity_name               - name of the mapping table
+--      i_entity_version            - version of the mapping table
+--      i_entity_description        - description of the mapping table
 --      i_path                      - path, where the mapping table data are saved
 --      i_key_schema                - reference to the schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
@@ -61,16 +61,16 @@ DECLARE
     _locked         BOOLEAN;
     _disabled       BOOLEAN;
 BEGIN
-    SELECT mt.entity_latest_version, mt.locked_at IS NOT NULL, mt.disabled_at IS NOT NULL
-    FROM mapping_table.entities mt
-    WHERE mt.entity_name = i_mapping_table_name
+    SELECT E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
+    FROM mapping_table.entities E
+    WHERE E.entity_name = i_entity_name
     FOR UPDATE
     INTO _latest_version, _locked, _disabled;
 
     IF NOT found THEN
         -- new mapping table, lock on stats will prevent racing insert of the same mapping table
         PERFORM
-        FROM stats.entities
+        FROM entity_base.stats
         FOR UPDATE;
 
         _latest_version = 0;
@@ -84,33 +84,33 @@ BEGIN
         RETURN;
     END IF;
 
-    IF _latest_version >= i_mapping_table_version THEN
+    IF _latest_version >= i_entity_version THEN
         status := 51;
         status_text := 'Mapping table already exists';
         RETURN;
-    ELSIF _latest_version + 1 < i_mapping_table_version THEN
+    ELSIF _latest_version + 1 < i_entity_version THEN
         status := 50;
         status_text := 'Mapping table version wrong';
         RETURN;
     END IF;
 
-    INSERT INTO mapping_table.versions(mapping_table_name, mapping_table_version, mapping_table_description, path,
+    INSERT INTO mapping_table.versions(entity_name, entity_version, entity_description, path,
                                        key_schema, default_mapping_values, table_filter, updated_by)
-    VALUES (i_mapping_table_name, i_mapping_table_version, i_mapping_table_description, i_path,
+    VALUES (i_entity_name, i_entity_version, i_entity_description, i_path,
             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name)
-    RETURNING mapping_table.versions.id_mapping_table_version
+    RETURNING mapping_table.versions.id_entity_version
     INTO key_entity_version;
 
     IF _latest_version = 0 THEN
         INSERT INTO mapping_table.entities(entity_name, entity_latest_version, created_by)
-        VALUES (i_mapping_table_name, i_mapping_table_version, i_user_name);
+        VALUES (i_entity_name, i_entity_version, i_user_name);
 
-        UPDATE stats.entities
+        UPDATE entity_base.stats
         SET mapping_table_count = mapping_table_count + 1;
     ELSE
         UPDATE mapping_table.entities
-        SET entity_latest_version = i_mapping_table_version
-        WHERE entity_name = i_mapping_table_name;
+        SET entity_latest_version = i_entity_version
+        WHERE entity_name = i_entity_name;
     END IF;
 
     status := 11;
