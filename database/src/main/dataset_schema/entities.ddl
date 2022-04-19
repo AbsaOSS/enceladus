@@ -13,20 +13,17 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS stats.entities
+-- DROP TABLE IF EXISTS dataset_schema.entities;
 
-CREATE TABLE stats.entities
+CREATE TABLE dataset_schema.entities
 (
-    schema_count        INTEGER NOT NULL,
-    mapping_table_count INTEGER NOT NULL,
-    dataset_count       INTEGER NOT NULL
-);
+    entity_type             CHAR NOT NULL DEFAULT 'S',
+    CONSTRAINT entities_pk PRIMARY KEY (entity_name)
+)
+    INHERITS (entity_base.entities);
 
-ALTER TABLE stats.entities
-    OWNER to enceladus;
+ALTER TABLE IF EXISTS dataset_schema.entities
+    ADD CONSTRAINT check_dataset_schema_entity_type CHECK (entity_type = 'S')
+    NOT VALID;
 
-INSERT INTO stats.entities (schema_count, mapping_table_count, dataset_count)
-VALUES (0, 0, 0);
-
-CREATE RULE entities_del_protect AS ON DELETE TO stats.entities DO INSTEAD NOTHING;
-CREATE RULE entities_ins_protect AS ON INSERT TO stats.entities DO INSTEAD NOTHING;
+ALTER TABLE dataset_schema.entities OWNER to enceladus;

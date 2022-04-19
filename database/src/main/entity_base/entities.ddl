@@ -13,19 +13,21 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS dataset_schema.schemas;
+-- DROP TABLE IF EXISTS entity_base.entities CASCADE;
 
-CREATE TABLE dataset_schema.schemas
+CREATE TABLE entity_base.entities
 (
-    schema_name             TEXT NOT NULL,
-    schema_latest_version   INTEGER NOT NULL,
+    entity_name             TEXT NOT NULL,
+    entity_latest_version   INTEGER NOT NULL,
+    entity_type             CHAR NOT NULL,
     created_by              TEXT NOT NULL,
     created_at              TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     locked_by               TEXT,
     locked_at               TIMESTAMP WITH TIME ZONE,
     disabled_by             TEXT,
-    disabled_at             TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT schemas_pk PRIMARY KEY (schema_name)
+    disabled_at             TIMESTAMP WITH TIME ZONE
 );
 
-ALTER TABLE dataset_schema.schemas OWNER to enceladus;
+ALTER TABLE entity_base.entities OWNER to enceladus;
+
+CREATE OR REPLACE RULE entity_base_entities_ins_protect AS ON INSERT TO entity_base.entities DO INSTEAD NOTHING;

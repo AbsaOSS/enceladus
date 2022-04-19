@@ -13,16 +13,7 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS dataset_schema.versions;
+CREATE SCHEMA IF NOT EXISTS entity_base;
+ALTER  SCHEMA entity_base OWNER TO enceladus;
 
-CREATE TABLE dataset_schema.versions
-(
-    fields              JSONB,
-    CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
-)
-    INHERITS (entity_base.versions);
-
-ALTER TABLE dataset_schema.versions
-    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
-
-ALTER TABLE dataset_schema.versions OWNER to enceladus;
+GRANT USAGE ON SCHEMA entity_base TO menas;

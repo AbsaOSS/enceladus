@@ -13,5 +13,18 @@
  * limitations under the License.
  */
 
-CREATE SCHEMA IF NOT EXISTS stats;
-ALTER  SCHEMA stats OWNER TO enceladus;
+-- DROP TABLE IF EXISTS entity_base.entity_type CASCADE;
+
+CREATE TABLE entity_base.entity_types
+(
+    entity_type             CHAR NOT NULL,
+    entity_type_name        TEXT NOT NULL,
+    CONSTRAINT entity_types_pk PRIMARY KEY (entity_type)
+);
+
+ALTER TABLE entity_base.entity_types OWNER to enceladus;
+
+INSERT INTO entity_base.entity_types(entity_type, entity_type_name)
+VALUES ('S', 'Schema'),
+       ('M', 'Mapping table'),
+       ('D', 'Dataset');

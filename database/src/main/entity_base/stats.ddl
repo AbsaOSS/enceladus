@@ -13,16 +13,20 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS dataset_schema.versions;
+-- DROP TABLE IF EXISTS entity_base.stats
 
-CREATE TABLE dataset_schema.versions
+CREATE TABLE entity_base.stats
 (
-    fields              JSONB,
-    CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
-)
-    INHERITS (entity_base.versions);
+    schema_count        INTEGER NOT NULL,
+    mapping_table_count INTEGER NOT NULL,
+    dataset_count       INTEGER NOT NULL
+);
 
-ALTER TABLE dataset_schema.versions
-    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
+ALTER TABLE entity_base.stats
+    OWNER to enceladus;
 
-ALTER TABLE dataset_schema.versions OWNER to enceladus;
+INSERT INTO entity_base.stats(schema_count, mapping_table_count, dataset_count)
+VALUES (0, 0, 0);
+
+CREATE RULE entity_base_stats_del_protect AS ON DELETE TO entity_base.stats DO INSTEAD NOTHING;
+CREATE RULE entity_base_stats_ins_protect AS ON INSERT TO entity_base.stats DO INSTEAD NOTHING;

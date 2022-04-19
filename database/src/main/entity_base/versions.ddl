@@ -13,16 +13,18 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS dataset_schema.versions;
+-- DROP TABLE IF EXISTS entity_base.versions CASCADE;
 
-CREATE TABLE dataset_schema.versions
+CREATE TABLE entity_base.versions
 (
-    fields              JSONB,
-    CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
-)
-    INHERITS (entity_base.versions);
+    id_entity_version   BIGINT NOT NULL DEFAULT global_id(),
+    entity_name         TEXT NOT NULL,
+    entity_version      INTEGER NOT NULL,
+    entity_description  TEXT,
+    updated_by          TEXT NOT NULL,
+    updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
 
-ALTER TABLE dataset_schema.versions
-    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
+ALTER TABLE entity_base.versions OWNER to enceladus;
 
-ALTER TABLE dataset_schema.versions OWNER to enceladus;
+CREATE OR REPLACE RULE entity_base_versions_ins_protect AS ON INSERT TO entity_base.versions DO INSTEAD NOTHING;

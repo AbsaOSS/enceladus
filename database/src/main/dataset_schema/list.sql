@@ -13,36 +13,39 @@
  * limitations under the License.
  */
 
-CREATE OR REPLACE FUNCTION dataset_schema.list_schemas(
+CREATE OR REPLACE FUNCTION dataset_schema.list(
     IN  i_include_disabled      BOOLEAN DEFAULT FALSE,
-    OUT schema_name             TEXT,
-    OUT schema_latest_version   INTEGER,
+    OUT entity_name             TEXT,
+    OUT entity_latest_version   INTEGER,
+    OUT locked                  BOOLEAN,
     OUT disabled                BOOLEAN
 ) RETURNS SETOF record AS
 $$
 -------------------------------------------------------------------------------
 --
--- Function: jobs_configuration.list_schemas(1)
+-- Function: dataset_schema.list(1)
 --      Returns a list of schemas with their latest versions
 --
 -- Parameters:
 --      i_include_disabled       - flag indicating if to include disabled schemas too
 --
 -- Returns:
---      schema_name             - name of the schema
---      schema_latest_version   - the latest version of the schema
+--      entity_name             - name of the schema
+--      entity_latest_version   - the latest version of the schema
+--      locked                  - signals if the schema is locked or not
+--      disabled                - signals if the schema is disabled or not
 --
 -------------------------------------------------------------------------------
 DECLARE
 BEGIN
     RETURN QUERY
-    SELECT dss.schema_name, dss.schema_latest_version, dss.disabled_at IS NOT NULL
-    FROM dataset_schema.schemas dss
-    WHERE i_include_disabled OR dss.disabled_at IS NULL
-    ORDER BY schema_name; --TODO Include order by?
+    SELECT E.entity_name, E.entity_latest_version, E.disabled_at IS NOT NULL, E.locked_at IS NOT NULL
+    FROM dataset_schema.entities E
+    WHERE i_include_disabled OR E.disabled_at IS NULL
+    ORDER BY entity_name; --TODO Include order by?
 END;
 $$
 LANGUAGE plpgsql VOLATILE SECURITY DEFINER;
 
-ALTER FUNCTION dataset_schema.list_schemas(BOOLEAN) OWNER TO enceladus;
-GRANT EXECUTE ON FUNCTION dataset_schema.list_schemas(BOOLEAN) TO menas;
+ALTER FUNCTION dataset_schema.list(BOOLEAN) OWNER TO enceladus;
+GRANT EXECUTE ON FUNCTION dataset_schema.list(BOOLEAN) TO menas;
