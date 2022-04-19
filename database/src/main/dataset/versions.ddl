@@ -17,8 +17,10 @@
 
 CREATE TABLE dataset.versions
 (
-    source_path     TEXT,
-    publish_path    TEXT,
+    source_path     TEXT NOT NULL,
+    publish_path    TEXT NOT NULL,
+    key_schema      BIGINT NOT NULL,
+    conformance     JSON[] NOT NULL,
     CONSTRAINT versions_pk PRIMARY KEY (id_entity_version)
 )
     INHERITS (entity_base.versions);
