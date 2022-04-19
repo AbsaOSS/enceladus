@@ -19,6 +19,7 @@ import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
+import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -27,8 +28,8 @@ import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -40,7 +41,7 @@ trait CommonMappingRuleInterpreter {
 
   protected def outputColumnNames(): String = rule.allOutputColumns().mkString(", ")
 
-  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
+  protected def getOutputsStructColumnName(df: DataFrame): String = df.schema.getClosestUniqueName("outputs")
 
   protected val mappings: Seq[Mapping] = rule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)

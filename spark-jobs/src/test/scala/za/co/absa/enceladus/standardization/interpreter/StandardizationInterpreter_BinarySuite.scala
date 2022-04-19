@@ -19,12 +19,12 @@ import org.apache.spark.sql.types.{BinaryType, Metadata, MetadataBuilder, Struct
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
 
-class StandardizationInterpreter_BinarySuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with Matchers {
+class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with Matchers {
 
   import spark.implicits._
 

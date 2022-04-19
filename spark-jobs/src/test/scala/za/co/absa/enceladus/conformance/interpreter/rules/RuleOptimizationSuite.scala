@@ -21,9 +21,9 @@ import za.co.absa.enceladus.conformance.interpreter.rules.mapping.MappingRuleInt
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches, InterpreterContext, Never}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.conformance.samples.TradeConformance._
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
-class RuleOptimizationSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase{
+class RuleOptimizationSuite extends AnyFunSuite with TZNormalizedSparkTestBase with HadoopFsTestBase{
 
   private val schemaJson =
     """{

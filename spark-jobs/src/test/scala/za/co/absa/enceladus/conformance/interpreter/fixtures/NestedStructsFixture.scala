@@ -26,12 +26,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.util.control.NonFatal
 
-trait NestedStructsFixture extends BeforeAndAfterAll with SparkTestBase {
+trait NestedStructsFixture extends BeforeAndAfterAll with TZNormalizedSparkTestBase {
 
   this: Suite =>
 

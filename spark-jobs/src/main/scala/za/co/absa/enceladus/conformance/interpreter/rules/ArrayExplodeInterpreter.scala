@@ -19,7 +19,7 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.utils.explode.ExplodeTools
+import za.co.absa.spark.commons.utils.ExplodeTools
 
 /**
   * This conformance interpreter explodes a given array.

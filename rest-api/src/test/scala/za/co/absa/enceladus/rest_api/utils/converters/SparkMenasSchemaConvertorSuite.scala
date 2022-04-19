@@ -17,15 +17,15 @@ package za.co.absa.enceladus.rest_api.utils.converters
 
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class SparkMenasSchemaConvertorSuite extends AnyFunSuite with SparkTestBase {
+class SparkMenasSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())

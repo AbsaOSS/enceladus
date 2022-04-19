@@ -18,10 +18,10 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.NumericType
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.spark.commons.utils.JsonUtils
 
-class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
+class LocalMappingTableSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
 
   import spark.implicits._
 

@@ -20,7 +20,7 @@ import org.scalatest.Outcome
 import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
 class NoneParameterStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFileFixture {
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   // A field containing the delimiter with the escape has to be enclosed in specified quotes
   private val content: String =

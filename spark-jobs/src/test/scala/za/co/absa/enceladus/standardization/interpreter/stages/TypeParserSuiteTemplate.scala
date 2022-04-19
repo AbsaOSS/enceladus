@@ -17,18 +17,17 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
 import java.sql.{Date, Timestamp}
-
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.standardization.interpreter.dataTypes.ParseOutput
 import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserSuiteTemplate._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.time.DateTimePattern
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults, TypedStructField}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 
-trait TypeParserSuiteTemplate extends AnyFunSuite with SparkTestBase {
+trait TypeParserSuiteTemplate extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val defaults: Defaults = GlobalDefaults
