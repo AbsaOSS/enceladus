@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
--- DROP TABLE IF EXISTS mapping_table.mapping_tables;
+-- DROP TABLE IF EXISTS mapping_table.entities;
 
-CREATE TABLE mapping_table.mapping_tables
+CREATE TABLE mapping_table.entities
 (
-    mapping_table_name              TEXT NOT NULL,
-    mapping_table_latest_version    INTEGER NOT NULL,
+    entity_name                     TEXT NOT NULL,
+    entity_latest_version           INTEGER NOT NULL,
     created_by                      TEXT NOT NULL,
     created_at                      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     locked_by                       TEXT,
     locked_at                       TIMESTAMP WITH TIME ZONE,
     disabled_by                     TEXT,
     disabled_at                     TIMESTAMP WITH TIME ZONE,
-    CONSTRAINT mapping_tables_pk PRIMARY KEY (mapping_table_name)
+    CONSTRAINT entities_pk PRIMARY KEY (entity_name)
 );
 
-ALTER TABLE mapping_table.mapping_tables OWNER to enceladus;
+ALTER TABLE mapping_table.entities OWNER to enceladus;

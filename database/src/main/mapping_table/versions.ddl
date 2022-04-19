@@ -23,8 +23,8 @@ CREATE TABLE mapping_table.versions
     mapping_table_description   TEXT,
     path                        TEXT NOT NULL ,
     key_schema                  BIGINT NOT NULL,
-    default_mapping_value       HSTORE,
-    filter                      JSONB,
+    default_mapping_values      HSTORE,
+    table_filter                JSONB,
     updated_by                  TEXT NOT NULL,
     updated_at                  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
     CONSTRAINT versions_pk PRIMARY KEY (id_mapping_table_version)
