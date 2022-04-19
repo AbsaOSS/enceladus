@@ -17,7 +17,7 @@
 
 CREATE TABLE mapping_table.versions
 (
-    path                        TEXT NOT NULL ,
+    table_path                  TEXT NOT NULL ,
     key_schema                  BIGINT NOT NULL,
     default_mapping_values      HSTORE,
     table_filter                JSON,

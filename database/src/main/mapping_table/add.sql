@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION mapping_table.add(
     IN  i_entity_name               TEXT,
     IN  i_entity_version            INTEGER,
     IN  i_entity_description        TEXT,
-    IN  i_path                      TEXT,
+    IN  i_table_path                      TEXT,
     IN  i_key_schema                BIGINT,
     IN  i_default_mapping_values    HSTORE,
     IN  i_table_filter              JSON,
@@ -37,7 +37,7 @@ $$
 --      i_entity_name               - name of the mapping table
 --      i_entity_version            - version of the mapping table
 --      i_entity_description        - description of the mapping table
---      i_path                      - path, where the mapping table data are saved
+--      i_table_path                      - table_path, where the mapping table data are saved
 --      i_key_schema                - reference to the schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
 --      i_table_filter              - filter on the data of the mapping table
@@ -70,7 +70,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_path,
+    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
                             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 
@@ -86,7 +86,7 @@ CREATE OR REPLACE FUNCTION mapping_table.add(
     IN  i_entity_name               TEXT,
     IN  i_entity_version            INTEGER,
     IN  i_entity_description        TEXT,
-    IN  i_path                      TEXT,
+    IN  i_table_path                TEXT,
     IN  i_schema_name               TEXT,
     IN  i_schema_version            INTEGER,
     IN  i_default_mapping_values    HSTORE,
@@ -107,7 +107,7 @@ $$
 --      i_entity_name               - name of the mapping table
 --      i_entity_version            - version of the mapping table
 --      i_entity_description        - description of the mapping table
---      i_path                      - path, where the mapping table data are saved
+--      i_table_path                - table_path, where the mapping table data are saved
 --      i_schema_name               - name of the referenced schema of the mapping table
 --      i_schema_version            - version of the referenced schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
@@ -144,7 +144,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_path,
+    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
                             _key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 

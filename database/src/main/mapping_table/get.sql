@@ -30,7 +30,7 @@ CREATE OR REPLACE FUNCTION mapping_table.get(
     OUT locked_at               TIMESTAMP WITH TIME ZONE,
     OUT disabled_by             TEXT,
     OUT disabled_at             TIMESTAMP WITH TIME ZONE,
-    OUT path                    TEXT,
+    OUT table_path              TEXT,
     OUT key_schema              BIGINT,
     OUT schema_name             TEXT,
     OUT schema_version          INTEGER,
@@ -64,7 +64,7 @@ $$
 --      locked_at               - if not NULL the schema is locked
 --      disabled_by             - if disabled, who was the user who disabled the schema
 --      disabled_at             - if not NULL the schema has been disabled
---      path                    - path, where the mapping table data are saved
+--      table_path              - table_path, where the mapping table data are saved
 --      key_schema              - id of the attached schema
 --      schema_name             - name of the schema
 --      schema_version          - the version of the schema
@@ -98,13 +98,13 @@ BEGIN
 
     SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
         V.entity_description, V.updated_by, V.updated_at,
-        V.path, V.key_schema, V.default_mapping_values, V.table_filter
+        V.table_path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
     WHERE V.entity_name = i_entity_name AND
         V.entity_version = _entity_version
     INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
         get.entity_description, get.updated_by, get.updated_at,
-        get.path, get.key_schema, get.default_mapping_values, get.table_filter;
+        get.table_path, get.key_schema, get.default_mapping_values, get.table_filter;
 
     IF NOT found THEN
         status := 43;
@@ -144,7 +144,7 @@ CREATE OR REPLACE FUNCTION mapping_table.get(
     OUT locked_at               TIMESTAMP WITH TIME ZONE,
     OUT disabled_by             TEXT,
     OUT disabled_at             TIMESTAMP WITH TIME ZONE,
-    OUT path                    TEXT,
+    OUT table_path              TEXT,
     OUT key_schema              BIGINT,
     OUT schema_name             TEXT,
     OUT schema_version          INTEGER,
@@ -176,7 +176,7 @@ $$
 --      locked_at               - if not NULL the schema is locked
 --      disabled_by             - if disabled, who was the user who disabled the schema
 --      disabled_at             - if not NULL the schema has been disabled
---      path                    - path, where the mapping table data are saved
+--      table_path              - table_path, where the mapping table data are saved
 --      key_schema              - id of the attached schema
 --      schema_name             - name of the schema
 --      schema_version          - the version of the schema
@@ -197,12 +197,12 @@ BEGIN
 
     SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
            V.entity_description, V.updated_by, V.updated_at,
-           V.path, V.key_schema, V.default_mapping_values, V.table_filter
+           V.table_path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
     WHERE V.id_entity_version = i_key_entity_version
     INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
         get.entity_description, get.updated_by, get.updated_at,
-        get.path, get.key_schema, get.default_mapping_values, get.table_filter;
+        get.table_path, get.key_schema, get.default_mapping_values, get.table_filter;
 
     IF NOT found THEN
         status := 40;

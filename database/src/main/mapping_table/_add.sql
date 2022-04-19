@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION mapping_table._add(
     IN  i_entity_name               TEXT,
     IN  i_entity_version            INTEGER,
     IN  i_entity_description        TEXT,
-    IN  i_path                      TEXT,
+    IN  i_table_path                TEXT,
     IN  i_key_schema                BIGINT,
     IN  i_default_mapping_values    HSTORE,
     IN  i_table_filter              JSON,
@@ -37,7 +37,7 @@ $$
 --      i_entity_name               - name of the mapping table
 --      i_entity_version            - version of the mapping table
 --      i_entity_description        - description of the mapping table
---      i_path                      - path, where the mapping table data are saved
+--      i_table_path                - table_path, where the mapping table data are saved
 --      i_key_schema                - reference to the schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
 --      i_table_filter              - filter on the data of the mapping table
@@ -94,9 +94,9 @@ BEGIN
         RETURN;
     END IF;
 
-    INSERT INTO mapping_table.versions(entity_name, entity_version, entity_description, path,
+    INSERT INTO mapping_table.versions(entity_name, entity_version, entity_description, table_path,
                                        key_schema, default_mapping_values, table_filter, updated_by)
-    VALUES (i_entity_name, i_entity_version, i_entity_description, i_path,
+    VALUES (i_entity_name, i_entity_version, i_entity_description, i_table_path,
             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name)
     RETURNING mapping_table.versions.id_entity_version
     INTO key_entity_version;
