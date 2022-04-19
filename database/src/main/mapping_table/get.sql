@@ -52,18 +52,18 @@ $$
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status text
---      id_schema               - Id of the schema
---      schema_name             - name of the schema
---      schema_version          - the version of the schema
---      schema_description      - description of the schema
+--      id_entity_version       - id of the mapping table
+--      entity_name             - name of the mapping table
+--      entity_version          - the version of the mapping table
+--      entity_description      - description of the mapping table
 --      created_by              - user who created the schema
---      created_at            - time & date when the schema was disabled
+--      created_at              - time & date when the schema was disabled
 --      updated_by              - user who updated the schema to this particular version
---      updated_at            - time & date when the this particular version of the schema was created
+--      updated_at              - time & date when the this particular version of the schema was created
 --      locked_by               - if locked, who was the user who locked the schema
---      locked_at             - if not NULL the schema is locked
+--      locked_at               - if not NULL the schema is locked
 --      disabled_by             - if disabled, who was the user who disabled the schema
---      disabled_at           - if not NULL the schema has been disabled
+--      disabled_at             - if not NULL the schema has been disabled
 --      path                    - path, where the mapping table data are saved
 --      key_schema              - id of the attached schema
 --      schema_name             - name of the schema
@@ -98,7 +98,7 @@ BEGIN
 
     SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
         V.entity_description, V.updated_by, V.updated_at,
-        V.key_schema, V.key_schema, V.default_mapping_values, V.table_filter
+        V.path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
     WHERE V.entity_name = i_entity_name AND
         V.entity_version = _entity_version
@@ -159,23 +159,23 @@ $$
 --      Returns the data of the requested schema, based on its id
 --
 -- Parameters:
---      i_key_schema        - id of the schema
+--      i_key_entity_version    - id of the mapping table
 --
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status text
---      id_schema               - Id of the schema
---      schema_name             - name of the schema
---      schema_version          - the version of the schema
---      schema_description      - description of the schema
+--      id_entity_version       - id of the mapping table
+--      entity_name             - name of the mapping table
+--      entity_version          - the version of the mapping table
+--      entity_description      - description of the mapping table
 --      created_by              - user who created the schema
---      created_at            - time & date when the schema was disabled
+--      created_at              - time & date when the schema was disabled
 --      updated_by              - user who updated the schema to this particular version
---      updated_at            - time & date when the this particular version of the schema was created
+--      updated_at              - time & date when the this particular version of the schema was created
 --      locked_by               - if locked, who was the user who locked the schema
---      locked_at             - if not NULL the schema is locked
+--      locked_at               - if not NULL the schema is locked
 --      disabled_by             - if disabled, who was the user who disabled the schema
---      disabled_at           - if not NULL the schema has been disabled
+--      disabled_at             - if not NULL the schema has been disabled
 --      path                    - path, where the mapping table data are saved
 --      key_schema              - id of the attached schema
 --      schema_name             - name of the schema
@@ -197,7 +197,7 @@ BEGIN
 
     SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
            V.entity_description, V.updated_by, V.updated_at,
-           V.key_schema, V.key_schema, V.default_mapping_values, V.table_filter
+           V.path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
     WHERE V.id_entity_version = i_key_entity_version
     INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
