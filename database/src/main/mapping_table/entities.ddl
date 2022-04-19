@@ -22,4 +22,8 @@ CREATE TABLE mapping_table.entities
 )
     INHERITS (entity_base.entities);
 
+ALTER TABLE IF EXISTS mapping_table.entities
+    ADD CONSTRAINT check_mapping_table_entity_type CHECK (entity_type = 'M')
+        NOT VALID;
+
 ALTER TABLE mapping_table.entities OWNER to enceladus;
