@@ -52,18 +52,18 @@ $$
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status text
---      id_schema               - Id of the schema
---      entity_name             - name of the schema
---      entity_version          - the version of the schema
---      entity_description      - description of the schema
---      created_by              - user who created the schema
---      created_at              - time & date when the schema was disabled
---      updated_by              - user who updated the schema to this particular version
---      updated_at              - time & date when the this particular version of the schema was created
---      locked_by               - if locked, who was the user who locked the schema
---      locked_at               - if not NULL the schema is locked
---      disabled_by             - if disabled, who was the user who disabled the schema
---      disabled_at             - if not NULL the schema has been disabled
+--      id_entity_version       - id of the dataset
+--      entity_name             - name of the dataset
+--      entity_version          - the version of the dataset
+--      entity_description      - description of the dataset
+--      created_by              - user who created the dataset
+--      created_at              - time & date when the dataset was disabled
+--      updated_by              - user who updated the dataset to this particular version
+--      updated_at              - time & date when the this particular version of the dataset was created
+--      locked_by               - if locked, who was the user who locked the dataset
+--      locked_at               - if not NULL the dataset is locked
+--      disabled_by             - if disabled, who was the user who disabled the dataset
+--      disabled_at             - if not NULL the dataset has been disabled
 --      source_path             - source path of the dataset
 --      publish_path            - publish path of the dataset
 --      key_schema              - id of the attached schema
@@ -159,23 +159,23 @@ $$
 --      Returns the data of the requested dataset, based on its id
 --
 -- Parameters:
---      i_key_schema            - id of the dataset
+--      i_key_entity_version    - id of the dataset
 --
 -- Returns:
 --      status                  - Status code
 --      status_text             - Status text
---      id_schema               - Id of the schema
---      entity_name             - name of the schema
---      entity_version          - the version of the schema
---      entity_description      - description of the schema
---      created_by              - user who created the schema
---      created_at              - time & date when the schema was disabled
---      updated_by              - user who updated the schema to this particular version
---      updated_at              - time & date when the this particular version of the schema was created
---      locked_by               - if locked, who was the user who locked the schema
---      locked_at               - if not NULL the schema is locked
---      disabled_by             - if disabled, who was the user who disabled the schema
---      disabled_at             - if not NULL the schema has been disabled
+--      id_entity_version       - id of the dataset
+--      entity_name             - name of the dataset
+--      entity_version          - the version of the dataset
+--      entity_description      - description of the dataset
+--      created_by              - user who created the dataset
+--      created_at              - time & date when the dataset was disabled
+--      updated_by              - user who updated the dataset to this particular version
+--      updated_at              - time & date when the this particular version of the dataset was created
+--      locked_by               - if locked, who was the user who locked the dataset
+--      locked_at               - if not NULL the dataset is locked
+--      disabled_by             - if disabled, who was the user who disabled the dataset
+--      disabled_at             - if not NULL the dataset has been disabled
 --      source_path             - source path of the dataset
 --      publish_path            - publish path of the dataset
 --      key_schema              - id of the attached schema
