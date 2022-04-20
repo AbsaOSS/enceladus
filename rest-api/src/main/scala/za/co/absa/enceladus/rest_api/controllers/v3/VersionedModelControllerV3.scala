@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.controllers.v3
 
 import com.mongodb.client.result.UpdateResult
 import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -96,6 +97,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array("/{name}/import"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
                          @RequestBody importObject: ExportableObject[C],
@@ -121,6 +123,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def create(@AuthenticationPrincipal principal: UserDetails,
              @RequestBody item: C,
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
@@ -138,6 +141,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PutMapping(Array("/{name}/{version}"))
   @ResponseStatus(HttpStatus.NO_CONTENT)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def edit(@AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
@@ -159,6 +163,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @DeleteMapping(Array("/{name}", "/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def disable(@PathVariable name: String,
               @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
     val v = if (version.isPresent) {

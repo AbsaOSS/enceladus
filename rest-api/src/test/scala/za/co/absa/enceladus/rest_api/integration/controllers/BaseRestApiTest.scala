@@ -142,8 +142,13 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
   }
 
   def sendPut[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+                    bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.PUT, urlPath, headers, bodyOpt)
+  }
+
+  def sendPutByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                       bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    sendByAdmin(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
   def sendPutAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
