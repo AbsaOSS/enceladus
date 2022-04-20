@@ -17,7 +17,7 @@ CREATE OR REPLACE FUNCTION mapping_table.add(
     IN  i_entity_name               TEXT,
     IN  i_entity_version            INTEGER,
     IN  i_entity_description        TEXT,
-    IN  i_table_path                      TEXT,
+    IN  i_table_path                TEXT,
     IN  i_key_schema                BIGINT,
     IN  i_default_mapping_values    HSTORE,
     IN  i_table_filter              JSON,
@@ -97,7 +97,7 @@ CREATE OR REPLACE FUNCTION mapping_table.add(
     OUT key_entity_version          BIGINT
 ) RETURNS record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: jobs_configuration.add(9)
 --      Stores a new version of the mapping table.
