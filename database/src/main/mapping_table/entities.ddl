@@ -18,8 +18,11 @@
 CREATE TABLE mapping_table.entities
 (
     entity_type             CHAR NOT NULL DEFAULT 'M',
-    CONSTRAINT entities_pk PRIMARY KEY (entity_name)
+    CONSTRAINT entities_pk PRIMARY KEY (id_entity)
 )
     INHERITS (entity_base.entities);
+
+ALTER TABLE mapping_table.entities
+    ADD CONSTRAINT entities_unq UNIQUE (entity_name);
 
 ALTER TABLE mapping_table.entities OWNER to enceladus;

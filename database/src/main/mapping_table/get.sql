@@ -80,15 +80,16 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
+    _key_entity         BIGINT;
     _entity_version     INTEGER;
     _schema_status      INTEGER;
 BEGIN
-    SELECT coalesce(i_entity_version, E.entity_latest_version), E.created_by, E.created_at,
-           E.locked_by, E.locked_at, E.disabled_by, E.locked_at
+    SELECT E.id_entity, coalesce(i_entity_version, E.entity_latest_version), E.entity_name,
+           E.created_by, E.created_at, E.locked_by, E.locked_at, E.disabled_by, E.locked_at
     FROM mapping_table.entities E
     WHERE E.entity_name = i_entity_name
-    INTO _entity_version, get.created_by, get.created_at,
-        get.locked_by, get.locked_at, get.disabled_by, get.disabled_at;
+    INTO _key_entity, _entity_version, get.entity_name,
+        get.created_by, get.created_at, get.locked_by, get.locked_at, get.disabled_by, get.disabled_at;
 
     IF NOT found THEN
         status := 40;
@@ -96,13 +97,13 @@ BEGIN
         RETURN;
     END IF;
 
-    SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
+    SELECT 10, 'OK', V.id_entity_version, V.entity_version,
         V.entity_description, V.updated_by, V.updated_at,
         V.table_path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
-    WHERE V.entity_name = i_entity_name AND
+    WHERE V.key_entity = _key_entity AND
         V.entity_version = _entity_version
-    INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
+    INTO status, status_text, get.id_entity_version, get.entity_version,
         get.entity_description, get.updated_by, get.updated_at,
         get.table_path, get.key_schema, get.default_mapping_values, get.table_filter;
 
@@ -191,16 +192,17 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
+    _key_entity     BIGINT;
     _schema_status  TEXT;
 BEGIN
 
 
-    SELECT 10, 'OK', V.id_entity_version, V.entity_name, V.entity_version,
+    SELECT 10, 'OK', V.id_entity_version, V.key_entity, V.entity_version,
            V.entity_description, V.updated_by, V.updated_at,
            V.table_path, V.key_schema, V.default_mapping_values, V.table_filter
     FROM mapping_table.versions V
     WHERE V.id_entity_version = i_key_entity_version
-    INTO status, status_text, get.id_entity_version, get.entity_name, get.entity_version,
+    INTO status, status_text, get.id_entity_version, _key_entity, get.entity_version,
         get.entity_description, get.updated_by, get.updated_at,
         get.table_path, get.key_schema, get.default_mapping_values, get.table_filter;
 
@@ -211,11 +213,11 @@ BEGIN
     END IF;
 
 
-    SELECT E.created_by, E.created_at, E.locked_by, E.locked_at,
+    SELECT E.entity_name, E.created_by, E.created_at, E.locked_by, E.locked_at,
         E.disabled_by, E.locked_at
     FROM mapping_table.entities E
-    WHERE E.entity_name = get.entity_name
-    INTO get.created_by, get.created_at, get.locked_by, get.locked_at,
+    WHERE E.id_entity = _key_entity
+    INTO get.entity_name, get.created_by, get.created_at, get.locked_by, get.locked_at,
         get.disabled_by, get.disabled_at;
 
     SELECT G.status, G.entity_name, G.entity_version, G.fields

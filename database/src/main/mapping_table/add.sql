@@ -27,7 +27,7 @@ CREATE OR REPLACE FUNCTION mapping_table.add(
     OUT key_entity_version          BIGINT
 ) RETURNS record AS
 $$
-    -------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --
 -- Function: jobs_configuration.add(8)
 --      Stores a new version of the mapping table.
@@ -131,10 +131,10 @@ $$
 DECLARE
     _key_schema BIGINT;
 BEGIN
-    SELECT V.id_entity_version
-    FROM dataset_schema.versions V
-    WHERE V.entity_name = i_schema_name AND
-          V.entity_version = i_schema_version
+
+    SELECT G.id_entity_version
+    FROM dataset_schema.get(i_schema_name, i_schema_version) G
+    WHERE G.status = 10
     INTO _key_schema;
 
     IF NOT found THEN

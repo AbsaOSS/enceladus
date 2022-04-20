@@ -57,60 +57,76 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
+    _entity_type    CHAR := 'M';
+    _key_entity     BIGINT;
+    _new_entity     BOOLEAN;
     _latest_version INTEGER;
     _locked         BOOLEAN;
     _disabled       BOOLEAN;
 BEGIN
-    SELECT E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
+    IF i_entity_version = 1 THEN
+        -- lock on stats to prevent competing inserts of new entity
+        PERFORM 1
+        FROM entity_base.stats S
+        WHERE S.entity_type = _entity_type
+            FOR UPDATE;
+    END IF;
+
+    SELECT E.id_entity, E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
     FROM mapping_table.entities E
     WHERE E.entity_name = i_entity_name
     FOR UPDATE
-    INTO _latest_version, _locked, _disabled;
+    INTO _key_entity, _latest_version, _locked, _disabled;
 
-    IF NOT found THEN
-        -- new mapping table, lock on stats will prevent racing insert of the same mapping table
-        PERFORM
-        FROM entity_base.stats
-        FOR UPDATE;
+    _new_entity := NOT found;
 
-        _latest_version = 0;
-    ELSIF _disabled THEN
-        status := 31;
-        status_text := 'Mapping table has been disabled';
-        RETURN ;
-    ELSIF _locked THEN
-        status := 32;
-        status_text := 'Mapping table is locked';
-        RETURN;
+    IF _new_entity THEN
+        IF i_entity_version != 1 THEN
+            status := 50;
+            status_text := 'Mapping table version wrong';
+            RETURN;
+        END IF;
+
+        UPDATE entity_base.stats
+        SET entity_count = stats.entity_count + 1
+        WHERE entity_type = _entity_type;
+
+        INSERT INTO mapping_table.entities(entity_name, entity_latest_version, created_by)
+        VALUES (i_entity_name, i_entity_version, i_user_name)
+        RETURNING id_entity
+        INTO _key_entity;
+    ELSE
+        IF _disabled THEN
+            status := 31;
+            status_text := 'Mapping table has been disabled';
+            RETURN ;
+        ELSIF _locked THEN
+            status := 32;
+            status_text := 'Mapping table is locked';
+            RETURN;
+        ELSIF _latest_version >= i_entity_version THEN
+            status := 51;
+            status_text := 'Mapping table already exists';
+            RETURN;
+        ELSIF _latest_version + 1 < i_entity_version THEN
+            status := 50;
+            status_text := 'Mapping table version wrong';
+            RETURN;
+        END IF;
+
     END IF;
 
-    IF _latest_version >= i_entity_version THEN
-        status := 51;
-        status_text := 'Mapping table already exists';
-        RETURN;
-    ELSIF _latest_version + 1 < i_entity_version THEN
-        status := 50;
-        status_text := 'Mapping table version wrong';
-        RETURN;
-    END IF;
-
-    INSERT INTO mapping_table.versions(entity_name, entity_version, entity_description, table_path,
+    INSERT INTO mapping_table.versions(key_entity, entity_version, entity_description, table_path,
                                        key_schema, default_mapping_values, table_filter, updated_by)
-    VALUES (i_entity_name, i_entity_version, i_entity_description, i_table_path,
+    VALUES (_key_entity, i_entity_version, i_entity_description, i_table_path,
             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name)
     RETURNING mapping_table.versions.id_entity_version
     INTO key_entity_version;
 
-    IF _latest_version = 0 THEN
-        INSERT INTO mapping_table.entities(entity_name, entity_latest_version, created_by)
-        VALUES (i_entity_name, i_entity_version, i_user_name);
-
-        UPDATE entity_base.stats
-        SET mapping_table_count = mapping_table_count + 1;
-    ELSE
+    IF NOT _new_entity THEN
         UPDATE mapping_table.entities
         SET entity_latest_version = i_entity_version
-        WHERE entity_name = i_entity_name;
+        WHERE id_entity = _key_entity;
     END IF;
 
     status := 11;
