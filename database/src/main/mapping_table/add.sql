@@ -31,13 +31,13 @@ $$
 --
 -- Function: jobs_configuration.add(8)
 --      Stores a new version of the mapping table.
---      The i_mapping table_version has to be an increment of the latest version of an existing mapping table or 1
+--      The i_entity_version has to be an increment of the latest version of an existing mapping table or 1
 --
 -- Parameters:
 --      i_entity_name               - name of the mapping table
 --      i_entity_version            - version of the mapping table
 --      i_entity_description        - description of the mapping table
---      i_table_path                      - table_path, where the mapping table data are saved
+--      i_table_path                - table_path, where the mapping table data are saved
 --      i_key_schema                - reference to the schema of the mapping table
 --      i_default_mapping_values    - default values of the mapping table
 --      i_table_filter              - filter on the data of the mapping table
@@ -70,7 +70,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
+    FROM mapping_table._add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
                             i_key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 
@@ -101,7 +101,7 @@ $$
 --
 -- Function: jobs_configuration.add(9)
 --      Stores a new version of the mapping table.
---      The i_mapping table_version has to be an increment of the latest version of an existing mapping table or 1
+--      The i_entity_version has to be an increment of the latest version of an existing mapping table or 1
 --
 -- Parameters:
 --      i_entity_name               - name of the mapping table
@@ -144,7 +144,7 @@ BEGIN
     END IF;
 
     SELECT A.status, A.status_text, A.key_entity_version
-    FROM mapping_table.add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
+    FROM mapping_table._add(i_entity_name, i_entity_version, i_entity_description, i_table_path,
                             _key_schema, i_default_mapping_values, i_table_filter, i_user_name) A
     INTO status, status_text, key_entity_version;
 
