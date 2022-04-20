@@ -18,9 +18,12 @@
 CREATE TABLE dataset.entities
 (
     entity_type             CHAR NOT NULL DEFAULT 'D',
-    CONSTRAINT entities_pk PRIMARY KEY (entity_name)
+    CONSTRAINT entities_pk PRIMARY KEY (id_entity)
 )
     INHERITS (entity_base.entities);
+
+ALTER TABLE dataset.entities
+    ADD CONSTRAINT entities_unq UNIQUE (entity_name);
 
 ALTER TABLE IF EXISTS dataset.entities
     ADD CONSTRAINT check_dataset_entity_type CHECK (entity_type = 'D')

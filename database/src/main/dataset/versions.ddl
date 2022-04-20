@@ -26,6 +26,6 @@ CREATE TABLE dataset.versions
     INHERITS (entity_base.versions);
 
 ALTER TABLE dataset.versions
-    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
+    ADD CONSTRAINT versions_unq UNIQUE (key_entity, entity_version);
 
 ALTER TABLE dataset.versions OWNER to enceladus;
