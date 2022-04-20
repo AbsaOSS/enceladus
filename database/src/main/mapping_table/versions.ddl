@@ -17,7 +17,7 @@
 
 CREATE TABLE mapping_table.versions
 (
-    path                        TEXT NOT NULL ,
+    table_path                  TEXT NOT NULL ,
     key_schema                  BIGINT NOT NULL,
     default_mapping_values      HSTORE,
     table_filter                JSON,
@@ -26,7 +26,7 @@ CREATE TABLE mapping_table.versions
     INHERITS (entity_base.versions);
 
 ALTER TABLE mapping_table.versions
-    ADD CONSTRAINT versions_unq UNIQUE (entity_name, entity_version);
+    ADD CONSTRAINT versions_unq UNIQUE (key_entity, entity_version);
 
 CREATE INDEX versions_idx ON mapping_table.versions (key_schema);
 
