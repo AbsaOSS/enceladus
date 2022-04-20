@@ -17,6 +17,7 @@
 
 CREATE TABLE entity_base.entities
 (
+    id_entity               BIGINT NOT NULL DEFAULT global_id(),
     entity_name             TEXT NOT NULL,
     entity_latest_version   INTEGER NOT NULL,
     entity_type             CHAR NOT NULL,

@@ -17,16 +17,15 @@
 
 CREATE TABLE entity_base.stats
 (
-    schema_count        INTEGER NOT NULL,
-    mapping_table_count INTEGER NOT NULL,
-    dataset_count       INTEGER NOT NULL
+    entity_type         CHAR NOT NULL,
+    entity_count        INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT stats_pk PRIMARY KEY (entity_type)
 );
 
 ALTER TABLE entity_base.stats
     OWNER to enceladus;
 
-INSERT INTO entity_base.stats(schema_count, mapping_table_count, dataset_count)
-VALUES (0, 0, 0);
-
-CREATE RULE entity_base_stats_del_protect AS ON DELETE TO entity_base.stats DO INSTEAD NOTHING;
-CREATE RULE entity_base_stats_ins_protect AS ON INSERT TO entity_base.stats DO INSTEAD NOTHING;
+INSERT INTO entity_base.stats(entity_type)
+VALUES ('S'),
+       ('M'),
+       ('D');

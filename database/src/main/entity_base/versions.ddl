@@ -18,7 +18,7 @@
 CREATE TABLE entity_base.versions
 (
     id_entity_version   BIGINT NOT NULL DEFAULT global_id(),
-    entity_name         TEXT NOT NULL,
+    key_entity          BIGINT NOT NULL,
     entity_version      INTEGER NOT NULL,
     entity_description  TEXT,
     updated_by          TEXT NOT NULL,

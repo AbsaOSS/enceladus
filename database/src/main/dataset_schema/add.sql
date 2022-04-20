@@ -51,58 +51,74 @@ $$
 --
 -------------------------------------------------------------------------------
 DECLARE
+    _entity_type    CHAR := 'S';
+    _key_entity     BIGINT;
+    _new_entity     BOOLEAN;
     _latest_version INTEGER;
     _locked         BOOLEAN;
     _disabled       BOOLEAN;
 BEGIN
-    SELECT E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
+
+    IF i_entity_version = 1 THEN
+        -- lock on stats to prevent competing inserts of new entity
+        PERFORM 1
+        FROM entity_base.stats S
+        WHERE S.entity_type = _entity_type
+        FOR UPDATE;
+    END IF;
+
+    SELECT E.id_entity, E.entity_latest_version, E.locked_at IS NOT NULL, E.disabled_at IS NOT NULL
     FROM dataset_schema.entities E
     WHERE E.entity_name = i_entity_name
     FOR UPDATE
-    INTO _latest_version, _locked, _disabled;
+    INTO _key_entity, _latest_version, _locked, _disabled;
 
-    IF NOT found THEN
-        -- new schema, lock on stats will prevent racing insert of the same schema
-        PERFORM
-        FROM entity_base.stats
-        FOR UPDATE;
+    _new_entity := NOT found;
 
-        _latest_version = 0;
-    ELSIF _disabled THEN
-        status := 31;
-        status_text := 'Schema has been disabled';
-        RETURN ;
-    ELSIF _locked THEN
-        status := 32;
-        status_text := 'Schema is locked';
-        RETURN;
+    IF _new_entity THEN
+        IF i_entity_version != 1 THEN
+            status := 50;
+            status_text := 'Schema version wrong';
+            RETURN;
+        END IF;
+
+        UPDATE entity_base.stats
+        SET entity_count = stats.entity_count + 1
+        WHERE entity_type = _entity_type;
+
+        INSERT INTO dataset_schema.entities (entity_name, entity_latest_version, created_by)
+        VALUES (i_entity_name, i_entity_version, i_user_name)
+        RETURNING id_entity
+        INTO _key_entity;
+    ELSE
+        IF _disabled THEN
+            status := 31;
+            status_text := 'Schema has been disabled';
+            RETURN ;
+        ELSIF _locked THEN
+            status := 32;
+            status_text := 'Schema is locked';
+            RETURN;
+        ELSEIF _latest_version >= i_entity_version THEN
+            status := 51;
+            status_text := 'Schema already exists';
+            RETURN;
+        ELSIF _latest_version + 1 < i_entity_version THEN
+            status := 50;
+            status_text := 'Schema version wrong';
+            RETURN;
+        END IF;
     END IF;
 
-    IF _latest_version >= i_entity_version THEN
-        status := 51;
-        status_text := 'Schema already exists';
-        RETURN;
-    ELSIF _latest_version + 1 < i_entity_version THEN
-        status := 50;
-        status_text := 'Schema version wrong';
-        RETURN;
-    END IF;
-
-    INSERT INTO dataset_schema.versions (entity_name, entity_version, entity_description, fields, updated_by)
-    VALUES (i_entity_name, i_entity_version, i_entity_description, i_fields, i_user_name)
+    INSERT INTO dataset_schema.versions (key_entity, entity_version, entity_description, fields, updated_by)
+    VALUES (_key_entity, i_entity_version, i_entity_description, i_fields, i_user_name)
     RETURNING dataset_schema.versions.id_entity_version
     INTO id_entity_version;
 
-    IF _latest_version = 0 THEN
-        INSERT INTO dataset_schema.entities (entity_name, entity_latest_version, created_by)
-        VALUES (i_entity_name, i_entity_version, i_user_name);
-
-        UPDATE entity_base.stats
-        SET schema_count = stats.schema_count + 1;
-    ELSE
+    IF NOT _new_entity THEN
         UPDATE dataset_schema.entities
         SET entity_latest_version = i_entity_version
-        WHERE entity_name = i_entity_name;
+        WHERE id_entity = _key_entity;
     END IF;
 
     status := 11;
