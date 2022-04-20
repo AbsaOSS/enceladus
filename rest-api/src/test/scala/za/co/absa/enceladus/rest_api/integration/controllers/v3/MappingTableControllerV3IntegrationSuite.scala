@@ -20,10 +20,12 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
+import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Validation}
-import za.co.absa.enceladus.model.test.factories.{MappingTableFactory, SchemaFactory}
+import za.co.absa.enceladus.model.test.factories.{MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.integration.controllers.toExpected
@@ -54,6 +56,14 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         assertBadRequest(response)
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("schema" -> List("Schema mtSchemaA v1 not found!")))
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for POST $apiUrl" in {
+        val mtA = MappingTableFactory.getDummyMappingTable("mtA", schemaName = "mtSchemaA", schemaVersion = 1)
+        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -150,6 +160,14 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       }
     }
 
+    "return 403" when {
+      s"admin auth is not used for PUT" in {
+        // no need for fixture whip-up, auth check should precede further processing
+        val response = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(Array.empty[DefaultValue]))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+
     "201 Created with location" when {
       Seq(
         ("empty defaults", Array.empty[DefaultValue]),
@@ -203,6 +221,14 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         responseBody shouldBe Validation(Map("version" ->
           List("Version 2 of mtA is not the latest version, therefore cannot be edited")
         ))
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for POST" in {
+        // no need for fixture whip-up, auth check should precede further processing
+        val response = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 

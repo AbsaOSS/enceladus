@@ -135,6 +135,16 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
     }
+
+    "return 403" when {
+      s"admin auth is not used for POST" in {
+        val dataset = DatasetFactory.getDummyDataset("dummyDs")
+
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+
     // todo what to do if  "the last dataset version is disabled"?
   }
 
@@ -336,6 +346,18 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
     }
+
+    "return 403" when {
+      s"admin auth is not used for PUT" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetA1 = DatasetFactory.getDummyDataset("datasetA", description = Some("init version"))
+        datasetFixture.add(datasetA1)
+
+        val datasetA2 = DatasetFactory.getDummyDataset("datasetA", description = Some("second version"), version = 2)
+        val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
   }
 
   s"GET $apiUrl/{name}/audit-trail" should {
@@ -446,6 +468,22 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
         response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for POST" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // import feature checks schema presence
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetXYZ", description = Some("init version"))
+        datasetFixture.add(dataset1)
+
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key1"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
+        )
+
+        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -649,7 +687,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-
   s"PUT $apiUrl/{name}/{version}/properties" should {
     "return 404" when {
       "when the name+version does not exist" in {
@@ -710,6 +747,20 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         assertBadRequest(response2)
         response2.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for PUT" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetV1)
+
+        propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("keyA"))
+        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+          bodyOpt = Some(Map("keyA" -> "valA")))
+
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -899,6 +950,18 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
+    "return 403" when {
+      s"admin auth is not used for POST" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules",
+          bodyOpt = Some(LiteralConformanceRule(order = 0,"column1", true, "ABC")))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+
     "return 201" when {
       "when conf rule is added" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
@@ -956,4 +1019,5 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
+  // todo delete tests are missing
 }

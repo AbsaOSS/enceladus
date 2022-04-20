@@ -20,6 +20,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.Validation
@@ -97,6 +98,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         }
       }
     }
+
     "return 400" when {
       "an enabled PropertyDefinition with that name already exists" in {
         val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
@@ -114,6 +116,14 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         assertBadRequest(response)
 
         response.getBody shouldBe "The suggested value invalidOptionC cannot be used: Value 'invalidOptionC' is not one of the allowed values (a, b)."
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for POST $apiUrl" in {
+        val propertyDefinition = PropertyDefinitionFactory.getDummyPropertyDefinition()
+        val response = sendPost[PropertyDefinition, String](apiUrl, bodyOpt = Some(propertyDefinition))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
