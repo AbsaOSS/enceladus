@@ -18,6 +18,7 @@ package za.co.absa.enceladus.rest_api.controllers.v3
 import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -33,7 +34,6 @@ import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.rest_api.utils.parsers.SchemaParser
 
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import scala.concurrent.Future
@@ -88,6 +88,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-file"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
@@ -123,6 +124,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-remote-uri"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
@@ -150,6 +152,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-registry"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleSubject(@AuthenticationPrincipal principal: UserDetails,
                     @PathVariable name: String,
                     @PathVariable version: Int,

@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.controllers.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
@@ -48,6 +49,7 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
 
   @PutMapping(path = Array("/{name}/{version}/defaults"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def updateDefault(@AuthenticationPrincipal user: UserDetails,
                  @PathVariable name: String,
                  @PathVariable version: String,
@@ -66,6 +68,7 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
 
   @PostMapping(path = Array("/{name}/{version}/defaults"))
   @ResponseStatus(HttpStatus.CREATED)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def addDefault(@AuthenticationPrincipal user: UserDetails,
                  @PathVariable name: String,
                  @PathVariable version: String,

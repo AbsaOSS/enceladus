@@ -71,7 +71,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
         )
 
-        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+        val response = sendPostByAdmin[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
         assertCreated(response)
         response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
         val locationHeader = response.getHeaders.getFirst("location")
@@ -94,7 +94,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           datasetFixture.add(dataset1, dataset2)
 
           val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
-          val response = sendPost[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
+          val response = sendPostByAdmin[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
           assertCreated(response)
           val locationHeaders = response.getHeaders.get("location").asScala
           locationHeaders should have size 1
@@ -116,7 +116,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val dataset = DatasetFactory.getDummyDataset("dummyDs")
         // there are schemas defined
 
-        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+        val response = sendPostByAdmin[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
 
         assertBadRequest(response)
         val responseBody = response.getBody
@@ -128,7 +128,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val dataset = DatasetFactory.getDummyDataset("dummyDs", properties = Some(Map("undefinedProperty1" -> "value1")))
         // propdefs are empty
 
-        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
+        val response = sendPostByAdmin[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
 
         assertBadRequest(response)
         val responseBody = response.getBody
@@ -280,7 +280,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             version = 2 // update references the last version
           )
 
-          val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
+          val response = sendPutByAdmin[Dataset, Validation](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
           assertCreated(response)
           response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
           val locationHeader = response.getHeaders.getFirst("location")
@@ -307,7 +307,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val datasetA2 = DatasetFactory.getDummyDataset("datasetA",
           description = Some("second version"), properties = Some(Map("keyA" -> "valA"))) // version in payload is irrelevant
 
-        val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
+        val response = sendPutByAdmin[Dataset, Validation](s"$apiUrl/datasetA/1", bodyOpt = Some(datasetA2))
 
         assertBadRequest(response)
         val responseBody = response.getBody
@@ -324,12 +324,12 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val datasetA1 = DatasetFactory.getDummyDataset("datasetA", description = Some("init version"))
           datasetFixture.add(datasetA1)
 
-          val response = sendPut[Dataset, String](s"$apiUrl/datasetA/7",
+          val response = sendPutByAdmin[Dataset, String](s"$apiUrl/datasetA/7",
             bodyOpt = Some(DatasetFactory.getDummyDataset("datasetA", version = 5)))
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("version mismatch: 7 != 5")
 
-          val response2 = sendPut[Dataset, String](s"$apiUrl/datasetABC/4",
+          val response2 = sendPutByAdmin[Dataset, String](s"$apiUrl/datasetABC/4",
             bodyOpt = Some(DatasetFactory.getDummyDataset("datasetXYZ", version = 4)))
           response2.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response2.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
@@ -432,24 +432,21 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 400" when {
       "a Dataset with the given name" should {
         "fail when name in the URL and payload is mismatched" in {
-          val response = sendPost[String, String](s"$apiUrl/datasetABC/import",
+          val response = sendPostByAdmin[String, String](s"$apiUrl/datasetABC/import",
             bodyOpt = Some(importableDs))
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
         }
       }
-    }
+      "imported Dataset fails validation" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
 
-    "return 400" when {
-        "imported Dataset fails validation" in {
-          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-          propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
+        val response = sendPostByAdmin[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
 
-          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
-
-          response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
-          response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
-        }
+        response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+        response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
+      }
     }
 
     "return 201" when {
@@ -465,7 +462,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("key3", essentiality = Essentiality.Recommended)
           )
 
-          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          val response = sendPostByAdmin[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
           assertCreated(response)
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/2")
@@ -495,7 +492,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
           )
 
-          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          val response = sendPostByAdmin[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
           assertCreated(response)
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/1") // this is the first version
@@ -656,7 +653,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   s"PUT $apiUrl/{name}/{version}/properties" should {
     "return 404" when {
       "when the name+version does not exist" in {
-        val response = sendPut[Map[String, String], String](s"$apiUrl/notFoundDataset/456/properties", bodyOpt = Some(Map.empty))
+        val response = sendPutByAdmin[Map[String, String], String](s"$apiUrl/notFoundDataset/456/properties", bodyOpt = Some(Map.empty))
         assertNotFound(response)
       }
     }
@@ -669,7 +666,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val datasetV3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
         datasetFixture.add(datasetV1, datasetV2, datasetV3)
 
-        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/2/properties", bodyOpt = Some(Map.empty))
+        val response = sendPutByAdmin[Map[String, String], Validation](s"$apiUrl/datasetA/2/properties", bodyOpt = Some(Map.empty))
 
         assertBadRequest(response)
         val responseBody = response.getBody
@@ -684,7 +681,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(datasetV1)
         // propdefs are empty
 
-        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+        val response = sendPutByAdmin[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
           bodyOpt = Some(Map("undefinedProperty1" -> "someValue")))
 
         assertBadRequest(response)
@@ -702,13 +699,13 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           PropertyDefinitionFactory.getDummyPropertyDefinition("AorB", propertyType = EnumPropertyType("a", "b"))
         )
 
-        val response1 = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+        val response1 = sendPutByAdmin[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
           bodyOpt = Some(Map("AorB" -> "a"))) // this is ok, but mandatoryA is missing
 
         assertBadRequest(response1)
         response1.getBody shouldBe Validation(Map("mandatoryA" -> List("Dataset property 'mandatoryA' is mandatory, but does not exist!")))
 
-        val response2 = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+        val response2 = sendPutByAdmin[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
           bodyOpt = Some(Map("mandatoryA" -> "valueA", "AorB" -> "c"))) // mandatoryA is ok, but AorB has invalid value
 
         assertBadRequest(response2)
@@ -733,7 +730,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
           )
 
-          val response1 = sendPut[String, Validation](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
+          val response1 = sendPutByAdmin[String, Validation](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(payload))
           assertCreated(response1)
           response1.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
           val headers1 = response1.getHeaders
@@ -869,7 +866,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetV1)
 
-        val response = sendPost[ConformanceRule, String](s"$apiUrl/notFoundDataset/456/rules",
+        val response = sendPostByAdmin[ConformanceRule, String](s"$apiUrl/notFoundDataset/456/rules",
           bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
         assertNotFound(response)
       }
@@ -883,21 +880,18 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         ))
         datasetFixture.add(datasetV1)
 
-        val response = sendPost[ConformanceRule, String](s"$apiUrl/datasetA/1/rules",
+        val response = sendPostByAdmin[ConformanceRule, String](s"$apiUrl/datasetA/1/rules",
           bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
         assertBadRequest(response)
 
         response.getBody should include("Rule with order 0 cannot be added, another rule with this order already exists.")
       }
-    }
-
-    "return 400" when {
       "when rule is not valid (missing MT)" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetV1)
 
-        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules",
+        val response = sendPostByAdmin[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules",
           bodyOpt = Some(exampleMcrRule0))
         assertBadRequest(response)
 
@@ -913,7 +907,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         )
         datasetFixture.add(datasetV1)
 
-        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
+        val response = sendPostByAdmin[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
         assertCreated(response)
         // if, in the future, there can be a rule update resulting in a warning, let's reflect that here
         response.getBody shouldBe Validation.empty

@@ -117,6 +117,15 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     upload(urlPath, headers, fileParamName, fileName, parameters)
   }
 
+  def sendPostUploadFileByAdmin[T](urlPath: String,
+                            fileName: String,
+                            parameters: Map[String, Any],
+                            fileParamName: String = "file",
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    upload(urlPath, headers, fileParamName, fileName, parameters, byAdmin = true)
+  }
+
   def sendPostRemoteFile[T](urlPath: String,
                             parameters: Map[String, Any],
                             headers: HttpHeaders = new HttpHeaders())
@@ -124,6 +133,15 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
 
     fromRemote(urlPath, headers, parameters)
+  }
+
+  def sendPostRemoteFileByAdmin[T](urlPath: String,
+                            parameters: Map[String, Any],
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters, byAdmin = true)
   }
 
   def sendPostSubject[T](urlPath: String,
@@ -134,6 +152,16 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
       s"parameters map must contain the 'subject', but only $parameters was found")
 
     fromRemote(urlPath, headers, parameters)
+  }
+
+  def sendPostSubjectByAdmin[T](urlPath: String,
+                         parameters: Map[String, Any],
+                         headers: HttpHeaders = new HttpHeaders())
+                        (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("subject"),
+      s"parameters map must contain the 'subject', but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters, byAdmin = true)
   }
 
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
@@ -204,7 +232,8 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
                 headers: HttpHeaders = HttpHeaders.EMPTY,
                 fileParamName: String,
                 fileName: String,
-                additionalParams: Map[String, Any])
+                additionalParams: Map[String, Any],
+                byAdmin: Boolean = false)
                (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
     val parameters = new LinkedMultiValueMap[String, Any]
@@ -214,7 +243,11 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     }
 
     val url = s"$baseUrl/$urlPath"
-    headers.addAll(authHeaders)
+    if (byAdmin) {
+      headers.addAll(authHeadersAdmin)
+    } else {
+      headers.addAll(authHeaders)
+    }
     headers.setContentType(MediaType.MULTIPART_FORM_DATA)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
@@ -225,7 +258,8 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
 
   def fromRemote[T](urlPath: String,
                     headers: HttpHeaders = HttpHeaders.EMPTY,
-                    params: Map[String, Any])
+                    params: Map[String, Any],
+                    byAdmin: Boolean = false)
                    (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
     val parameters: MultiValueMap[String, String] = new LinkedMultiValueMap()
@@ -234,7 +268,11 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     }
 
     val url = s"$baseUrl/$urlPath"
-    headers.addAll(authHeaders)
+    if (byAdmin) {
+      headers.addAll(authHeadersAdmin)
+    } else {
+      headers.addAll(authHeaders)
+    }
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
