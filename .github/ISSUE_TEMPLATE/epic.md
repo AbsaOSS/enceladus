@@ -16,5 +16,3 @@ A list of expected issues that will be needed to achieve this Epic
 1. 
 2. 
 3. 
-
-**NB! Don't forget to assign the Epic into a Milestone**
