@@ -314,6 +314,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     validateName(item.name)
   }
 
+  /** does not include za.co.absa.enceladus.rest_api.services.VersionedModelService#validate(java.lang.Object)*/
   def validateForCreation(item: C): Future[Validation] = {
     isUniqueName(item.name).map { isUnique =>
       if (isUnique) {

@@ -140,7 +140,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   }
 
   @PutMapping(Array("/{name}/{version}"))
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def edit(@AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,

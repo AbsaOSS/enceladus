@@ -29,6 +29,7 @@ import za.co.absa.enceladus.rest_api.controllers.SchemaController
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
+import za.co.absa.enceladus.rest_api.services.v3.SchemaServiceV3
 import za.co.absa.enceladus.rest_api.services.{AttachmentService, SchemaRegistryService, SchemaService}
 import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
@@ -43,10 +44,10 @@ import scala.util.{Failure, Success, Try}
 @RestController
 @RequestMapping(Array("/api-v3/schemas"))
 class SchemaControllerV3 @Autowired()(
-                                     schemaService: SchemaService,
-                                     attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
-                                     schemaRegistryService: SchemaRegistryService
+                                       schemaService: SchemaServiceV3,
+                                       attachmentService: AttachmentService,
+                                       sparkMenasConvertor: SparkMenasSchemaConvertor,
+                                       schemaRegistryService: SchemaRegistryService
                                      )
   extends VersionedModelControllerV3(schemaService) {
 
@@ -61,10 +62,8 @@ class SchemaControllerV3 @Autowired()(
               @RequestParam(defaultValue = "false") pretty: Boolean): CompletableFuture[String] = {
     forVersionExpression(name, version) (schemaService.getVersion).map {
       case Some(schema) =>
-        // todo why is this a problem at all? why is this specific to json?
         if (schema.fields.isEmpty) throw ValidationException(
           Validation.empty.withError("schema-fields", s"Schema $name v$version exists, but has no fields!")
-          // or throw notFound() as v2?
         )
         val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
         if (pretty) sparkStruct.prettyJson else sparkStruct.json

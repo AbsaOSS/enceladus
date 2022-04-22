@@ -28,7 +28,7 @@ import org.springframework.http.{HttpStatus, MediaType}
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, SchemaFactory}
-import za.co.absa.enceladus.model.{Schema, Validation}
+import za.co.absa.enceladus.model.{Schema, SchemaField, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.RestResponse
@@ -82,14 +82,18 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
 
   s"POST $apiUrl" can {
     "return 201" when {
-      "a Schema is created" in {
-        val schema = SchemaFactory.getDummySchema("schemaA")
+      "a Schema is created (v1-payload has defined fields already)" in {
+        val schema = SchemaFactory.getDummySchema("schemaA", fields = List(
+          SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
+        ))
 
         val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
 
         assertCreated(response)
         val locationHeader = response.getHeaders.getFirst("location")
         locationHeader should endWith("/api-v3/schemas/schemaA/1")
+
+        response.getBody shouldBe Validation.empty
 
         val response2 = sendGet[Schema]("/schemas/schemaA/1")
         assertOk(response2)
@@ -101,8 +105,17 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
 
     "return 400" when {
+      "a Schema is created (empty fields = warning)" in {
+        val schema = SchemaFactory.getDummySchema("schemaA")
+        val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
+
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty
+          .withError("schema-fields", "No fields found! There must be fields defined for actual usage.")
+      }
       "an enabled Schema with that name already exists" in {
-        val schema = SchemaFactory.getDummySchema()
+        val schema = SchemaFactory.getDummySchema(fields = List(
+          SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)))
         schemaFixture.add(schema)
 
         val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
@@ -110,7 +123,9 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         assertBadRequest(response)
 
         val actual = response.getBody
-        val expected = Validation().withError("name", "entity with name already exists: 'dummyName'")
+        val expected = Validation.empty
+          .withError("name", "entity with name already exists: 'dummyName'")
+
         assert(actual == expected)
       }
     }
@@ -119,6 +134,60 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
       s"admin auth is not used for POST $apiUrl" in {
         val schema = SchemaFactory.getDummySchema()
         val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
+
+  s"PUT $apiUrl/{name}/{version}" can {
+    "return 201" when {
+      "a Schema is updated (v1-payload has defined fields already)" in {
+        val schema1 = SchemaFactory.getDummySchema("schemaA", fields = List(
+          SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
+        ))
+        schemaFixture.add(schema1)
+
+        val schema2 = SchemaFactory.getDummySchema("schemaA", fields = List(
+          SchemaField("anotherField", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
+        ))
+        val response = sendPutByAdmin[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
+
+        assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("location")
+        locationHeader should endWith("/api-v3/schemas/schemaA/2")
+
+        response.getBody shouldBe Validation.empty
+
+        val response2 = sendGet[Schema]("/schemas/schemaA/2")
+        assertOk(response2)
+
+        val actual = response2.getBody
+        val expected = toExpected(schema2.copy(version = 2, parent = Some(SchemaFactory.toParent(schema1))), actual)
+        assert(actual == expected)
+      }
+    }
+
+    "return 400" when {
+      "a Schema fails to update due to empty fields" in {
+        val schema1 = SchemaFactory.getDummySchema("schemaA")
+        schemaFixture.add(schema1)
+
+        val schema2 = SchemaFactory.getDummySchema("schemaA")
+        val response = sendPutByAdmin[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
+
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty
+          .withError("schema-fields", "No fields found! There must be fields defined for actual usage.")
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for POST $apiUrl" in {
+        val schema1 = SchemaFactory.getDummySchema("schemaA")
+        schemaFixture.add(schema1)
+
+        val schema = SchemaFactory.getDummySchema("schemaA")
+        val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema))
         response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
