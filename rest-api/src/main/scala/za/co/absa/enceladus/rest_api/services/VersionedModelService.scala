@@ -266,6 +266,17 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
   }
 
+  /**
+   * Enables all versions of the entity by name.
+   * @param name
+   */
+  def enableEntity(name: String): Future[UpdateResult] = {
+    val auth = SecurityContextHolder.getContext.getAuthentication
+    val principal = auth.getPrincipal.asInstanceOf[UserDetails]
+
+    versionedMongoRepository.enableAllVersions(name, principal.getUsername)
+  }
+
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]

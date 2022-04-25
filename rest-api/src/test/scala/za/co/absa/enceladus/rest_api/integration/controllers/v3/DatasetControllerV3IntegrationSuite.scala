@@ -32,6 +32,7 @@ import za.co.absa.enceladus.model.versionedModel.VersionList
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 
 import scala.collection.JavaConverters._
 
@@ -1019,5 +1020,76 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  // todo delete tests are missing
+  // todo PUT to $apiUrl/{name} to enable test cases
+  // todo deal with historically partially-disabled entities
+
+  s"DELETE $apiUrl/{name}" can {
+    "return 200" when {
+      "a Dataset with the given name exists" should {
+        "disable the dataset with the given name" in {
+          val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1)
+          val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2)
+          val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1)
+          datasetFixture.add(dsA1, dsA2, dsB)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/dsA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Dataset](s"$apiUrl/dsA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Dataset](s"$apiUrl/dsA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+
+          // unrelated dataset unaffected
+          val responseB = sendGet[Dataset](s"$apiUrl/dsB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe false
+        }
+      }
+
+      "a Dataset with the given name exists and there hare mixed disabled states (historical)" should {
+        "disable all versions the dataset with the given name" in {
+          val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1, disabled = true)
+          val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = false)
+          datasetFixture.add(dsA1, dsA2)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/dsA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Dataset](s"$apiUrl/dsA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Dataset](s"$apiUrl/dsA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+
+      "no Dataset with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDeleteByAdmin[String](s"$apiUrl/aDataset")
+          assertNotFound(response)
+        }
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for DELETE" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetV1)
+
+        val response = sendDelete[Validation](s"$apiUrl/datasetA")
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
 }

@@ -27,6 +27,8 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
 import java.net.URI
@@ -161,18 +163,32 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     }
   }
 
-  @DeleteMapping(Array("/{name}", "/{name}/{version}"))
+  @PutMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  def disable(@PathVariable name: String,
-              @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-    val v = if (version.isPresent) {
-      // For some reason Spring reads the Optional[Int] param as a Optional[String] and then throws ClassCastException
-      Some(version.get.toInt)
-    } else {
-      None
+  def enable(@AuthenticationPrincipal user: UserDetails,
+           @PathVariable name: String): CompletableFuture[DisabledPayload] = {
+
+    versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
+      if(updateResult.getMatchedCount >= 0) {
+        DisabledPayload(disabled = false)
+      } else {
+        throw NotFoundException(s"No versions for entity $name found to be enabled.")
+      }
     }
-    versionedModelService.disableVersion(name, v)
+  }
+
+  @DeleteMapping(Array("/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
+      if(updateResult.getMatchedCount >= 0) {
+        DisabledPayload(disabled = true)
+      } else {
+        throw NotFoundException(s"No versions for entity $name found to be disabled.")
+      }
+    }
   }
 
   /**

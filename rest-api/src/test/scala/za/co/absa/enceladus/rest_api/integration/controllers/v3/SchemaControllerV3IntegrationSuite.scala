@@ -777,4 +777,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
+  // todo DELETE for v3: 404 for not-found entities (v2 for schemas returned 200)
+
 }

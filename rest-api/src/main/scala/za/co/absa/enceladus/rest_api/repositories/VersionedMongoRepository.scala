@@ -133,9 +133,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   }
 
+  // for V3 usage: version = None
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
     collection.updateMany(getNameVersionFilter(name, version), combine(
       set("disabled", true),
+      set("dateDisabled", ZonedDateTime.now()),
+      set("userDisabled", username))).toFuture()
+  }
+
+  // V3 only
+  def enableAllVersions(name: String, username: String): Future[UpdateResult] = {
+    collection.updateMany(getNameVersionFilter(name, version = None), combine(
+      set("disabled", false),
       set("dateDisabled", ZonedDateTime.now()),
       set("userDisabled", username))).toFuture()
   }

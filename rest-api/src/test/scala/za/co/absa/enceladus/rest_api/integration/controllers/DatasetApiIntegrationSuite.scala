@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
@@ -445,7 +444,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
           val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1)
           datasetFixture.add(dsA, dsB)
 
-          val response = sendDelete[Dataset, String](s"$apiUrl/disable/dsA/1")
+          val response = sendDelete[String](s"$apiUrl/disable/dsA/1")
 
           assertOk(response)
 
@@ -460,7 +459,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
           val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2)
           datasetFixture.add(dsA1, dsA2)
 
-          val response = sendDelete[Dataset, String](s"$apiUrl/disable/dsA/1")
+          val response = sendDelete[String](s"$apiUrl/disable/dsA/1")
 
           assertOk(response)
 
@@ -472,7 +471,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
 
       "no Dataset with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[Dataset, String](s"$apiUrl/disable/aDataset/1")
+          val response = sendDelete[String](s"$apiUrl/disable/aDataset/1")
 
           assertNotFound(response)
           // Beware that, sadly, V2 Schemas returns 200 on disable of non-existent entity while V2 Datasets returns 404
