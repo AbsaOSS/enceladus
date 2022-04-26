@@ -15,12 +15,15 @@
 
 package za.co.absa.enceladus.dao.rest
 
+import org.mockito.MockitoSugar.withObjectMocked
+import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.dao.UnauthorizedException
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 
-class RestDaoFactorySuite extends AnyWordSpec with Matchers {
+class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatchersSugar {
 
   private val menasApiBaseUrls = List("http://localhost:8080/menas/api")
 
@@ -47,6 +50,44 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers {
         exception.getMessage should be("No Menas credentials provided")
       }
     }
+    "properly adjusts the starting URL based on the setup type " when {
+      val fooCrossHostApiCaller = CrossHostApiCaller(Seq.empty)
+      val plainCredentials = MenasPlainCredentials("user", "changeme")
+      "when it's round-robin" in {
+        withObjectMocked[CrossHostApiCaller.type] {
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
+          getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
+          Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
+            menasApiBaseUrls,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
+            None)
+        }
+      }
+      "when it's fallback" in {
+        withObjectMocked[CrossHostApiCaller.type] {
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          val plainCredentials = MenasPlainCredentials("user", "changeme")
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, AvailabilitySetup.Fallback)
+          getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
+          Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
+            menasApiBaseUrls,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
+            Option(0))
+        }
+      }
+      "when the setup type is not specified" in {
+        withObjectMocked[CrossHostApiCaller.type] {
+          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
+          getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
+          Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
+            menasApiBaseUrls,
+            CrossHostApiCaller.DefaultUrlsRetryCount,
+            None)
+        }
+      }
+    }
   }
 
   private def getAuthClient(restClient: RestClient): AuthClient = {
@@ -54,5 +95,5 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers {
     field.setAccessible(true)
     field.get(restClient).asInstanceOf[AuthClient]
   }
-
 }
+

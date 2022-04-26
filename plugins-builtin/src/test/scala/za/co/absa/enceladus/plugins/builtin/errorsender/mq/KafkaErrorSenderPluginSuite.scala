@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq
 
 import java.time.Instant
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
@@ -32,10 +31,10 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPlugi
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 
-class KafkaErrorSenderPluginSuite extends AnyFlatSpec with SparkTestBase with Matchers with BeforeAndAfterAll {
+class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTestBase with Matchers with BeforeAndAfterAll {
 
   private val port = 6081
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))

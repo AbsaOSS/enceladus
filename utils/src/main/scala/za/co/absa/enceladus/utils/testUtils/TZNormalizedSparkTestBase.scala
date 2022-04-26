@@ -13,15 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.explode
+package za.co.absa.enceladus.utils.testUtils
 
-/**
-  * Stores all info needed to revert a single array explosion.
-  */
-case class Explosion(
-                      arrayFieldName: String,
-                      idFieldName: String,
-                      indexFieldName: String,
-                      sizeFieldName: String,
-                      superTransientFieldName: Option[String]
-                    )
+import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+import za.co.absa.spark.commons.test.{SparkTestBase, SparkTestConfig}
+
+trait TZNormalizedSparkTestBase extends SparkTestBase {
+  override protected def initSpark(implicit sparkConfig: SparkTestConfig): SparkSession = {
+    val result = super.initSpark
+
+    //TODO make conditional on empty SparkTestBase.timezone, once SparkCommons 0.3.0 will have been released
+    TimeZoneNormalizer.normalizeAll(result)
+
+    result
+  }
+}

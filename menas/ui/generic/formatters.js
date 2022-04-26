@@ -80,6 +80,10 @@ var Formatters = new function() {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && (Object.keys(oObj).length !== 0)
   };
 
+  this.nonEmptyAndNonNullFilled = function(oObj) {
+    return Formatters.nonEmptyObject(oObj) && oObj.filter(x => x).length !== 0 // [null] will return false, too
+  };
+
   this.isDefinedAndTrue = function(oObj) {
     return (oObj !== null) && (typeof (oObj) !== "undefined") && oObj == true
   };
@@ -109,7 +113,7 @@ var Formatters = new function() {
     if (!oDate)
       return "";
     return this.infoDateFormat.format(oDate)
-  }
+  };
 
   this.toStringInfoDate = function(oDate) {
     return this.infoDateFormat.format(oDate);

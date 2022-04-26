@@ -18,6 +18,10 @@
     <CustomListItem>
         <form:SimpleForm adjustLabelSpan="true" editable="false">
             <form:content>
+                <!-- normally, commonRuleFields.fragment.xml would be used here, but for MRC we need special content bc. of multiple outputs -->
+                <Title text="{=${order} + 1}. {_t}" level="H2"/>
+                <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.add.checkpointBox"/>
+
                 <Label text="Mapping Table"/>
                 <Link text="{mappingTable} (v{mappingTableVersion})" press="toMappingTable"
                       cust:name="{mappingTable}" cust:version="{mappingTableVersion}"/>
@@ -47,6 +51,10 @@
                         </CustomListItem>
                     </items>
                 </List>
+                <Label text="Filter" />
+                <Tree id="filterTree" items="{path: 'filterViewTree', parameters: {numberOfExpandedLevels: 1}}" noDataText="No filter set.">
+                    <StandardTreeItem title="{text}" icon="{icon}"/>
+                </Tree>
             </form:content>
         </form:SimpleForm>
         <core:Fragment type="XML" fragmentName="components.dataset.conformanceRule.display.actionMenu"/>

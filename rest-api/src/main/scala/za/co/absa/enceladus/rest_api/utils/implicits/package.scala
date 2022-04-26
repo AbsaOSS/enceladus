@@ -38,6 +38,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.user._
 import za.co.absa.enceladus.model.versionedModel._
+
 import scala.collection.immutable
 import scala.compat.java8.FutureConverters._
 import scala.collection.JavaConverters

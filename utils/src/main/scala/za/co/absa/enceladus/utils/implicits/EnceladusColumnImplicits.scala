@@ -15,50 +15,14 @@
 
 package za.co.absa.enceladus.utils.implicits
 
-import org.apache.spark.sql.Column
+import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types.{StructField, StructType}
 import za.co.absa.enceladus.utils.general.Section
+import za.co.absa.spark.commons.implicits.ColumnImplicits.ColumnEnhancements
 
-object ColumnImplicits {
-  implicit class ColumnEnhancements(column: Column) {
-    def isInfinite: Column = {
-      column.isin(Double.PositiveInfinity, Double.NegativeInfinity)
-    }
-
-    /**
-      * Spark strings are base on 1 unlike scala. The function shifts the substring indexation to be in accordance with
-      * Scala/ Java.
-      * Another enhancement is, that the function allows a negative index, denoting counting of the index from back
-      * This version takes the substring from the startPos until the end.
-      * @param startPos the index (zero based) where to start the substring from, if negative it's counted from end
-      * @return         column with requested substring
-      */
-    def zeroBasedSubstr(startPos: Int): Column = {
-      if (startPos >= 0) {
-        zeroBasedSubstr(startPos, Int.MaxValue - startPos)
-      } else {
-        zeroBasedSubstr(startPos, -startPos)
-      }
-    }
-
-    /**
-      * Spark strings are base on 1 unlike scala. The function shifts the substring indexation to be in accordance with
-      * Scala/ Java.
-      * Another enhancement is, that the function allows a negative index, denoting counting of the index from back
-      * This version takes the substring from the startPos and takes up to the given number of characters (less.
-      * @param startPos the index (zero based) where to start the substring from, if negative it's counted from end
-      * @param len      length of the desired substring, if longer then the rest of the string, all the remaining characters are taken
-      * @return         column with requested substring
-      */
-    def zeroBasedSubstr(startPos: Int, len: Int): Column = {
-      if (startPos >= 0) {
-        column.substr(startPos + 1, len)
-      } else {
-        val startPosColumn = greatest(length(column) + startPos + 1, lit(1))
-        val lenColumn = lit(len) + when(length(column) + startPos <= 0, length(column) + startPos).otherwise(0)
-        column.substr(startPosColumn,lenColumn)
-      }
-    }
+object EnceladusColumnImplicits {
+  implicit class EnceladusColumnEnhancements(column: Column) {
 
     /**
       * Spark strings are base on 1 unlike scala. The function shifts the substring indexation to be in accordance with
@@ -68,7 +32,7 @@ object ColumnImplicits {
       * @param section  the start and requested length of the substring encoded within the Section object
       * @return         column with requested substring
       */
-    def zeroBasedSubstr(section: Section): Column = zeroBasedSubstr(section.start, section.length)
+    def zeroBasedSubstr(section: Section): Column = column.zeroBasedSubstr(section.start, section.length)
 
     /**
       * Removes part of a StringType column, defined by the provided section. A column containing the remaining part of
@@ -100,12 +64,37 @@ object ColumnImplicits {
 
       section match {
         case Section(_, 0) => Left(column)
-        case Section(0, l) => Left(zeroBasedSubstr(l))
+        case Section(0, l) => Left(column.zeroBasedSubstr(l))
         case Section(s, l) if (s < 0) && (s + l >= 0) => Left(upToNegative(s)) //till the end
-        case Section(s, l) if s >= 0 => Right(zeroBasedSubstr(0, s), zeroBasedSubstr(s + l, Int.MaxValue))
-        case Section(s, l) => Right(upToNegative(s), zeroBasedSubstr(s + l))
+        case Section(s, l) if s >= 0 => Right(column.zeroBasedSubstr(0, s), column.zeroBasedSubstr(s + l, Int.MaxValue))
+        case Section(s, l) => Right(upToNegative(s), column.zeroBasedSubstr(s + l))
       }
     }
 
+  }
+
+  implicit class EnceladusDataframeEnhancements(df: DataFrame) {
+    /**
+     * Set nullable property of column.
+     *
+     * @param columnName is the column name to change
+     * @param nullable   boolean flag to set the nullability of the column `columnName` to
+     */
+    def withNullableColumnState(columnName: String, nullable: Boolean): DataFrame = {
+      // Courtesy of https://stackoverflow.com/a/33195510
+
+      // modify [[StructField] with name `columnName` if its nullability differs
+      val newSchema = StructType(df.schema.map {
+        case StructField(c, t, n, m) if c.equals(columnName) && n != nullable =>
+          StructField(c, t, nullable = nullable, m)
+        case y: StructField => y
+      })
+
+      if (newSchema == df.schema) {
+        df // no change
+      } else {
+        df.sqlContext.createDataFrame(df.rdd, newSchema) // apply new schema
+      }
+    }
   }
 }

@@ -24,10 +24,10 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, Interpreter
 import za.co.absa.enceladus.conformance.samples.EmployeeConformance
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 
-class RulesSuite extends AnyFunSuite with SparkTestBase {
+class RulesSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   private val dummyInterpreter = new RuleInterpreter {
     override def conformanceRule: Option[ConformanceRule] = None
@@ -60,6 +60,14 @@ class RulesSuite extends AnyFunSuite with SparkTestBase {
       ).expr
 
     assert(roleCondGen.semanticEquals(roleCond))
+  }
+
+  test("Test empty join condition evaluates to true") {
+    val countryRule = EmployeeConformance.countryRule.copy(attributeMappings = Map.empty)
+    val countryCondGen = CommonMappingRuleInterpreter.getJoinCondition(countryRule).expr
+    val countryCond = lit(true).expr
+
+    assert(countryCondGen.semanticEquals(countryCond))
   }
 
   test("Infest strictest type int") {

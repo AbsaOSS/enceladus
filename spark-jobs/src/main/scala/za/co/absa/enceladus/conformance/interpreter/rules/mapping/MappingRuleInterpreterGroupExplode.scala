@@ -24,10 +24,11 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.utils.ExplodeTools
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
@@ -51,7 +52,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 
-    val withErrorsDf = if (rule.additionalColumns.getOrElse(Map()).isEmpty) {
+    val withErrorsDf = if (rule.definedAdditionalColumns().isEmpty) {
       val joined = joinDatasetAndMappingTable(mapTable, explodedDf)
       val placedDf = ExplodeTools.nestedRenameReplace(joined, rule.outputColumn, rule.outputColumn)
 
@@ -59,6 +60,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
       log.debug(s"Array Error Condition = $arrayErrorCondition")
       addErrorsAndDefaults(placedDf, rule.outputColumn, defaultValues.get(rule.targetAttribute), mappingErrUdfCall, arrayErrorCondition)
     } else {
+      import za.co.absa.spark.commons.utils.SchemaUtils
       val parentPath = SchemaUtils.getParentPath(rule.outputColumn)
       val outputsStructColumnName = if (rule.outputColumn.contains(".")) {
         parentPath + "." + getOutputsStructColumnName(df)

@@ -13,8 +13,27 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.testUtils
 
-trait SparkLocalMaster {
-  System.getProperties.setProperty("spark.master", "local[4]")
+class DataTypeUtils {
+
+  // common data types definition for CastingConformanceRule, MappingConformanceRule filters, etc.
+  static dataTypes = [
+    "boolean",
+    "byte",
+    "short",
+    "integer",
+    "long",
+    "float",
+    "double",
+    "decimal(38,18)",
+    "string",
+    "date",
+    "timestamp",
+    "binary"
+  ];
+
+  static dataTypesAsTypes = DataTypeUtils.dataTypes.map(function (val) {
+    return {type: val}
+  }); // [ {type: boolean}, {type: byte}, ...]
+
 }

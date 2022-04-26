@@ -16,28 +16,27 @@
 package za.co.absa.enceladus.conformance.streaming
 
 import org.apache.commons.configuration2.Configuration
-import org.apache.spark.sql.{Column, DataFrame}
+import org.apache.spark.sql.Column
 import org.apache.spark.sql.functions.{col, lit}
-import org.apache.spark.sql.types.StructField
 import za.co.absa.enceladus.conformance.streaming.InfoDateFactory.log
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.model.ConformedSchema
 
 sealed trait InfoVersionFactory {
-  def getInfoVersionColumn(df: DataFrame): Column
+  def getInfoVersionColumn(conformedSchema: ConformedSchema): Column
 }
 
 object InfoVersionFactory {
 
   private class InfoVersionLiteralFactory(reportVersion: Int) extends InfoVersionFactory {
-    override def getInfoVersionColumn(df: DataFrame): Column = lit(reportVersion)
+    override def getInfoVersionColumn(conformedSchema: ConformedSchema): Column = lit(reportVersion)
   }
 
   private class InfoVersionColumnFactory(columnName: String) extends InfoVersionFactory {
-    override def getInfoVersionColumn(df: DataFrame): Column = {
-      val dt: Option[StructField] = SchemaUtils.getField(columnName, df.schema)
-      dt match {
-        case Some(_) => col(columnName)
-        case None => throw new IllegalArgumentException(s"The specified info column does not exist: $columnName")
+    override def getInfoVersionColumn(conformedSchema: ConformedSchema): Column = {
+      if(conformedSchema.hasField(columnName)) {
+        col(columnName)
+      } else {
+        throw new IllegalArgumentException(s"The specified info column does not exist: $columnName")
       }
     }
   }

@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
-import za.co.absa.enceladus.conformance.config.FilterFromConfig
+import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.MenasDAO
@@ -28,8 +28,8 @@ import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -41,7 +41,7 @@ trait CommonMappingRuleInterpreter {
 
   protected def outputColumnNames(): String = rule.allOutputColumns().mkString(", ")
 
-  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
+  protected def getOutputsStructColumnName(df: DataFrame): String = df.schema.getClosestUniqueName("outputs")
 
   protected val mappings: Seq[Mapping] = rule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
@@ -66,13 +66,9 @@ trait CommonMappingRuleInterpreter {
 
     val mappingTableDef = dao.getMappingTable(rule.mappingTable, rule.mappingTableVersion)
 
-    val ruleFilter = if (rule.mappingTableFilter.nonEmpty) {
-      rule.mappingTableFilter
-    } else {
-      // This is a workaround until UI supports filter definition. Until then, the filters can be set via configuration.
-      FilterFromConfig.loadFilter(rule.mappingTable)
-    }
+    val ruleFilter = rule.mappingTableFilter
     val mappingTableFilter = mappingTableDef.filter.filterNot(_ => rule.getOverrideMappingTableOwnFilter)
+
     // find the data frame from the mapping table
     val filter: Option[DataFrameFilter] = (ruleFilter, mappingTableFilter) match {
       case (Some(a), Some(b)) => Option(a and b)

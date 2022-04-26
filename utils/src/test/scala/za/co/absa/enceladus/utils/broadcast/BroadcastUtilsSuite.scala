@@ -19,11 +19,11 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 
 import scala.collection.mutable
 
-class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTestBase {
+class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase with LoggerTestBase {
 
   import spark.implicits._
 
@@ -497,12 +497,6 @@ class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTest
     }
 
     "throw an exception" when {
-
-      "a join without key fields is attempted" in {
-        intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Nil, Map(""->"val"))
-        }
-      }
 
       "a join with more than 10 fields attempted" in {
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id", "id",

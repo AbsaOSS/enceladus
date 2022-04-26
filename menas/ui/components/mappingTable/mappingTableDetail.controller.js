@@ -295,6 +295,10 @@ sap.ui.define([
 
     load: function() {
       let currentMT = this._model.getProperty("/currentMappingTable");
+
+      let filterDataWithNamesAndIcons = FilterTreeUtils.addIconsAndNiceNamesToFilterData(currentMT.filter);
+      currentMT.filterTree = [filterDataWithNamesAndIcons];
+
       this.byId("info").setModel(new sap.ui.model.json.JSONModel(currentMT), "mappingTable");
       if (currentMT) {
         this.fetchSchema();
@@ -306,6 +310,5 @@ sap.ui.define([
           .then(version => this._model.setProperty("/editingEnabled", currentMT.version === version));
       }
     }
-
   });
 });

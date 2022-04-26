@@ -20,6 +20,8 @@ import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.Eventually
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.Waiters.{interval, scaled, timeout}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
@@ -28,12 +30,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
 import scala.concurrent.duration.DurationInt
 
-class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase with Eventually {
+class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll

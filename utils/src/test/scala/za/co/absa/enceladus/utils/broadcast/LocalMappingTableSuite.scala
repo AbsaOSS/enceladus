@@ -18,10 +18,10 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.NumericType
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.spark.commons.utils.JsonUtils
 
-class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
+class LocalMappingTableSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
 
   import spark.implicits._
 
@@ -105,15 +105,16 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
         assert(localMt.keyTypes(1).isInstanceOf[NumericType])
         assert(localMt.getRowWithDefault(Seq(1, 21), 0).isInstanceOf[Row])
       }
+
+      "no join condition" in {
+        val localMt = LocalMappingTable(dfMt, Nil, Map(""->"val"))
+        assert(localMt.keyTypes.length == 0)
+        assert(localMt.rowCount == 1)
+        assert(localMt.outputColumns.values.toSeq == Seq("val"))
+      }
     }
 
     "throw an exception" when {
-      "no join keys are provided" in {
-        intercept[IllegalArgumentException] {
-          LocalMappingTable(dfMt, Nil, Map(""->"val"))
-        }
-      }
-
       "a join key does not exists in the schema" in {
         intercept[IllegalArgumentException] {
           LocalMappingTable(dfMt, Seq("dummy"), Map(""->"val"))
