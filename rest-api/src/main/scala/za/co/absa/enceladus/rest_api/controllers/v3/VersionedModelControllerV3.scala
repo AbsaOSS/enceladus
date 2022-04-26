@@ -166,11 +166,9 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @PutMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  def enable(@AuthenticationPrincipal user: UserDetails,
-           @PathVariable name: String): CompletableFuture[DisabledPayload] = {
-
-    versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
-      if(updateResult.getMatchedCount >= 0) {
+  def enable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    versionedModelService.enableEntity(name).map { updateResult => // always enabling all version of the entity
+      if(updateResult.getMatchedCount > 0) {
         DisabledPayload(disabled = false)
       } else {
         throw NotFoundException(s"No versions for entity $name found to be enabled.")
@@ -183,7 +181,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
     versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
-      if(updateResult.getMatchedCount >= 0) {
+      if(updateResult.getMatchedCount > 0) {
         DisabledPayload(disabled = true)
       } else {
         throw NotFoundException(s"No versions for entity $name found to be disabled.")

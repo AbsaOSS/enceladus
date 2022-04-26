@@ -274,9 +274,11 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             description = Some("second version"), properties = Some(Map("keyA" -> "valA")), version = 2)
           datasetFixture.add(datasetA1, datasetA2)
 
-          Seq("keyA", "keyB", "keyC").foreach {propName => propertyDefinitionFixture.add(
-            PropertyDefinitionFactory.getDummyPropertyDefinition(propName, essentiality = Essentiality.Optional)
-          )}
+          Seq("keyA", "keyB", "keyC").foreach { propName =>
+            propertyDefinitionFixture.add(
+              PropertyDefinitionFactory.getDummyPropertyDefinition(propName, essentiality = Essentiality.Optional)
+            )
+          }
           // this will cause missing property 'keyD' to issue a warning if not present
           propertyDefinitionFixture.add(
             PropertyDefinitionFactory.getDummyPropertyDefinition("keyD", essentiality = Essentiality.Recommended)
@@ -919,7 +921,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(datasetV1)
 
         val response = sendPostByAdmin[ConformanceRule, String](s"$apiUrl/notFoundDataset/456/rules",
-          bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
+          bodyOpt = Some(LiteralConformanceRule(0, "column1", true, value = "ABC")))
         assertNotFound(response)
       }
     }
@@ -928,12 +930,12 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       "when the there is a conflicting conf rule #" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
-          LiteralConformanceRule(order = 0,"column1", true, "ABC")
+          LiteralConformanceRule(order = 0, "column1", true, "ABC")
         ))
         datasetFixture.add(datasetV1)
 
         val response = sendPostByAdmin[ConformanceRule, String](s"$apiUrl/datasetA/1/rules",
-          bodyOpt = Some(LiteralConformanceRule(0,"column1", true, value = "ABC")))
+          bodyOpt = Some(LiteralConformanceRule(0, "column1", true, value = "ABC")))
         assertBadRequest(response)
 
         response.getBody should include("Rule with order 0 cannot be added, another rule with this order already exists.")
@@ -958,7 +960,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(datasetV1)
 
         val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules",
-          bodyOpt = Some(LiteralConformanceRule(order = 0,"column1", true, "ABC")))
+          bodyOpt = Some(LiteralConformanceRule(order = 0, "column1", true, "ABC")))
         response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
@@ -967,7 +969,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       "when conf rule is added" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(
-          LiteralConformanceRule(order = 0,"column1", true, "ABC"))
+          LiteralConformanceRule(order = 0, "column1", true, "ABC"))
         )
         datasetFixture.add(datasetV1)
 
@@ -1020,8 +1022,77 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  // todo PUT to $apiUrl/{name} to enable test cases
-  // todo deal with historically partially-disabled entities
+  s"PUT $apiUrl/{name}" can {
+    "return 200" when {
+      "a Dataset with the given name exists" should {
+        "enable the dataset with the given name" in {
+          val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1, disabled = true)
+          val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = true)
+          val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1, disabled = true)
+          datasetFixture.add(dsA1, dsA2, dsB)
+
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/dsA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = false)
+
+          // all versions now enabled
+          val responseA1 = sendGet[Dataset](s"$apiUrl/dsA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe false
+
+          val responseA2 = sendGet[Dataset](s"$apiUrl/dsA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe false
+
+          // unrelated dataset unaffected
+          val responseB = sendGet[Dataset](s"$apiUrl/dsB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe true
+        }
+      }
+
+      "a Dataset with the given name exists and there have mixed disabled states (historical)" should {
+        "enable all versions the dataset with the given name" in {
+          val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1, disabled = true)
+          val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = false)
+          datasetFixture.add(dsA1, dsA2)
+
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/dsA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = false)
+
+          // all versions enabled
+          val responseA1 = sendGet[Dataset](s"$apiUrl/dsA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe false
+
+          val responseA2 = sendGet[Dataset](s"$apiUrl/dsA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe false
+        }
+      }
+    }
+
+    "return 404" when {
+      "no Dataset with the given name exists" should {
+        "enable nothing" in {
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/aDataset")
+          assertNotFound(response)
+        }
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for DELETE" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        datasetFixture.add(datasetV1)
+
+        val response = sendDelete[Validation](s"$apiUrl/datasetA")
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
 
   s"DELETE $apiUrl/{name}" can {
     "return 200" when {
@@ -1052,7 +1123,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         }
       }
 
-      "a Dataset with the given name exists and there hare mixed disabled states (historical)" should {
+      "a Dataset with the given name exists and there have mixed disabled states (historical)" should {
         "disable all versions the dataset with the given name" in {
           val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1, disabled = true)
           val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = false)
@@ -1072,7 +1143,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           responseA2.getBody.disabled shouldBe true
         }
       }
+    }
 
+    "return 404" when {
       "no Dataset with the given name exists" should {
         "disable nothing" in {
           val response = sendDeleteByAdmin[String](s"$apiUrl/aDataset")
