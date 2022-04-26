@@ -178,20 +178,19 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
     }
   }
 
-  //TODO to be fixed in #2044
-  ignore("End to end dynamic conformance test") {
+  test("End to end dynamic conformance test") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = false)
   }
 
-  ignore("End to end dynamic conformance test (experimental optimized mapping rule)") {
+  test("End to end dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndDynamicConformance(useExperimentalMappingRule = true)
   }
 
-  ignore("End to end array dynamic conformance test") {
+  test("End to end array dynamic conformance test") {
     testEndToEndArrayConformance(useExperimentalMappingRule = false)
   }
 
-  ignore("End to end array dynamic conformance test (experimental optimized mapping rule)") {
+  test("End to end array dynamic conformance test (experimental optimized mapping rule)") {
     testEndToEndArrayConformance(useExperimentalMappingRule = true)
   }
 }

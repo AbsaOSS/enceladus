@@ -77,18 +77,18 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
     }
 
     //TODO to be fixed in #2043
-    /*"throw SchemaParsingException at parse avro" when {
+    "throw SchemaParsingException at parse avro" when {
       "given unparsable avsc content" in {
         val caughtException = the[SchemaParsingException] thrownBy {
           avroParser.parse("invalid avsc")
         }
 
         inside(caughtException) { case SchemaParsingException(SchemaType.Avro, msg, _, _, _, cause) =>
-          msg should include("expected a valid value")
+          msg should include("expecting (JSON String, Number, Array, Object")
           cause shouldBe a[SchemaParseException]
         }
       }
-    }*/
+    }
 
     val copybookParser = schemaParserFactory.getParser(Copybook)
     "parse cobol copybook schema to StructType" when {
