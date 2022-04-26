@@ -31,7 +31,7 @@ import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, SchemaFacto
 import za.co.absa.enceladus.model.{Schema, SchemaField, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.models.rest.RestResponse
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
@@ -64,21 +64,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
   private val schemaFixture: SchemaFixtureService = null
 
   @Autowired
-  private val datasetFixture: DatasetFixtureService = null
-
-  @Autowired
-  private val mappingTableFixture: MappingTableFixtureService = null
-
-  @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
-
-  @Autowired
-  private val convertor: SparkMenasSchemaConvertor = null
 
   private val apiUrl = "/schemas"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
-  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture, datasetFixture, mappingTableFixture)
+  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture)
 
   s"POST $apiUrl" can {
     "return 201" when {
@@ -193,8 +184,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
-  // todo disable dataset - all versions/one version/ check the usage to prevent from disabling
-  // todo used-in implementation checks
+
 
   s"GET $apiUrl/{name}/{version}/json" should {
     "return 404" when {
@@ -778,5 +768,149 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
   }
 
   // todo DELETE for v3: 404 for not-found entities (v2 for schemas returned 200)
+  s"PUT $apiUrl/{name}" can {
+    "return 200" when {
+      "a Schema with the given name exists" should {
+        "enable the Schema with the given name" in {
+          val schA1 = SchemaFactory.getDummySchema(name = "schA", version = 1, disabled = true)
+          val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = true)
+          val schB = SchemaFactory.getDummySchema(name = "schB", version = 1, disabled = true)
+          schemaFixture.add(schA1, schA2, schB)
+
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/schA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = false)
+
+          // all versions now enabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe false
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe false
+
+          // unrelated schema unaffected
+          val responseB = sendGet[Schema](s"$apiUrl/schB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe true
+        }
+      }
+
+      "a Schema with the given name exists and there have mixed disabled states (historical)" should {
+        "enable all versions the schema with the given name" in {
+          val schA1 = SchemaFactory.getDummySchema(name = "schA", version = 1, disabled = true)
+          val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = false)
+          schemaFixture.add(schA1, schA2)
+
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/schA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = false)
+
+          // all versions enabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe false
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe false
+        }
+      }
+    }
+
+    "return 404" when {
+      "no Schema with the given name exists" should {
+        "enable nothing" in {
+          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/aSchema")
+          assertNotFound(response)
+        }
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for DELETE" in {
+        val schemaV1 = SchemaFactory.getDummySchema(name = "schemaA", version = 1)
+        schemaFixture.add(schemaV1)
+
+        val response = sendDelete[Validation](s"$apiUrl/schemaA")
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
+
+  // todo disable schema - all versions/one version/ check the usage to prevent from disabling
+  // todo used-in implementation checks
+
+  s"DELETE $apiUrl/{name}" can {
+    "return 200" when {
+      "a Schema with the given name exists" should {
+        "disable the schema with the given name" in {
+          val schA1 = SchemaFactory.getDummySchema(name = "schA", version = 1)
+          val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2)
+          val schB = SchemaFactory.getDummySchema(name = "schB", version = 1)
+          schemaFixture.add(schA1, schA2, schB)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+
+          // unrelated schema unaffected
+          val responseB = sendGet[Schema](s"$apiUrl/schB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe false
+        }
+      }
+
+      "a Schema with the given name exists and there have mixed disabled states (historical)" should {
+        "disable all versions the schema with the given name" in {
+          val schA1 = SchemaFactory.getDummySchema(name = "schA", version = 1, disabled = true)
+          val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = false)
+          schemaFixture.add(schA1, schA2)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+    }
+
+    "return 404" when {
+      "no Schema with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDeleteByAdmin[String](s"$apiUrl/aSchema")
+          assertNotFound(response)
+        }
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for DELETE" in {
+        val schemaV1 = SchemaFactory.getDummySchema(name = "schemaA", version = 1)
+        schemaFixture.add(schemaV1)
+
+        val response = sendDelete[Validation](s"$apiUrl/schemaA")
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
 
 }
