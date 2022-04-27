@@ -30,6 +30,7 @@ import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.VersionList
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.EntityDisabledException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
@@ -87,29 +88,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         assert(actual == expected)
       }
-      "create a new version of Dataset" when {
-        "the dataset is disabled (i.e. all version are disabled)" in {
-          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-          val dataset1 = DatasetFactory.getDummyDataset("dummyDs", version = 1, disabled = true)
-          val dataset2 = DatasetFactory.getDummyDataset("dummyDs", version = 2, disabled = true)
-          datasetFixture.add(dataset1, dataset2)
-
-          val dataset3 = DatasetFactory.getDummyDataset("dummyDs", version = 7) // version is ignored for create
-          val response = sendPostByAdmin[Dataset, String](apiUrl, bodyOpt = Some(dataset3))
-          assertCreated(response)
-          val locationHeaders = response.getHeaders.get("location").asScala
-          locationHeaders should have size 1
-          val relativeLocation = stripBaseUrl(locationHeaders.head) // because locationHeader contains domain, port, etc.
-
-          val response2 = sendGet[Dataset](stripBaseUrl(relativeLocation))
-          assertOk(response2)
-
-          val actual = response2.getBody
-          val expected = toExpected(dataset3.copy(version = 3, parent = Some(DatasetFactory.toParent(dataset2))), actual)
-
-          assert(actual == expected)
-        }
-      }
     }
 
     "return 400" when {
@@ -135,6 +113,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
+      "disabled entity with the name already exists" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val dataset1 = DatasetFactory.getDummyDataset("dummyDs", disabled = true)
+        datasetFixture.add(dataset1)
+
+        val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("a new version attempt"))
+        val response = sendPostByAdmin[Dataset, EntityDisabledException](apiUrl, bodyOpt = Some(dataset2))
+
+        assertBadRequest(response)
+        response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
+      }
     }
 
     "return 403" when {
@@ -146,7 +135,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
       }
     }
 
-    // todo what to do if  "the last dataset version is disabled"?
   }
 
   s"GET $apiUrl/{name}" should {
@@ -347,6 +335,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           response2.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response2.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
         }
+      }
+      "entity is disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val dataset1 = DatasetFactory.getDummyDataset("dummyDs", disabled = true)
+        datasetFixture.add(dataset1)
+
+        val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("ds update"))
+        val response = sendPutByAdmin[Dataset, EntityDisabledException](s"$apiUrl/dummyDs/1", bodyOpt = Some(dataset2))
+
+        assertBadRequest(response)
+        response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
       }
     }
 
@@ -592,25 +591,15 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  s"GET $apiUrl/{name}/{version}/used-in" should {
+  s"GET $apiUrl/{name}/used-in" should {
     "return 404" when {
-      "when the dataset of latest version does not exist" in {
-        val response = sendGet[String](s"$apiUrl/notFoundDataset/latest/used-in")
-        assertNotFound(response)
-      }
-    }
-
-    "return 404" when {
-      "when the dataset of name/version does not exist" in {
+      "when the dataset of name does not exist" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetA)
 
-        val response = sendGet[String](s"$apiUrl/notFoundDataset/1/used-in")
+        val response = sendGet[String](s"$apiUrl/notFoundDataset/used-in")
         assertNotFound(response)
-
-        val response2 = sendGet[String](s"$apiUrl/datasetA/7/used-in")
-        assertNotFound(response2)
       }
     }
 
@@ -619,7 +608,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetA = DatasetFactory.getDummyDataset(name = "datasetA")
         datasetFixture.add(datasetA)
-        val response = sendGet[UsedIn](s"$apiUrl/datasetA/latest/used-in")
+        val response = sendGet[UsedIn](s"$apiUrl/datasetA/used-in")
         assertOk(response)
 
         response.getBody shouldBe UsedIn(None, None)
@@ -627,11 +616,11 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
 
     "return 200" when {
-      "for existing name+version for dataset" in {
+      "for existing name for dataset" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2)
         datasetFixture.add(dataset2)
-        val response = sendGet[UsedIn](s"$apiUrl/dataset/2/used-in")
+        val response = sendGet[UsedIn](s"$apiUrl/dataset/used-in")
 
         assertOk(response)
         response.getBody shouldBe UsedIn(None, None)

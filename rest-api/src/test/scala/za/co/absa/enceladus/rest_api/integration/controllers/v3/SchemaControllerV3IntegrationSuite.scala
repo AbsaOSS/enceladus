@@ -27,8 +27,9 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.{HttpStatus, MediaType}
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, SchemaFactory}
-import za.co.absa.enceladus.model.{Schema, SchemaField, Validation}
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
+import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
@@ -64,12 +65,20 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
   private val schemaFixture: SchemaFixtureService = null
 
   @Autowired
+  private val datasetFixture: DatasetFixtureService = null
+
+  @Autowired
+  private val mappingTableFixture: MappingTableFixtureService = null
+
+  @Autowired
   private val attachmentFixture: AttachmentFixtureService = null
 
   private val apiUrl = "/schemas"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
-  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture)
+  override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture, datasetFixture, mappingTableFixture)
+
+  // todo the disabled state preventing post/put from creating a new entity => get rid of recreate
 
   s"POST $apiUrl" can {
     "return 201" when {
@@ -185,7 +194,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
   }
 
 
-
   s"GET $apiUrl/{name}/{version}/json" should {
     "return 404" when {
       "no schema exists for the specified name" in {
@@ -204,7 +212,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
 
         assertNotFound(response)
       }
-      "the schema has no fields" in { // todo 404 or 400 failed valiadation???
+      "the schema has no fields" in {
         val schema = SchemaFactory.getDummySchema(name = "schemaA", version = 1)
         schemaFixture.add(schema)
 
@@ -767,7 +775,67 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
-  // todo DELETE for v3: 404 for not-found entities (v2 for schemas returned 200)
+  s"GET $apiUrl/{name}/used-in" should {
+    "return 200" when {
+      "there are used-in records" in {
+        val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+        val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+        schemaFixture.add(schema1, schema2)
+
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", schemaName = "schema", schemaVersion = 1)
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", schemaName = "schema", schemaVersion = 1, disabled = true)
+        datasetFixture.add(datasetA, datasetB)
+
+        val mappingTableA = MappingTableFactory.getDummyMappingTable(name = "mappingA", schemaName = "schema", schemaVersion = 1)
+        val mappingTableB = MappingTableFactory.getDummyMappingTable(name = "mappingB", schemaName = "schema", schemaVersion = 1, disabled = true)
+        val mappingTableC = MappingTableFactory.getDummyMappingTable(name = "mappingC", schemaName = "schema", schemaVersion = 2)
+        mappingTableFixture.add(mappingTableA, mappingTableB, mappingTableC)
+
+
+        val response = sendGet[UsedIn](s"$apiUrl/schema/used-in")
+        assertOk(response)
+
+        // datasetB and mappingB are disabled -> not reported
+        // mappingC is reported, even though it schema is tied to schema-v2, because disabling is done on the whole entity in API v3
+        response.getBody shouldBe UsedIn(
+          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
+          mappingTables = Some(Seq(MenasReference(None, "mappingA", 1), MenasReference(None, "mappingC", 1)))
+        )
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/{version}/used-in" should {
+    "return 200" when {
+      "there are used-in records for particular version" in {
+        val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+        val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+        schemaFixture.add(schema1, schema2)
+
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", schemaName = "schema", schemaVersion = 1)
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", schemaName = "schema", schemaVersion = 1, disabled = true)
+        datasetFixture.add(datasetA, datasetB)
+
+        val mappingTableA = MappingTableFactory.getDummyMappingTable(name = "mappingA", schemaName = "schema", schemaVersion = 1)
+        val mappingTableB = MappingTableFactory.getDummyMappingTable(name = "mappingB", schemaName = "schema", schemaVersion = 1, disabled = true)
+        val mappingTableC = MappingTableFactory.getDummyMappingTable(name = "mappingC", schemaName = "schema", schemaVersion = 2)
+        mappingTableFixture.add(mappingTableA, mappingTableB, mappingTableC)
+
+
+        val response = sendGet[UsedIn](s"$apiUrl/schema/1/used-in")
+        assertOk(response)
+
+        // datasetB and mappingB are disabled -> not reported
+        // mappingC is tied to schema v2 -> not reported
+        response.getBody shouldBe UsedIn(
+          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
+          mappingTables = Some(Seq(MenasReference(None, "mappingA", 1)))
+        )
+      }
+    }
+  }
+
+
   s"PUT $apiUrl/{name}" can {
     "return 200" when {
       "a Schema with the given name exists" should {
@@ -839,9 +907,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
-  // todo disable schema - all versions/one version/ check the usage to prevent from disabling
-  // todo used-in implementation checks
-
   s"DELETE $apiUrl/{name}" can {
     "return 200" when {
       "a Schema with the given name exists" should {
@@ -871,7 +936,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         }
       }
 
-      "a Schema with the given name exists and there have mixed disabled states (historical)" should {
+      "a Schema with the given name exists and there have mixed (historical) disabled states " should {
         "disable all versions the schema with the given name" in {
           val schA1 = SchemaFactory.getDummySchema(name = "schA", version = 1, disabled = true)
           val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = false)
@@ -889,6 +954,107 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val responseA2 = sendGet[Schema](s"$apiUrl/schA/2")
           assertOk(responseA2)
           responseA2.getBody.disabled shouldBe true
+        }
+      }
+      "the Schema is only used in disabled Datasets" should {
+        "disable the Schema" in {
+          val dataset = DatasetFactory.getDummyDataset(schemaName = "schema", schemaVersion = 1, disabled = true)
+          datasetFixture.add(dataset)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schema")
+
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schema/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schema/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+      "the Schema is only used in disabled MappingTables" should {
+        "disable the Schema" in {
+          val mappingTable = MappingTableFactory.getDummyMappingTable(schemaName = "schema", schemaVersion = 1, disabled = true)
+          mappingTableFixture.add(mappingTable)
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schema")
+
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[Schema](s"$apiUrl/schema/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[Schema](s"$apiUrl/schema/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+    }
+
+    "return 400" when {
+      "the Schema is used by an enabled Dataset" should {
+        "return a list of the entities the Schema is used in" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", schemaName = "schema", schemaVersion = 1)
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 7, schemaName = "schema", schemaVersion = 2)
+          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset3", schemaName = "anotherSchema", schemaVersion = 8) // moot
+          val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", schemaName = "schema", schemaVersion = 2, disabled = true)
+          datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
+
+          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+
+          assertBadRequest(response)
+          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), Some(Seq()))
+        }
+      }
+      "the Schema is used by a enabled MappingTable" should {
+        "return a list of the entities the Schema is used in" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mapping1", schemaName = "schema", schemaVersion = 1, disabled = false)
+          val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", schemaName = "schema", schemaVersion = 2, disabled = false)
+          mappingTableFixture.add(mappingTable1, mappingTable2)
+
+          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+          assertBadRequest(response)
+
+          response.getBody shouldBe UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+        }
+      }
+      "the Schema is used by combination of MT and DS" should {
+        "return a list of the entities the Schema is used in" in {
+          val schema1 = SchemaFactory.getDummySchema(name = "schema", version = 1)
+          val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
+          schemaFixture.add(schema1, schema2)
+
+          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mapping1", schemaName = "schema", schemaVersion = 1, disabled = false)
+          mappingTableFixture.add(mappingTable1)
+
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", schemaName = "schema", schemaVersion = 2)
+          datasetFixture.add(dataset2)
+
+          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+          assertBadRequest(response)
+
+          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
         }
       }
     }

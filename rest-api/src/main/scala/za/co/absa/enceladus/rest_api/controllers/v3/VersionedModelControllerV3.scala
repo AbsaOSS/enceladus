@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.exceptions.{EntityDisabledException, NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
@@ -85,6 +85,12 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     forVersionExpression(name, version) { case (name, versionInt) => versionedModelService.getUsedIn(name, Some(versionInt)) }
   }
 
+  @GetMapping(Array("/{name}/used-in"))
+  @ResponseStatus(HttpStatus.OK)
+  def usedIn(@PathVariable name: String): CompletableFuture[UsedIn] = {
+    versionedModelService.getUsedIn(name, None)
+  }
+
   @GetMapping(Array("/{name}/{version}/export"))
   @ResponseStatus(HttpStatus.OK)
   def exportSingleEntity(@PathVariable name: String, @PathVariable version: String): CompletableFuture[String] = {
@@ -131,7 +137,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
       if (isDisabled) {
-        versionedModelService.recreate(principal.getUsername, item)
+        Future.failed(EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first (PUT) to push new versions (PUT)."))
       } else {
         versionedModelService.create(item, principal.getUsername)
       }
@@ -155,10 +161,16 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     } else if (version != item.version) {
       Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
     } else {
-      versionedModelService.update(user.getUsername, item).map {
-        case Some((updatedEntity, validation)) =>
-          createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
-        case None => throw notFound()
+      versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
+        if (isDisabled) {
+          throw EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first to create new versions.")
+        } else {
+          versionedModelService.update(user.getUsername, item).map {
+            case Some((updatedEntity, validation)) =>
+              createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
+            case None => throw notFound()
+          }
+        }
       }
     }
   }
@@ -168,7 +180,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def enable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
     versionedModelService.enableEntity(name).map { updateResult => // always enabling all version of the entity
-      if(updateResult.getMatchedCount > 0) {
+      if (updateResult.getMatchedCount > 0) {
         DisabledPayload(disabled = false)
       } else {
         throw NotFoundException(s"No versions for entity $name found to be enabled.")
@@ -181,7 +193,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
     versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
-      if(updateResult.getMatchedCount > 0) {
+      if (updateResult.getMatchedCount > 0) {
         DisabledPayload(disabled = true)
       } else {
         throw NotFoundException(s"No versions for entity $name found to be disabled.")

@@ -26,7 +26,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.rest_api.exceptions.EndpointDisabled
 import za.co.absa.enceladus.rest_api.services.PropertyDefinitionService
 import za.co.absa.enceladus.model.ExportableObject
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -63,8 +62,6 @@ class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefi
       val location: URI = new URI(s"/api/properties/datasets/${entity.name}/${entity.version}")
       ResponseEntity.created(location).body(entity)
     }
-
-    // TODO: Location header would make sense for the underlying VersionedModelController.create, too. Issue #1611
   }
 
   @GetMapping(Array("/{propertyName}"))
