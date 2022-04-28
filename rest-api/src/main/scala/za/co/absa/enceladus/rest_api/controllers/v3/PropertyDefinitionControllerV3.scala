@@ -17,11 +17,11 @@ package za.co.absa.enceladus.rest_api.controllers.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.rest_api.services.PropertyDefinitionService
+import za.co.absa.enceladus.rest_api.services.v3.PropertyDefinitionServiceV3
 
 @RestController
 @RequestMapping(path = Array("/api-v3/property-definitions/datasets"), produces = Array("application/json"))
-class PropertyDefinitionControllerV3 @Autowired()(propertyDefService: PropertyDefinitionService)
-  extends VersionedModelControllerV3(propertyDefService)
+class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: PropertyDefinitionServiceV3)
+  extends VersionedModelControllerV3(propertyDefinitionService)
 
 // super-class implementation is sufficient

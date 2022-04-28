@@ -175,6 +175,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       .toFuture()
   }
 
+  def findRefContainedAsKey(refNameCol: String, name: String): Future[Seq[MenasReference]] = {
+
+    // `refNameCol` contains a map where the `name` is the key, so this is e.g. {"properties.keyName" : {$exists : true}}
+    val filter = Filters.and(getNotDisabledFilter, Filters.exists(s"$refNameCol.$name", true))
+
+    collection
+      .find[MenasReference](filter)
+      .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
+      .sort(Sorts.ascending("name", "version"))
+      .toFuture()
+  }
+
   private def collectLatestVersions(postAggFilter: Option[Bson]): Future[Seq[C]] = {
     val pipeline = Seq(
       filter(Filters.notEqual("disabled", true)),

@@ -28,10 +28,10 @@ import scala.concurrent.Future
 @Service
 class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoRepository,
                                     oozieRepository: OozieRepository,
-                                    datasetPropertyDefinitionService: PropertyDefinitionService,
-                                    mappingTableService: MappingTableService,
-                                    val schemaService: SchemaService)
-  extends DatasetService(datasetMongoRepository, oozieRepository, datasetPropertyDefinitionService)
+                                    propertyDefinitionService: PropertyDefinitionServiceV3,
+                                    mappingTableService: MappingTableServiceV3,
+                                    val schemaService: SchemaServiceV3)
+  extends DatasetService(datasetMongoRepository, oozieRepository, propertyDefinitionService)
   with HavingSchemaService {
 
   import scala.concurrent.ExecutionContext.Implicits.global

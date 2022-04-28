@@ -78,8 +78,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
 
   override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture, datasetFixture, mappingTableFixture)
 
-  // todo the disabled state preventing post/put from creating a new entity => get rid of recreate
-
   s"POST $apiUrl" can {
     "return 201" when {
       "a Schema is created (v1-payload has defined fields already)" in {

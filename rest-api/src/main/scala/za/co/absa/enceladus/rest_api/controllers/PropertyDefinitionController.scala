@@ -38,15 +38,15 @@ import scala.concurrent.ExecutionContext.Implicits.global
  */
 @RestController
 @RequestMapping(path = Array("/api/properties/datasets"), produces = Array("application/json"))
-class PropertyDefinitionController @Autowired()(propertyDefService: PropertyDefinitionService)
-  extends VersionedModelController(propertyDefService) {
+class PropertyDefinitionController @Autowired()(propertyDefinitionService: PropertyDefinitionService)
+  extends VersionedModelController(propertyDefinitionService) {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
   @GetMapping(Array(""))
   def getAllDatasetProperties(): CompletableFuture[Seq[PropertyDefinition]] = {
     logger.info("retrieving all dataset properties in full")
-    propertyDefService.getLatestVersions()
+    propertyDefinitionService.getLatestVersions()
   }
 
   @PostMapping(Array(""))
