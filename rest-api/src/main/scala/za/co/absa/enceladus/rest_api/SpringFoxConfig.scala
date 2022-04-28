@@ -43,12 +43,13 @@ class SpringFoxConfig extends ProjectMetadata {
       // api v2
       regex("/api/dataset.*"), regex("/api/schema.*"),
       regex("/api/mappingTable.*"), regex("/api/properties.*"),
-      regex("/api/monitoring.*"),regex("/api/runs.*"),
+      regex("/api/monitoring.*"), regex("/api/runs.*"),
       regex("/api/user.*"), regex("/api/spark.*"),
       regex("/api/configuration.*"),
 
       // api v3
-        regex("/api-v3/datasets.*")
+      regex("/api-v3/datasets.*"), regex("/api-v3/schemas.*"),
+      regex("/api-v3/mapping-tables.*"), regex("/api-v3/property-definitions.*")
 
     )
 

@@ -464,7 +464,7 @@ object DatasetService {
    * @param properties original properties
    * @return properties without empty-string value entries
    */
-  def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
+  private def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
       properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
