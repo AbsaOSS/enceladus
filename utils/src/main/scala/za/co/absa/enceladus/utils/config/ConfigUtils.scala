@@ -35,7 +35,7 @@ object ConfigUtils {
    * file is attempted to be found in current directory instead (returned as Some(justFileName.ext) -
    * for spark-submit uses --files with aliases
    * None is returned otherwise if not found at all
-   * @param filePath
+   * @param pathFileName
    * @return defined existing file path or None
    */
   def getExistingFilePathWithCurrentDirFallback(pathFileName: String): Option[String] = {

@@ -551,6 +551,7 @@
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>scripts/cmd/tee.bat</exclude>
                                 <exclude>**/org.mockito.plugins.MockMaker</exclude>
+                                <exclude>**/.idea/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
