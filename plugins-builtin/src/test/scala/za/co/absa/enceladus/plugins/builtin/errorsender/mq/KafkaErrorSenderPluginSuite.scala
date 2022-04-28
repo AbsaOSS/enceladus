@@ -25,7 +25,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.BeforeAndAfterAll
 import za.co.absa.abris.avro.read.confluent.SchemaManager
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.KafkaConnectionParams
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginSuite.{TestingErrCol, TestingRecord}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
@@ -100,33 +100,51 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
   val testClientId = "errorId1"
   val testTopicName = "errorTopicName1"
   val testKafkaUrl = "http://example.com:9092"
+  val testSecurityProtocol = "SASL_SSL"
+  val testSaslMechanism = "GSSAPI"
   val testSchemaRegUrl = "http://example.com:8081"
+  val testSchemaRegAuthSource = "USER_INFO"
+  val testSchemaRegAuthUserInfo = "svc-account:SVC-P4SSW0RD"
 
   private val testConfig = ConfigFactory.empty()
     .withValue("kafka.error.client.id", ConfigValueFactory.fromAnyRef(testClientId))
     .withValue("kafka.error.topic.name", ConfigValueFactory.fromAnyRef(testTopicName))
     .withValue("kafka.bootstrap.servers", ConfigValueFactory.fromAnyRef(testKafkaUrl))
+    .withValue("kafka.security.protocol", ConfigValueFactory.fromAnyRef(testSecurityProtocol))
+    .withValue("kafka.sasl.mechanism", ConfigValueFactory.fromAnyRef(testSaslMechanism))
     .withValue("kafka.schema.registry.url", ConfigValueFactory.fromAnyRef(testSchemaRegUrl))
+    .withValue("kafka.schema.registry.basic.auth.credentials.source", ConfigValueFactory.fromAnyRef(testSchemaRegAuthSource))
+    .withValue("kafka.schema.registry.basic.auth.user.info", ConfigValueFactory.fromAnyRef(testSchemaRegAuthUserInfo))
 
   //TODO to be fixed in #2042
  /* it should "correctly create the error plugin from config" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
 
-    errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl, schemaRegistryUrl = testSchemaRegUrl,
-      clientId = testClientId, security = None, topicName = testTopicName, schemaRegistrySecurityParams = None)
+    errorPlugin.connectionParams shouldBe KafkaConnectionParams(bootstrapServers = testKafkaUrl,
+      schemaRegistryUrl = testSchemaRegUrl, clientId = testClientId,
+      security = Some(KafkaSecurityParams(testSecurityProtocol, Some(testSaslMechanism))), topicName = testTopicName,
+      schemaRegistrySecurityParams = Some(SchemaRegistrySecurityParams(testSchemaRegAuthSource, Some(testSchemaRegAuthUserInfo))))
 
     errorPlugin.keySchemaRegistryConfig shouldBe Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> testSchemaRegUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> testTopicName,
       SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataErrorKey",
-      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.key.schema")
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.key.schema",
+      "basic.auth.credentials.source" -> "USER_INFO",
+      "basic.auth.user.info" -> "svc-account:SVC-P4SSW0RD"
+    )
 
     errorPlugin.valueSchemaRegistryConfig shouldBe Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> testSchemaRegUrl,
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> testTopicName,
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> "dataError",
+      SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema",
+      "basic.auth.credentials.source" -> "USER_INFO",
+      "basic.auth.user.info" -> "svc-account:SVC-P4SSW0RD"
+    )
+  }
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }*/
 

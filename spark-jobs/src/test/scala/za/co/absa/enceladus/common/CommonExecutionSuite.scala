@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.common
 
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.mockito.Mockito
@@ -34,9 +35,11 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSp
     def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {
       prepareJob()
     }
+
     override protected def validatePaths(pathConfig: PathConfig): Unit = {}
-    override def repartitionDataFrame(df:  DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
-                                               (implicit spark: SparkSession): DataFrame =
+
+    override def repartitionDataFrame(df: DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
+                                     (implicit spark: SparkSession): DataFrame =
       super.repartitionDataFrame(df, minBlockSize, maxBlockSize)
   }
 

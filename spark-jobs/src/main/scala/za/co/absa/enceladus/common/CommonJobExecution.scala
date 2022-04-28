@@ -19,7 +19,7 @@ import java.text.MessageFormat
 import java.time.Instant
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.SPARK_VERSION
+import org.apache.spark.{SPARK_VERSION, SparkConf}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
@@ -59,13 +59,19 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
+  protected var secureConfig: Map[String, String] = Map.empty
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
+
+    // ssl paths stripped paths for current directory usage (expecting files distributed via spark-submit's "--files"
+    val executorSecConfig = SecureConfig.getSslProperties(configReader.config, useCurrentDirectoryPaths = true)
+
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
+      .config("spark.executor.extraJavaOptions", SecureConfig.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -74,7 +80,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(configReader.config)
+    val secConf = SecureConfig.getSslProperties(configReader.config)
+    SecureConfig.setSystemProperties(secConf)
   }
 
   protected def prepareJob[T]()
@@ -107,7 +114,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
-          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
+        s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
       )
       case _ => //validation passed
     }
@@ -295,7 +302,9 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
-    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+    val keyPrefix = Try {
+      conf.getString("control.info.dataset.properties.prefix")
+    }.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
     data.foreach { case (key, value) =>
@@ -323,11 +332,11 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addInfoColumns(intoDf: DataFrame, reportDate: String, reportVersion: Int): DataFrame = {
-    import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
+    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
     intoDf
-      .withColumnOverwriteIfExists(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
-      .withColumnOverwriteIfExists(InfoDateColumnString, lit(reportDate))
-      .withColumnOverwriteIfExists(InfoVersionColumn, lit(reportVersion))
+      .withColumnIfDoesNotExist(InfoDateColumn, to_date(lit(reportDate), ReportDateFormat))
+      .withColumnIfDoesNotExist(InfoDateColumnString, lit(reportDate))
+      .withColumnIfDoesNotExist(InfoVersionColumn, lit(reportVersion))
   }
 
   private def getReportVersion[T](jobConfig: JobConfigParser[T], dataset: Dataset)(implicit hadoopConf: Configuration): Int = {

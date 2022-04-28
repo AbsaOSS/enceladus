@@ -362,7 +362,8 @@ sap.ui.define([
 
         this._datasetRestDAO = new DatasetRestDAO();
         this._datasetRestDAO.getLatestVersionByName(currentDataset.name)
-          .then(version => this._model.setProperty("/editingEnabled", currentDataset.version === version));
+          .then(version => this._model.setProperty("/editingEnabled",
+            this._datasetService.canBeEdited(currentDataset, version)));
 
         const auditTable = this.byId("auditTrailTable");
         this._datasetService.getAuditTrail(currentDataset.name, auditTable);

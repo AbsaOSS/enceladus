@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka
 
 import com.typesafe.config.Config
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import org.apache.avro.{Schema => AvroSchema}
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.avro.SchemaConverters
@@ -63,12 +64,20 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
     KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorKafkaTopicKey)
   }
 
+  private[kafka] def getAuthParams(connectionParams: KafkaConnectionParams) = {
+    connectionParams.schemaRegistrySecurityParams match {
+      case None => Map.empty[String, String]
+      case Some(srParams) => Map(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE -> srParams.credentialsSource) ++
+        srParams.userInfo.map(info => Map(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG -> info)).getOrElse(Map.empty[String, String])
+    }
+  }
+
   //TODO to be fixed in 2042
-  def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): ToAvroConfig = {
-    // generate schema
-//    val allColumns = struct(df.columns.map(c => df(c)): _*)
-//    val expression = allColumns.expr
-//    val schema = toAvroType(expression.dataType, expression.nullable)
+  def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {
+    Map(
+      // common part
+      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl,
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> connectionParams.topicName,
 
     val schemaRegistryClientConfig =
       Map(AbrisConfig.SCHEMA_REGISTRY_URL -> connectionParams.schemaRegistryUrl)
