@@ -32,22 +32,7 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    mappingTableMongoRepository: MappingTableMongoRepository,
                                    datasetMongoRepository: DatasetMongoRepository,
                                    sparkMenasConvertor: SparkMenasSchemaConvertor)
-  extends VersionedModelService(schemaMongoRepository) {
-
-  // same as v2
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    for {
-      usedInD <- datasetMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
-      usedInM <- mappingTableMongoRepository.findRefEqual("schemaName", "schemaVersion", name, version)
-    } yield UsedIn(Some(usedInD), Some(usedInM))
-  }
-
-  // same as v2
-  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[(Schema, Validation)] = {
-    super.update(username, schemaName, schemaVersion)({ oldSchema =>
-      oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
-    }).map(_.getOrElse(throw new IllegalArgumentException("Failed to derive new schema from file!")))
-  }
+  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor) {
 
   override def validate(item: Schema): Future[Validation] = {
     if (item.fields.isEmpty) {
@@ -58,39 +43,8 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
     }
   }
 
-  // same as V2, but fields from payload are used, too
-  override def update(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
-    super.update(username, schema.name, schema.version) { latest =>
-      latest.setDescription(schema.description).asInstanceOf[Schema].copy(fields = schema.fields)
-    }
-  }
-
-  // same as V2, but fields from payload are used, too
-  override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
-    val schema = Schema(name = newSchema.name,
-      description = newSchema.description,
-      fields = newSchema.fields
-    )
-    super.create(schema, username)
-  }
-
-  // same as v2
-  override def recreate(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
-    for {
-      latestVersion <- getLatestVersionNumber(schema.name)
-      update <- super.update(username, schema.name, latestVersion) { latest =>
-        latest
-          .copy(fields = List())
-          .setDescription(schema.description).asInstanceOf[Schema]
-      }
-    } yield update
-  }
-
-  // same as v2
-  override def importItem(item: Schema, username: String): Future[Option[(Schema, Validation)]] = {
-    getLatestVersionValue(item.name).flatMap {
-      case Some(version) => update(username, item.copy(version = version))
-      case None => super.create(item.copy(version = 1), username)
-    }
+  // V3 applies fields on create/update from the payload, too (V2 did not allow fields payload here, only via 'upload'
+  override protected def updateFields(current: Schema, update: Schema) : Schema = {
+    current.setDescription(update.description).asInstanceOf[Schema].copy(fields = update.fields)
   }
 }

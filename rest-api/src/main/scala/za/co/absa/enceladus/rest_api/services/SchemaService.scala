@@ -56,15 +56,29 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield update
   }
 
-  override def update(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
-    super.update(username, schema.name, schema.version) { latest =>
-      latest.setDescription(schema.description).asInstanceOf[Schema]
+  /**
+   * This method applies only certain fields from `updateSchema` to the subject of this method. Here, for V2 API,
+   * only description field is applied, all other fields are disregarded - internally called at create/update
+   * @param current existing latest schema prior to changes
+   * @param update schema with create/update fields information
+   * @return
+   */
+  protected def updateFields(current: Schema, update: Schema) : Schema = {
+    current.setDescription(update.description).asInstanceOf[Schema]
+  }
+
+  /** final - override `updateWithFields` if needed */
+  final override def update(username: String, update: Schema): Future[Option[(Schema, Validation)]] = {
+    super.update(username, update.name, update.version) { latest =>
+      updateFields(latest, update)
     }
   }
 
-  override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
-    val schema = Schema(name = newSchema.name,
-      description = newSchema.description)
+  /** final - override `updateWithFields` if needed */
+  final override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
+    val initSchema = Schema(name = newSchema.name, description = newSchema.description)
+
+    val schema = updateFields(initSchema, newSchema)
     super.create(schema, username)
   }
 
