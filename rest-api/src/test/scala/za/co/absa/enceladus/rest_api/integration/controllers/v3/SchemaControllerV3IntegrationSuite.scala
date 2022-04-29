@@ -833,7 +833,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
-
   s"PUT $apiUrl/{name}" can {
     "return 200" when {
       "a Schema with the given name exists" should {
