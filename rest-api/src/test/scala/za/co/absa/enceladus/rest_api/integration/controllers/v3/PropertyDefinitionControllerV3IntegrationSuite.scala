@@ -153,7 +153,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         // datasetB is not reported, because it is disabled
         response.getBody shouldBe UsedIn(
           datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
-          mappingTables = Some(Seq())
+          mappingTables = None
         )
       }
     }
@@ -177,7 +177,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         // same outcome as $apiUrl/{name}/used-in above -- because propDefs are not tied by version to datasets
         response.getBody shouldBe UsedIn(
           datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
-          mappingTables = Some(Seq())
+          mappingTables = None
         )
       }
     }
@@ -275,7 +275,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/keyA")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), Some(Seq()))
+          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
         }
       }
     }

@@ -36,6 +36,10 @@ class MappingTableServiceV3 @Autowired()(mappingTableMongoRepository: MappingTab
       originalValidation <- super.validate(item)
       mtSchemaValidation <- validateSchemaExists(item.schemaName, item.schemaVersion)
     } yield originalValidation.merge(mtSchemaValidation)
-
   }
+
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    super.getUsedIn(name, version).map(_.normalized)
+  }
+
 }

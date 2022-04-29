@@ -34,7 +34,8 @@ class PropertyDefinitionServiceV3 @Autowired()(propertyDefMongoRepository: Prope
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
     for {
       usedInD <- datasetMongoRepository.findRefContainedAsKey("properties", name)
-    } yield UsedIn(Some(usedInD), Some(Seq.empty))
+      optionalUsedInD = if (usedInD.isEmpty) None else Some(usedInD)
+    } yield UsedIn(optionalUsedInD, None)
   }
 
 }

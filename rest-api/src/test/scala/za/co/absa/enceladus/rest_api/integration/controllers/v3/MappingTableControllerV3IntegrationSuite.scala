@@ -324,13 +324,25 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         // datasetC is not reported, because it depends on v2 of the MT
         response.getBody shouldBe UsedIn(
           datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
-          mappingTables = None // todo this unfortunately differs from other usedIns, they give Some(Seq.empty)
+          mappingTables = None
+        )
+      }
+
+      "there are no used-in records for particular version" in {
+        val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+        mappingTableFixture.add(mappingTable1)
+
+        val response = sendGet[UsedIn](s"$apiUrl/mappingTable/1/used-in")
+        assertOk(response)
+
+        response.getBody shouldBe UsedIn(
+          datasets = None,
+          mappingTables = None
         )
       }
     }
   }
 
-  // todo deletes for ties within datasets via MappingCR
   s"DELETE $apiUrl/{name}" can {
     "return 200" when {
       "a MappingTable with the given name exists" should {

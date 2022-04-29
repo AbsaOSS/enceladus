@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest_api.services.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{Schema, Validation}
+import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 import za.co.absa.enceladus.rest_api.services.SchemaService
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
@@ -30,6 +30,8 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    datasetMongoRepository: DatasetMongoRepository,
                                    sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   override def validate(item: Schema): Future[Validation] = {
     if (item.fields.isEmpty) {
@@ -44,4 +46,9 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
   override protected def updateFields(current: Schema, update: Schema) : Schema = {
     current.setDescription(update.description).asInstanceOf[Schema].copy(fields = update.fields)
   }
+
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    super.getUsedIn(name, version).map(_.normalized)
+  }
+
 }

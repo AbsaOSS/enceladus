@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services.v3
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
-import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.rest_api.services.DatasetService
 
@@ -71,6 +71,10 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
         throw new IllegalArgumentException(s"Rule with order ${rule.order} cannot be added, another rule with this order already exists.")
       }
     }
+  }
+
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    super.getUsedIn(name, version).map(_.normalized)
   }
 
 }

@@ -35,8 +35,6 @@ import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3,
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 
-import scala.collection.JavaConverters._
-
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))

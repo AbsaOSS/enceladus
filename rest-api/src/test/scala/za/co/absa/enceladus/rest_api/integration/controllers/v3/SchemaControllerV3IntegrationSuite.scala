@@ -36,7 +36,6 @@ import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.restapi.TestResourcePath
 
 import java.io.File
@@ -1017,7 +1016,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), Some(Seq()))
+          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
         }
       }
       "the Schema is used by a enabled MappingTable" should {
@@ -1033,7 +1032,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
           assertBadRequest(response)
 
-          response.getBody shouldBe UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+          response.getBody shouldBe UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
         }
       }
       "the Schema is used by combination of MT and DS" should {
