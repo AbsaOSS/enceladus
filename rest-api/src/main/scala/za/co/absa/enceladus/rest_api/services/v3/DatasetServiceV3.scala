@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.rest_api.services.{DatasetService, MappingTableService, PropertyDefinitionService, SchemaService}
+import za.co.absa.enceladus.rest_api.services.DatasetService
 
 import scala.concurrent.Future
 
