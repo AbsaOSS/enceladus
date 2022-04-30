@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.plugins.builtin.errorsender
 
-import java.time.LocalDate
-
 case class DceError(sourceSystem: String,
                     sourceSystemId: Option[String],
                     dataset: Option[String],
