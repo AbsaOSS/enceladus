@@ -53,7 +53,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPath(dataset.hdfsPath)
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
-          .setProperties(removeBlankProperties(dataset.properties))
+          .setProperties(removeBlankPropertiesOpt(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]
       })
     }
@@ -113,7 +113,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       schemaName = newDataset.schemaName,
       schemaVersion = newDataset.schemaVersion,
       conformance = List(),
-      properties = removeBlankProperties(newDataset.properties))
+      properties = removeBlankPropertiesOpt(newDataset.properties))
     super.create(dataset, username)
   }
 
@@ -124,28 +124,13 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  def updateProperties(username: String, datasetName: String, datasetVersion: Int,
-                       updatedProperties: Map[String, String]): Future[Option[(Dataset, Validation)]] = {
-    for {
-      successfulValidation <- validateProperties(updatedProperties).flatMap {
-        case validation if !validation.isValid => Future.failed(ValidationException(validation)) // warnings are ok for update
-        case validation => Future.successful(validation) // empty or with warnings
-      }
-
-      // updateFuture includes latest-check and version increase
-      update <- updateFuture(username, datasetName, datasetVersion) { latest =>
-        Future.successful(latest.copy(properties = Some(removeBlankProperties(updatedProperties))))
-      }
-    } yield update
-  }
-
   // kept for API v2 usage only
-  def updatePropertiesV2(username: String, datasetName: String,
-                         updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
+  def updateProperties(username: String, datasetName: String,
+                       updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
     for {
       latestVersion <- getLatestVersionNumber(datasetName)
       update <- update(username, datasetName, latestVersion) { latest =>
-        latest.copy(properties = removeBlankProperties(updatedProperties))
+        latest.copy(properties = removeBlankPropertiesOpt(updatedProperties))
       }
     } yield update.map(_._1) // v2 does not expect validation on update
   }
@@ -453,7 +438,7 @@ object DatasetService {
    * @param properties original properties
    * @return properties without empty-string value entries
    */
-  def removeBlankProperties(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
+  private[services] def removeBlankPropertiesOpt(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
     properties.map {
       removeBlankProperties
     }
@@ -465,7 +450,7 @@ object DatasetService {
    * @param properties original properties
    * @return properties without empty-string value entries
    */
-  private def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
+  private[services] def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
       properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
