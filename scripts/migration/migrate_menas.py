@@ -21,7 +21,7 @@ from typing import List
 from datetime import datetime, timezone
 
 from constants import *
-from menas_db import MenasDb
+from menas_db import MenasDb, MenasDbCollectionError
 
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
 # pip install -r requirements.txt
@@ -49,9 +49,11 @@ def parse_args() -> argparse.Namespace:
 
     input_options_group = parser.add_mutually_exclusive_group(required=True)
     input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
+                                     nargs="+", help='list datasets names to migrate')
     input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
-                                     nargs="+", help='list datasets to migrate')
+                                     nargs="+", help='list mapping tables names to migrate')
+    input_options_group.add_argument('-p', '--property-definitions', dest="propdefs", metavar="PROP_NAME", default=[],
+                                     nargs="+", help='list property definition names to migrate (use * for all)')
 
     return parser.parse_args()
 
@@ -272,6 +274,38 @@ def migrate_collections_by_mt_names(source_db: MenasDb, target_db: MenasDb,
         print("*** Dryrun selected, no actual migration will take place.")
 
 
+def migrate_propdefs_by_propdef_names(source_db: MenasDb, target_db: MenasDb, supplied_propdef_names: List[str],
+                                      dryrun: bool) -> None:
+    if verbose:
+        print("Property definition names given: {}".format(supplied_propdef_names))
+
+    if supplied_propdef_names == ["*"]:
+        migration_free_propdef_names = source_db.assemble_all_propdefs()
+        print('All property definitions to migrate ("*"): {}'.format(migration_free_propdef_names))
+    else:
+        migration_free_propdef_names = source_db.assemble_migration_free_propdefs_from_prop_names(supplied_propdef_names)
+        print('Property definitions to migrate: {}'.format(migration_free_propdef_names))
+
+    if not dryrun:
+        print("")
+        migrate_entities(source_db, target_db, PROPERTY_DEF_COLLECTION, migration_free_propdef_names,
+                     describe_default_entity, entity_name="property definition", locking=True)
+
+    else:
+        print("*** Dryrun selected, no actual migration will take place.")
+
+
+def check_compatible_property_definitions(source_db: MenasDb, target_db: MenasDb) -> None:
+    source_propdefs = source_db.assemble_all_propdefs(migration_free_only=False)
+    target_propdefs = target_db.assemble_all_propdefs(migration_free_only=False)
+
+    diff = set(source_propdefs).difference(set(target_propdefs))
+    if len(diff) != 0:
+        raise MenasDbCollectionError("Property definition need to be migrated before Datasets are migrated. "
+                                     f"These PDs are missing on target: {diff}."
+                                     "Migrate property definitions first (-p * or -p PDname1 PDname2 ...)")
+
+
 def run(parsed_args: argparse.Namespace):
     source_conn_string = parsed_args.source
     target_conn_string = parsed_args.target
@@ -302,15 +336,22 @@ def run(parsed_args: argparse.Namespace):
 
     dataset_names = parsed_args.datasets
     mt_names = parsed_args.mtables
+    propdef_names = parsed_args.propdefs
     if dataset_names:
+        check_compatible_property_definitions(source_db, target_db)
+
         print('Dataset names supplied: {}'.format(dataset_names))
         migrate_collections_by_ds_names(source_db, target_db, dataset_names, dryrun=dryrun)
     elif mt_names:
         print('Mapping table names supplied: {}'.format(mt_names))
         migrate_collections_by_mt_names(source_db, target_db, mt_names, dryrun=dryrun)
+    elif propdef_names:
+        print('Property definition names supplied: {}'.format(propdef_names))
+        migrate_propdefs_by_propdef_names(source_db, target_db, propdef_names, dryrun=dryrun)
     else:
         # should not happen (-d/-m is exclusive and required)
-        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...).. or MT names (-m mt1 mt2 ... ) must be given.")
+        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...)..,  MT names (-m mt1 mt2 ... ), "
+                        "or prop defs (-p prop1 prop2 ...) must be given.")
 
     print("Done.")
 
