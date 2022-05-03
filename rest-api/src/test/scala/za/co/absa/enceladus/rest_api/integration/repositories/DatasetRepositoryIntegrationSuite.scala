@@ -477,14 +477,14 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
   "DatasetMongoRepository::getLatestVersions" should {
     "return an empty Seq" when {
       "no datasets exist and search query is provided" in {
-        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("abc")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("abc")))
         assert(actual.isEmpty)
       }
       "only disabled dataset exists" in {
         val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", version = 1,
           disabled = true, dateDisabled = Option(DatasetFactory.dummyZonedDateTime), userDisabled = Option("user"))
         datasetFixture.add(dataset1)
-        assert(await(datasetMongoRepository.getLatestVersionsSummary(Some("dataset1"))).isEmpty)
+        assert(await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("dataset1"))).isEmpty)
       }
     }
 
@@ -496,7 +496,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
-        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("dataset2")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("dataset2")))
 
         val expected = Seq(dataset3).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -508,7 +508,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset5 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset2, dataset3, dataset4, dataset5)
-        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("tas")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("tas")))
 
         val expected = Seq(dataset3, dataset4).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -544,7 +544,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
         val abc1 = DatasetFactory.getDummyDataset(name = "abc", version = 1)
 
         datasetFixture.add(dataset1ver1, dataset1ver2, dataset2ver1, abc1)
-        val actual = await(datasetMongoRepository.getLatestVersionsSummary(Some("")))
+        val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("")))
 
         val expected = Seq(abc1, dataset1ver2, dataset2ver1).map(DatasetFactory.toSummary)
         assert(actual == expected)
@@ -561,7 +561,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
       val dataset1ver2 = DatasetFactory.getDummyDataset(name = "dataset1", version = 2)
       datasetFixture.add(dataset1ver2)
 
-      val actual = await(datasetMongoRepository.getLatestVersionsSummary(None))
+      val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(None))
 
       val expected = Seq(dataset1ver2, dataset2ver2).map(DatasetFactory.toSummary)
       assert(actual == expected)

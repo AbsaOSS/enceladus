@@ -21,7 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionList}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.menas.audit._
@@ -38,8 +38,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def getLatestVersionsSummary(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersionsSummary(searchQuery)
+  def getLatestVersionsSummarySearch(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
+    versionedMongoRepository.getLatestVersionsSummarySearch(searchQuery)
   }
 
   def getLatestVersions(): Future[Seq[C]] = {
@@ -58,10 +58,6 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.getAllVersions(name)
   }
 
-  def getAllVersionsValues(name: String): Future[Option[VersionList]] = {
-    versionedMongoRepository.getAllVersionsValues(name)
-  }
-
   def getLatestVersion(name: String): Future[Option[C]] = {
     versionedMongoRepository.getLatestVersionValue(name).flatMap({
       case Some(version) => getVersion(name, version)
@@ -78,6 +74,10 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     versionedMongoRepository.getLatestVersionValue(name)
+  }
+
+  def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
+    versionedMongoRepository.getLatestVersionSummary(name)
   }
 
   def exportSingleItem(name: String, version: Int): Future[String] = {
@@ -202,6 +202,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   private[rest_api] def create(item: C, username: String): Future[Option[(C, Validation)]] = {
+    // individual validations are deliberately not run in parallel - the latter may not be needed if the former fails
     for {
       validation <- for {
         generalValidation <- validate(item)
