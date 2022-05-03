@@ -49,13 +49,13 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
-    versionedModelService.getLatestVersionsSummary(searchQuery.toScalaOption)
+    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
   }
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionsList(@PathVariable name: String): CompletableFuture[VersionList] = {
-    versionedModelService.getAllVersionsValues(name) map {
+  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[VersionedSummary] = {
+    versionedModelService.getLatestVersionSummary(name) map {
       case Some(entity) => entity
       case None => throw notFound()
     }

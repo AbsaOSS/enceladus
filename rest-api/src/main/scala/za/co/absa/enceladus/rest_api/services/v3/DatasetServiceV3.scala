@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.rest_api.services.DatasetService._
 import za.co.absa.enceladus.rest_api.services.DatasetService
 
 import scala.concurrent.Future
@@ -53,6 +55,7 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
 
   // general entity validation is extendable for V3 - here with properties validation
   override def validate(item: Dataset): Future[Validation] = {
+    // individual validations are deliberately not run in parallel - the latter may not be needed if the former fails
     for {
       originalValidation <- super.validate(item)
       propertiesValidation <- validateProperties(item.propertiesAsMap)
@@ -71,6 +74,21 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
         throw new IllegalArgumentException(s"Rule with order ${rule.order} cannot be added, another rule with this order already exists.")
       }
     }
+  }
+
+  def updateProperties(username: String, datasetName: String, datasetVersion: Int,
+                       updatedProperties: Map[String, String]): Future[Option[(Dataset, Validation)]] = {
+    for {
+      successfulValidation <- validateProperties(updatedProperties).flatMap {
+        case validation if !validation.isValid => Future.failed(ValidationException(validation)) // warnings are ok for update
+        case validation => Future.successful(validation) // empty or with warnings
+      }
+
+      // updateFuture includes latest-check and version increase
+      update <- updateFuture(username, datasetName, datasetVersion) { latest =>
+        Future.successful(latest.copy(properties = Some(removeBlankProperties(updatedProperties))))
+      }
+    } yield update
   }
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {

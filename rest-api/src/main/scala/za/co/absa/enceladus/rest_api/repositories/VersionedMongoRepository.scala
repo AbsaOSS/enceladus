@@ -27,7 +27,7 @@ import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionList}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -61,7 +61,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
-  def getLatestVersionsSummary(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+  def getLatestVersionsSummarySearch(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
     val searchFilter = searchQuery match {
       case Some(search) => Filters.regex("name", search, "i")
       case None => Filters.expr(true)
@@ -84,21 +84,26 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+  def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
-    collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
+    collection.aggregate[VersionedSummary](pipeline).headOption()
   }
 
-  def getAllVersionsValues(name: String): Future[Option[VersionList]] = {
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+    getLatestVersionSummary(name).map(_.map(_.latestVersion))
+  }
+
+  def getAllVersionsValues(name: String): Future[Seq[Int]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       Aggregates.sort(Sorts.ascending("version")),
       Aggregates.group("$name", Accumulators.push("versions", "$version")) // all versions into single array
     )
-    collection.aggregate[VersionList](pipeline).headOption().map(_.map(vlist => VersionList("versions", vlist.versions)))
+    collection.aggregate[Seq[Int]](pipeline).headOption().map(_.getOrElse(Seq.empty)
+    )
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
