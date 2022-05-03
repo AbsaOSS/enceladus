@@ -17,6 +17,7 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.{SPARK_VERSION, SparkConf}
@@ -29,7 +30,6 @@ import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnStri
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
@@ -42,6 +42,8 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.SparkVersionGuard
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -52,7 +54,7 @@ trait CommonJobExecution extends ProjectMetadata {
                                          performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
-  SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+  SparkVersionGuard.fromSpark3XCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
