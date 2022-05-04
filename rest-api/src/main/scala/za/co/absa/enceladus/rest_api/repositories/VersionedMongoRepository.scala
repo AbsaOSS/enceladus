@@ -84,6 +84,9 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
   def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
@@ -92,18 +95,11 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.aggregate[VersionedSummary](pipeline).headOption()
   }
 
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
     getLatestVersionSummary(name).map(_.map(_.latestVersion))
-  }
-
-  def getAllVersionsValues(name: String): Future[Seq[Int]] = {
-    val pipeline = Seq(
-      filter(getNameFilter(name)),
-      Aggregates.sort(Sorts.ascending("version")),
-      Aggregates.group("$name", Accumulators.push("versions", "$version")) // all versions into single array
-    )
-    collection.aggregate[Seq[Int]](pipeline).headOption().map(_.getOrElse(Seq.empty)
-    )
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
@@ -175,8 +171,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     val pipeline = Seq(
       filter(Filters.notEqual("disabled", true)),
       Aggregates.group("$name",
-      Accumulators.max("latestVersion", "$version"),
-      Accumulators.last("doc","$$ROOT")),
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.last("doc", "$$ROOT")),
       Aggregates.replaceRoot("$doc")) ++
       postAggFilter.map(Aggregates.filter)
 
