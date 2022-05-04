@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
-import za.co.absa.enceladus.model.versionedModel.VersionedSummary
+import za.co.absa.enceladus.model.versionedModel.NamedLatestVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityDisabledException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
@@ -145,9 +145,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           parent = Some(DatasetFactory.toParent(datasetV1)))
         datasetFixture.add(datasetV1, datasetV2)
 
-        val response = sendGet[VersionedSummary](s"$apiUrl/datasetA")
+        val response = sendGet[NamedLatestVersion](s"$apiUrl/datasetA")
         assertOk(response)
-        assert(response.getBody == VersionedSummary("datasetA", 2))
+        assert(response.getBody == NamedLatestVersion("datasetA", 2))
       }
     }
 
@@ -394,45 +394,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
               |"updatedBy":"dummyUser","updated":"2017-12-04T16:19:17Z",
               |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"Dataset datasetA created."}]
               |}]}""".stripMargin.replaceAll("[\\r\\n]", ""))
-        }
-      }
-    }
-  }
-
-  s"GET $apiUrl/{name}/export" should {
-    "return 404" when {
-      "when the name does not exist" in {
-        val response = sendGet[String](s"$apiUrl/notFoundDataset/export")
-        assertNotFound(response)
-      }
-    }
-
-    "return 200" when {
-      "there is a correct Dataset" should {
-        "return the exported Dataset representation for the latest version" in {
-          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset")
-          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset", version = 2, description = Some("Hi, I am the latest version"),
-            properties = Some(Map("key1" -> "val1", "key2" -> "val2")),
-            conformance = List(LiteralConformanceRule(0, "outputCol1", controlCheckpoint = false, "litValue1"))
-          )
-          datasetFixture.add(dataset1, dataset2)
-          val response = sendGet[String](s"$apiUrl/dataset/export")
-
-          assertOk(response)
-
-          val body = response.getBody
-          assert(body ==
-            """{"metadata":{"exportVersion":1},"item":{
-              |"name":"dataset",
-              |"description":"Hi, I am the latest version",
-              |"hdfsPath":"/dummy/path",
-              |"hdfsPublishPath":"/dummy/publish/path",
-              |"schemaName":"dummySchema",
-              |"schemaVersion":1,
-              |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
-              |"properties":{"key2":"val2","key1":"val1"}
-              |}}""".stripMargin.replaceAll("[\\r\\n]", ""))
         }
       }
     }

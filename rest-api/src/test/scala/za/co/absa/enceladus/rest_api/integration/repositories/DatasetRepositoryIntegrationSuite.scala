@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.integration.repositories
 
 import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
+import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -32,11 +33,12 @@ import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.menas.scheduler.ScheduleTiming
 import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats.ParquetDataFormat
+import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
+class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest with Matchers {
 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
@@ -474,7 +476,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
-  "DatasetMongoRepository::getLatestVersions" should {
+  "DatasetMongoRepository::getLatestVersionsSummarySearch" should {
     "return an empty Seq" when {
       "no datasets exist and search query is provided" in {
         val actual = await(datasetMongoRepository.getLatestVersionsSummarySearch(Some("abc")))
@@ -565,6 +567,66 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val expected = Seq(dataset1ver2, dataset2ver2).map(DatasetFactory.toSummary)
       assert(actual == expected)
+    }
+  }
+
+  "DatasetMongoRepository::getLatestVersionSummary" should {
+    "returns no summary" when {
+      "no datasets exist by the name" in {
+        val actual = await(datasetMongoRepository.getLatestVersionSummary("notExistingName"))
+        actual shouldBe None
+      }
+    }
+    "returns even the disabled dataset" when {
+      "only disabled dataset exists" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true)
+        val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true, version = 2)
+        datasetFixture.add(dataset1, dataset2)
+        val actual = await(datasetMongoRepository.getLatestVersionSummary("datasetA"))
+        actual shouldBe Some(VersionedSummary("datasetA", 2)) // warning: currently, this method reports the disabled, too
+      }
+    }
+
+    "return give correct version summary" when {
+      "dataset versions exist" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+        datasetFixture.add(dataset1, dataset2, dataset3)
+
+        val actual = await(datasetMongoRepository.getLatestVersionSummary("datasetA"))
+        actual shouldBe Some(VersionedSummary("datasetA", 3))
+      }
+    }
+  }
+
+  "DatasetMongoRepository::getLatestVersionValue" should {
+    "returns no latest version" when {
+      "no datasets exist by the name" in {
+        val actual = await(datasetMongoRepository.getLatestVersionValue("notExistingName"))
+        actual shouldBe None
+      }
+    }
+    "returns even the disabled dataset version" when {
+      "only disabled dataset exists" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true)
+        val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true, version = 2)
+        datasetFixture.add(dataset1, dataset2)
+        val actual = await(datasetMongoRepository.getLatestVersionValue("datasetA"))
+        actual shouldBe Some(2) // warning: currently, this method reports the disabled, too
+      }
+    }
+
+    "return gives correct latest version" when {
+      "dataset versions exist" in {
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2)
+        val dataset3 = DatasetFactory.getDummyDataset(name = "datasetA", version = 3)
+        datasetFixture.add(dataset1, dataset2, dataset3)
+
+        val actual = await(datasetMongoRepository.getLatestVersionValue("datasetA"))
+        actual shouldBe Some(3)
+      }
     }
   }
 

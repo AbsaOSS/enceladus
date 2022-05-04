@@ -38,6 +38,10 @@ import javax.servlet.http.HttpServletRequest
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+object VersionedModelControllerV3 {
+  val LatestVersionKey = "latest"
+}
+
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelService[C]) extends BaseController {
 
@@ -48,15 +52,16 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   // todo maybe offset/limit?
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedLatestVersion]] = {
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
+      .map(_.map(_.toNamedLatestVersion))
   }
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[VersionedSummary] = {
+  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedLatestVersion] = {
     versionedModelService.getLatestVersionSummary(name) map {
-      case Some(entity) => entity
+      case Some(entity) => entity.toNamedLatestVersion
       case None => throw notFound()
     }
   }
@@ -95,12 +100,6 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @ResponseStatus(HttpStatus.OK)
   def exportSingleEntity(@PathVariable name: String, @PathVariable version: String): CompletableFuture[String] = {
     forVersionExpression(name, version)(versionedModelService.exportSingleItem)
-  }
-
-  @GetMapping(Array("/{name}/export"))
-  @ResponseStatus(HttpStatus.OK)
-  def exportLatestEntity(@PathVariable name: String): CompletableFuture[String] = {
-    versionedModelService.exportLatestItem(name) // todo: remove in favor of the above? (that supports /{name}/latest/export)
   }
 
   @PostMapping(Array("/{name}/import"))
@@ -233,16 +232,12 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     val location: URI = ServletUriComponentsBuilder.fromRequest(request)
       .path(s"$strippingPrefix/{name}/{version}$suffix")
       .buildAndExpand(name, version.toString)
-      .normalize() // will normalize `/one/two/../three` into `/one/tree`
-      .toUri() // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
+      .normalize // will normalize `/one/two/../three` into `/one/tree`
+      .toUri // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
 
     // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
 
     ResponseEntity.created(location)
   }
 
-}
-
-object VersionedModelControllerV3 {
-  val LatestVersionKey = "latest"
 }
