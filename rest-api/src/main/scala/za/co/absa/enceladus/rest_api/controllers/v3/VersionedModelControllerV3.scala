@@ -50,15 +50,16 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   // todo maybe offset/limit?
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedLatestVersion]] = {
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
+      .map(_.map(_.toNamedLatestVersion))
   }
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[VersionedSummary] = {
+  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedLatestVersion] = {
     versionedModelService.getLatestVersionSummary(name) map {
-      case Some(entity) => entity
+      case Some(entity) => entity.toNamedLatestVersion
       case None => throw notFound()
     }
   }
