@@ -49,7 +49,6 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
 
   @PutMapping(path = Array("/{name}/{version}/defaults"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def updateDefaults(@AuthenticationPrincipal user: UserDetails,
                      @PathVariable name: String,
                      @PathVariable version: String,
@@ -68,7 +67,6 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
 
   @PostMapping(path = Array("/{name}/{version}/defaults"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def addDefault(@AuthenticationPrincipal user: UserDetails,
                  @PathVariable name: String,
                  @PathVariable version: String,

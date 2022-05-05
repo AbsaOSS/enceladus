@@ -84,7 +84,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
         ))
 
-        val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
+        val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
 
         assertCreated(response)
         val locationHeader = response.getHeaders.getFirst("location")
@@ -104,7 +104,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     "return 400" when {
       "a Schema is created (empty fields = warning)" in {
         val schema = SchemaFactory.getDummySchema("schemaA")
-        val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
+        val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
 
         assertBadRequest(response)
         response.getBody shouldBe Validation.empty
@@ -115,7 +115,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)))
         schemaFixture.add(schema)
 
-        val response = sendPostByAdmin[Schema, Validation](apiUrl, bodyOpt = Some(schema))
+        val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
 
         assertBadRequest(response)
 
@@ -124,14 +124,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           .withError("name", "entity with name already exists: 'dummyName'")
 
         assert(actual == expected)
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl" in {
-        val schema = SchemaFactory.getDummySchema()
-        val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
@@ -147,7 +139,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         val schema2 = SchemaFactory.getDummySchema("schemaA", fields = List(
           SchemaField("anotherField", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
         ))
-        val response = sendPutByAdmin[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
+        val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
 
         assertCreated(response)
         val locationHeader = response.getHeaders.getFirst("location")
@@ -170,22 +162,11 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         schemaFixture.add(schema1)
 
         val schema2 = SchemaFactory.getDummySchema("schemaA")
-        val response = sendPutByAdmin[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
+        val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
 
         assertBadRequest(response)
         response.getBody shouldBe Validation.empty
           .withError("schema-fields", "No fields found! There must be fields defined for actual usage.")
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl" in {
-        val schema1 = SchemaFactory.getDummySchema("schemaA")
-        schemaFixture.add(schema1)
-
-        val schema = SchemaFactory.getDummySchema("schemaA")
-        val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
@@ -364,7 +345,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           schemaFixture.add(schema)
 
           val schemaParams = HashMap[String, String]("format" -> "copybook")
-          val responseUploaded = sendPostUploadFileByAdmin[Validation](
+          val responseUploaded = sendPostUploadFile[Validation](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Copybook.ok, schemaParams)
           assertCreated(responseUploaded)
           val locationHeader = responseUploaded.getHeaders.getFirst("location")
@@ -386,7 +367,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           schemaFixture.add(schema)
 
           val schemaParams = HashMap[String, Any]("format" -> "struct")
-          val responseUploaded = sendPostUploadFileByAdmin[Validation](
+          val responseUploaded = sendPostUploadFile[Validation](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
           assertCreated(responseUploaded)
           val locationHeader = responseUploaded.getHeaders.getFirst("location")
@@ -408,7 +389,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           schemaFixture.add(schema)
 
           val schemaParams = HashMap[String, Any]("format" -> "avro")
-          val responseUploaded = sendPostUploadFileByAdmin[Schema](
+          val responseUploaded = sendPostUploadFile[Schema](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Avro.ok, schemaParams)
           assertCreated(responseUploaded)
           val locationHeader = responseUploaded.getHeaders.getFirst("location")
@@ -431,7 +412,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         schemaFixture.add(schema)
 
         val schemaParams = HashMap.empty[String, Any] // v2 fallbacked on this, v3 forbids it
-        val response = sendPostUploadFileByAdmin[String](
+        val response = sendPostUploadFile[String](
           s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
         assertBadRequest(response)
         response.getBody should include("Required String parameter 'format' is not present")
@@ -442,7 +423,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         schemaFixture.add(schema)
 
         val schemaParams = HashMap[String, Any]("format" -> "") // v2 fallbacked on this, v3 forbids it
-        val response = sendPostUploadFileByAdmin[String](
+        val response = sendPostUploadFile[String](
           s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
         assertBadRequest(response)
         response.getBody should include("not a recognized schema format. Menas currently supports: struct, copybook, avro.")
@@ -451,7 +432,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
       "a copybook with a syntax error" should {
         "return a response containing a schema parsing error with syntax error specific fields" in {
           val schemaParams = HashMap[String, Any]("format" -> "copybook")
-          val response = sendPostUploadFileByAdmin[RestResponse](
+          val response = sendPostUploadFile[RestResponse](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Copybook.bogus, schemaParams)
           val body = response.getBody
 
@@ -471,7 +452,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
       "a JSON struct type schema with a syntax error" should {
         "return a response containing a schema parsing error returned by the StructType parser" in {
           val schemaParams = HashMap[String, Any]("format" -> "struct")
-          val response = sendPostUploadFileByAdmin[RestResponse](
+          val response = sendPostUploadFile[RestResponse](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.bogus, schemaParams)
           val body = response.getBody
 
@@ -489,7 +470,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
       "an avro-schema with a syntax error" should {
         "return a response containing a schema parsing error encountered during avro schema parsing" in {
           val schemaParams = HashMap[String, Any]("format" -> "avro")
-          val response = sendPostUploadFileByAdmin[RestResponse](
+          val response = sendPostUploadFile[RestResponse](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Avro.bogus, schemaParams)
           val body = response.getBody
 
@@ -507,7 +488,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
       "a wrong format has been specified" should {
         "return a response containing a schema format error" in {
           val schemaParams = HashMap[String, Any]("format" -> "foo")
-          val response = sendPostUploadFileByAdmin[RestResponse](
+          val response = sendPostUploadFile[RestResponse](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.bogus, schemaParams)
           val body = response.getBody
 
@@ -526,18 +507,9 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     "return 404" when {
       "a schema file is uploaded, but no schema exists for the specified name and version" in {
         val schemaParams = HashMap[String, Any]("format" -> "copybook")
-        val responseUploaded = sendPostUploadFileByAdmin[Schema](
+        val responseUploaded = sendPostUploadFile[Schema](
           s"$apiUrl/schemaA/1/from-file", TestResourcePath.Copybook.ok, schemaParams)
         assertNotFound(responseUploaded)
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl/{name}/{version}/from-file" in {
-        val schemaParams = HashMap[String, Any]("format" -> "copybook")
-        val response = sendPostUploadFile[Schema](
-          s"$apiUrl/irrelevantWhatSchema/123/from-file", TestResourcePath.Copybook.ok, schemaParams)
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
@@ -574,7 +546,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
           val params = HashMap[String, Any]("format" -> "copybook", "remoteUrl" -> remoteUrl)
-          val responseRemoteLoaded = sendPostRemoteFileByAdmin[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
@@ -598,7 +570,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
 
           val params = HashMap("remoteUrl" -> remoteUrl, "format" -> "struct")
-          val responseRemoteLoaded = sendPostRemoteFileByAdmin[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
@@ -622,7 +594,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "remoteUrl" -> remoteUrl)
-          val responseRemoteLoaded = sendPostRemoteFileByAdmin[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
@@ -651,7 +623,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
               .willReturn(readTestResourceAsResponseWithContentType(testResourcePath)))
 
             val params = HashMap("format" -> schemaType.toString, "remoteUrl" -> remoteUrl)
-            val response = sendPostRemoteFileByAdmin[RestResponse](s"$apiUrl/schemaA/1/from-remote-uri", params)
+            val response = sendPostRemoteFile[RestResponse](s"$apiUrl/schemaA/1/from-remote-uri", params)
             val body = response.getBody
 
             assertBadRequest(response)
@@ -672,7 +644,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
 
           val params = HashMap[String, Any]("format" -> "foo", "remoteUrl" -> remoteUrl)
-          val response = sendPostRemoteFileByAdmin[RestResponse](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val response = sendPostRemoteFile[RestResponse](s"$apiUrl/schemaA/1/from-remote-uri", params)
           val body = response.getBody
 
           assertBadRequest(response)
@@ -693,17 +665,8 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
         val params = HashMap[String, Any]("format" -> "copybook", "remoteUrl" -> remoteUrl)
-        val response = sendPostRemoteFileByAdmin[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+        val response = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
         assertNotFound(response)
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl/{name}/{version}/from-remote-uri" in {
-        // no need for any mocking, auth check should precede further processing
-        val params = HashMap[String, Any]("format" -> "copybook", "remoteUrl" -> remoteUrl)
-        val response = sendPostRemoteFile[Schema](s"$apiUrl/irrelevantWhatSchema/123/from-remote-uri", params)
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
@@ -721,7 +684,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopic1-value")
-          val responseRemoteLoaded = sendPostSubjectByAdmin[Schema](s"$apiUrl/schemaA/1/from-registry", params)
+          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/schemaA/1/from-registry", params)
           assertCreated(responseRemoteLoaded)
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
@@ -746,7 +709,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopic2")
-          val responseRemoteLoaded = sendPostSubjectByAdmin[Schema](s"$apiUrl/schemaA/1/from-registry", params)
+          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/schemaA/1/from-registry", params)
           assertCreated(responseRemoteLoaded)
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
@@ -759,15 +722,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assert(actual.version == schema.version + 1)
           assert(actual.fields.length == 7)
         }
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl/{name}/{version}/from-registry" in {
-        // no need for any mocking, auth check should precede further processing
-        val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopicABC")
-        val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/irrelevantWhatSchema/123/from-registry", params)
-        responseRemoteLoaded.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }

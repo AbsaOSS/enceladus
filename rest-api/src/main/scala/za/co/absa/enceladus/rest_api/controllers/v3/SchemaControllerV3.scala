@@ -87,7 +87,6 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-file"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
@@ -123,7 +122,6 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-remote-uri"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
@@ -151,7 +149,6 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-registry"))
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("@authConstants.hasAdminRole(authentication)")
   def handleSubject(@AuthenticationPrincipal principal: UserDetails,
                     @PathVariable name: String,
                     @PathVariable version: Int,
