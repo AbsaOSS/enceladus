@@ -24,6 +24,8 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{ExportableObject, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.v3.PropertyDefinitionServiceV3
 
 import java.util.Optional
@@ -69,14 +71,11 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
     super.edit(user, name, version, item, request)
   }
 
-  @DeleteMapping(Array("/{name}", "/{name}/{version}"))
+  @DeleteMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def disable(@PathVariable name: String,
-              @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-
-    super.disable(name, version)
+  override def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    super.disable(name)
   }
-
 }
 

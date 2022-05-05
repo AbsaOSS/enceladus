@@ -328,7 +328,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val mtB = MappingTableFactory.getDummyMappingTable(name = "mtB", version = 1)
           mappingTableFixture.add(mtA1, mtA2, mtB)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/mtA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mtA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -354,7 +354,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val mtA2 = MappingTableFactory.getDummyMappingTable(name = "mtA", version = 2, disabled = false)
           mappingTableFixture.add(mtA1, mtA2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/mtA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mtA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -376,7 +376,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
           mappingTableFixture.add(mappingTable1, mappingTable2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/mappingTable")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mappingTable")
 
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
@@ -406,7 +406,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", conformance = List(mcr("mappingTable", 2)), disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/mappingTable")
+          val response = sendDelete[UsedIn](s"$apiUrl/mappingTable")
 
           assertBadRequest(response)
           response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
@@ -417,19 +417,9 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
     "return 404" when {
       "no MappingTable with the given name exists" should {
         "disable nothing" in {
-          val response = sendDeleteByAdmin[String](s"$apiUrl/aMappingTable")
+          val response = sendDelete[String](s"$apiUrl/aMappingTable")
           assertNotFound(response)
         }
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for DELETE" in {
-        val mappingTableV1 = MappingTableFactory.getDummyMappingTable(name = "mappingTableA", version = 1)
-        mappingTableFixture.add(mappingTableV1)
-
-        val response = sendDelete[Validation](s"$apiUrl/mappingTableA")
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }

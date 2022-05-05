@@ -117,19 +117,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(dataset1)
 
         val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("a new version attempt"))
-        val response = sendPostByAdmin[Dataset, EntityDisabledException](apiUrl, bodyOpt = Some(dataset2))
+        val response = sendPost[Dataset, EntityDisabledException](apiUrl, bodyOpt = Some(dataset2))
 
         assertBadRequest(response)
         response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST" in {
-        val dataset = DatasetFactory.getDummyDataset("dummyDs")
-
-        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -340,7 +331,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(dataset1)
 
         val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("ds update"))
-        val response = sendPutByAdmin[Dataset, EntityDisabledException](s"$apiUrl/dummyDs/1", bodyOpt = Some(dataset2))
+        val response = sendPut[Dataset, EntityDisabledException](s"$apiUrl/dummyDs/1", bodyOpt = Some(dataset2))
 
         assertBadRequest(response)
         response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
@@ -925,7 +916,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1, disabled = true)
           datasetFixture.add(dsA1, dsA2, dsB)
 
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/dsA")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/dsA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = false)
 
@@ -951,7 +942,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = false)
           datasetFixture.add(dsA1, dsA2)
 
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/dsA")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/dsA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = false)
 
@@ -970,20 +961,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 404" when {
       "no Dataset with the given name exists" should {
         "enable nothing" in {
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/aDataset")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/aDataset")
           assertNotFound(response)
         }
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for DELETE" in {
-        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        datasetFixture.add(datasetV1)
-
-        val response = sendDelete[Validation](s"$apiUrl/datasetA")
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
@@ -997,7 +977,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1)
           datasetFixture.add(dsA1, dsA2, dsB)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/dsA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/dsA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -1023,7 +1003,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2, disabled = false)
           datasetFixture.add(dsA1, dsA2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/dsA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/dsA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -1042,20 +1022,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     "return 404" when {
       "no Dataset with the given name exists" should {
         "disable nothing" in {
-          val response = sendDeleteByAdmin[String](s"$apiUrl/aDataset")
+          val response = sendDelete[String](s"$apiUrl/aDataset")
           assertNotFound(response)
         }
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for DELETE" in {
-        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
-        datasetFixture.add(datasetV1)
-
-        val response = sendDelete[Validation](s"$apiUrl/datasetA")
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }

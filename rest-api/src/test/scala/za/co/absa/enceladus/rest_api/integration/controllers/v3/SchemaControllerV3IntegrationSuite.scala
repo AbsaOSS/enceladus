@@ -795,7 +795,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schB = SchemaFactory.getDummySchema(name = "schB", version = 1, disabled = true)
           schemaFixture.add(schA1, schA2, schB)
 
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/schA")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/schA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = false)
 
@@ -821,7 +821,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = false)
           schemaFixture.add(schA1, schA2)
 
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/schA")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/schA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = false)
 
@@ -840,21 +840,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     "return 404" when {
       "no Schema with the given name exists" should {
         "enable nothing" in {
-          val response = sendPutByAdmin[String, DisabledPayload](s"$apiUrl/aSchema")
+          val response = sendPut[String, DisabledPayload](s"$apiUrl/aSchema")
           assertNotFound(response)
         }
       }
     }
 
-    "return 403" when {
-      s"admin auth is not used for DELETE" in {
-        val schemaV1 = SchemaFactory.getDummySchema(name = "schemaA", version = 1)
-        schemaFixture.add(schemaV1)
-
-        val response = sendDelete[Validation](s"$apiUrl/schemaA")
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
-      }
-    }
   }
 
   s"DELETE $apiUrl/{name}" can {
@@ -866,7 +857,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schB = SchemaFactory.getDummySchema(name = "schB", version = 1)
           schemaFixture.add(schA1, schA2, schB)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/schA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -892,7 +883,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schA2 = SchemaFactory.getDummySchema(name = "schA", version = 2, disabled = false)
           schemaFixture.add(schA1, schA2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schA")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/schA")
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
 
@@ -914,7 +905,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schema")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/schema")
 
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
@@ -937,7 +928,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/schema")
+          val response = sendDelete[DisabledPayload](s"$apiUrl/schema")
 
           assertOk(response)
           response.getBody shouldBe DisabledPayload(disabled = true)
@@ -967,7 +958,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", schemaName = "schema", schemaVersion = 2, disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[UsedIn](s"$apiUrl/schema")
 
           assertBadRequest(response)
           response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
@@ -983,7 +974,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", schemaName = "schema", schemaVersion = 2, disabled = false)
           mappingTableFixture.add(mappingTable1, mappingTable2)
 
-          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[UsedIn](s"$apiUrl/schema")
           assertBadRequest(response)
 
           response.getBody shouldBe UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
@@ -1001,7 +992,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", schemaName = "schema", schemaVersion = 2)
           datasetFixture.add(dataset2)
 
-          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[UsedIn](s"$apiUrl/schema")
           assertBadRequest(response)
 
           response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
@@ -1012,19 +1003,9 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     "return 404" when {
       "no Schema with the given name exists" should {
         "disable nothing" in {
-          val response = sendDeleteByAdmin[String](s"$apiUrl/aSchema")
+          val response = sendDelete[String](s"$apiUrl/aSchema")
           assertNotFound(response)
         }
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for DELETE" in {
-        val schemaV1 = SchemaFactory.getDummySchema(name = "schemaA", version = 1)
-        schemaFixture.add(schemaV1)
-
-        val response = sendDelete[Validation](s"$apiUrl/schemaA")
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
   }
