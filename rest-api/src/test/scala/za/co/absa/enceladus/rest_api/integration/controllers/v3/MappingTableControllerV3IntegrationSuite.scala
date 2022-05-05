@@ -51,19 +51,11 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       "referenced schema does not exits" in {
         val mtA = MappingTableFactory.getDummyMappingTable("mtA", schemaName = "mtSchemaA", schemaVersion = 1)
 
-        val response = sendPostByAdmin[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
+        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
 
         assertBadRequest(response)
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("schema" -> List("Schema mtSchemaA v1 not found!")))
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST $apiUrl" in {
-        val mtA = MappingTableFactory.getDummyMappingTable("mtA", schemaName = "mtSchemaA", schemaVersion = 1)
-        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -74,7 +66,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
-        val response = sendPostByAdmin[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
+        val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
         assertCreated(response)
         val locationHeader = response.getHeaders.getFirst("location")
         locationHeader should endWith("/api-v3/mapping-tables/mtA/1")
@@ -136,9 +128,9 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       "when the name/version does not exist" in {
         mappingTableFixture.add(MappingTableFactory.getDummyMappingTable("mtA"))
 
-        assertNotFound(sendPutByAdmin[Array[DefaultValue], String](s"$apiUrl/notFoundMt/456/defaults", bodyOpt = Some(Array())))
-        assertNotFound(sendPutByAdmin[Array[DefaultValue], String](s"$apiUrl/mtA/456/defaults", bodyOpt = Some(Array())))
-        assertNotFound(sendPutByAdmin[Array[DefaultValue], String](s"$apiUrl/notFoundMt/latest/defaults", bodyOpt = Some(Array())))
+        assertNotFound(sendPut[Array[DefaultValue], String](s"$apiUrl/notFoundMt/456/defaults", bodyOpt = Some(Array())))
+        assertNotFound(sendPut[Array[DefaultValue], String](s"$apiUrl/mtA/456/defaults", bodyOpt = Some(Array())))
+        assertNotFound(sendPut[Array[DefaultValue], String](s"$apiUrl/notFoundMt/latest/defaults", bodyOpt = Some(Array())))
       }
     }
 
@@ -150,21 +142,13 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
         mappingTableFixture.add(mtAv1, mtAv2, mtAv3)
 
-        val response = sendPutByAdmin[Array[DefaultValue], Validation](s"$apiUrl/mtA/2/defaults", bodyOpt = Some(Array()))
+        val response = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/2/defaults", bodyOpt = Some(Array()))
 
         assertBadRequest(response)
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("version" ->
           List("Version 2 of mtA is not the latest version, therefore cannot be edited")
         ))
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for PUT" in {
-        // no need for fixture whip-up, auth check should precede further processing
-        val response = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(Array.empty[DefaultValue]))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -179,7 +163,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
           schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
-          val response1 = sendPutByAdmin[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(bothPayloadAndExpectedResult))
+          val response1 = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(bothPayloadAndExpectedResult))
           assertCreated(response1)
           response1.getBody shouldBe Validation.empty
           val headers1 = response1.getHeaders
@@ -200,9 +184,9 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         mappingTableFixture.add(MappingTableFactory.getDummyMappingTable("mtA"))
 
         val aDefaultValue = DefaultValue("colA", "defaultA")
-        assertNotFound(sendPostByAdmin[DefaultValue, String](s"$apiUrl/notFoundMt/456/defaults", bodyOpt = Some(aDefaultValue)))
-        assertNotFound(sendPostByAdmin[DefaultValue, String](s"$apiUrl/mtA/456/defaults", bodyOpt = Some(aDefaultValue)))
-        assertNotFound(sendPostByAdmin[DefaultValue, String](s"$apiUrl/notFoundMt/latest/defaults", bodyOpt = Some(aDefaultValue)))
+        assertNotFound(sendPost[DefaultValue, String](s"$apiUrl/notFoundMt/456/defaults", bodyOpt = Some(aDefaultValue)))
+        assertNotFound(sendPost[DefaultValue, String](s"$apiUrl/mtA/456/defaults", bodyOpt = Some(aDefaultValue)))
+        assertNotFound(sendPost[DefaultValue, String](s"$apiUrl/notFoundMt/latest/defaults", bodyOpt = Some(aDefaultValue)))
       }
     }
 
@@ -214,21 +198,13 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
         mappingTableFixture.add(mtAv1, mtAv2, mtAv3)
 
-        val response = sendPostByAdmin[DefaultValue, Validation](s"$apiUrl/mtA/2/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
+        val response = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/2/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
 
         assertBadRequest(response)
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("version" ->
           List("Version 2 of mtA is not the latest version, therefore cannot be edited")
         ))
-      }
-    }
-
-    "return 403" when {
-      s"admin auth is not used for POST" in {
-        // no need for fixture whip-up, auth check should precede further processing
-        val response = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
-        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
       }
     }
 
@@ -239,7 +215,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
-        val response1 = sendPostByAdmin[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
+        val response1 = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
         assertCreated(response1)
         response1.getBody shouldBe Validation.empty
         val headers1 = response1.getHeaders
