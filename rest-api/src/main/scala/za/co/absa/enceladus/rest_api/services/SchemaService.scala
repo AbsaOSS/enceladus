@@ -67,14 +67,14 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     current.setDescription(update.description).asInstanceOf[Schema]
   }
 
-  /** final - override `updateWithFields` if needed */
+  /** final - override `updateFields` if needed */
   final override def update(username: String, update: Schema): Future[Option[(Schema, Validation)]] = {
     super.update(username, update.name, update.version) { latest =>
       updateFields(latest, update)
     }
   }
 
-  /** final - override `updateWithFields` if needed */
+  /** final - override `updateFields` if needed */
   final override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
     val initSchema = Schema(name = newSchema.name, description = newSchema.description)
 

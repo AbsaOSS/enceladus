@@ -50,11 +50,11 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
   @PutMapping(path = Array("/{name}/{version}/defaults"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  def updateDefault(@AuthenticationPrincipal user: UserDetails,
-                 @PathVariable name: String,
-                 @PathVariable version: String,
-                 @RequestBody newDefaults: Array[DefaultValue],
-                 request: HttpServletRequest
+  def updateDefaults(@AuthenticationPrincipal user: UserDetails,
+                     @PathVariable name: String,
+                     @PathVariable version: String,
+                     @RequestBody newDefaults: Array[DefaultValue],
+                     request: HttpServletRequest
                 ): CompletableFuture[ResponseEntity[Validation]] = {
     for {
       existingMtOpt <- forVersionExpression(name, version)(mappingTableService.getVersion)
@@ -75,6 +75,7 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
                  @RequestBody newDefault: DefaultValue,
                  request: HttpServletRequest
                 ): CompletableFuture[ResponseEntity[Validation]] = {
+    // request processing as above in PUT except for: mappingTableService.{updateDefaults -> addDefault} being used
     for {
       existingMtOpt <- forVersionExpression(name, version)(mappingTableService.getVersion)
       existingMt = existingMtOpt.getOrElse(throw notFound())

@@ -30,7 +30,7 @@ import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.services.v3.SchemaServiceV3
-import za.co.absa.enceladus.rest_api.services.{AttachmentService, SchemaRegistryService, SchemaService}
+import za.co.absa.enceladus.rest_api.services.{AttachmentService, SchemaRegistryService}
 import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.rest_api.utils.parsers.SchemaParser
@@ -60,7 +60,7 @@ class SchemaControllerV3 @Autowired()(
   def getJson(@PathVariable name: String,
               @PathVariable version: String,
               @RequestParam(defaultValue = "false") pretty: Boolean): CompletableFuture[String] = {
-    forVersionExpression(name, version) (schemaService.getVersion).map {
+    forVersionExpression(name, version)(schemaService.getVersion).map {
       case Some(schema) =>
         if (schema.fields.isEmpty) throw ValidationException(
           Validation.empty.withError("schema-fields", s"Schema $name v$version exists, but has no fields!")
