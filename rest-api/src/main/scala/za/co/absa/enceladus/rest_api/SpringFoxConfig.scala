@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest_api
 
 import com.google.common.base.Predicate
 import com.google.common.base.Predicates.or
-import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.context.annotation.{Bean, Configuration, Primary, Profile}
 import springfox.documentation.builders.PathSelectors.regex
 import springfox.documentation.builders.{ApiInfoBuilder, RequestHandlerSelectors}
 import springfox.documentation.spi.DocumentationType
@@ -28,34 +28,55 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 @Configuration
 @EnableSwagger2
 class SpringFoxConfig extends ProjectMetadata {
+
+  import org.springframework.beans.factory.annotation.Value
+
+  @Value("${spring.profiles.active:}")
+  private val activeProfiles: String = null
+
   @Bean
   def api(): Docket = {
+    val isDev = activeProfiles.split(",").map(_.toLowerCase).contains("dev")
+
     new Docket(DocumentationType.SWAGGER_2)
-      .apiInfo(apiInfo)
+      .apiInfo(apiInfo(isDev))
       .select
       .apis(RequestHandlerSelectors.any)
-      .paths(filteredPaths)
+      .paths(filteredPaths(isDev))
       .build
   }
 
-  private def filteredPaths: Predicate[String] =
-    or[String](
-      // api v2
+  private def filteredPaths(isDev: Boolean): Predicate[String] = {
+    val v2devPaths = Seq(
       regex("/api/dataset.*"), regex("/api/schema.*"),
       regex("/api/mappingTable.*"), regex("/api/properties.*"),
       regex("/api/monitoring.*"), regex("/api/runs.*"),
       regex("/api/user.*"), regex("/api/spark.*"),
-      regex("/api/configuration.*"),
-
-      // api v3
+      regex("/api/configuration.*")
+    )
+    val v2prodPaths = Seq(
+      regex("/api/.*/importItem"),
+      regex("/api/.*/exportItem/.*")
+    )
+    val v3paths = Seq(
       regex("/api-v3/datasets.*"), regex("/api-v3/schemas.*"),
       regex("/api-v3/mapping-tables.*"), regex("/api-v3/property-definitions.*")
-
     )
 
-  private def apiInfo =
+    val paths: Seq[Predicate[String]] = if (isDev) {
+      v2devPaths ++ v3paths
+    } else {
+      v2prodPaths ++ v3paths
+    }
+
+    or[String](
+      paths: _*
+    )
+  }
+
+  private def apiInfo(isDev: Boolean) =
     new ApiInfoBuilder()
-      .title("Menas API")
+      .title(s"Menas API${ if (isDev) " - DEV " else ""}")
       .description("Menas API reference for developers")
       .license("Apache 2.0 License")
       .version(projectVersion) // api or project?
