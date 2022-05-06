@@ -22,7 +22,7 @@
             <Bar>
                 <contentMiddle>
                     <HBox alignItems="Center" justifyContent="End" renderType="Bare">
-                        <Title text="Mapping Table: {/currentMappingTable/name} (v{/currentMappingTable/version})">
+                        <Title text="Mapping Table: {/currentMappingTable/name} (v{/currentMappingTable/version})" />
                         <core:Icon src="sap-icon://locked"
                                    visible="{= ${/currentMappingTable/locked} === true}"
                                    tooltip="Locked by {/currentMappingTable/userLocked} at {/currentMappingTable/dateLocked}"/>
