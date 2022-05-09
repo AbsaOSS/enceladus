@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
-import com.mongodb.client.result.UpdateResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -24,11 +23,9 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{ExportableObject, Validation}
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.v3.PropertyDefinitionServiceV3
 
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 
