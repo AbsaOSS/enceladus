@@ -32,7 +32,10 @@ import za.co.absa.enceladus.rest_api.integration.repositories.BaseRepositoryTest
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-abstract class BaseRestApiTest extends BaseRepositoryTest {
+abstract class BaseRestApiTestV2 extends BaseRestApiTest("/api/login", "/api")
+abstract class BaseRestApiTestV3 extends BaseRestApiTest("/api/login", "/api-v3")
+
+abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseRepositoryTest {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -50,7 +53,9 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   @Value("${menas.auth.inmemory.admin.password}")
   val adminPasswd: String = ""
 
-  private lazy val baseUrl = s"http://localhost:$port/api"
+  // expecting apiPath to be /api for v2 and /api-v3 for v3
+  private lazy val baseUrl = s"http://localhost:$port$apiPath"
+  private lazy val loginBaseUrl = s"http://localhost:$port$loginPath"
   private lazy val authHeaders = getAuthHeaders(user, passwd)
   private lazy val authHeadersAdmin = getAuthHeaders(adminUser, adminPasswd)
 
@@ -71,7 +76,7 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   }
 
   def getAuthHeaders(username: String, password: String): HttpHeaders = {
-    val loginUrl = s"$baseUrl/login?username=$username&password=$password&submit=Login"
+    val loginUrl = s"$loginBaseUrl?username=$username&password=$password&submit=Login"
 
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 
@@ -248,5 +253,7 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   def assertCreated(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.CREATED)
   }
+
+  def stripBaseUrl(fullUrl: String): String = fullUrl.stripPrefix(baseUrl)
 
 }

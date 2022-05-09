@@ -31,7 +31,7 @@ import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll with Matchers {
+class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll with Matchers {
 
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null

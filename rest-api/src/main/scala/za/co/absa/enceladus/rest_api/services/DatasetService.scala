@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import DatasetService._
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future
@@ -43,7 +44,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def update(username: String, dataset: Dataset): Future[Option[Dataset]] = {
+  override def update(username: String, dataset: Dataset): Future[Option[(Dataset, Validation)]] = {
     super.updateFuture(username, dataset.name, dataset.version) { latest =>
       updateSchedule(dataset, latest).map({ withSchedule =>
         withSchedule
@@ -52,7 +53,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
           .setHDFSPath(dataset.hdfsPath)
           .setHDFSPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
-          .setProperties(removeBlankProperties(dataset.properties))
+          .setProperties(removeBlankPropertiesOpt(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]
       })
     }
@@ -93,10 +94,18 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    Future.successful(UsedIn())
+    val existingEntity = version match {
+      case Some(version) => getVersion(name, version)
+      case None          => getLatestVersion(name)
+    }
+
+    existingEntity.flatMap {
+      case Some(_) => Future.successful(UsedIn()) // empty usedIn for existing datasets
+      case None => Future.failed(NotFoundException(s"Dataset '$name' in version ${version.getOrElse("any")}' not found"))
+    }
   }
 
-  override def create(newDataset: Dataset, username: String): Future[Option[Dataset]] = {
+  override def create(newDataset: Dataset, username: String): Future[Option[(Dataset, Validation)]] = {
     val dataset = Dataset(name = newDataset.name,
       description = newDataset.description,
       hdfsPath = newDataset.hdfsPath,
@@ -104,24 +113,26 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
       schemaName = newDataset.schemaName,
       schemaVersion = newDataset.schemaVersion,
       conformance = List(),
-      properties = removeBlankProperties(newDataset.properties))
+      properties = removeBlankPropertiesOpt(newDataset.properties))
     super.create(dataset, username)
   }
 
-  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int, rule: ConformanceRule): Future[Option[Dataset]] = {
+  def addConformanceRule(username: String, datasetName: String, datasetVersion: Int,
+                         rule: ConformanceRule): Future[Option[(Dataset, Validation)]] = {
     update(username, datasetName, datasetVersion) { dataset =>
       dataset.copy(conformance = dataset.conformance :+ rule)
     }
   }
 
-  def replaceProperties(username: String, datasetName: String,
-                        updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
+  // kept for API v2 usage only
+  def updateProperties(username: String, datasetName: String,
+                       updatedProperties: Option[Map[String, String]]): Future[Option[Dataset]] = {
     for {
       latestVersion <- getLatestVersionNumber(datasetName)
       update <- update(username, datasetName, latestVersion) { latest =>
-        latest.copy(properties = removeBlankProperties(updatedProperties))
+        latest.copy(properties = removeBlankPropertiesOpt(updatedProperties))
       }
-    } yield update
+    } yield update.map(_._1) // v2 does not expect validation on update
   }
 
   private def validateExistingProperty(key: String, value: String,
@@ -196,7 +207,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
-  def validateProperties(properties: Map[String, String], forRun: Boolean): Future[Validation] = {
+  def validateProperties(properties: Map[String, String], forRun: Boolean = false): Future[Validation] = {
 
     datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
       val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
@@ -219,7 +230,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[Dataset]] =
     datasetMongoRepository.getLatestVersions(missingProperty)
 
-  override def importItem(item: Dataset, username: String): Future[Option[Dataset]] = {
+  override def importItem(item: Dataset, username: String): Future[Option[(Dataset, Validation)]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
       case None => super.create(item.copy(version = 1), username)
@@ -260,6 +271,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
     }
   }
 
+  // CR-related methods:
   private def validateConformanceRules(conformanceRules: List[ConformanceRule],
                                        maybeSchema: Future[Option[Schema]]): Future[Validation] = {
 
@@ -426,10 +438,20 @@ object DatasetService {
    * @param properties original properties
    * @return properties without empty-string value entries
    */
-  def removeBlankProperties(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
+  private[services] def removeBlankPropertiesOpt(properties: Option[Map[String, String]]): Option[Map[String, String]]  = {
     properties.map {
-      _.filter { case (_, propValue) => propValue.nonEmpty }
+      removeBlankProperties
     }
+  }
+
+  /**
+   * Removes properties having empty-string value. Effectively mapping such properties' values from Some("") to None.
+   * This is Backend-implementation related to DatasetService.replaceBlankProperties(dataset) on Frontend
+   * @param properties original properties
+   * @return properties without empty-string value entries
+   */
+  private[services] def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
+      properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
   private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {

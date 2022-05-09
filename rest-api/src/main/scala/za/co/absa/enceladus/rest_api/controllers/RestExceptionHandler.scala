@@ -44,6 +44,11 @@ class RestExceptionHandler {
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
+  @ExceptionHandler(value = Array(classOf[IllegalArgumentException]))
+  def handleIllegalArgumentException(exception: IllegalArgumentException): ResponseEntity[Any] = {
+    ResponseEntity.badRequest().body(exception.getMessage)
+  }
+
   @ExceptionHandler(value = Array(classOf[AsyncRequestTimeoutException]))
   def handleAsyncRequestTimeoutException(exception: AsyncRequestTimeoutException): ResponseEntity[Any] = {
     val message = Option(exception.getMessage).getOrElse("Request timeout expired.")

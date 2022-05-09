@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.repositories
 
 import java.time.ZonedDateTime
-
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -62,7 +61,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
-  def getLatestVersionsSummary(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+  def getLatestVersionsSummarySearch(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
     val searchFilter = searchQuery match {
       case Some(search) => Filters.regex("name", search, "i")
       case None => Filters.expr(true)
@@ -85,12 +84,22 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
+  def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
       Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
     )
-    collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
+    collection.aggregate[VersionedSummary](pipeline).headOption()
+  }
+
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+    getLatestVersionSummary(name).map(_.map(_.latestVersion))
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
@@ -162,8 +171,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     val pipeline = Seq(
       filter(Filters.notEqual("disabled", true)),
       Aggregates.group("$name",
-      Accumulators.max("latestVersion", "$version"),
-      Accumulators.last("doc","$$ROOT")),
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.last("doc", "$$ROOT")),
       Aggregates.replaceRoot("$doc")) ++
       postAggFilter.map(Aggregates.filter)
 

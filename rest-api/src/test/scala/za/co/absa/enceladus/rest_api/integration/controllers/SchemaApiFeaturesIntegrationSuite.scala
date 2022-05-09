@@ -47,7 +47,7 @@ import scala.collection.immutable.HashMap
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
   private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))

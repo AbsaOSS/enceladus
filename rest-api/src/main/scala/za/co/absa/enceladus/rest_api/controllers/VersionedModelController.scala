@@ -17,7 +17,6 @@ package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import com.mongodb.client.result.UpdateResult
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -29,6 +28,7 @@ import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
 
+
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
 
@@ -39,7 +39,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/list", "/list/{searchQuery}"))
   @ResponseStatus(HttpStatus.OK)
   def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
-    versionedModelService.getLatestVersionsSummary(searchQuery.toScalaOption)
+    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
   }
 
   @GetMapping(Array("/searchSuggestions"))
@@ -114,7 +114,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @ResponseStatus(HttpStatus.CREATED)
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
-    versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
+    versionedModelService.importSingleItemV2(importObject.item, principal.getUsername, importObject.metadata).map {
       case Some(entity) => entity
       case None         => throw notFound()
     }
@@ -130,7 +130,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
         versionedModelService.create(item, principal.getUsername)
       }
     }.map {
-      case Some(entity) => entity
+      case Some((entity, validation)) => entity // v2 does not support validation-warnings on create
       case None         => throw notFound()
     }
   }
@@ -140,7 +140,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   def edit(@AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
-      case Some(entity) => entity
+      case Some((entity, validation)) => entity // v2 disregarding validation on edit
       case None         => throw notFound()
     }
   }
