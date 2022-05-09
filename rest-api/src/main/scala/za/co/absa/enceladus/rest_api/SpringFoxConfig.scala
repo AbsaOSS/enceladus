@@ -47,26 +47,23 @@ class SpringFoxConfig extends ProjectMetadata {
   }
 
   private def filteredPaths(isDev: Boolean): Predicate[String] = {
-    val v2devPaths = Seq(
+    val v2Paths = Seq(
       regex("/api/dataset.*"), regex("/api/schema.*"),
       regex("/api/mappingTable.*"), regex("/api/properties.*"),
       regex("/api/monitoring.*"), regex("/api/runs.*"),
       regex("/api/user.*"), regex("/api/spark.*"),
       regex("/api/configuration.*")
     )
-    val v2prodPaths = Seq(
-      regex("/api/.*/importItem"),
-      regex("/api/.*/exportItem/.*")
-    )
+
     val v3paths = Seq(
       regex("/api-v3/datasets.*"), regex("/api-v3/schemas.*"),
       regex("/api-v3/mapping-tables.*"), regex("/api-v3/property-definitions.*")
     )
 
     val paths: Seq[Predicate[String]] = if (isDev) {
-      v2devPaths ++ v3paths
+      v2Paths ++ v3paths
     } else {
-      v2prodPaths ++ v3paths
+      v3paths
     }
 
     or[String](
