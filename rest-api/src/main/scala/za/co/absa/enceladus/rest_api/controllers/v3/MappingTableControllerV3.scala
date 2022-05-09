@@ -26,6 +26,7 @@ import za.co.absa.enceladus.rest_api.services.v3.MappingTableServiceV3
 
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
+import scala.concurrent.Future
 
 @RestController
 @RequestMapping(Array("/api-v3/mapping-tables"))
@@ -54,15 +55,10 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
                      @PathVariable version: String,
                      @RequestBody newDefaults: Array[DefaultValue],
                      request: HttpServletRequest
-                ): CompletableFuture[ResponseEntity[Validation]] = {
-    for {
-      existingMtOpt <- forVersionExpression(name, version)(mappingTableService.getVersion)
-      existingMt = existingMtOpt.getOrElse(throw notFound())
-      updatedMtAndValidationOpt <- mappingTableService.updateDefaults(user.getUsername, name, existingMt.version, newDefaults.toList)
-      (updatedMt, validation) = updatedMtAndValidationOpt.getOrElse(throw notFound())
-      response = createdWithNameVersionLocationBuilder(name, updatedMt.version, request,
-        stripLastSegments = 3, suffix = s"/defaults").body(validation)  // stripping: /{name}/{version}/defaults
-    } yield response
+                    ): CompletableFuture[ResponseEntity[Validation]] = {
+    withMappingTableToResponse(name, version, user, request) { existingMt =>
+      mappingTableService.updateDefaults(user.getUsername, name, existingMt.version, newDefaults.toList)
+    }
   }
 
   @PostMapping(path = Array("/{name}/{version}/defaults"))
@@ -73,14 +69,22 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
                  @RequestBody newDefault: DefaultValue,
                  request: HttpServletRequest
                 ): CompletableFuture[ResponseEntity[Validation]] = {
-    // request processing as above in PUT except for: mappingTableService.{updateDefaults -> addDefault} being used
+    withMappingTableToResponse(name, version, user, request) { existingMt =>
+      mappingTableService.addDefault(user.getUsername, name, existingMt.version, newDefault)
+    }
+  }
+
+  private def withMappingTableToResponse(name: String, version: String, user: UserDetails, request: HttpServletRequest,
+                                         stripLastSegments: Int = 3, suffix: String = s"/defaults")
+                                        (updateExistingMtFn: MappingTable => Future[Option[(MappingTable, Validation)]]):
+  Future[ResponseEntity[Validation]] = {
     for {
       existingMtOpt <- forVersionExpression(name, version)(mappingTableService.getVersion)
       existingMt = existingMtOpt.getOrElse(throw notFound())
-      updatedMtAndValidationOpt <- mappingTableService.addDefault(user.getUsername, name, existingMt.version, newDefault)
+      updatedMtAndValidationOpt <- updateExistingMtFn(existingMt)
       (updatedMt, validation) = updatedMtAndValidationOpt.getOrElse(throw notFound())
       response = createdWithNameVersionLocationBuilder(name, updatedMt.version, request,
-        stripLastSegments = 3, suffix = s"/defaults").body(validation)  // stripping: /{name}/{version}/defaults
+        stripLastSegments, suffix).body(validation) // for .../defaults: stripping /{name}/{version}/defaults
     } yield response
   }
 
