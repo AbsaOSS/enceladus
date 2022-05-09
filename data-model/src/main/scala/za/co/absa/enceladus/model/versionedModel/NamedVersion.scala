@@ -15,4 +15,4 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-case class NamedLatestVersion(name: String, version: Int)
+case class NamedVersion(name: String, version: Int)

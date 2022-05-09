@@ -38,7 +38,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 object VersionedModelControllerV3 {
-  val LatestVersionKey = "latest"
+  final val LatestVersionKey = "latest"
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
@@ -51,16 +51,16 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   // todo maybe offset/limit?
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedLatestVersion]] = {
+  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
-      .map(_.map(_.toNamedLatestVersion))
+      .map(_.map(_.toNamedVersion))
   }
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedLatestVersion] = {
+  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedVersion] = {
     versionedModelService.getLatestVersionSummary(name) map {
-      case Some(entity) => entity.toNamedLatestVersion
+      case Some(entity) => entity.toNamedVersion
       case None => throw notFound()
     }
   }

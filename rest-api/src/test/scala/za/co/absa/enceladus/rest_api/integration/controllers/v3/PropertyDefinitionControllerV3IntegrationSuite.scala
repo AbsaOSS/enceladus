@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
-import za.co.absa.enceladus.model.versionedModel.NamedLatestVersion
+import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
@@ -142,9 +142,9 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           version = 2, parent = Some(PropertyDefinitionFactory.toParent(pdV1)))
         propertyDefinitionFixture.add(pdV1, pdV2)
 
-        val response = sendGet[NamedLatestVersion](s"$apiUrl/pdA")
+        val response = sendGet[NamedVersion](s"$apiUrl/pdA")
         assertOk(response)
-        assert(response.getBody == NamedLatestVersion("pdA", 2))
+        assert(response.getBody == NamedVersion("pdA", 2))
       }
     }
 

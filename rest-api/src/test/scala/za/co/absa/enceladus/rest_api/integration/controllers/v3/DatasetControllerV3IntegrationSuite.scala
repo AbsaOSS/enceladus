@@ -28,7 +28,7 @@ import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
-import za.co.absa.enceladus.model.versionedModel.NamedLatestVersion
+import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityDisabledException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
@@ -136,9 +136,9 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           parent = Some(DatasetFactory.toParent(datasetV1)))
         datasetFixture.add(datasetV1, datasetV2)
 
-        val response = sendGet[NamedLatestVersion](s"$apiUrl/datasetA")
+        val response = sendGet[NamedVersion](s"$apiUrl/datasetA")
         assertOk(response)
-        assert(response.getBody == NamedLatestVersion("datasetA", 2))
+        assert(response.getBody == NamedVersion("datasetA", 2))
       }
     }
 
