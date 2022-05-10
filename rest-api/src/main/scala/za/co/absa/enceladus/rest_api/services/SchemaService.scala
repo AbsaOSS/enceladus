@@ -15,14 +15,14 @@
 
 package za.co.absa.enceladus.rest_api.services
 
+import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
+import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 
 import scala.concurrent.Future
-import org.apache.spark.sql.types.StructType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 
 @Service
 class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
@@ -39,10 +39,10 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield UsedIn(Some(usedInD), Some(usedInM))
   }
 
-  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[Option[(Schema, Validation)]] = {
+  def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[(Schema, Validation)] = {
     super.update(username, schemaName, schemaVersion)({ oldSchema =>
       oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
-    })
+    }).map(_.getOrElse(throw new IllegalArgumentException("Failed to derive new schema from file!")))
   }
 
   override def recreate(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
@@ -56,15 +56,29 @@ class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
     } yield update
   }
 
-  override def update(username: String, schema: Schema): Future[Option[(Schema, Validation)]] = {
-    super.update(username, schema.name, schema.version) { latest =>
-      latest.setDescription(schema.description).asInstanceOf[Schema]
+  /**
+   * This method applies only certain fields from `updateSchema` to the subject of this method. Here, for V2 API,
+   * only description field is applied, all other fields are disregarded - internally called at create/update
+   * @param current existing latest schema prior to changes
+   * @param update schema with create/update fields information
+   * @return
+   */
+  protected def updateFields(current: Schema, update: Schema) : Schema = {
+    current.setDescription(update.description).asInstanceOf[Schema]
+  }
+
+  /** final - override `updateFields` if needed */
+  final override def update(username: String, update: Schema): Future[Option[(Schema, Validation)]] = {
+    super.update(username, update.name, update.version) { latest =>
+      updateFields(latest, update)
     }
   }
 
-  override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
-    val schema = Schema(name = newSchema.name,
-      description = newSchema.description)
+  /** final - override `updateFields` if needed */
+  final override def create(newSchema: Schema, username: String): Future[Option[(Schema, Validation)]] = {
+    val initSchema = Schema(name = newSchema.name, description = newSchema.description)
+
+    val schema = updateFields(initSchema, newSchema)
     super.create(schema, username)
   }
 

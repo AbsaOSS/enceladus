@@ -29,7 +29,6 @@ import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.L
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
 import java.net.URI
-import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
@@ -137,7 +136,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   }
 
   @PutMapping(Array("/{name}/{version}"))
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.CREATED)
   def edit(@AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
