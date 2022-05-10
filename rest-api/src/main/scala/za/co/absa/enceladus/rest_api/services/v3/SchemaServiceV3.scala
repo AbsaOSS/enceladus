@@ -15,12 +15,15 @@
 
 package za.co.absa.enceladus.rest_api.services.v3
 
+import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
-import za.co.absa.enceladus.rest_api.services.SchemaService
+import za.co.absa.enceladus.rest_api.services.{SchemaService, VersionedModelService}
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import scala.concurrent.ExecutionContext.Implicits.global
+
 
 import scala.concurrent.Future
 

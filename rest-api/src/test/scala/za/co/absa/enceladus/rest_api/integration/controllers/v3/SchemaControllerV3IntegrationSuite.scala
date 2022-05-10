@@ -171,7 +171,6 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
     }
   }
 
-
   s"GET $apiUrl/{name}/{version}/json" should {
     "return 404" when {
       "no schema exists for the specified name" in {
