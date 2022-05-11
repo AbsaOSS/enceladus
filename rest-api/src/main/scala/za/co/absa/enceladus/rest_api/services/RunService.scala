@@ -34,12 +34,12 @@ import scala.util.{Failure, Success, Try}
 class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService(runMongoRepository) {
 
-  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
-    runMongoRepository.getRunSummariesPerDatasetName()
+  def getGroupedRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+    runMongoRepository.getGroupedRunSummariesPerDatasetName()
   }
 
-  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
-    runMongoRepository.getRunSummariesPerDatasetVersion(datasetName)
+  def getGroupedRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+    runMongoRepository.getGroupedRunSummariesPerDatasetVersion(datasetName)
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -156,6 +156,13 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Run] = {
     runMongoRepository.updateRunStatus(uniqueId, runStatus).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateRunStatus(datasetName: String, datasetVersion: Int, runId: Int, newRunStatus: RunStatus): Future[Run] = {
+    runMongoRepository.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }

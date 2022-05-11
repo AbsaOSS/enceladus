@@ -193,7 +193,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .aggregate[BsonDocument](pipeline)
   }
 
-  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+  def getGroupedRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
     val pipeline = Seq(
       project(fields(
         include("dataset"),
@@ -236,7 +236,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+  def getGroupedRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
     val pipeline = Seq(
       filter(equal("dataset", datasetName)),
       project(fields(
@@ -357,6 +357,21 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     val bsonRunStatus = BsonDocument(SerializationUtils.asJson(runStatus))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
+      Updates.set("runStatus", bsonRunStatus),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def updateRunStatus(datasetName: String, datasetVersion: Int, runId: Int, newRunStatus: RunStatus): Future[Option[Run]] = {
+    val filter = and(
+      equal("dataset", datasetName),
+      equal("datasetVersion", datasetVersion),
+      equal("runId", runId)
+    )
+
+    val bsonRunStatus = BsonDocument(SerializationUtils.asJson(newRunStatus))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      filter,
       Updates.set("runStatus", bsonRunStatus),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))

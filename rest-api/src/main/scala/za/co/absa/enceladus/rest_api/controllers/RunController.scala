@@ -63,13 +63,13 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @GetMapping(Array("/grouped"))
   @ResponseStatus(HttpStatus.OK)
   def getRunSummariesPerDatasetName(): CompletableFuture[Seq[RunDatasetNameGroupedSummary]] = {
-    runService.getRunSummariesPerDatasetName()
+    runService.getGroupedRunSummariesPerDatasetName()
   }
 
   @GetMapping(Array("/grouped/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getRunSummariesPerDatasetVersion(@PathVariable datasetName: String): CompletableFuture[Seq[RunDatasetVersionGroupedSummary]] = {
-    runService.getRunSummariesPerDatasetVersion(datasetName)
+    runService.getGroupedRunSummariesPerDatasetVersion(datasetName)
   }
 
   @GetMapping(Array("/bySparkAppId/{appId}"))
