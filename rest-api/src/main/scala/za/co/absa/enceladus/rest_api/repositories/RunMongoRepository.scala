@@ -316,6 +316,16 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection.withDocumentClass[BsonDocument].insertOne(bson).head()
   }
 
+  def getByUniqueId(uniqueId: String): Future[Option[Run]] = {
+    val filter = equal("uniqueId", uniqueId)
+
+    collection
+      .find[BsonDocument](filter)
+      .headOption()
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+      // why not just .find[Run]? Because Run.RunStatus.RunState is a Scala enum that does not play nice with bson-serde
+  }
+
   def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
     val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(checkpoint))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(

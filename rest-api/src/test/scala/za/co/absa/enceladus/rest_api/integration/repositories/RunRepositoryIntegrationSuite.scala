@@ -31,6 +31,8 @@ import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
+import java.util.UUID
+
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
@@ -87,6 +89,31 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val expected = List(dataset1ver2run1, dataset2ver1run1)
       assert(actual == expected)
+    }
+  }
+
+  val uuid1 = UUID.randomUUID().toString
+  "RunMongoRepository::getByUniqueId" should {
+    "return a defined Option of the Run when exists" when {
+      "there is a Run of the specified Dataset" in {
+        val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2, uniqueId = Some(uuid1))
+        val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+        runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+        val actual = await(runMongoRepository.getByUniqueId(uuid1))
+        assert(actual == Some(dataset1run2))
+      }
+    }
+
+    "return None when not found" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val otherId = UUID.randomUUID().toString
+        val actual = await(runMongoRepository.getByUniqueId(otherId))
+        assert(actual == None)
+      }
     }
   }
 

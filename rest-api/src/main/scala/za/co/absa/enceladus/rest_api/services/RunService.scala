@@ -89,6 +89,10 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
     runMongoRepository.getRunBySparkAppId(appId)
   }
 
+  def getRunByUniqueId(uniqueId: String): Future[Option[Run]] = {
+    runMongoRepository.getByUniqueId(uniqueId)
+  }
+
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {
     runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
       case Some(run) => run

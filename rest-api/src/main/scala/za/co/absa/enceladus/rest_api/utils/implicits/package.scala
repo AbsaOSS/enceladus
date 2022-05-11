@@ -17,7 +17,6 @@ package za.co.absa.enceladus.rest_api.utils
 
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import io.github.cbartosiak.bson.codecs.jsr310.zoneddatetime.ZonedDateTimeAsDocumentCodec
 import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
 import org.bson.codecs.configuration.{CodecRegistries, CodecRegistry}
