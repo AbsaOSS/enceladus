@@ -17,7 +17,7 @@ package za.co.absa.enceladus.plugins.builtin.common.mq.kafka
 
 import java.util.Properties
 
-import io.confluent.kafka.serializers.{AbstractKafkaAvroSerDeConfig, KafkaAvroSerializer}
+import io.confluent.kafka.serializers.{AbstractKafkaSchemaSerDeConfig, KafkaAvroSerializer}
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord, RecordMetadata}
@@ -40,7 +40,7 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
     val props = new Properties()
 
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaConnectionParams.bootstrapServers)
-    props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaConnectionParams.schemaRegistryUrl)
+    props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, kafkaConnectionParams.schemaRegistryUrl)
     props.put(CommonClientConfigs.CLIENT_ID_CONFIG, kafkaConnectionParams.clientId)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, classOf[KafkaAvroSerializer])
@@ -51,8 +51,8 @@ class InfoProducerKafka[T](kafkaConnectionParams: KafkaConnectionParams)
     })
 
     kafkaConnectionParams.schemaRegistrySecurityParams.foreach(param => {
-      props.put(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, param.credentialsSource)
-      param.userInfo.foreach(info => props.put(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG, info))
+      props.put(AbstractKafkaSchemaSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE, param.credentialsSource)
+      param.userInfo.foreach(info => props.put(AbstractKafkaSchemaSerDeConfig.USER_INFO_CONFIG, info))
     })
 
     new KafkaProducer[GenericRecord, GenericRecord](props)

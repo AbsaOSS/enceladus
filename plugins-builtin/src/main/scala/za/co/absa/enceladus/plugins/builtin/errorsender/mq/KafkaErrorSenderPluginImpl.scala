@@ -71,10 +71,10 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams) e
       log.info(s"Sending $count errors to kafka topic ${connectionParams.topicName} ...")
 
       Try {
-        val (keySchemaId, valueSchemaId) = registerSchemas(connectionParams)
+        val (keySchemaId, valueSchemaId, schemaRegistryParams) = registerSchemas(connectionParams)
 
-        val valueConfig = avroValueSchemaRegistryConfig(connectionParams.schemaRegistryUrl, valueSchemaId)
-        val keyConfig = avroKeySchemaRegistryConfig(connectionParams.schemaRegistryUrl, keySchemaId)
+        val valueConfig = avroValueSchemaRegistryConfig(schemaRegistryParams, valueSchemaId)
+        val keyConfig = avroKeySchemaRegistryConfig(schemaRegistryParams, keySchemaId)
 
         val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams, keyConfig, valueConfig)
         sendErrorsToKafka(forKafkaDf)
