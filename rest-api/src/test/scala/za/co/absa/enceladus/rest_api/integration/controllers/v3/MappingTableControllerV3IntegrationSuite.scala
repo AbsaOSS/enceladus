@@ -270,15 +270,19 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable",2)))
         datasetFixture.add(datasetA, datasetB, datasetC)
 
-        val response = sendGet[UsedIn](s"$apiUrl/mappingTable/used-in")
+        val response = sendGet[String](s"$apiUrl/mappingTable/used-in")
         assertOk(response)
 
         // datasetB is disabled -> not reported
         // datasetC is reported, because this is a version-less check
-        response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
-          mappingTables = None
-        )
+        // String-typed this time to also check isEmpty/nonEmpty serialization presence
+        response.getBody shouldBe
+          """
+            |{"datasets":[
+            |{"collection":null,"name":"datasetA","version":1},{"collection":null,"name":"datasetC","version":1}
+            |],
+            |"mappingTables":null}
+            |""".stripMargin.replaceAll("[\\r\\n]", "")
       }
     }
   }
