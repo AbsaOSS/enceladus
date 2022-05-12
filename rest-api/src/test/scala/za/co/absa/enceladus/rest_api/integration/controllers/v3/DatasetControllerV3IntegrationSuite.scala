@@ -138,7 +138,29 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         val response = sendGet[NamedVersion](s"$apiUrl/datasetA")
         assertOk(response)
-        assert(response.getBody == NamedVersion("datasetA", 2))
+        assert(response.getBody == NamedVersion("datasetA", 2, disabled = false))
+      }
+
+      "a Dataset with the given name exists - all disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1, disabled = true)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, disabled = true)
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[NamedVersion](s"$apiUrl/datasetA")
+        assertOk(response)
+        assert(response.getBody == NamedVersion("datasetA", 2, disabled = true))
+      }
+
+      "a Dataset with with mixed disabled states" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1)
+        val datasetV2 = DatasetFactory.getDummyDataset(name = "datasetA", version = 2, disabled = true)
+        datasetFixture.add(datasetV1, datasetV2)
+
+        val response = sendGet[NamedVersion](s"$apiUrl/datasetA")
+        assertOk(response)
+        assert(response.getBody == NamedVersion("datasetA", 2, disabled = true)) // mixed state -> disabled
       }
     }
 

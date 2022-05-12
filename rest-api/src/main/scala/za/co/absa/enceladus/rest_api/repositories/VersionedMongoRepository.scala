@@ -27,7 +27,7 @@ import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionedSummaryV2}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -68,10 +68,13 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     }
     val pipeline = Seq(
       filter(Filters.and(searchFilter, getNotDisabledFilter)),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")),
+      Aggregates.group("$name",
+        Accumulators.max("latestVersion", "$version")
+      ),
       sort(Sorts.ascending("_id"))
     )
-    collection.aggregate[VersionedSummary](pipeline).toFuture()
+    collection.aggregate[VersionedSummaryV2](pipeline).toFuture()
+      .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(true)))) // because of the notDisabled filter
   }
 
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {
@@ -90,7 +93,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
   def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
+      Aggregates.group("$name",
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.addToSet("disabledSet", "$disabled")
+      )
     )
     collection.aggregate[VersionedSummary](pipeline).headOption()
   }

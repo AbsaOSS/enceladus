@@ -144,7 +144,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
         val response = sendGet[NamedVersion](s"$apiUrl/pdA")
         assertOk(response)
-        assert(response.getBody == NamedVersion("pdA", 2))
+        assert(response.getBody == NamedVersion("pdA", 2, disabled = false))
       }
     }
 

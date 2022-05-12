@@ -15,4 +15,7 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-case class NamedVersion(name: String, version: Int)
+/**
+ * V3 Wrapper for [[za.co.absa.enceladus.model.versionedModel.VersionedSummary]]
+ */
+case class NamedVersion(name: String, version: Int, disabled: Boolean)

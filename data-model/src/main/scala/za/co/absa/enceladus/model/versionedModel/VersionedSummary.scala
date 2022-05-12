@@ -15,8 +15,18 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-case class VersionedSummary(_id: String, latestVersion: Int) {
-  def toNamedVersion: NamedVersion = NamedVersion(_id, latestVersion)
+/**
+ * V2 Representation of `VersionedSummary` - V2 does not carry disabled information
+ */
+case class VersionedSummaryV2(_id: String, latestVersion: Int)
+
+case class VersionedSummary(_id: String, latestVersion: Int, disabledSet: Set[Boolean]) {
+  def toV2: VersionedSummaryV2 = VersionedSummaryV2(_id, latestVersion)
+
+  def toNamedVersion: NamedVersion = {
+    val disabled = disabledSet.contains(true) // legacy mixed state reported as disabled for V3 summary
+    NamedVersion(_id, latestVersion, disabled)
+  }
 }
 
 

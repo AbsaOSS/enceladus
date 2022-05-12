@@ -30,7 +30,7 @@ import za.co.absa.enceladus.rest_api.services.DatasetService
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.versionedModel.VersionedSummary
+import za.co.absa.enceladus.model.versionedModel.VersionedSummaryV2
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevelName
 
@@ -49,9 +49,9 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @GetMapping(Array("/latest"))
   @ResponseStatus(HttpStatus.OK)
   def getLatestVersions(@RequestParam(value = "missing_property", required = false)
-                        missingProperty: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+                        missingProperty: Optional[String]): CompletableFuture[Seq[VersionedSummaryV2]] = {
     datasetService.getLatestVersions(missingProperty.toScalaOption)
-      .map(datasets => datasets.map(dataset => VersionedSummary(dataset.name, dataset.version)))
+      .map(datasets => datasets.map(dataset => VersionedSummaryV2(dataset.name, dataset.version)))
   }
 
   @PostMapping(Array("/{datasetName}/rule/create"))
