@@ -73,7 +73,8 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
     "datasetName1", datasetVersion = 1, "2020-03-30", reportVersion = 1, "output/Path1", null,
     "sourceSystem1", Some("http://runUrls1"), runId = Some(1), Some("uniqueRunId"), testNow)
 
- /* "ErrorSenderPluginParams" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
+ /* TODO to be fixed in #2042
+  "ErrorSenderPluginParams" should "getIndividualErrors (exploding, filtering by source for Standardization)" in {
     val plugin = KafkaErrorSenderPluginImpl(null, Map(), Map())
 
     plugin.getIndividualErrors(testDataDf, defaultPluginParams.copy(sourceId = SourcePhase.Standardization))
@@ -130,6 +131,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> "za.co.absa.dataquality.errors.avro.schema")
   }*/
 
+  // TODO to be fixed in #2042
   /*it should "skip sending 0 errors to kafka" in {
     val connectionParams = KafkaErrorSenderPlugin.kafkaConnectionParamsFromConfig(testConfig)
     val keySchemaRegistryConfig = KafkaErrorSenderPlugin.avroKeySchemaRegistryConfig(connectionParams)
@@ -150,6 +152,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
     assert(!sendErrorsToKafkaWasCalled, "KafkaErrorSenderPluginImpl.sentErrorToKafka should not be called for 0 errors")
   }*/
 
+  // TODO to be fixed in #2042
   /*it should "fail on incompatible parameters map" in {
     val errorPlugin: KafkaErrorSenderPluginImpl = KafkaErrorSenderPlugin.apply(testConfig)
     val bogusParamMap = Map("bogus" -> "boo")
