@@ -15,8 +15,4 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-case class VersionedSummary(_id: String, latestVersion: Int) {
-  def toNamedLatestVersion: NamedLatestVersion = NamedLatestVersion(_id, latestVersion)
-}
-
-
+case class NamedLatestVersion(name: String, version: Int)

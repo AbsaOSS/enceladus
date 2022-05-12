@@ -38,7 +38,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     used.map(refs => UsedIn(Some(refs), None))
   }
 
-  override def create(mt: MappingTable, username: String): Future[Option[MappingTable]] = {
+  override def create(mt: MappingTable, username: String): Future[Option[(MappingTable, Validation)]] = {
     val mappingTable = MappingTable(name = mt.name,
       description = mt.description,
       schemaName = mt.schemaName,
@@ -48,19 +48,19 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     super.create(mappingTable, username)
   }
 
-  def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[MappingTable]] = {
+  def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
       latest.setDefaultMappingValue(defaultValues)
     }
   }
 
-  def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[MappingTable]] = {
+  def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
       latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
     }
   }
 
-  override def update(username: String, mt: MappingTable): Future[Option[MappingTable]] = {
+  override def update(username: String, mt: MappingTable): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mt.name, mt.version) { latest =>
       latest
         .setHDFSPath(mt.hdfsPath)
@@ -71,7 +71,7 @@ class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTabl
     }
   }
 
-  override def importItem(item: MappingTable, username: String): Future[Option[MappingTable]] = {
+  override def importItem(item: MappingTable, username: String): Future[Option[(MappingTable, Validation)]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
       case None => super.create(item.copy(version = 1), username)

@@ -29,7 +29,7 @@ import scala.concurrent.{Await, Future}
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class AuthenticationIntegrationSuite extends BaseRestApiTest {
+class AuthenticationIntegrationSuite extends BaseRestApiTestV2 {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

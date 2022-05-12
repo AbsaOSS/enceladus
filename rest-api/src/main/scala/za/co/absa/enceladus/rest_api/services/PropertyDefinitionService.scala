@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.rest_api.repositories.PropertyDefinitionMongoRepository
-import za.co.absa.enceladus.model.UsedIn
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.Future
@@ -31,7 +31,7 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
 
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = Future.successful(UsedIn())
 
-  override def update(username: String, propertyDef: PropertyDefinition): Future[Option[PropertyDefinition]] = {
+  override def update(username: String, propertyDef: PropertyDefinition): Future[Option[(PropertyDefinition, Validation)]] = {
     super.update(username, propertyDef.name, propertyDef.version) { latest =>
       latest
         .setPropertyType(propertyDef.propertyType)
@@ -45,7 +45,7 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     propertyDefMongoRepository.distinctCount()
   }
 
-  override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
+  override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[(PropertyDefinition, Validation)]] = {
     val propertyDefBase = PropertyDefinition(
       name = newPropertyDef.name,
       description = newPropertyDef.description,
@@ -63,7 +63,7 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
     super.create(propertyDefinition, username)
   }
 
-  override private[services] def importItem(item: PropertyDefinition, username: String): Future[Option[PropertyDefinition]] = {
+  override private[services] def importItem(item: PropertyDefinition, username: String): Future[Option[(PropertyDefinition, Validation)]] = {
     getLatestVersionValue(item.name).flatMap {
       case Some(version) => update(username, item.copy(version = version))
       case None => super.create(item.copy(version = 1), username)

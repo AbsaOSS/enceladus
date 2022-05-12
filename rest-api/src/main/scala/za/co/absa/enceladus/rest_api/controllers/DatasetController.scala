@@ -64,7 +64,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
       latestVersion <- datasetService.getLatestVersionValue(datasetName)
       res <- latestVersion match {
         case Some(version) => datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
-          case Some(ds) => ds
+          case Some((ds, validation)) => ds // v2 disregarding validation
           case _        => throw notFound()
         }
         case _ => throw notFound()
@@ -113,7 +113,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
                         @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
+    datasetService.updateProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
       case None => throw notFound()
       case Some(dataset) =>
         val location: URI = new URI(s"/api/dataset/${dataset.name}/${dataset.version}")
