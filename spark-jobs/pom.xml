@@ -71,6 +71,11 @@
             <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-partition-sizing_${scala.compat.version}</artifactId>
+            <version>0.1.0</version>
+        </dependency>
 
         <!-- Hyperdrive -->
         <dependency>
