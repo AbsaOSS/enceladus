@@ -25,7 +25,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration, Repartitioner}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -154,9 +154,8 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    val minBlockSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxBlockSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-    val withRepartitioning = repartitionDataFrame(withPartCols, minBlockSize, maxBlockSize)
+    val repartitioner = new Repartitioner(configReader, log)
+    val withRepartitioning = repartitioner.repartition(withPartCols)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
