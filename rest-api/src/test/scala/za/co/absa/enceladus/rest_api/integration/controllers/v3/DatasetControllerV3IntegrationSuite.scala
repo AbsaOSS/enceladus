@@ -30,7 +30,6 @@ import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
-import za.co.absa.enceladus.rest_api.exceptions.EntityDisabledException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
@@ -111,19 +110,19 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
-      "disabled entity with the name already exists" in {
+      "entity with the name already exists" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset1 = DatasetFactory.getDummyDataset("dummyDs", disabled = true)
         datasetFixture.add(dataset1)
 
         val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("a new version attempt"))
-        val response = sendPost[Dataset, EntityDisabledException](apiUrl, bodyOpt = Some(dataset2))
+        val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset2))
 
         assertBadRequest(response)
-        response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
+        response.getBody shouldBe Validation.empty.withError("name", "entity with name already exists: 'dummyDs'")
+        // even if disabled, the dulicate name check has precedence and is reported first
       }
     }
-
   }
 
   s"GET $apiUrl/{name}" should {
@@ -353,10 +352,10 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         datasetFixture.add(dataset1)
 
         val dataset2 = DatasetFactory.getDummyDataset("dummyDs", description = Some("ds update"))
-        val response = sendPut[Dataset, EntityDisabledException](s"$apiUrl/dummyDs/1", bodyOpt = Some(dataset2))
+        val response = sendPut[Dataset, Validation](s"$apiUrl/dummyDs/1", bodyOpt = Some(dataset2))
 
         assertBadRequest(response)
-        response.getBody.getMessage should include("Entity dummyDs is disabled. Enable it first")
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity dummyDs is disabled!")
       }
     }
   }
@@ -430,6 +429,21 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
         response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
         response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
+      }
+      "exists and is disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // import feature checks schema presence
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetXYZ", description = Some("init version"), disabled = true)
+        datasetFixture.add(dataset1)
+
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key1"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
+        )
+
+        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity datasetXYZ is disabled!")
       }
     }
 
@@ -684,6 +698,22 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         assertBadRequest(response2)
         response2.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
       }
+      "when the dataset is disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1, disabled = true)
+        datasetFixture.add(datasetV1)
+
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("AorB", propertyType = EnumPropertyType("a", "b"))
+        )
+
+        val response = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties",
+          bodyOpt = Some(Map("AorB" -> "a")))
+
+        assertBadRequest(response)
+        val responseBody = response.getBody
+        responseBody shouldBe Validation(Map("disabled" -> List("Entity datasetA is disabled!")))
+      }
     }
 
     "201 Created with location" when {
@@ -771,6 +801,15 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val response = sendGet[Validation](s"$apiUrl/datasetA/1/validation")
         assertOk(response)
         response.getBody shouldBe Validation(Map("AorB" -> List("Value 'c' is not one of the allowed values (a, b).")))
+      }
+      "dataset is disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true)
+        datasetFixture.add(datasetV1)
+
+        val response = sendGet[Validation](s"$apiUrl/datasetA/1/validation")
+        assertOk(response)
+        response.getBody shouldBe Validation(Map("disabled" -> List("Entity datasetA is disabled!")))
       }
     }
   }
@@ -869,6 +908,17 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         assertBadRequest(response)
 
         response.getBody shouldBe Validation.empty.withError("mapping-table", "Mapping table CurrencyMappingTable v9 not found!")
+      }
+      "when dataset is disabled" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true, conformance = List(
+          LiteralConformanceRule(order = 0, "column1", true, "ABC"))
+        )
+        datasetFixture.add(datasetV1)
+
+        val response = sendPost[ConformanceRule, Validation](s"$apiUrl/datasetA/1/rules", bodyOpt = Some(exampleLitRule1))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity datasetA is disabled!")
       }
     }
 

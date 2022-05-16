@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
-import com.mongodb.client.result.UpdateResult
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
@@ -26,9 +25,8 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
-import za.co.absa.enceladus.rest_api.exceptions.{EntityDisabledException, NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
-import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.rest_api.services.v3.VersionedModelServiceV3
 
 import java.net.URI
@@ -132,13 +130,10 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def create(@AuthenticationPrincipal principal: UserDetails,
              @RequestBody item: C,
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
-    versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
-      if (isDisabled) {
-        Future.failed(EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first (PUT) to push new versions (PUT)."))
-      } else {
+
+    // enabled check is part of the validation
         versionedModelService.create(item, principal.getUsername)
-      }
-    }.map {
+      .map {
       case Some((entity, validation)) => createdWithNameVersionLocationBuilder(entity.name, entity.version, request).body(validation)
       case None => throw notFound()
     }
@@ -157,16 +152,11 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     } else if (version != item.version) {
       Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
     } else {
-      versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
-        if (isDisabled) {
-          throw EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first to create new versions.")
-        } else {
-          versionedModelService.update(user.getUsername, item).map {
-            case Some((updatedEntity, validation)) =>
-              createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
-            case None => throw notFound()
-          }
-        }
+      // disable check is already part of V3 validation
+      versionedModelService.update(user.getUsername, item).map {
+        case Some((updatedEntity, validation)) =>
+          createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
+        case None => throw notFound()
       }
     }
   }

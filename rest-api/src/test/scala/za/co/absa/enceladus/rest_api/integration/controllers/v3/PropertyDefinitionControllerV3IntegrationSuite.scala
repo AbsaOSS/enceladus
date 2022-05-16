@@ -239,6 +239,22 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response2.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
       }
+      "the pd is disabled" in {
+        val propertyDefinitionA1 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA")
+        val propertyDefinitionA2 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("second version"), version = 2, disabled = true)
+        propertyDefinitionFixture.add(propertyDefinitionA1, propertyDefinitionA2)
+
+        val propertyDefinitionA3 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("updated"),
+          propertyType = EnumPropertyType("a", "b"),
+          version = 2 // update references the last version
+        )
+
+        val response = sendPutByAdmin[PropertyDefinition, Validation](s"$apiUrl/propertyDefinitionA/2", bodyOpt = Some(propertyDefinitionA3))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionA is disabled!")
+      }
     }
 
     "return 403" when {
@@ -286,6 +302,16 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
+      }
+      "the pd is disabled" in {
+        val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionXYZ",
+          description = Some("init version"), disabled = true)
+        propertyDefinitionFixture.add(propertyDefinition1)
+
+        val response = sendPostByAdmin[String, Validation](s"$apiUrl/propertyDefinitionXYZ/import", bodyOpt = Some(importablePd))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionXYZ is disabled!")
+
       }
     }
 
