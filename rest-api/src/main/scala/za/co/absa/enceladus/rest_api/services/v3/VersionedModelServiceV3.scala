@@ -63,7 +63,7 @@ trait VersionedModelServiceV3[C <: VersionedModel with Product with Auditable[C]
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
 
-    // todo check validation of used-in dependees?
+    // todo check validation of used-in dependees? #2065
 
     mongoRepository.enableAllVersions(name, principal.getUsername)
   }

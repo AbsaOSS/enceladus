@@ -929,8 +929,8 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 
-  // todo add enable cases where dependencies are disabled/removed(?) -> should fail
-  // todo add enable cases where dependencies are ok -> should fail
+  // todo add enable cases where dependencies are disabled/removed(?) -> should fail #2065
+  // todo add enable cases where dependencies are ok -> should fail #2065
 
   s"PUT $apiUrl/{name}" can {
     "return 200" when {
