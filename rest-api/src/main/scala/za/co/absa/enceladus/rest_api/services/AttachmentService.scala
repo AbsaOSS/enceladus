@@ -25,11 +25,13 @@ import scala.concurrent.Future
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 
 @Service
-class AttachmentService @Autowired()(attachmentMongoRepository: AttachmentMongoRepository,
+class AttachmentService @Autowired()(val mongoRepository: AttachmentMongoRepository,
                                      schemaMongoRepository: SchemaMongoRepository,
                                      datasetMongoRepository: DatasetMongoRepository,
                                      mappingTableMongoRepository: MappingTableMongoRepository)
-  extends ModelService(attachmentMongoRepository) {
+  extends ModelService[MenasAttachment] {
+
+  protected val attachmentMongoRepository: AttachmentMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

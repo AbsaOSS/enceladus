@@ -27,7 +27,8 @@ import scala.concurrent.Future
 class MappingTableServiceV3 @Autowired()(mappingTableMongoRepository: MappingTableMongoRepository,
                                          datasetMongoRepository: DatasetMongoRepository,
                                          val schemaService: SchemaServiceV3)
-  extends MappingTableService(mappingTableMongoRepository, datasetMongoRepository) with HavingSchemaService {
+  extends MappingTableService(mappingTableMongoRepository, datasetMongoRepository) with HavingSchemaService
+    with VersionedModelServiceV3[MappingTable] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

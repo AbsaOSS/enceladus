@@ -26,12 +26,11 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
-import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 
 @RunWith(classOf[SpringRunner])

@@ -32,7 +32,8 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    mappingTableMongoRepository: MappingTableMongoRepository,
                                    datasetMongoRepository: DatasetMongoRepository,
                                    sparkMenasConvertor: SparkMenasSchemaConvertor)
-  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor) {
+  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
+  with VersionedModelServiceV3[Schema]{
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
