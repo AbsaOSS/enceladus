@@ -83,7 +83,7 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
         }
 
         inside(caughtException) { case SchemaParsingException(SchemaType.Avro, msg, _, _, _, cause) =>
-          msg should include("expected a valid value")
+          msg should include("expecting (JSON String, Number, Array, Object")
           cause shouldBe a[SchemaParseException]
         }
       }

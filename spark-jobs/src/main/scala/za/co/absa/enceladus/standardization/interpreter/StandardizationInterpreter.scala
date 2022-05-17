@@ -109,7 +109,7 @@ object StandardizationInterpreter {
   private def cleanTheFinalErrorColumn(dataFrame: DataFrame)
                                       (implicit spark: SparkSession, udfLib: UDFLibrary): DataFrame = {
     ArrayTransformations.flattenArrays(dataFrame, ErrorMessage.errorColumnName)
-      .withColumn(ErrorMessage.errorColumnName, callUDF(UDFNames.cleanErrCol, col(ErrorMessage.errorColumnName)))
+      .withColumn(ErrorMessage.errorColumnName, call_udf(UDFNames.cleanErrCol, col(ErrorMessage.errorColumnName)))
   }
 
   private def gatherRowErrors(origSchema: StructType)(implicit spark: SparkSession): List[Column] = {
@@ -117,7 +117,7 @@ object StandardizationInterpreter {
     origSchema.getField(corruptRecordColumn).map {_ =>
       val column = col(corruptRecordColumn)
       when(column.isNotNull, // input row was not per expected schema
-        array(callUDF(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure
+        array(call_udf(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure
         )).otherwise( // schema is OK
         typedLit(Seq.empty[ErrorMessage])
       )

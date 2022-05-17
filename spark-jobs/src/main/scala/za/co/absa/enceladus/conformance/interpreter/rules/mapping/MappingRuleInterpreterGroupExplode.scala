@@ -48,7 +48,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-    val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
+    val mappingErrUdfCall = call_udf(UDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
       array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
       typedLit(mappings))
 

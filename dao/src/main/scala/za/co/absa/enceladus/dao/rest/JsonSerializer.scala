@@ -28,6 +28,7 @@ object JsonSerializer {
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+    .configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
   def fromJson[T](json: String)

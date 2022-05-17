@@ -245,7 +245,7 @@ object TypeParser {
         flatten(array(errs.map(x => when(dropChildrenErrsCond, typedLit(Seq[ErrorMessage]())).otherwise(x)): _*)),
         // then add an error if this one is null
         when(nullErrCond,
-          array(callUDF(UDFNames.stdNullErr, lit(inputFullPathName))))
+          array(call_udf(UDFNames.stdNullErr, lit(inputFullPathName))))
           .otherwise(
             typedLit(Seq[ErrorMessage]())
           )
@@ -264,15 +264,15 @@ object TypeParser {
 
       val err: Column  = if (field.nullable) {
         when(column.isNotNull and castHasError, // cast failed
-          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
+          array(call_udf(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
         ).otherwise( // everything is OK
           typedLit(Seq.empty[ErrorMessage])
         )
       } else {
         when(column.isNull, // NULL not allowed
-          array(callUDF(UDFNames.stdNullErr, lit(columnIdForUdf)))
+          array(call_udf(UDFNames.stdNullErr, lit(columnIdForUdf)))
         ).otherwise( when(castHasError, // cast failed
-          array(callUDF(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
+          array(call_udf(UDFNames.stdCastErr, lit(columnIdForUdf), column.cast(StringType)))
         ).otherwise( // everything is OK
           typedLit(Seq.empty[ErrorMessage])
         ))
@@ -426,7 +426,7 @@ object TypeParser {
         case StringType =>
           // already validated in Standardization
           field.normalizedEncoding match {
-            case Some(MetadataValues.Encoding.Base64) => callUDF(UDFNames.binaryUnbase64, column)
+            case Some(MetadataValues.Encoding.Base64) => call_udf(UDFNames.binaryUnbase64, column)
             case Some(MetadataValues.Encoding.None) | None =>
               if (field.normalizedEncoding.isEmpty) {
                 logger.warn(s"Binary field ${field.structField.name} does not have encoding setup in metadata. Reading as-is.")

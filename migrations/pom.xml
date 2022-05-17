@@ -60,6 +60,7 @@
             <artifactId>mongo-scala-driver_${scala.compat.version}</artifactId>
             <version>${mongo.scala.driver.version}</version>
         </dependency>
+
         <dependency>
             <groupId>io.github.cbartosiak</groupId>
             <artifactId>bson-codecs-jsr310</artifactId>

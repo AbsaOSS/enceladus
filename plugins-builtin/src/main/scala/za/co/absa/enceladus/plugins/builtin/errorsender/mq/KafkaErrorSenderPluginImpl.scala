@@ -29,13 +29,15 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPlugin
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 import za.co.absa.enceladus.utils.modules._
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.abris.avro.functions.to_avro
+import za.co.absa.abris.config.ToAvroConfig
 
 import scala.util.{Failure, Success, Try}
 
 
 case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
-                                      keySchemaRegistryConfig: Map[String, String],
-                                      valueSchemaRegistryConfig: Map[String, String]) extends PostProcessor {
+                                      keySchemaRegistryConfig: ToAvroConfig,
+                                      valueSchemaRegistryConfig: ToAvroConfig) extends PostProcessor {
 
   private val log = LogManager.getLogger(classOf[KafkaErrorSenderPluginImpl])
 
@@ -122,14 +124,12 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
     val keyAvroSchemaString = KafkaErrorSenderPlugin.getKeyAvroSchemaString
 
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
-    import za.co.absa.abris.avro.functions.to_confluent_avro
 
     stdErrors.sqlContext.createDataFrame(stdErrors.rdd, valueSchemaType) // forces avsc schema to assure compatible nullability of the DF
       .select(
-        to_confluent_avro(
-          struct(lit(params.sourceSystem).as("sourceSystem")), keyAvroSchemaString, keySchemaRegistryConfig
-        ).as("key"),
-        to_confluent_avro(allValueColumns, valueAvroSchemaString, valueSchemaRegistryConfig).as("value")
+        to_avro(
+          struct(lit(params.sourceSystem).as("sourceSystem")), keyAvroSchemaString).as("key"),
+        to_avro(allValueColumns, valueAvroSchemaString).as("value")
       )
   }
 
