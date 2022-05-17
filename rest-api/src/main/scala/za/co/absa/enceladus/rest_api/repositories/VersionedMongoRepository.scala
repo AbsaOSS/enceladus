@@ -74,7 +74,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       sort(Sorts.ascending("_id"))
     )
     collection.aggregate[VersionedSummaryV2](pipeline).toFuture()
-      .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(true)))) // because of the notDisabled filter
+      .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(false)))) // because of the notDisabled filter
   }
 
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {

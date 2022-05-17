@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.model.test.factories
 
-import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.versionedModel.VersionedSummaryV2
+import za.co.absa.enceladus.model.versionedModel.VersionedSummary
+
+import java.time.ZonedDateTime
 
 object DatasetFactory extends EntityFactory[Dataset] {
 
@@ -126,8 +127,8 @@ object DatasetFactory extends EntityFactory[Dataset] {
     MenasReference(collection, name, version)
   }
 
-  def toSummaryV2(dataset: Dataset): VersionedSummaryV2 = {
-    VersionedSummaryV2(dataset.name, dataset.version)
+  def toSummary(dataset: Dataset): VersionedSummary = {
+    VersionedSummary(dataset.name, dataset.version, Set(dataset.disabled))
   }
 
 }
