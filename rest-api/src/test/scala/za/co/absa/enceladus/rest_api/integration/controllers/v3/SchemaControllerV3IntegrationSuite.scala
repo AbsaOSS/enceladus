@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
@@ -957,10 +958,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", schemaName = "schema", schemaVersion = 2, disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
         }
       }
       "the Schema is used by a enabled MappingTable" should {
@@ -973,10 +976,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", schemaName = "schema", schemaVersion = 2, disabled = false)
           mappingTableFixture.add(mappingTable1, mappingTable2)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
           assertBadRequest(response)
 
-          response.getBody shouldBe UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+          )
         }
       }
       "the Schema is used by combination of MT and DS" should {
@@ -991,10 +996,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", schemaName = "schema", schemaVersion = 2)
           datasetFixture.add(dataset2)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
           assertBadRequest(response)
 
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
+          )
         }
       }
     }

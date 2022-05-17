@@ -26,12 +26,12 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
-import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 
 
 @RunWith(classOf[SpringRunner])
@@ -412,10 +412,12 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", conformance = List(mcr("mappingTable", 2)), disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/mappingTable")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/mappingTable")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "mappingTable", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
         }
       }
     }

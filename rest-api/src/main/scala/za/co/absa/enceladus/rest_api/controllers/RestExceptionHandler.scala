@@ -116,8 +116,8 @@ class RestExceptionHandler {
   }
 
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))
-  def handleValidationException(exception: EntityInUseException): ResponseEntity[UsedIn] = {
-    ResponseEntity.badRequest().body(exception.usedIn)
+  def handleValidationException(exception: EntityInUseException): ResponseEntity[EntityInUseException] = {
+    ResponseEntity.badRequest().body(exception)
   }
 
   @ExceptionHandler(value = Array(classOf[MethodArgumentTypeMismatchException]))
