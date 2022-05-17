@@ -262,7 +262,8 @@ trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
 
   private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      throw EntityInUseException(usedIn)
+      val entityVersionStr = s"""entity "$name"${ version.map(" v" + _).getOrElse("")}""" // either "entity MyName" or "entity MyName v23"
+      throw EntityInUseException(s"""Cannot disable $entityVersionStr, because it is used in the following entities""", usedIn)
     } else {
       mongoRepository.disableVersion(name, version, principal.getUsername)
     }
