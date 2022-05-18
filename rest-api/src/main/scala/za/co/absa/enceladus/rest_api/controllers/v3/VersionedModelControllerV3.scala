@@ -47,7 +47,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // todo maybe offset/limit?
+  // todo maybe offset/limit -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
@@ -58,7 +58,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedVersion] = {
-    versionedModelService.getLatestVersionSummary(name) map {
+    versionedModelService.getLatestVersionSummary(name).map {
       case Some(entity) => entity.toNamedVersion
       case None => throw notFound()
     }
