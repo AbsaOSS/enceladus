@@ -67,7 +67,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
           case Some((ds, validation)) => ds // v2 disregarding validation
           case _        => throw notFound()
         }
-        case _ => throw notFound()
+        case _ => Future.failed(notFound())
       }
     } yield res
   }
@@ -104,7 +104,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
         } else {
           datasetService.filterProperties(dsProperties, DatasetController.paramsToPropertyDefinitionFilter(scalaFilterMap))
         }
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 
@@ -126,7 +126,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def getPropertiesValidation(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
       case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = false)
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 
@@ -135,7 +135,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def getPropertiesValidationForRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
       case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = true)
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 
