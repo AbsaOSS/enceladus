@@ -17,4 +17,5 @@ package za.co.absa.enceladus.rest_api.exceptions
 
 import za.co.absa.enceladus.model.UsedIn
 
-case class EntityInUseException(usedIn: UsedIn) extends Exception()
+case class EntityInUseException(message: String = "There are dependencies present preventing the action",
+                                usedIn: UsedIn) extends Exception()

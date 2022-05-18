@@ -28,6 +28,7 @@ import za.co.absa.enceladus.rest_api.utils.implicits._
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 @RestController
 @RequestMapping(path = Array("/api-v3/datasets"))
@@ -57,13 +58,11 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
         case Some((entity, validation)) =>
           // stripping last 3 segments (/dsName/dsVersion/properties), instead of /api-v3/dastasets/dsName/dsVersion/properties we want /api-v3/dastasets/dsName/dsVersion/properties
           createdWithNameVersionLocationBuilder(entity.name, entity.version, request, stripLastSegments = 3, suffix = "/properties")
-            .body(validation) // todo include in tests
+            .body(validation)
         case None => throw notFound()
       }
     }
   }
-
-  // todo putIntoInfoFile switch needed?
 
   @GetMapping(Array("/{name}/{version}/rules"))
   @ResponseStatus(HttpStatus.OK)
@@ -90,7 +89,7 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
             suffix = s"/rules/$addedRuleOrder").body(validation)
         case _ => throw notFound()
       }
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 

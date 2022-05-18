@@ -41,10 +41,12 @@ case class UsedIn(datasets: Option[Seq[MenasReference]] = None,
     }
   }
 
+  @JsonIgnore
   val isEmpty: Boolean = {
     normalized.datasets == None && normalized.mappingTables == None
   }
 
+  @JsonIgnore
   val nonEmpty: Boolean = !isEmpty
 }
 

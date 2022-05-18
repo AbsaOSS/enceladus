@@ -23,7 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
-import za.co.absa.enceladus.model.versionedModel._
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummaryV2}
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.menas.audit._
@@ -38,8 +38,9 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @GetMapping(Array("/list", "/list/{searchQuery}"))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+  def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummaryV2]] = {
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
+      .map(_.map(_.toV2))
   }
 
   @GetMapping(Array("/searchSuggestions"))
@@ -114,8 +115,8 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @ResponseStatus(HttpStatus.CREATED)
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
-    versionedModelService.importSingleItemV2(importObject.item, principal.getUsername, importObject.metadata).map {
-      case Some(entity) => entity
+    versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
+      case Some((entity, validation)) => entity // validation is disregarded for V2
       case None         => throw notFound()
     }
   }

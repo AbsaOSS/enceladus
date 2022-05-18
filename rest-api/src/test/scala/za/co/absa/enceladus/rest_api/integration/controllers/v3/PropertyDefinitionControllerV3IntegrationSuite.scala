@@ -29,6 +29,7 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
@@ -144,7 +145,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
         val response = sendGet[NamedVersion](s"$apiUrl/pdA")
         assertOk(response)
-        assert(response.getBody == NamedVersion("pdA", 2))
+        assert(response.getBody == NamedVersion("pdA", 2, disabled = false))
       }
     }
 
@@ -239,6 +240,22 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response2.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
       }
+      "the pd is disabled" in {
+        val propertyDefinitionA1 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA")
+        val propertyDefinitionA2 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("second version"), version = 2, disabled = true)
+        propertyDefinitionFixture.add(propertyDefinitionA1, propertyDefinitionA2)
+
+        val propertyDefinitionA3 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("updated"),
+          propertyType = EnumPropertyType("a", "b"),
+          version = 2 // update references the last version
+        )
+
+        val response = sendPutByAdmin[PropertyDefinition, Validation](s"$apiUrl/propertyDefinitionA/2", bodyOpt = Some(propertyDefinitionA3))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionA is disabled!")
+      }
     }
 
     "return 403" when {
@@ -286,6 +303,16 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
+      }
+      "the pd is disabled" in {
+        val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionXYZ",
+          description = Some("init version"), disabled = true)
+        propertyDefinitionFixture.add(propertyDefinition1)
+
+        val response = sendPostByAdmin[String, Validation](s"$apiUrl/propertyDefinitionXYZ/import", bodyOpt = Some(importablePd))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionXYZ is disabled!")
+
       }
     }
 
@@ -514,10 +541,12 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", properties = Some(Map("keyA" -> "x")), disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDeleteByAdmin[UsedIn](s"$apiUrl/keyA")
+          val response = sendDeleteByAdmin[EntityInUseException](s"$apiUrl/keyA")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "keyA", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
         }
       }
     }

@@ -15,6 +15,5 @@
 
 package za.co.absa.enceladus.rest_api.exceptions
 
-// todo, there is no usage, remove?
 case class EndpointDisabledException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
 

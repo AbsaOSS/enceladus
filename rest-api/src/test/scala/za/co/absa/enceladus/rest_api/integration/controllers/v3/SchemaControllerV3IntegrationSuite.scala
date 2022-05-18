@@ -30,6 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
@@ -167,6 +168,20 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         assertBadRequest(response)
         response.getBody shouldBe Validation.empty
           .withError("schema-fields", "No fields found! There must be fields defined for actual usage.")
+      }
+      "schema is disabled" in {
+        val schema1 = SchemaFactory.getDummySchema("schemaA", disabled = true, fields = List(
+          SchemaField("field1", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
+        ))
+        schemaFixture.add(schema1)
+
+        val schema2 = SchemaFactory.getDummySchema("schemaA", fields = List(
+          SchemaField("anotherField", "string", "", nullable = true, metadata = Map.empty, children = Seq.empty)
+        ))
+        val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
+
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity schemaA is disabled!")
       }
     }
   }
@@ -501,6 +516,16 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           }
         }
       }
+      "schema is disabled" in {
+        val schema = SchemaFactory.getDummySchema("schemaA", disabled = true)
+        schemaFixture.add(schema)
+
+        val schemaParams = HashMap[String, Any]("format" -> "struct")
+        val responseUploaded = sendPostUploadFile[Validation](
+          s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
+        assertBadRequest(responseUploaded)
+        responseUploaded.getBody shouldBe Validation.empty.withError("disabled", "Entity schemaA is disabled!")
+      }
     }
 
     "return 404" when {
@@ -545,8 +570,10 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Copybook.ok)))
 
           val params = HashMap[String, Any]("format" -> "copybook", "remoteUrl" -> remoteUrl)
-          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Validation](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
+          responseRemoteLoaded.getBody shouldBe Validation.empty
+
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
@@ -569,8 +596,9 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Json.ok)))
 
           val params = HashMap("remoteUrl" -> remoteUrl, "format" -> "struct")
-          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Validation](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
+          responseRemoteLoaded.getBody shouldBe Validation.empty
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
@@ -593,8 +621,10 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "remoteUrl" -> remoteUrl)
-          val responseRemoteLoaded = sendPostRemoteFile[Schema](s"$apiUrl/schemaA/1/from-remote-uri", params)
+          val responseRemoteLoaded = sendPostRemoteFile[Validation](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
+          responseRemoteLoaded.getBody shouldBe Validation.empty
+
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
@@ -656,6 +686,19 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           }
         }
       }
+      "the schema is disabled" in {
+        val schema = SchemaFactory.getDummySchema("schemaA", disabled = true)
+        schemaFixture.add(schema)
+
+        wireMockServer.stubFor(get(urlPathEqualTo(remoteFilePath))
+          .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+
+        val params = HashMap[String, Any]("format" -> "avro", "remoteUrl" -> remoteUrl)
+        val responseRemoteLoaded = sendPostRemoteFile[Validation](s"$apiUrl/schemaA/1/from-remote-uri", params)
+        assertBadRequest(responseRemoteLoaded)
+        responseRemoteLoaded.getBody shouldBe Validation.empty.withError("disabled", "Entity schemaA is disabled!")
+
+      }
     }
 
     "return 404" when {
@@ -683,8 +726,10 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopic1-value")
-          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/schemaA/1/from-registry", params)
+          val responseRemoteLoaded = sendPostSubject[Validation](s"$apiUrl/schemaA/1/from-registry", params)
           assertCreated(responseRemoteLoaded)
+          responseRemoteLoaded.getBody shouldBe Validation.empty
+
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
@@ -708,8 +753,10 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
             .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
 
           val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopic2")
-          val responseRemoteLoaded = sendPostSubject[Schema](s"$apiUrl/schemaA/1/from-registry", params)
+          val responseRemoteLoaded = sendPostSubject[Validation](s"$apiUrl/schemaA/1/from-registry", params)
           assertCreated(responseRemoteLoaded)
+          responseRemoteLoaded.getBody shouldBe Validation.empty
+
           val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
@@ -721,6 +768,21 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assert(actual.version == schema.version + 1)
           assert(actual.fields.length == 7)
         }
+      }
+    }
+
+    "return 400" when {
+      "the schema is disabled" in {
+        val schema = SchemaFactory.getDummySchema("schemaA", disabled = true)
+        schemaFixture.add(schema)
+
+        wireMockServer.stubFor(get(urlPathEqualTo(subjectPath("myTopic1-value")))
+          .willReturn(readTestResourceAsResponseWithContentType(TestResourcePath.Avro.ok)))
+
+        val params = HashMap[String, Any]("format" -> "avro", "subject" -> "myTopic1-value")
+        val responseRemoteLoaded = sendPostSubject[Validation](s"$apiUrl/schemaA/1/from-registry", params)
+        assertBadRequest(responseRemoteLoaded)
+        responseRemoteLoaded.getBody shouldBe Validation.empty.withError("disabled", "Entity schemaA is disabled!")
       }
     }
   }
@@ -957,10 +1019,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", schemaName = "schema", schemaVersion = 2, disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
 
           assertBadRequest(response)
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
         }
       }
       "the Schema is used by a enabled MappingTable" should {
@@ -973,10 +1037,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mapping2", schemaName = "schema", schemaVersion = 2, disabled = false)
           mappingTableFixture.add(mappingTable1, mappingTable2)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
           assertBadRequest(response)
 
-          response.getBody shouldBe UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+          )
         }
       }
       "the Schema is used by combination of MT and DS" should {
@@ -991,10 +1057,12 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", schemaName = "schema", schemaVersion = 2)
           datasetFixture.add(dataset2)
 
-          val response = sendDelete[UsedIn](s"$apiUrl/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/schema")
           assertBadRequest(response)
 
-          response.getBody shouldBe UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
+          )
         }
       }
     }

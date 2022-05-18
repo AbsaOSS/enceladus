@@ -25,10 +25,12 @@ import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 import scala.concurrent.Future
 
 @Service
-class SchemaService @Autowired() (schemaMongoRepository: SchemaMongoRepository,
+class SchemaService @Autowired() (val mongoRepository: SchemaMongoRepository,
     mappingTableMongoRepository: MappingTableMongoRepository,
     datasetMongoRepository: DatasetMongoRepository,
-    sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService(schemaMongoRepository) {
+    sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService[Schema] {
+
+  protected val schemaMongoRepository: SchemaMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

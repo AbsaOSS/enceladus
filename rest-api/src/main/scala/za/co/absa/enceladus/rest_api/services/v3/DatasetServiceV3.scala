@@ -34,7 +34,7 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
                                     mappingTableService: MappingTableServiceV3,
                                     val schemaService: SchemaServiceV3)
   extends DatasetService(datasetMongoRepository, oozieRepository, propertyDefinitionService)
-  with HavingSchemaService {
+  with HavingSchemaService with VersionedModelServiceV3[Dataset] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

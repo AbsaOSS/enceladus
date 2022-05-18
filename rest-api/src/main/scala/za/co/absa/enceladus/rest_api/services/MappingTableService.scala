@@ -23,8 +23,10 @@ import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, Mappi
 import scala.concurrent.Future
 
 @Service
-class MappingTableService @Autowired() (mappingTableMongoRepository: MappingTableMongoRepository,
-    datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService(mappingTableMongoRepository) {
+class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRepository,
+    datasetMongoRepository: DatasetMongoRepository) extends VersionedModelService[MappingTable] {
+
+  protected val mappingTableMongoRepository: MappingTableMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

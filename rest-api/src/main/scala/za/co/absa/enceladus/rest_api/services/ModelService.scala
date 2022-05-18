@@ -20,7 +20,9 @@ import za.co.absa.enceladus.rest_api.repositories.MongoRepository
 
 import scala.concurrent.Future
 
-abstract class ModelService[C](mongoRepository: MongoRepository[C]) {
+trait ModelService[C] {
+
+  def mongoRepository: MongoRepository[C]
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
