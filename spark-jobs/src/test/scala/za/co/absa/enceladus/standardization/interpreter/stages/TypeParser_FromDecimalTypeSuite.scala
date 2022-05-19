@@ -97,7 +97,6 @@ class TypeParser_FromDecimalTypeSuite extends TypeParserSuiteTemplate  {
     doTestIntoDateFieldWithPatternAndDefault(input)
   }
 
-  // todo issue #1720
   test("Into timestamp field with pattern and default") {
     doTestIntoTimestampFieldWithPatternAndDefault(input)
   }
