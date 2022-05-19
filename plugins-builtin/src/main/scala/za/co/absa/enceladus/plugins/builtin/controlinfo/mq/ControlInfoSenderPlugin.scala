@@ -41,5 +41,5 @@ class ControlInfoSenderPlugin(producer: InfoProducer[DceControlInfo]) extends Co
       measurements)
     producer.send(dceControlInfo)
   }
-  override def close(): Unit = producer.close()
+  override def close(): Unit = {}
 }

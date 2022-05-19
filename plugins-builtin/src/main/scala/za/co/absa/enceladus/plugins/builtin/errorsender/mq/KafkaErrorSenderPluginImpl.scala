@@ -20,7 +20,7 @@ import org.apache.spark.sql.functions.{col, explode, lit, size, struct, typedLit
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import KafkaErrorSenderPluginImpl._
@@ -30,14 +30,13 @@ import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 import za.co.absa.enceladus.utils.modules._
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.abris.avro.functions.to_avro
-import za.co.absa.abris.config.ToAvroConfig
+import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig}
+import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin.{avroKeySchemaRegistryConfig, avroValueSchemaRegistryConfig, registerSchemas}
 
 import scala.util.{Failure, Success, Try}
 
 
-case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
-                                      keySchemaRegistryConfig: ToAvroConfig,
-                                      valueSchemaRegistryConfig: ToAvroConfig) extends PostProcessor {
+case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams) extends PostProcessor {
 
   private val log = LogManager.getLogger(classOf[KafkaErrorSenderPluginImpl])
 
@@ -72,7 +71,12 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
       log.info(s"Sending $count errors to kafka topic ${connectionParams.topicName} ...")
 
       Try {
-        val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams)
+        val (keySchemaId, valueSchemaId, schemaRegistryParams) = registerSchemas(connectionParams)
+
+        val valueConfig = avroValueSchemaRegistryConfig(schemaRegistryParams, valueSchemaId)
+        val keyConfig = avroKeySchemaRegistryConfig(schemaRegistryParams, keySchemaId)
+
+        val forKafkaDf = prepareDataForKafka(dfWithErrors, errorSenderParams, keyConfig, valueConfig)
         sendErrorsToKafka(forKafkaDf)
       } match {
         case Success(_) => log.info(s"$count errors successfully sent to kafka topic ${connectionParams.topicName}")
@@ -117,19 +121,17 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
     stdErrors
   }
 
-  def prepareDataForKafka(stdErrors: DataFrame, params: ErrorSenderPluginParams): DataFrame = {
-    val valueAvroSchemaString = KafkaErrorSenderPlugin.getValueAvroSchemaString
+  def prepareDataForKafka(stdErrors: DataFrame, params: ErrorSenderPluginParams, keyConfig: ToAvroConfig,
+                          valueConfig: ToAvroConfig): DataFrame = {
     val valueSchemaType = KafkaErrorSenderPlugin.getValueStructTypeSchema
-
-    val keyAvroSchemaString = KafkaErrorSenderPlugin.getKeyAvroSchemaString
 
     val allValueColumns = struct(stdErrors.columns.head, stdErrors.columns.tail: _*)
 
     stdErrors.sqlContext.createDataFrame(stdErrors.rdd, valueSchemaType) // forces avsc schema to assure compatible nullability of the DF
       .select(
         to_avro(
-          struct(lit(params.sourceSystem).as("sourceSystem")), keyAvroSchemaString).as("key"),
-        to_avro(allValueColumns, valueAvroSchemaString).as("value")
+          struct(lit(params.sourceSystem).as("sourceSystem")), keyConfig).as("key"),
+        to_avro(allValueColumns, valueConfig).as("value")
       )
   }
 

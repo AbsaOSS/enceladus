@@ -25,8 +25,8 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
@@ -38,6 +38,7 @@ import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
+import za.co.absa.spark.commons.SparkVersionGuard
 
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
@@ -126,7 +127,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
 
-    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+    SparkVersionGuard.fromSpark3XCompatibilitySettings.copy(minVersionInclusive = semver"3.2.1")(log)
+      .ensureSparkVersionCompatibility(SPARK_VERSION)
 
     validateConfiguration(conf)
 

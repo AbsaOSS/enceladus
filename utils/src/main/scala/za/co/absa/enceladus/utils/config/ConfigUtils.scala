@@ -24,45 +24,33 @@ object ConfigUtils {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
-  /**
-   * Puts a config key and value to the system properties if it is not defined there.
-   *
-   * @param conf  A configuration.
-   * @param key   Configuration key.
-   */
-  def setSystemPropertyStringFallback(conf: Config, key: String): Unit = {
-    if (System.getProperty(key) == null && conf.hasPath(key)) {
-      System.setProperty(key, conf.getString(key))
+  def setSystemProperty(key: String, value: String, overrideExisting: Boolean = false): Unit = {
+    if (overrideExisting || System.getProperty(key) == null) {
+      System.setProperty(key, value)
     }
   }
 
   /**
-   * Puts a file location from a configuration to the system properties ensuring the file exists.
-   *
-   * A file provided can be at an absolute path (for client mode), e.g. /home/aabb/file.conf,
-   * but other locations are investigated as well in this order.
-   *
-   * - The exact path passed (/home/aabb/file.conf).
-   * - The file in the current directory, when spark-submit uses --files with aliases (file.conf).
-   *
-   * @param conf  A configuration.
-   * @param key   Configuration key.
+   * File path is check for existence on given path (returned as Some); as a fallback when not found on path,
+   * file is attempted to be found in current directory instead (returned as Some(justFileName.ext) -
+   * for spark-submit uses --files with aliases
+   * None is returned otherwise if not found at all
+   * @param pathFileName
+   * @return defined existing file path or None
    */
-  def setSystemPropertyFileFallback(conf: Config, key: String): Unit = {
-    if (System.getProperty(key) == null && conf.hasPath(key)) {
-      val pathFileName = conf.getString(key)
-      if (Files.exists(Paths.get(pathFileName))) {
-        log.info(s"File exists: $pathFileName")
-        System.setProperty(key, pathFileName)
+  def getExistingFilePathWithCurrentDirFallback(pathFileName: String): Option[String] = {
+    if (Files.exists(Paths.get(pathFileName))) {
+      log.info(s"File exists: $pathFileName")
+      Some(pathFileName)
+    } else {
+      log.info(s"File does not exist: $pathFileName")
+      val fileNameInCurDir = Paths.get(pathFileName).getFileName
+      if (Files.exists(fileNameInCurDir)) {
+        log.info(s"File exists: ${fileNameInCurDir.toString} (in the current directory, not in $pathFileName)")
+        Some(fileNameInCurDir.toString)
       } else {
-        log.info(s"File does not exist: $pathFileName")
-        val fileNameInCurDir = Paths.get(pathFileName).getFileName
-        if (Files.exists(fileNameInCurDir)) {
-          log.info(s"File exists: ${fileNameInCurDir.toString} (in the current directory, not in $pathFileName)")
-          System.setProperty(key, fileNameInCurDir.toString)
-        } else {
-          log.error(s"File does not exist: $pathFileName (nor ${fileNameInCurDir.toString} in the current directory)")
-        }
+        log.error(s"File does not exist: $pathFileName (nor ${fileNameInCurDir.toString} in the current directory)")
+        None
       }
     }
   }

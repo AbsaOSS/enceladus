@@ -17,19 +17,20 @@ package za.co.absa.enceladus.common
 
 import java.text.MessageFormat
 import java.time.Instant
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.SPARK_VERSION
+import org.apache.spark.{SPARK_VERSION, SparkConf}
 import org.apache.spark.sql.functions.{lit, to_date}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.{Atum, ControlType}
+import za.co.absa.commons.version.Version.VersionStringInterpolator
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
@@ -42,6 +43,8 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.SparkVersionGuard
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -52,20 +55,27 @@ trait CommonJobExecution extends ProjectMetadata {
                                          performance: PerformanceMeasurer)
 
   TimeZoneNormalizer.normalizeJVMTimeZone()
-  SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+  SparkVersionGuard.fromSpark3XCompatibilitySettings.copy(minVersionInclusive = semver"3.2.1")(log)
+    .ensureSparkVersionCompatibility(SPARK_VERSION)
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
+  protected var secureConfig: Map[String, String] = Map.empty
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
     val reportVersion = cmd.reportVersion.map(_.toString).getOrElse("")
+
+    // ssl paths stripped paths for current directory usage (expecting files distributed via spark-submit's "--files"
+    val executorSecConfig = SecureConfig.getSslProperties(configReader.config, useCurrentDirectoryPaths = true)
+
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
+      .config("spark.executor.extraJavaOptions", SecureConfig.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -74,7 +84,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def initialValidation(): Unit = {
     // This should be the first thing the app does to make secure Kafka work with our CA.
     // After Spring activates JavaX, it will be too late.
-    SecureConfig.setSecureKafkaProperties(configReader.config)
+    val secConf = SecureConfig.getSslProperties(configReader.config)
+    SecureConfig.setSystemProperties(secConf)
   }
 
   protected def prepareJob[T]()
@@ -107,7 +118,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     (minPartition, maxPartition) match {
       case (Some(min), Some(max)) if min >= max => throw new IllegalStateException(
-          s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
+        s"${CommonConfConstants.minPartitionSizeKey} has to be smaller than ${CommonConfConstants.maxPartitionSizeKey}"
       )
       case _ => //validation passed
     }
@@ -295,7 +306,9 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def addCustomDataToInfoFile(conf: ConfigReader, data: Map[String, String]): Unit = {
-    val keyPrefix = Try{conf.getString("control.info.dataset.properties.prefix")}.toOption.getOrElse("")
+    val keyPrefix = Try {
+      conf.getString("control.info.dataset.properties.prefix")
+    }.toOption.getOrElse("")
 
     log.debug(s"Writing custom data to info file (with prefix '$keyPrefix'): $data")
     data.foreach { case (key, value) =>

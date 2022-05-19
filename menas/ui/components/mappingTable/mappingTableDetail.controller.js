@@ -307,7 +307,8 @@ sap.ui.define([
 
         this._mtRestDAO = new MappingTableRestDAO();
         this._mtRestDAO.getLatestVersionByName(currentMT.name)
-          .then(version => this._model.setProperty("/editingEnabled", currentMT.version === version));
+          .then(version => this._model.setProperty("/editingEnabled",
+            this._mappingTableService.canBeEdited(currentMT, version)));
       }
     }
   });

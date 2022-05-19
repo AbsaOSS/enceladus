@@ -21,6 +21,10 @@ class PropertiesDAO {
   static getProperty(propertyName) {
     return RestClient.get(`/properties/datasets/${propertyName}`);
   }
+
+  static getProperty(propertyName) {
+    return RestClient.get(`api/properties/datasets/${propertyName}`);
+  }
 }
 
 const PropertiesService = new function () {
