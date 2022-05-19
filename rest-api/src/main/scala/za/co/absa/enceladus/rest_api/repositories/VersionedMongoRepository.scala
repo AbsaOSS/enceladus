@@ -141,6 +141,20 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
+  def setLockState(name: String, isLocked: Boolean, username: String,
+                  datetime: ZonedDateTime = ZonedDateTime.now()): Future[UpdateResult] = {
+    val (dateLocked, userLocked) = if (isLocked) {
+      (datetime, username)
+    } else {
+      (null, null)
+    }
+
+    collection.updateMany(getNameFilter(name), combine(
+      set("locked", isLocked),
+      set("dateLocked", dateLocked),
+      set("userLocked", userLocked))).toFuture()
+  }
+
   def isDisabled(name: String): Future[Boolean] = {
     val pipeline = Seq(filter(getNameFilter(name)),
       Aggregates.addFields(Field("enabled", BsonDocument("""{$toInt: {$not: "$disabled"}}"""))),

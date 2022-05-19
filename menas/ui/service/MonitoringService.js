@@ -363,8 +363,7 @@ var MonitoringService = new function() {
 
       if (oData.length > 0) {
         for (let oRun of oData) {
-          oRun["infoDate"] = new Date(oRun["informationDateCasted"]["$date"]); // milliseconds to date
-          oRun["infoDateString"] = Formatters.infoDateToString(oRun["infoDate"]);
+          oRun["infoDateString"] = oRun["controlMeasure"]["metadata"]["additionalInfo"]["enceladus_info_date"]
           oRun["startDateTime"] = new Date(oRun["startDateTimeCasted"]["$date"]); // milliseconds to date
           oRun["warnings"] = [];
 

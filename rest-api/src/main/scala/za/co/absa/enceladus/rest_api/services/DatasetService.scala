@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.services
 
+import javax.ws.rs.NotAllowedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
@@ -31,8 +32,9 @@ import DatasetService._
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
-import scala.concurrent.Future
 import scala.language.reflectiveCalls
+import scala.concurrent.Future
+import scala.language.{postfixOps, reflectiveCalls}
 import scala.util.{Failure, Success}
 
 
@@ -62,6 +64,8 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
     if (newDataset.schedule == latest.schedule) {
       Future(latest)
+    } else if (latest.lockedWithDefault) {
+      Future.failed(new NotAllowedException("Entity is locked"))
     } else if (newDataset.schedule.isEmpty) {
       Future(latest.setSchedule(None))
     } else {
