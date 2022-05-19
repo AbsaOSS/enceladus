@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.Date
+import java.time.format.DateTimeFormatter
+
 import org.apache.spark.sql.types.{DateType, MetadataBuilder, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -220,6 +222,9 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
     )
 
     val src = seq.toDF(fieldName)
+
+    //probably not the best solution
+    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     logDataFrameContent(std)
