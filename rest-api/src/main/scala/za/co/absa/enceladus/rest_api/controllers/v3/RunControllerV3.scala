@@ -1,0 +1,199 @@
+/*
+ * Copyright 2018 ABSA Group Limited
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package za.co.absa.enceladus.rest_api.controllers.v3
+
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.web.bind.annotation._
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, RunStatus}
+import za.co.absa.atum.utils.SerializationUtils
+import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.rest_api.controllers.BaseController
+import RunControllerV3.LatestKey
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
+import za.co.absa.enceladus.rest_api.services.RunService
+
+import java.util.Optional
+import java.util.concurrent.CompletableFuture
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+
+object RunControllerV3 {
+  final val LatestKey = "latest"
+}
+
+@RestController
+@RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
+class RunControllerV3 @Autowired()(runService: RunService) extends BaseController {
+
+  import za.co.absa.enceladus.rest_api.utils.implicits._
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  @GetMapping()
+  @ResponseStatus(HttpStatus.OK)
+  def list(@RequestParam startDate: Optional[String],
+           @RequestParam sparkAppId: Optional[String],
+           @RequestParam uniqueId: Optional[String]
+          ): CompletableFuture[String] = {
+
+    // todo pagination #2060
+    ((startDate.toScalaOption, sparkAppId.toScalaOption, uniqueId.toScalaOption) match {
+      case (None, None, None) => runService.getAllLatest() // no filter
+      case (Some(startDate), None, None) => runService.getByStartDate(startDate)
+      case (None, Some(sparkAppId), None) => runService.getRunBySparkAppId(sparkAppId)
+      case (None, None, Some(uniqueId)) => runService.getRunByUniqueId(uniqueId).map(_.toSeq)
+      case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
+    }).map(SerializationUtils.asJson) // todo: After Atum's model is released with @JsonScalaEnumeration, change this to return Future[Seq[Run]] natively
+  }
+
+  // todo pagination #2060
+  @GetMapping(Array("/{datasetName}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSummariesByDatasetName(@PathVariable datasetName: String,
+                                @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
+    // todo implement startDate option?
+    runService.getSummariesByDatasetName(datasetName)
+  }
+
+  // todo pagination #2060
+  @GetMapping(Array("/{datasetName}/{datasetVersion}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
+                                          @PathVariable datasetVersion: Int,
+                                          @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
+    // todo implement startDate option?
+    runService.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
+  }
+
+  @PostMapping(Array("/{datasetName}/{datasetVersion}"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def create(
+              @PathVariable datasetName: String,
+              @PathVariable datasetVersion: Int,
+              @RequestBody run: Run,
+              @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+    if (datasetName != run.dataset) {
+      Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$datasetName' != '${run.dataset}'"))
+    } else if (datasetVersion != run.datasetVersion) {
+      Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: $datasetVersion != ${run.datasetVersion}"))
+    } else {
+      runService.create(run, principal.getUsername)
+    }
+  }
+
+  // todo pagination #2060
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRun(@PathVariable datasetName: String,
+             @PathVariable datasetVersion: Int,
+             @PathVariable runId: String): CompletableFuture[String] = {
+    // todo: After Atum's model is released with @JsonScalaEnumeration, change this to return Future[Run] natively
+    getRunForRunIdExpression(datasetName, datasetVersion, runId).map(SerializationUtils.asJson) // runId support latest for GET
+  }
+
+  @PutMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def updateRunStatus(
+                       @PathVariable datasetName: String,
+                       @PathVariable datasetVersion: Int,
+                       @PathVariable runId: Int,
+                       @RequestBody newRunStatus: RunStatus,
+                       @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+    runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus)
+  }
+
+  // todo pagination #2060 ???
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/checkpoints"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunCheckpoints(@PathVariable datasetName: String,
+                        @PathVariable datasetVersion: Int,
+                        @PathVariable runId: String): CompletableFuture[Seq[Checkpoint]] = {
+    getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.checkpoints)
+  }
+
+  @PostMapping(Array("/{datasetName}/{datasetVersion}/{runId}/checkpoints"))
+  @ResponseStatus(HttpStatus.CREATED)
+  def addCheckpoint(
+                     @PathVariable datasetName: String,
+                     @PathVariable datasetVersion: Int,
+                     @PathVariable runId: Int,
+                     @RequestBody newCheckpoint: Checkpoint,
+                     @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+    runService.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint)
+  }
+
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/checkpoints/{checkpointName}"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunCheckpointByName(@PathVariable datasetName: String,
+                        @PathVariable datasetVersion: Int,
+                        @PathVariable runId: String,
+                        @PathVariable checkpointName: String): CompletableFuture[Checkpoint] = {
+    for {
+      checkpoints <- getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.checkpoints)
+      cpByName = checkpoints.find(_.name == checkpointName).getOrElse(
+        throw NotFoundException(s"Checkpoint by name '$checkpointName' was not found for Run" +
+          s"(dataset=$datasetName, dsVer=$datasetVersion, runId=$runId")
+      )
+    } yield cpByName
+  }
+
+  // todo pagination #2060 ???
+  @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/metadata"))
+  @ResponseStatus(HttpStatus.OK)
+  def getRunMetadata(@PathVariable datasetName: String,
+                        @PathVariable datasetVersion: Int,
+                        @PathVariable runId: String): CompletableFuture[ControlMeasureMetadata] = {
+    getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.metadata)
+  }
+
+  // todo: really do the following? what is the expected metaName?
+  // top-level (e.g. "country") or even lower (e.g. "additionalInfo.myFieldX")?
+  //@GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/metadata/{metadatumName}"))
+
+
+  /**
+   * For run's dataset name, version and runId (either a number of 'latest'), the `forVersionFn` is called.
+   */
+  protected def forRunIdExpression[T](datasetName: String, datasetVersion: Int, runIdStr: String)
+                                       (forVersionFn: (String, Int, Int) => Future[T]): Future[T] = {
+    getRunForRunIdExpression(datasetName, datasetVersion, runIdStr).flatMap {run =>
+      forVersionFn(datasetName, datasetVersion, run.runId)
+    }
+  }
+
+  /**
+   * Retrieves a Run by dataset name, version and runId (either a number of 'latest')
+   * @param datasetName dataset name
+   * @param datasetVersion dateset version
+   * @param runIdStr runId (either a number of 'latest')
+   * @return Run object
+   */
+  protected def getRunForRunIdExpression(datasetName: String, datasetVersion: Int, runIdStr: String): Future[Run] = {
+    runIdStr match {
+      case LatestKey => runService.getLatestRun(datasetName, datasetVersion)
+      case nonLatestRunIdString => Try(nonLatestRunIdString.toInt) match {
+        case Success(actualRunId) => runService.getRun(datasetName, datasetVersion, actualRunId)
+        case Failure(exception) =>
+          Future.failed(new IllegalArgumentException(s"Cannot convert '$runIdStr' to a valid runId expression. " +
+            s"Either use 'latest' or an actual runId number. Underlying problem: ${exception.getMessage}"))
+      }
+    }
+  }
+
+}

@@ -142,6 +142,13 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
     }
   }
 
+  def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {
+    runMongoRepository.appendCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
   def updateControlMeasure(uniqueId: String, controlMeasure: ControlMeasure): Future[Run] = {
     runMongoRepository.updateControlMeasure(uniqueId, controlMeasure).map {
       case Some(run) => run

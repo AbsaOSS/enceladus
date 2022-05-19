@@ -326,10 +326,24 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       // why not just .find[Run]? Because Run.RunStatus.RunState is a Scala enum that does not play nice with bson-serde
   }
 
-  def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
+def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
     val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(checkpoint))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
+      Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def appendCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Option[Run]] = {
+    val filter = and(
+      equal("dataset", datasetName),
+      equal("datasetVersion", datasetVersion),
+      equal("runId", runId)
+    )
+    val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(newCheckpoint))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      filter,
       Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
