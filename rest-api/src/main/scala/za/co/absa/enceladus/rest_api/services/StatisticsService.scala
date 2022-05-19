@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.services
+package za.co.absa.enceladus.rest_api.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component

@@ -19,7 +19,8 @@ import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.rest_api.exceptions.{LockedEntityException, ValidationException}
+import za.co.absa.enceladus.menas.exceptions.LockedEntityException
+import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -305,7 +306,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     )
 
     val dataset = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(properties))
-    DatasetService.removeBlankProperties(dataset.properties) shouldBe Some(Map("propKey1" -> "someValue"))
+    DatasetService.removeBlankPropertiesOpt(dataset.properties) shouldBe Some(Map("propKey1" -> "someValue"))
   }
 
   test("DatasetService.replacePrefixIfFound replaces field prefixes") {
@@ -345,10 +346,10 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
     Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
 
-    val maybeDataset = await(service.update("datasetA",
+    val maybeDataset: Option[(Dataset, Validation)] = await(service.update("datasetA",
       DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
-    assertResult(Some("newdescr"))(maybeDataset.get.description)
-    assert(!maybeDataset.get.lockedWithDefault)
+    assertResult(Some("newdescr"))(maybeDataset.get._1.description)
+    assert(!maybeDataset.get._1.lockedWithDefault)
   }
 
 }

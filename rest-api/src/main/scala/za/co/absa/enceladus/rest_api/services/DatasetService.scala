@@ -18,9 +18,8 @@ package za.co.absa.enceladus.rest_api.services
 import javax.ws.rs.NotAllowedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
-import za.co.absa.enceladus.rest_api.repositories.OozieRepository
-import za.co.absa.enceladus.rest_api.services.DatasetService.RuleValidationsAndFields
+import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.rest_api.services.DatasetService.{RuleValidationsAndFields, _}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -28,8 +27,7 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import DatasetService._
-import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.language.reflectiveCalls
@@ -64,8 +62,6 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
     if (newDataset.schedule == latest.schedule) {
       Future(latest)
-    } else if (latest.lockedWithDefault) {
-      Future.failed(new NotAllowedException("Entity is locked"))
     } else if (newDataset.schedule.isEmpty) {
       Future(latest.setSchedule(None))
     } else {
@@ -455,7 +451,7 @@ object DatasetService {
    * @return properties without empty-string value entries
    */
   private[services] def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
-      properties.filter { case (_, propValue) => propValue.nonEmpty }
+    properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
   private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {
