@@ -67,7 +67,7 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
                                 @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
-    // todo implement startDate option?
+    // todo implement startDate
     runService.getSummariesByDatasetName(datasetName)
   }
 
@@ -77,7 +77,7 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
                                           @PathVariable datasetVersion: Int,
                                           @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
-    // todo implement startDate option?
+    // todo implement startDate option
     runService.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
   }
 
