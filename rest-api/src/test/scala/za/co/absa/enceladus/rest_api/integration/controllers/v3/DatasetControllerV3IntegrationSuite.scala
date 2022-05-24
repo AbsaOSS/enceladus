@@ -110,7 +110,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
-      "entity with the name already exists" in {
+      "disabled entity with the name already exists" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset1 = DatasetFactory.getDummyDataset("dummyDs", disabled = true)
         datasetFixture.add(dataset1)
