@@ -40,7 +40,13 @@ trait VersionedModelServiceV3[C <: VersionedModel with Product with Auditable[C]
 
   // v3 has internal validation on importItem (because it is based on update), v2 only had it on import
   override def importSingleItem(item: C, username: String, metadata: Map[String, String]): Future[Option[(C, Validation)]] = {
-    importItem(item, username)
+    val metadataValidation = validateMetadata(metadata)
+    if (metadataValidation.isValid) {
+      // even if valid, merge validations results (warnings may be theoretically present)
+      importItem(item, username).map(_.map { case (item, validation) => (item, validation.merge(metadataValidation)) })
+    } else {
+      Future.failed(ValidationException(metadataValidation))
+    }
   }
 
   override private[services] def update(username: String, itemName: String, itemVersion: Int)

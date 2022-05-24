@@ -251,8 +251,6 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
     }
   }
 
-
-
   // Dataset specific:
   Seq(
     s"$apiUrl/{name}/{version}/properties",
