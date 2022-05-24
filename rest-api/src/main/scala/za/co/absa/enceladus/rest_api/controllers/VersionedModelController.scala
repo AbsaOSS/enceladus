@@ -116,7 +116,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
                          @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
     versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
-      case Some((entity, validation)) => entity // validation is disregarded for V2
+      case Some((entity, validation)) => entity // validation is disregarded for V2, import-v2 has its own
       case None         => throw notFound()
     }
   }
