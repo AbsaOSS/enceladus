@@ -110,7 +110,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("undefinedProperty1" -> List("There is no property definition for key 'undefinedProperty1'.")))
       }
-      "entity with the name already exists" in {
+      "disabled entity with the name already exists" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val dataset1 = DatasetFactory.getDummyDataset("dummyDs", disabled = true)
         datasetFixture.add(dataset1)
@@ -400,35 +400,71 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   }
 
   s"POST $apiUrl/{name}/import" should {
-    val importableDs =
-      """{"metadata":{"exportVersion":1},"item":{
-        |"name":"datasetXYZ",
-        |"description":"Hi, I am the import",
-        |"hdfsPath":"/dummy/path",
-        |"hdfsPublishPath":"/dummy/publish/path",
-        |"schemaName":"dummySchema",
-        |"schemaVersion":1,
-        |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
-        |"properties":{"key2":"val2","key1":"val1"}
-        |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+    def importableDs(name: String = "datasetXYZ", metadataContent: String = """"exportVersion":1"""): String = {
+      s"""{"metadata":{$metadataContent},"item":{
+         |"name":"$name",
+         |"description":"Hi, I am the import",
+         |"hdfsPath":"/dummy/path",
+         |"hdfsPublishPath":"/dummy/publish/path",
+         |"schemaName":"dummySchema",
+         |"schemaVersion":1,
+         |"conformance":[{"_t":"LiteralConformanceRule","order":0,"outputColumn":"outputCol1","controlCheckpoint":false,"value":"litValue1"}],
+         |"properties":{"key2":"val2","key1":"val1"}
+         |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+    }
 
     "return 400" when {
       "a Dataset with the given name" should {
         "fail when name in the URL and payload is mismatched" in {
           val response = sendPost[String, String](s"$apiUrl/datasetABC/import",
-            bodyOpt = Some(importableDs))
+            bodyOpt = Some(importableDs()))
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("name mismatch: 'datasetABC' != 'datasetXYZ'")
         }
       }
-      "imported Dataset fails validation" in {
+      "imported Dataset fails validation 1 (ref'd entities)" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
 
-        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
 
         response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
         response.getBody shouldBe Validation.empty.withError("key2", "There is no property definition for key 'key2'.")
+      }
+      "imported Dataset fails validation 2 (entityName invalid)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key1"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
+        )
+
+        val response = sendPost[String, Validation](s"$apiUrl/name$${*/import", bodyOpt = Some(importableDs(name = "name${*")))
+
+        response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+        response.getBody shouldBe Validation.empty.withError("name", "name contains whitespace: 'name${*'")
+      }
+      "imported dataset has unsupported/incorrect metadata exportVersion" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        propertyDefinitionFixture.add(PropertyDefinitionFactory.getDummyPropertyDefinition("key1")) // key2 propdef is missing
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key1"),
+          PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
+        )
+
+        val response1 = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import",
+          bodyOpt = Some(importableDs(metadataContent = """"exportVersion":6""")))
+
+        response1.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+        response1.getBody shouldBe Validation.empty.withError("metadata.exportApiVersion",
+          "Export/Import API version mismatch. Acceptable version is 1. Version passed is 6")
+
+        val response2 = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import",
+          bodyOpt = Some(importableDs(metadataContent = """"otherMetaKey":"otherMetaVal"""")))
+
+        response2.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+        response2.getBody shouldBe Validation.empty.withError("metadata.exportApiVersion",
+          "Export/Import API version mismatch. Acceptable version is 1. Version passed is null")
       }
       "exists and is disabled" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // import feature checks schema presence
@@ -440,7 +476,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
         )
 
-        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+        val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
         assertBadRequest(response)
 
         response.getBody shouldBe Validation.empty.withError("disabled", "Entity datasetXYZ is disabled!")
@@ -460,7 +496,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("key3", essentiality = Essentiality.Recommended)
           )
 
-          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
           assertCreated(response)
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/2")
@@ -490,7 +526,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             PropertyDefinitionFactory.getDummyPropertyDefinition("key2")
           )
 
-          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs))
+          val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
           assertCreated(response)
           val locationHeader = response.getHeaders.getFirst("location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/1") // this is the first version

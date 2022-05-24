@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.integration.controllers
 
 import org.junit.runner.RunWith
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
@@ -27,14 +28,14 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, PropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
+class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll with Matchers {
 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
@@ -42,10 +43,13 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
 
+  @Autowired
+  private val schemaFixture: SchemaFixtureService = null
+
   private val apiUrl = "/dataset"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture)
+  override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture)
 
   s"POST $apiUrl/create" can {
     "return 201" when {
@@ -177,7 +181,74 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
         }
       }
     }
+  }
 
+  private def importableDs(name: String = "dataset", metadataContent: String = """"exportVersion":1"""): String = {
+    s"""{"metadata":{$metadataContent},"item":{
+       |"name":"$name",
+       |"hdfsPath":"/dummy/path",
+       |"hdfsPublishPath":"/dummy/publish/path",
+       |"schemaName":"dummySchema",
+       |"schemaVersion":1,
+       |"conformance":[],
+       |"properties":{"key2":"val2","key1":"val1"}
+       |}}""".stripMargin.replaceAll("[\\r\\n]", "")
+  }
+
+  s"POST $apiUrl/importItem" should {
+    "return 201" when {
+      "the import is successful" should {
+        "return the imported PD representation" in {
+          schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // referenced schema must exists
+
+          val response = sendPost[String, Dataset](s"$apiUrl/importItem", bodyOpt = Some(importableDs()))
+          assertCreated(response)
+
+          val actual = response.getBody
+          val expectedDs = DatasetFactory.getDummyDataset("dataset", properties = Some(Map("key1" -> "val1", "key2" -> "val2")))
+          val expected = toExpected(expectedDs, actual)
+          assert(actual == expected)
+        }
+      }
+    }
+    "return 404" when {
+      "referenced schema does not exits" in {
+        // referenced schema missing
+        val response = sendPost[String, Validation](s"$apiUrl/importItem", bodyOpt = Some(importableDs()))
+        assertBadRequest(response)
+
+        response.getBody shouldBe
+          Validation.empty.withError("item.schema", "schema dummySchema v1 defined for the dataset could not be found")
+      }
+      "imported dataset has disallowed name" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // referenced schema must exists
+
+        val response = sendPost[String, Validation](s"$apiUrl/importItem", bodyOpt = Some(importableDs(name = "invalid %$. name")))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("item.name", "name 'invalid %$. name' contains unsupported characters")
+      }
+      "imported dataset has unsupported metadata exportVersion" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // referenced schema must exists
+
+        val response = sendPost[String, Validation](s"$apiUrl/importItem",
+          bodyOpt = Some(importableDs(metadataContent = """"exportVersion":6""" )))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("metadata.exportApiVersion",
+          "Export/Import API version mismatch. Acceptable version is 1. Version passed is 6")
+      }
+      "imported dataset has unsupported metadata" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // referenced schema must exists
+
+        val response = sendPost[String, Validation](s"$apiUrl/importItem",
+          bodyOpt = Some(importableDs(metadataContent = """"otherMetaKey":"otherMetaVal"""" )))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("metadata.exportApiVersion",
+          "Export/Import API version mismatch. Acceptable version is 1. Version passed is null")
+      }
+    }
   }
 
   // Dataset specific:
