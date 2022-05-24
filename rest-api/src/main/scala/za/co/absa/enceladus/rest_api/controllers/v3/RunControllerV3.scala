@@ -20,8 +20,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, RunStatus}
-import za.co.absa.atum.utils.SerializationUtils
+import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import RunControllerV3.LatestKey
@@ -50,16 +49,16 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   def list(@RequestParam startDate: Optional[String],
            @RequestParam sparkAppId: Optional[String],
            @RequestParam uniqueId: Optional[String]
-          ): CompletableFuture[String] = {
+          ): CompletableFuture[Seq[Run]] = {
 
     // todo pagination #2060
-    ((startDate.toScalaOption, sparkAppId.toScalaOption, uniqueId.toScalaOption) match {
+    (startDate.toScalaOption, sparkAppId.toScalaOption, uniqueId.toScalaOption) match {
       case (None, None, None) => runService.getAllLatest() // no filter
       case (Some(startDate), None, None) => runService.getByStartDate(startDate)
       case (None, Some(sparkAppId), None) => runService.getRunBySparkAppId(sparkAppId)
       case (None, None, Some(uniqueId)) => runService.getRunByUniqueId(uniqueId).map(_.toSeq)
       case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
-    }).map(SerializationUtils.asJson) // todo: After Atum's model is released with @JsonScalaEnumeration, change this to return Future[Seq[Run]] natively
+    }
   }
 
   // todo pagination #2060
@@ -102,9 +101,8 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   @ResponseStatus(HttpStatus.OK)
   def getRun(@PathVariable datasetName: String,
              @PathVariable datasetVersion: Int,
-             @PathVariable runId: String): CompletableFuture[String] = {
-    // todo: After Atum's model is released with @JsonScalaEnumeration, change this to return Future[Run] natively
-    getRunForRunIdExpression(datasetName, datasetVersion, runId).map(SerializationUtils.asJson) // runId support latest for GET
+             @PathVariable runId: String): CompletableFuture[Run] = {
+    getRunForRunIdExpression(datasetName, datasetVersion, runId) // runId support latest for GET
   }
 
   @PutMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))

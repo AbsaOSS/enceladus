@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.dao
 
 import org.apache.spark.sql.types.StructType
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.model._
-import za.co.absa.atum.model._
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.concurrent.CompletableFuture
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal

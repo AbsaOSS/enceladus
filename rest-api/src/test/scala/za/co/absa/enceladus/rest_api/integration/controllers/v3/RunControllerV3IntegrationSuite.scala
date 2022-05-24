@@ -62,7 +62,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
           val actual = response.getBody
           val expected = SerializationUtils.asJson(Array(dataset1ver2run1, dataset2ver1run1))
-          expected shouldBe actual
+          actual shouldBe expected
         }
         "order the results by dataset name (ASC)" in {
           val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
@@ -618,205 +618,205 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
   }
 
   // todo this is V2, remove/adjust:
-  s"POST $apiUrl/addCheckpoint/{uniqueId}" can {
-    val endpointBase = s"$apiUrl/addCheckpoint"
-    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
-
-    "return 200" when {
-      "there is a Run with the specified uniqueId" should {
-        "add the supplied checkpoint to the end of the present checkpoints and return the updated Run" in {
-          val checkpoint0 = RunFactory.getDummyCheckpoint(name = "checkpoint0")
-          val measure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint0))
-          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
-          runFixture.add(run)
-
-          val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
-
-          val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint1))
-
-          assertOk(response)
-
-          val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
-          val expected = run.copy(controlMeasure = expectedControlMeasure)
-          val body = response.getBody
-          assert(body == expected)
-        }
-      }
-    }
-
-    "return 404" when {
-      "there is no Run with the specified uniqueId" in {
-        val checkpoint = RunFactory.getDummyCheckpoint()
-
-        val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint))
-
-        assertNotFound(response)
-      }
-    }
-  }
-
-  s"POST $apiUrl/updateControlMeasure/{uniqueId}" can {
-    val endpointBase = s"$apiUrl/updateControlMeasure"
-    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
-
-    "return 200" when {
-      "there is a Run with the specified uniqueId" should {
-        "update the Run's ControlMeasure and return the updated Run" in {
-          val originalMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
-          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
-          runFixture.add(run)
-
-          val expectedMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option(uniqueId))
-
-          val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedMeasure))
-
-          assertOk(response)
-
-          val expected = run.copy(controlMeasure = expectedMeasure)
-          val body = response.getBody
-          assert(body == expected)
-        }
-      }
-    }
-
-    "return 404" when {
-      "there is no Run with the specified uniqueId" in {
-        val controlMeasure = RunFactory.getDummyControlMeasure()
-
-        val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(controlMeasure))
-
-        assertNotFound(response)
-      }
-    }
-  }
-
-  s"POST $apiUrl/updateSplineReference/{uniqueId}" can {
-    val endpointBase = s"$apiUrl/updateSplineReference"
-    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
-
-    "return 200" when {
-      "there is a Run with the specified uniqueId" should {
-        "update the Run's SplineReference and return the updated Run" in {
-          val originalSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = null)
-          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
-          runFixture.add(run)
-
-          val expectedSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
-
-          val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedSplineRef))
-
-          assertOk(response)
-
-          val expected = run.copy(splineRef = expectedSplineRef)
-          val body = response.getBody
-          assert(body == expected)
-        }
-      }
-    }
-
-    "return 404" when {
-      "there is no Run with the specified uniqueId" in {
-        val splineReference = RunFactory.getDummySplineReference()
-
-        val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(splineReference))
-
-        assertNotFound(response)
-      }
-    }
-  }
-
-  s"POST $apiUrl/updateRunStatus/{uniqueId}" can {
-    val endpointBase = s"$apiUrl/updateRunStatus"
-    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
-
-    "return 200" when {
-      "there is a Run with the specified uniqueId" should {
-        "update the Run's RunStatus and return the updated Run" in {
-          val originalStatus = RunFactory.getDummyRunStatus(runState = RunState.running)
-          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
-          runFixture.add(run)
-
-          val expectedStatus = RunFactory.getDummyRunStatus(runState = RunState.allSucceeded)
-
-          val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedStatus))
-
-          assertOk(response)
-
-          val expected = run.copy(runStatus = expectedStatus)
-          val body = response.getBody
-          assert(body == expected)
-        }
-      }
-    }
-
-    "return 404" when {
-      "there is no Run with the specified uniqueId" in {
-        val runStatus = RunFactory.getDummyRunStatus()
-
-        val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(runStatus))
-
-        assertNotFound(response)
-      }
-    }
-  }
-
-  s"GET $apiUrl/bySparkAppId/{appId}" can {
-    val sampleAppId1 = "application_1578585424019_0008" // YARN
-    val sampleAppId2 = "local-1433865536131"            // local
-    val sampleAppId3 = "driver-20170926223339-0001"     // MESOS
-
-    "return 200" when {
-      "there are no Run entities stored in the database" should {
-        "return an empty collection" in{
-          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$sampleAppId1")
-          assertOk(response)
-          val body = response.getBody
-          assert(body.isEmpty)
-        }
-      }
-
-      "there are Run entities stored in the database" should{
-        "return empty collection when searching for missing app_id" in {
-          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
-          val wrongAppId = "missing-100500777-0042"     // MESOS
-          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$wrongAppId")
-          assertOk(response)
-          val body = response.getBody
-          assert(body.isEmpty)
-        }
-
-        "return [correctRun] when searching for unique app_id" in {
-          // std app_id only
-          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
-          // both std and cnfrm app_ids
-          val run2 = setUpRunWithAppIds(sampleAppId2, sampleAppId3, runId = 2)
-          // get run1 by std app_id
-          val response1 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
-          val body1 = response1.getBody
-          assert(body1 == SerializationUtils.asJson(Seq(run1)))
-          // get run2 by std app_id
-          val response2 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId2")
-          val body2 = response2.getBody
-          assert(body2 == SerializationUtils.asJson(Seq(run2)))
-          // get run2 by conform app_id
-          val response3 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId3")
-          val body3 = response3.getBody
-          assert(body3 == SerializationUtils.asJson(Seq(run2)))
-        }
-
-        "return [run1, run2] when there are 2 runs with the same app_ids" in {
-          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
-          val run2 = setUpRunWithAppIds(sampleAppId1, runId = 2)
-
-          // get run1 by std app_id
-          val response = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
-          val actual = response.getBody
-          val expected = SerializationUtils.asJson(Seq(run1, run2))
-          assert(actual == expected)
-        }
-      }
-    }
-  }
+//  s"POST $apiUrl/addCheckpoint/{uniqueId}" can {
+//    val endpointBase = s"$apiUrl/addCheckpoint"
+//    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+//
+//    "return 200" when {
+//      "there is a Run with the specified uniqueId" should {
+//        "add the supplied checkpoint to the end of the present checkpoints and return the updated Run" in {
+//          val checkpoint0 = RunFactory.getDummyCheckpoint(name = "checkpoint0")
+//          val measure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint0))
+//          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = measure)
+//          runFixture.add(run)
+//
+//          val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
+//
+//          val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint1))
+//
+//          assertOk(response)
+//
+//          val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
+//          val expected = run.copy(controlMeasure = expectedControlMeasure)
+//          val body = response.getBody
+//          assert(body == expected)
+//        }
+//      }
+//    }
+//
+//    "return 404" when {
+//      "there is no Run with the specified uniqueId" in {
+//        val checkpoint = RunFactory.getDummyCheckpoint()
+//
+//        val response = sendPost[Checkpoint, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(checkpoint))
+//
+//        assertNotFound(response)
+//      }
+//    }
+//  }
+//
+//  s"POST $apiUrl/updateControlMeasure/{uniqueId}" can {
+//    val endpointBase = s"$apiUrl/updateControlMeasure"
+//    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+//
+//    "return 200" when {
+//      "there is a Run with the specified uniqueId" should {
+//        "update the Run's ControlMeasure and return the updated Run" in {
+//          val originalMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option("eeeeeeee-f9ac-46f8-9657-a09a4e3fb6e9"))
+//          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), controlMeasure = originalMeasure)
+//          runFixture.add(run)
+//
+//          val expectedMeasure = RunFactory.getDummyControlMeasure(runUniqueId = Option(uniqueId))
+//
+//          val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedMeasure))
+//
+//          assertOk(response)
+//
+//          val expected = run.copy(controlMeasure = expectedMeasure)
+//          val body = response.getBody
+//          assert(body == expected)
+//        }
+//      }
+//    }
+//
+//    "return 404" when {
+//      "there is no Run with the specified uniqueId" in {
+//        val controlMeasure = RunFactory.getDummyControlMeasure()
+//
+//        val response = sendPost[ControlMeasure, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(controlMeasure))
+//
+//        assertNotFound(response)
+//      }
+//    }
+//  }
+//
+//  s"POST $apiUrl/updateSplineReference/{uniqueId}" can {
+//    val endpointBase = s"$apiUrl/updateSplineReference"
+//    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+//
+//    "return 200" when {
+//      "there is a Run with the specified uniqueId" should {
+//        "update the Run's SplineReference and return the updated Run" in {
+//          val originalSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = null)
+//          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), splineRef = originalSplineRef)
+//          runFixture.add(run)
+//
+//          val expectedSplineRef = RunFactory.getDummySplineReference(sparkApplicationId = "application_1512977199009_0007")
+//
+//          val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedSplineRef))
+//
+//          assertOk(response)
+//
+//          val expected = run.copy(splineRef = expectedSplineRef)
+//          val body = response.getBody
+//          assert(body == expected)
+//        }
+//      }
+//    }
+//
+//    "return 404" when {
+//      "there is no Run with the specified uniqueId" in {
+//        val splineReference = RunFactory.getDummySplineReference()
+//
+//        val response = sendPost[SplineReference, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(splineReference))
+//
+//        assertNotFound(response)
+//      }
+//    }
+//  }
+//
+//  s"POST $apiUrl/updateRunStatus/{uniqueId}" can {
+//    val endpointBase = s"$apiUrl/updateRunStatus"
+//    val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+//
+//    "return 200" when {
+//      "there is a Run with the specified uniqueId" should {
+//        "update the Run's RunStatus and return the updated Run" in {
+//          val originalStatus = RunFactory.getDummyRunStatus(runState = RunState.running)
+//          val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId), runStatus = originalStatus)
+//          runFixture.add(run)
+//
+//          val expectedStatus = RunFactory.getDummyRunStatus(runState = RunState.allSucceeded)
+//
+//          val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(expectedStatus))
+//
+//          assertOk(response)
+//
+//          val expected = run.copy(runStatus = expectedStatus)
+//          val body = response.getBody
+//          assert(body == expected)
+//        }
+//      }
+//    }
+//
+//    "return 404" when {
+//      "there is no Run with the specified uniqueId" in {
+//        val runStatus = RunFactory.getDummyRunStatus()
+//
+//        val response = sendPost[RunStatus, Run](s"$endpointBase/$uniqueId", bodyOpt = Option(runStatus))
+//
+//        assertNotFound(response)
+//      }
+//    }
+//  }
+//
+//  s"GET $apiUrl/bySparkAppId/{appId}" can {
+//    val sampleAppId1 = "application_1578585424019_0008" // YARN
+//    val sampleAppId2 = "local-1433865536131"            // local
+//    val sampleAppId3 = "driver-20170926223339-0001"     // MESOS
+//
+//    "return 200" when {
+//      "there are no Run entities stored in the database" should {
+//        "return an empty collection" in{
+//          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$sampleAppId1")
+//          assertOk(response)
+//          val body = response.getBody
+//          assert(body.isEmpty)
+//        }
+//      }
+//
+//      "there are Run entities stored in the database" should{
+//        "return empty collection when searching for missing app_id" in {
+//          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+//          val wrongAppId = "missing-100500777-0042"     // MESOS
+//          val response = sendGet[Array[Run]](s"$apiUrl/bySparkAppId/$wrongAppId")
+//          assertOk(response)
+//          val body = response.getBody
+//          assert(body.isEmpty)
+//        }
+//
+//        "return [correctRun] when searching for unique app_id" in {
+//          // std app_id only
+//          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+//          // both std and cnfrm app_ids
+//          val run2 = setUpRunWithAppIds(sampleAppId2, sampleAppId3, runId = 2)
+//          // get run1 by std app_id
+//          val response1 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
+//          val body1 = response1.getBody
+//          assert(body1 == SerializationUtils.asJson(Seq(run1)))
+//          // get run2 by std app_id
+//          val response2 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId2")
+//          val body2 = response2.getBody
+//          assert(body2 == SerializationUtils.asJson(Seq(run2)))
+//          // get run2 by conform app_id
+//          val response3 = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId3")
+//          val body3 = response3.getBody
+//          assert(body3 == SerializationUtils.asJson(Seq(run2)))
+//        }
+//
+//        "return [run1, run2] when there are 2 runs with the same app_ids" in {
+//          val run1 = setUpRunWithAppIds(sampleAppId1, runId = 1)
+//          val run2 = setUpRunWithAppIds(sampleAppId1, runId = 2)
+//
+//          // get run1 by std app_id
+//          val response = sendGet[String](s"$apiUrl/bySparkAppId/$sampleAppId1")
+//          val actual = response.getBody
+//          val expected = SerializationUtils.asJson(Seq(run1, run2))
+//          assert(actual == expected)
+//        }
+//      }
+//    }
+//  }
 
   private def setUpSimpleRun(): Run = {
     val run = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)

@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -52,6 +53,10 @@ class Application() {
       .registerModule(new JavaTimeModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+      .setSerializationInclusion(Include.NON_ABSENT)
+      // ^ fields of `Option[T]` are not included if None (ame behavior as Atum's SerializationUtils.asJson)
+      // explanation: https://github.com/FasterXML/jackson-module-scala/issues/46#issuecomment-128770969
   }
 }
 
