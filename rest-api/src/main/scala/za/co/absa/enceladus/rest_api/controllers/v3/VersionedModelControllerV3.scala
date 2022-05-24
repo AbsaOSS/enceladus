@@ -26,6 +26,8 @@ import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
+import za.co.absa.enceladus.rest_api.exceptions.{EntityDisabledException, NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 
 import java.net.URI
@@ -36,7 +38,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 object VersionedModelControllerV3 {
-  val LatestVersionKey = "latest"
+  final val LatestVersionKey = "latest"
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
@@ -46,19 +48,19 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // todo maybe offset/limit?
+  // todo maybe offset/limit -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedLatestVersion]] = {
+  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
-      .map(_.map(_.toNamedLatestVersion))
+      .map(_.map(_.toNamedVersion))
   }
 
   @GetMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedLatestVersion] = {
-    versionedModelService.getLatestVersionSummary(name) map {
-      case Some(entity) => entity.toNamedLatestVersion
+  def getVersionSummaryForEntity(@PathVariable name: String): CompletableFuture[NamedVersion] = {
+    versionedModelService.getLatestVersionSummary(name).map {
+      case Some(entity) => entity.toNamedVersion
       case None => throw notFound()
     }
   }
@@ -85,6 +87,12 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def usedIn(@PathVariable name: String,
              @PathVariable version: String): CompletableFuture[UsedIn] = {
     forVersionExpression(name, version) { case (name, versionInt) => versionedModelService.getUsedIn(name, Some(versionInt)) }
+  }
+
+  @GetMapping(Array("/{name}/used-in"))
+  @ResponseStatus(HttpStatus.OK)
+  def usedIn(@PathVariable name: String): CompletableFuture[UsedIn] = {
+    versionedModelService.getUsedIn(name, None)
   }
 
   @GetMapping(Array("/{name}/{version}/export"))
@@ -125,7 +133,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
     versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
       if (isDisabled) {
-        versionedModelService.recreate(principal.getUsername, item)
+        Future.failed(EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first (PUT) to push new versions (PUT)."))
       } else {
         versionedModelService.create(item, principal.getUsername)
       }
@@ -148,25 +156,42 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
     } else if (version != item.version) {
       Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: ${version} != ${item.version}"))
     } else {
-      versionedModelService.update(user.getUsername, item).map {
-        case Some((updatedEntity, validation)) =>
-          createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
-        case None => throw notFound()
+      versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
+        if (isDisabled) {
+          throw EntityDisabledException(s"Entity ${item.name} is disabled. Enable it first to create new versions.")
+        } else {
+          versionedModelService.update(user.getUsername, item).map {
+            case Some((updatedEntity, validation)) =>
+              createdWithNameVersionLocationBuilder(updatedEntity.name, updatedEntity.version, request, stripLastSegments = 2).body(validation)
+            case None => throw notFound()
+          }
+        }
       }
     }
   }
 
-  @DeleteMapping(Array("/{name}", "/{name}/{version}"))
+  @PutMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
-  def disable(@PathVariable name: String,
-              @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-    val v = if (version.isPresent) {
-      // For some reason Spring reads the Optional[Int] param as a Optional[String] and then throws ClassCastException
-      Some(version.get.toInt)
-    } else {
-      None
+  def enable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    versionedModelService.enableEntity(name).map { updateResult => // always enabling all version of the entity
+      if (updateResult.getMatchedCount > 0) {
+        DisabledPayload(disabled = false)
+      } else {
+        throw NotFoundException(s"No versions for entity $name found to be enabled.")
+      }
     }
-    versionedModelService.disableVersion(name, v)
+  }
+
+  @DeleteMapping(Array("/{name}"))
+  @ResponseStatus(HttpStatus.OK)
+  def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    versionedModelService.disableVersion(name, None).map { updateResult => // always disabling all version of the entity
+      if (updateResult.getMatchedCount > 0) {
+        DisabledPayload(disabled = true)
+      } else {
+        throw NotFoundException(s"No versions for entity $name found to be disabled.")
+      }
+    }
   }
 
   /**

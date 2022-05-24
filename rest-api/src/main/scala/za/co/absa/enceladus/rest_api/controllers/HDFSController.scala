@@ -16,13 +16,14 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.concurrent.CompletableFuture
-
 import org.apache.hadoop.fs.Path
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.menas.HDFSFolder
 import za.co.absa.enceladus.rest_api.services.HDFSService
+
+import scala.concurrent.Future
 
 @RestController
 @RequestMapping(Array("/api/hdfs"))
@@ -41,7 +42,7 @@ class HDFSController @Autowired() (hdfsService: HDFSService) extends BaseControl
       if (exists) {
         hdfsService.getFolder(path)
       } else {
-        throw notFound()
+        Future.failed(notFound())
       }
     }
   }

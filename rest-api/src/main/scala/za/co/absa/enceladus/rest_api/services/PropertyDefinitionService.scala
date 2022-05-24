@@ -23,13 +23,15 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.Future
 
-@Service
+@Service("propertyDefinitionService") // by-name qualifier: V2 implementations use the base implementation, not v3
 class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository)
   extends VersionedModelService(propertyDefMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = Future.successful(UsedIn())
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    Future.successful(UsedIn())
+  }
 
   override def update(username: String, propertyDef: PropertyDefinition): Future[Option[(PropertyDefinition, Validation)]] = {
     super.update(username, propertyDef.name, propertyDef.version) { latest =>

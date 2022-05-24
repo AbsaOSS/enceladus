@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
-import com.mongodb.client.result.UpdateResult
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -24,16 +23,16 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.{ExportableObject, Validation}
-import za.co.absa.enceladus.rest_api.services.PropertyDefinitionService
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.services.v3.PropertyDefinitionServiceV3
 
-import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
 
 @RestController
 @RequestMapping(path = Array("/api-v3/property-definitions/datasets"), produces = Array("application/json"))
-class PropertyDefinitionControllerV3 @Autowired()(propertyDefService: PropertyDefinitionService)
-  extends VersionedModelControllerV3(propertyDefService) {
+class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: PropertyDefinitionServiceV3)
+  extends VersionedModelControllerV3(propertyDefinitionService) {
 
   // super-class implementation is sufficient, but the following changing endpoints need admin-auth
 
@@ -69,16 +68,11 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefService: PropertyDe
     super.edit(user, name, version, item, request)
   }
 
-  @DeleteMapping(Array("/{name}", "/{name}/{version}"))
+  @DeleteMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def disable(@PathVariable name: String,
-              @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] = {
-
-    super.disable(name, version)
+  override def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
+    super.disable(name)
   }
-
-  // todo add "enable" with preAuth check when available, too
-
 }
 

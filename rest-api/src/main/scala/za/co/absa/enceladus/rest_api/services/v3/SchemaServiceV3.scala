@@ -34,6 +34,8 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    sparkMenasConvertor: SparkMenasSchemaConvertor)
   extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor) {
 
+  import scala.concurrent.ExecutionContext.Implicits.global
+
   override def validate(item: Schema): Future[Validation] = {
     if (item.fields.isEmpty) {
       // V3 disallows empty schema fields - V2 allowed it at first that to get updated by an attachment upload/remote-load
@@ -47,4 +49,9 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
   override protected def updateFields(current: Schema, update: Schema) : Schema = {
     current.setDescription(update.description).asInstanceOf[Schema].copy(fields = update.fields)
   }
+
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    super.getUsedIn(name, version).map(_.normalized)
+  }
+
 }

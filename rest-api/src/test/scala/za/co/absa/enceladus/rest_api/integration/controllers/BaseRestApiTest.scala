@@ -184,13 +184,13 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     sendAsync(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
-  def sendDelete[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+  def sendDelete[T](urlPath: String, headers: HttpHeaders = new HttpHeaders())
+                   (implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.DELETE, urlPath, headers)
   }
 
-  def sendDeleteByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                       bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+  def sendDeleteByAdmin[T](urlPath: String, headers: HttpHeaders = new HttpHeaders())
+                          (implicit ct: ClassTag[T]): ResponseEntity[T] = {
     sendByAdmin(HttpMethod.DELETE, urlPath, headers)
   }
 

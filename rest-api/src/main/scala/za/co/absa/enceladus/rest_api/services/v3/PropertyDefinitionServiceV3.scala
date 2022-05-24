@@ -17,29 +17,25 @@ package za.co.absa.enceladus.rest_api.services.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
-import za.co.absa.enceladus.rest_api.services.{MappingTableService, SchemaService, VersionedModelService}
+import za.co.absa.enceladus.model.properties.PropertyDefinition
+import za.co.absa.enceladus.model.{UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
+import za.co.absa.enceladus.rest_api.services.PropertyDefinitionService
 
 import scala.concurrent.Future
 
 @Service
-class MappingTableServiceV3 @Autowired()(mappingTableMongoRepository: MappingTableMongoRepository,
-                                         datasetMongoRepository: DatasetMongoRepository,
-                                         val schemaService: SchemaServiceV3)
-  extends MappingTableService(mappingTableMongoRepository, datasetMongoRepository) with HavingSchemaService {
+class PropertyDefinitionServiceV3 @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository,
+                                               datasetMongoRepository: DatasetMongoRepository)
+  extends PropertyDefinitionService(propertyDefMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def validate(item: MappingTable): Future[Validation] = {
-    for {
-      originalValidation <- super.validate(item)
-      mtSchemaValidation <- validateSchemaExists(item.schemaName, item.schemaVersion)
-    } yield originalValidation.merge(mtSchemaValidation)
-  }
-
   override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
-    super.getUsedIn(name, version).map(_.normalized)
+    for {
+      usedInD <- datasetMongoRepository.findRefContainedAsKey("properties", name)
+      optionalUsedInD = if (usedInD.isEmpty) None else Some(usedInD)
+    } yield UsedIn(optionalUsedInD, None)
   }
 
 }

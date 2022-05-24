@@ -21,7 +21,7 @@ import za.co.absa.enceladus.rest_api.services.SchemaService
 import scala.concurrent.{ExecutionContext, Future}
 
 trait HavingSchemaService {
-  protected def schemaService: SchemaService
+  protected def schemaService: SchemaServiceV3
 
   def validateSchemaExists(schemaName: String, schemaVersion: Int)
                           (implicit executionContext: ExecutionContext): Future[Validation] = {

@@ -23,12 +23,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Validation}
-import za.co.absa.enceladus.model.test.factories.{MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
-import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
+import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
+import za.co.absa.enceladus.model.dataFrameFilter._
+import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
+import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.integration.controllers.toExpected
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
+
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -41,10 +45,13 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
   @Autowired
   private val schemaFixture: SchemaFixtureService = null
 
+  @Autowired
+  private val datasetFixture: DatasetFixtureService = null
+
   private val apiUrl = "/mapping-tables"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(mappingTableFixture, schemaFixture)
+  override def fixtures: List[FixtureService[_]] = List(mappingTableFixture, schemaFixture, datasetFixture)
 
   s"POST $apiUrl" should {
     "return 400" when {
@@ -226,6 +233,201 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         val responseBody = response2.getBody
         val expectedDefaults = Array(DefaultValue("anOldDefault", "itsValue"), DefaultValue("colA", "defaultA")) // POST = adding, 'anOldDefault' is kept
         responseBody shouldBe expectedDefaults
+      }
+    }
+  }
+
+  private def mcr(mtName: String, mtVersion: Int, index: Int = 0) = MappingConformanceRule(index,
+    controlCheckpoint = true,
+    mappingTable = mtName,
+    mappingTableVersion = mtVersion,
+    attributeMappings = Map("InputValue" -> "STRING_VAL"),
+    targetAttribute = "CCC",
+    outputColumn = "ConformedCCC",
+    isNullSafe = true,
+    mappingTableFilter = Some(
+      AndJoinedFilters(Set(
+        OrJoinedFilters(Set(
+          EqualsFilter("column1", "soughtAfterValue"),
+          EqualsFilter("column1", "alternativeSoughtAfterValue")
+        )),
+        DiffersFilter("column2", "anotherValue"),
+        NotFilter(IsNullFilter("col3"))
+      ))
+    ),
+    overrideMappingTableOwnFilter = Some(true)
+  )
+
+  s"GET $apiUrl/{name}/used-in" should {
+    "return 200" when {
+      "there are used-in records" in {
+        val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+        val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
+        mappingTableFixture.add(mappingTable1, mappingTable2)
+
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable",1)))
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable",1)), disabled = true)
+        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable",2)))
+        datasetFixture.add(datasetA, datasetB, datasetC)
+
+        val response = sendGet[String](s"$apiUrl/mappingTable/used-in")
+        assertOk(response)
+
+        // datasetB is disabled -> not reported
+        // datasetC is reported, because this is a version-less check
+        // String-typed this time to also check isEmpty/nonEmpty serialization presence
+        response.getBody shouldBe
+          """
+            |{"datasets":[
+            |{"collection":null,"name":"datasetA","version":1},{"collection":null,"name":"datasetC","version":1}
+            |],
+            |"mappingTables":null}
+            |""".stripMargin.replaceAll("[\\r\\n]", "")
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/{version}/used-in" should {
+    "return 200" when {
+      "there are used-in records for particular version" in {
+        val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+        val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
+        mappingTableFixture.add(mappingTable1, mappingTable2)
+
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable",1)))
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable",1)), disabled = true)
+        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable",2)))
+        datasetFixture.add(datasetA, datasetB, datasetC)
+
+        val response = sendGet[UsedIn](s"$apiUrl/mappingTable/1/used-in")
+        assertOk(response)
+
+        // datasetB is disabled -> not reported
+        // datasetC is not reported, because it depends on v2 of the MT
+        response.getBody shouldBe UsedIn(
+          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
+          mappingTables = None
+        )
+      }
+
+      "there are no used-in records for particular version" in {
+        val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+        mappingTableFixture.add(mappingTable1)
+
+        val response = sendGet[UsedIn](s"$apiUrl/mappingTable/1/used-in")
+        assertOk(response)
+
+        response.getBody shouldBe UsedIn(
+          datasets = None,
+          mappingTables = None
+        )
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/{name}" can {
+    "return 200" when {
+      "a MappingTable with the given name exists" should {
+        "disable the mappingTable with the given name" in {
+          val mtA1 = MappingTableFactory.getDummyMappingTable(name = "mtA", version = 1)
+          val mtA2 = MappingTableFactory.getDummyMappingTable(name = "mtA", version = 2)
+          val mtB = MappingTableFactory.getDummyMappingTable(name = "mtB", version = 1)
+          mappingTableFixture.add(mtA1, mtA2, mtB)
+
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mtA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[MappingTable](s"$apiUrl/mtA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[MappingTable](s"$apiUrl/mtA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+
+          // unrelated mappingTable unaffected
+          val responseB = sendGet[MappingTable](s"$apiUrl/mtB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe false
+        }
+      }
+
+      "a MappingTable with the given name exists and there have mixed (historical) disabled states " should {
+        "disable all versions the mappingTable with the given name" in {
+          val mtA1 = MappingTableFactory.getDummyMappingTable(name = "mtA", version = 1, disabled = true)
+          val mtA2 = MappingTableFactory.getDummyMappingTable(name = "mtA", version = 2, disabled = false)
+          mappingTableFixture.add(mtA1, mtA2)
+
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mtA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[MappingTable](s"$apiUrl/mtA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[MappingTable](s"$apiUrl/mtA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+      "the MappingTable is only used in disabled Datasets" should {
+        "disable the MappingTable" in {
+          val dataset = DatasetFactory.getDummyDataset(conformance = List(mcr("mappingTable", 1)), disabled = true)
+          datasetFixture.add(dataset)
+          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+          val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
+          mappingTableFixture.add(mappingTable1, mappingTable2)
+
+          val response = sendDelete[DisabledPayload](s"$apiUrl/mappingTable")
+
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[MappingTable](s"$apiUrl/mappingTable/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[MappingTable](s"$apiUrl/mappingTable/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+    }
+
+    "return 400" when {
+      "the MappingTable is used by an enabled Dataset" should {
+        "return a list of the entities the MappingTable is used in" in {
+          val mappingTable1 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 1)
+          val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
+          mappingTableFixture.add(mappingTable1, mappingTable2)
+
+          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", conformance = List(mcr("mappingTable", 1)))
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 7, conformance = List(mcr("mappingTable", 2)))
+          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset3",conformance = List(mcr("anotherMappingTable", 8))) // moot
+          val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", conformance = List(mcr("mappingTable", 2)), disabled = true)
+          datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
+
+          val response = sendDelete[EntityInUseException](s"$apiUrl/mappingTable")
+
+          assertBadRequest(response)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "mappingTable", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
+        }
+      }
+    }
+
+    "return 404" when {
+      "no MappingTable with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDelete[String](s"$apiUrl/aMappingTable")
+          assertNotFound(response)
+        }
       }
     }
   }

@@ -579,11 +579,11 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest with Matchers
     }
     "returns even the disabled dataset" when {
       "only disabled dataset exists" in {
-        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true)
+        val dataset1 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = false)
         val dataset2 = DatasetFactory.getDummyDataset(name = "datasetA", disabled = true, version = 2)
         datasetFixture.add(dataset1, dataset2)
         val actual = await(datasetMongoRepository.getLatestVersionSummary("datasetA"))
-        actual shouldBe Some(VersionedSummary("datasetA", 2)) // warning: currently, this method reports the disabled, too
+        actual shouldBe Some(VersionedSummary("datasetA", 2, Set(true, false)))
       }
     }
 
@@ -595,7 +595,7 @@ class DatasetRepositoryIntegrationSuite extends BaseRepositoryTest with Matchers
         datasetFixture.add(dataset1, dataset2, dataset3)
 
         val actual = await(datasetMongoRepository.getLatestVersionSummary("datasetA"))
-        actual shouldBe Some(VersionedSummary("datasetA", 3))
+        actual shouldBe Some(VersionedSummary("datasetA", 3, Set(false)))
       }
     }
   }

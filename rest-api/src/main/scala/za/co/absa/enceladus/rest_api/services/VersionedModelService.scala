@@ -267,6 +267,17 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
   }
 
+  /**
+   * Enables all versions of the entity by name.
+   * @param name
+   */
+  def enableEntity(name: String): Future[UpdateResult] = {
+    val auth = SecurityContextHolder.getContext.getAuthentication
+    val principal = auth.getPrincipal.asInstanceOf[UserDetails]
+
+    versionedMongoRepository.enableAllVersions(name, principal.getUsername)
+  }
+
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
@@ -278,7 +289,8 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      throw EntityInUseException(usedIn)
+      val entityVersionStr = s"""entity "$name"${ version.map(" v" + _).getOrElse("")}""" // either "entity MyName" or "entity MyName v23"
+      throw EntityInUseException(s"""Cannot disable $entityVersionStr, because it is used in the following entities""", usedIn)
     } else {
       versionedMongoRepository.disableVersion(name, version, principal.getUsername)
     }
