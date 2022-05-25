@@ -42,7 +42,8 @@ object RunMongoRepository {
   val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
-@Repository
+// scalastyle:off number.of.methods legacy code
+@Repository("mongoRepository") // by-name qualifier - for v2 repos
 class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
@@ -281,12 +282,16 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
-    val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", appId)
-    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
+  protected def sparkIdFilter(sparkAppId: String): Bson = {
+    val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", sparkAppId)
+    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", sparkAppId)
 
+    or(stdAppIdFilter, conformAppIdFilter)
+  }
+
+  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
     collection
-      .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
+      .find[BsonDocument](sparkIdFilter(appId))
       .toFuture()
       .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
@@ -396,7 +401,7 @@ def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Ru
       .map(_ > 0).head()
   }
 
-  private def getDatasetFilter(datasetName: String, datasetVersion: Int): Bson = {
+  protected def getDatasetFilter(datasetName: String, datasetVersion: Int): Bson = {
     val datasetNameEq = equal("dataset", datasetName)
     val datasetVersionEq = equal("datasetVersion", datasetVersion)
 

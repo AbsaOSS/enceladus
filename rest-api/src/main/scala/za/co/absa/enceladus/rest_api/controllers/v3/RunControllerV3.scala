@@ -44,6 +44,7 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   import za.co.absa.enceladus.rest_api.utils.implicits._
   import scala.concurrent.ExecutionContext.Implicits.global
 
+  // fix incorrect startDate filter implementation, return Seq[RunSummary]
   @GetMapping()
   @ResponseStatus(HttpStatus.OK)
   def list(@RequestParam startDate: Optional[String],
@@ -62,6 +63,7 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   }
 
   // todo pagination #2060
+  // todo implement this with startDate filter & latestOfEach
   @GetMapping(Array("/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
