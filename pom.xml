@@ -359,7 +359,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -457,10 +456,12 @@
                     </gitFlowConfig>
                     <commitDevelopmentVersionAtStart>true</commitDevelopmentVersionAtStart>
                     <versionDigitToIncrement>1</versionDigitToIncrement>
+
                     <commitMessages>
                         <hotfixStartMessage>Update versions for hotfix v@{version}</hotfixStartMessage>
                         <hotfixFinishMessage>Update for next development version @{version}</hotfixFinishMessage>
                         <hotfixVersionUpdateMessage>Update to hotfix version @{version}</hotfixVersionUpdateMessage>
+
                         <releaseStartMessage>Update versions for release v@{version}</releaseStartMessage>
                         <releaseFinishMessage>Update for next development version @{version}</releaseFinishMessage>
                         <releaseVersionUpdateMessage>Update for next development version @{version}</releaseVersionUpdateMessage>
@@ -480,7 +481,7 @@
             <plugin>
                 <groupId>org.scoverage</groupId>
                 <artifactId>scoverage-maven-plugin</artifactId>
-                <version>${maven.scoverage.version}</version>
+                <version>${scoverage.maven.plugin.version}</version>
                 <configuration>
                     <scalaVersion>${scala.version}</scalaVersion>
                     <aggregate>true</aggregate>
@@ -565,7 +566,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>${maven.sources.version}</version>
+                        <version>${maven.source.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -578,7 +579,7 @@
                     <plugin>
                         <groupId>net.alchim31.maven</groupId>
                         <artifactId>scala-maven-plugin</artifactId>
-                        <version>4.5.0</version>
+                        <version>${scala.maven.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

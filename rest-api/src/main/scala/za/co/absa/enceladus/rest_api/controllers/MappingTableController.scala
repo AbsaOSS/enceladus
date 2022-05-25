@@ -40,7 +40,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
     @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
     mappingTableService.updateDefaults(user.getUsername, upd.id.name,
       upd.id.version, upd.value.toList).map {
-        case Some(entity) => entity
+        case Some(entity) => entity._1 // v2 disregarding validation
         case None         => throw notFound()
       }
   }
@@ -51,7 +51,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
     @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
     mappingTableService.addDefault(user.getUsername, newDefault.id.name,
       newDefault.id.version, newDefault.value).map {
-        case Some(entity) => entity
+        case Some(entity) => entity._1 // v2 disregarding validation
         case None         => throw notFound()
       }
   }

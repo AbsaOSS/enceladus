@@ -15,7 +15,5 @@
 
 package za.co.absa.enceladus.rest_api.exceptions
 
-import za.co.absa.enceladus.model.UsedIn
+case class EndpointDisabledException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
 
-case class EntityInUseException(message: String = "There are dependencies present preventing the action",
-                                usedIn: UsedIn) extends Exception()

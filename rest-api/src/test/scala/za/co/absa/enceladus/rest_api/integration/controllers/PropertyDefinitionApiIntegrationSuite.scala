@@ -31,7 +31,7 @@ import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll with Matchers {
+class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll with Matchers {
 
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
@@ -138,7 +138,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+          val response = sendDeleteByAdmin[String](s"$apiUrl/disable/propertyDefinition")
 
           assertOk(response)
 
@@ -153,7 +153,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition")
+          val response = sendDeleteByAdmin[String](s"$apiUrl/disable/propertyDefinition")
 
           assertOk(response)
 
@@ -173,7 +173,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
           val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "otherPropertyDefinition", version = 1)
           propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          val response = sendDeleteByAdmin[String](s"$apiUrl/disable/propertyDefinition/1")
           assertOk(response)
 
           val actual = response.getBody
@@ -191,7 +191,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
             val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
             propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
 
-            val response = sendDeleteByAdmin[PropertyDefinition, String](deleteUrl)
+            val response = sendDeleteByAdmin[String](deleteUrl)
             assertOk(response)
 
             val actual = response.getBody
@@ -203,7 +203,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTest with BeforeA
 
       "no PropertyDefinition with the given name exists" should {
         "disable nothing" in {
-          val response = sendDeleteByAdmin[PropertyDefinition, String](s"$apiUrl/disable/propertyDefinition/1")
+          val response = sendDeleteByAdmin[String](s"$apiUrl/disable/propertyDefinition/1")
           assertOk(response)
 
           val actual = response.getBody

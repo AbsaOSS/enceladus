@@ -15,18 +15,17 @@
 
 package za.co.absa.enceladus.rest_api.repositories
 
+import org.mongodb.scala.model.Projections._
+import org.mongodb.scala.model.{Filters, Sorts}
 import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
+import za.co.absa.enceladus.model
+import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema}
 
-import scala.reflect.ClassTag
-import za.co.absa.enceladus.model.menas.MenasReference
-import org.mongodb.scala.model.Filters
-import org.mongodb.scala.model.Projections._
-import za.co.absa.enceladus.model
-
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 object DatasetMongoRepository {
   val collectionBaseName: String = "dataset"
@@ -77,13 +76,24 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
    * @return List of Menas references to Datasets, which contain the relevant conformance rules
    */
   def containsMappingRuleRefEqual(refColVal: (String, Any)*): Future[Seq[MenasReference]] = {
+  // The gist of the find query that this method is based on; testable in a mongo client
+  //      { $and : [
+  //        {... non disabled filter here...},
+  //        {"conformance": {"$elemMatch": {$and : [
+  //          {"mappingTable": "AnotherAwesomeMappingTable"}, // from refColVal
+  //          {"mappingTableVersion": 1} // from refColVal
+  //        ]}}}
+  //      ]}
 
-    val equals = Filters.and(refColVal.map(col => Filters.eq(col._1, col._2)) :_*)
-    val filter = Filters.elemMatch("conformance", equals)
+    val equalConditionsFilter = Filters.and(refColVal.map {
+      case (key, value) => Filters.eq(key, value)
+    } :_*)
+    val filter = Filters.and(getNotDisabledFilter, Filters.elemMatch("conformance", equalConditionsFilter))
 
     collection
       .find[MenasReference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
+      .sort(Sorts.ascending("name", "version"))
       .toFuture()
   }
 

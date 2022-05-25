@@ -29,23 +29,13 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
 
   private val validName = "validName"
 
-  test("Validate dataset with valid, unique name") {
-    Mockito.when(modelRepository.isUniqueName(validName)).thenReturn(Future.successful(true))
-
+  test("Validate a valid model name") {
     val result = Await.result(service.validateName(validName), shortTimeout)
     assert(result.isValid)
     assert(result == Validation())
   }
 
-  test("Validate dataset with valid, taken name") {
-    Mockito.when(modelRepository.isUniqueName(validName)).thenReturn(Future.successful(false))
-
-    val result = Await.result(service.validateName(validName), shortTimeout)
-    assert(!result.isValid)
-    assert(result == Validation(Map("name" -> List(s"entity with name already exists: '$validName'"))))
-  }
-
-  test("Validate dataset with invalid name") {
+  test("Validate an invalid model name") {
     assertHasWhitespace(" InvalidName")
     assertHasWhitespace("InvalidName\t")
     assertHasWhitespace("Invalid\nName")
@@ -57,6 +47,26 @@ abstract class VersionedModelServiceTest[C <: VersionedModel with Product with A
     val result = Await.result(service.validateName(name), shortTimeout)
     assert(!result.isValid)
     assert(result == Validation(Map("name" -> List(s"name contains whitespace: '$name'"))))
+  }
+
+  protected val validModels: Seq[C] = Seq.empty // expecting to override to check models
+
+  test("Validate valid models") {
+    val results = validModels.map{model => (model, Await.result(service.validate(model), shortTimeout))}
+
+    results.foreach { case (model, validation) =>
+      assert(validation.isValid, s"Expected $model to be valid, but $validation found")
+    }
+  }
+
+  protected val invalidModels: Seq[C] = Seq.empty // expecting to override to check models
+
+  test("Validate invalid models") {
+    val results = invalidModels.map{model => (model, Await.result(service.validate(model), shortTimeout))}
+
+    results.foreach { case (model, validation) =>
+      assert(!validation.isValid, s"Expected $model to be invalid, but $validation found")
+    }
   }
 
 }

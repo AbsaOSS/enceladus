@@ -15,5 +15,5 @@
 
 package za.co.absa.enceladus.rest_api.exceptions
 
-case class EndpointDisabled(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
+case class EntityDisabledException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
 

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.repositories
 
 import java.time.ZonedDateTime
-
 import org.mongodb.scala._
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.immutable.Document
@@ -28,7 +27,7 @@ import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
 import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
+import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionedSummaryV2}
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -62,17 +61,20 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
-  def getLatestVersionsSummary(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+  def getLatestVersionsSummarySearch(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
     val searchFilter = searchQuery match {
       case Some(search) => Filters.regex("name", search, "i")
       case None => Filters.expr(true)
     }
     val pipeline = Seq(
       filter(Filters.and(searchFilter, getNotDisabledFilter)),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version")),
+      Aggregates.group("$name",
+        Accumulators.max("latestVersion", "$version")
+      ),
       sort(Sorts.ascending("_id"))
     )
-    collection.aggregate[VersionedSummary](pipeline).toFuture()
+    collection.aggregate[VersionedSummaryV2](pipeline).toFuture()
+      .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(false)))) // because of the notDisabled filter
   }
 
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {
@@ -85,12 +87,25 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.find(getNameVersionFilter(name, Some(version))).headOption()
   }
 
-  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
+  def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
     val pipeline = Seq(
       filter(getNameFilter(name)),
-      Aggregates.group("$name", Accumulators.max("latestVersion", "$version"))
+      Aggregates.group("$name",
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.addToSet("disabledSet", "$disabled")
+      )
     )
-    collection.aggregate[VersionedSummary](pipeline).headOption().map(_.map(_.latestVersion))
+    collection.aggregate[VersionedSummary](pipeline).headOption()
+  }
+
+  /**
+   * Beware that this method ignores the disabled flag of the entities
+   */
+  def getLatestVersionValue(name: String): Future[Option[Int]] = {
+    getLatestVersionSummary(name).map(_.map(_.latestVersion))
   }
 
   def getAllVersions(name: String, inclDisabled: Boolean = false): Future[Seq[C]] = {
@@ -125,6 +140,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   }
 
+  // for V3 usage: version = None
   def disableVersion(name: String, version: Option[Int], username: String): Future[UpdateResult] = {
     collection.updateMany(getNameVersionFilter(name, version), combine(
       set("disabled", true),
@@ -144,6 +160,14 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("locked", isLocked),
       set("dateLocked", dateLocked),
       set("userLocked", userLocked))).toFuture()
+  }
+
+  // V3 only
+  def enableAllVersions(name: String, username: String): Future[UpdateResult] = {
+    collection.updateMany(getNameVersionFilter(name, version = None), combine(
+      set("disabled", false),
+      set("dateDisabled", ZonedDateTime.now()),
+      set("userDisabled", username))).toFuture()
   }
 
   def isDisabled(name: String): Future[Boolean] = {
@@ -172,12 +196,24 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       .toFuture()
   }
 
+  def findRefContainedAsKey(refNameCol: String, name: String): Future[Seq[MenasReference]] = {
+
+    // `refNameCol` contains a map where the `name` is the key, so this is e.g. {"properties.keyName" : {$exists : true}}
+    val filter = Filters.and(getNotDisabledFilter, Filters.exists(s"$refNameCol.$name", true))
+
+    collection
+      .find[MenasReference](filter)
+      .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
+      .sort(Sorts.ascending("name", "version"))
+      .toFuture()
+  }
+
   private def collectLatestVersions(postAggFilter: Option[Bson]): Future[Seq[C]] = {
     val pipeline = Seq(
       filter(Filters.notEqual("disabled", true)),
       Aggregates.group("$name",
-      Accumulators.max("latestVersion", "$version"),
-      Accumulators.last("doc","$$ROOT")),
+        Accumulators.max("latestVersion", "$version"),
+        Accumulators.last("doc", "$$ROOT")),
       Aggregates.replaceRoot("$doc")) ++
       postAggFilter.map(Aggregates.filter)
 

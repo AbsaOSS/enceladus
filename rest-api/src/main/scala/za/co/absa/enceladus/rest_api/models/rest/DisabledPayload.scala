@@ -13,6 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest_api.exceptions
+package za.co.absa.enceladus.rest_api.models.rest
 
-case class LockedEntityException(message: String) extends Exception()
+case class DisabledPayload(disabled: Boolean)

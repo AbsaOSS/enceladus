@@ -23,10 +23,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 @Component
-class StatisticsService @Autowired() (propertyDefService: PropertyDefinitionService, datasetService: DatasetService){
+class StatisticsService @Autowired() (propertyDefinitionService: PropertyDefinitionService, datasetService: DatasetService){
   //#TODO find optimizations #1897
   def getPropertiesWithMissingCount(): Future[Seq[PropertyDefinitionStats]] = {
-    val propertyDefsFuture = propertyDefService.getLatestVersions()
+    val propertyDefsFuture = propertyDefinitionService.getLatestVersions()
     propertyDefsFuture
       .map { (props: Seq[PropertyDefinition]) =>
         val propertiesWithMissingCounts: Seq[Future[PropertyDefinitionStats]] = props.map(propertyDef =>

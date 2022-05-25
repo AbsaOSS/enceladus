@@ -23,7 +23,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
@@ -35,7 +34,7 @@ import za.co.absa.enceladus.rest_api.integration.fixtures._
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
   @Autowired
   private val datasetFixture: DatasetFixtureService = null
@@ -437,4 +436,48 @@ class DatasetApiIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll 
     }
   }
 
+  s"DELETE $apiUrl/disable/{name}/{version}" can {
+    "return 200" when {
+      "a Dataset with the given name and version exists" should {
+        "disable only the dataset with the given name and version" in {
+          val dsA = DatasetFactory.getDummyDataset(name = "dsA", version = 1)
+          val dsB = DatasetFactory.getDummyDataset(name = "dsB", version = 1)
+          datasetFixture.add(dsA, dsB)
+
+          val response = sendDelete[String](s"$apiUrl/disable/dsA/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+      "multiple versions of the Dataset with the given name exist" should {
+        "disable the specified version of the Dataset" in {
+          val dsA1 = DatasetFactory.getDummyDataset(name = "dsA", version = 1)
+          val dsA2 = DatasetFactory.getDummyDataset(name = "dsA", version = 2)
+          datasetFixture.add(dsA1, dsA2)
+
+          val response = sendDelete[String](s"$apiUrl/disable/dsA/1")
+
+          assertOk(response)
+
+          val actual = response.getBody
+          val expected = """{"matchedCount":1,"modifiedCount":1,"upsertedId":null,"modifiedCountAvailable":true}"""
+          assert(actual == expected)
+        }
+      }
+
+      "no Dataset with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDelete[String](s"$apiUrl/disable/aDataset/1")
+
+          assertNotFound(response)
+          // Beware that, sadly, V2 Schemas returns 200 on disable of non-existent entity while V2 Datasets returns 404
+          // This is due to getUsedIn implementation (non) checking the entity existence.
+        }
+      }
+    }
+  }
 }
