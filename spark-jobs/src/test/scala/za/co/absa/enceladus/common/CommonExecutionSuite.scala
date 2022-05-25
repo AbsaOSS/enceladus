@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.common
 
 import org.apache.spark.sql.types.{StringType, StructType}
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.mockito.Mockito
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
@@ -25,19 +24,17 @@ import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.partition.sizing.DataFramePartitioner.DataFrameFunctions
 
-class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with MockitoSugar {
+class CommonExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with MockitoSugar {
 
   private class CommonJobExecutionTest extends CommonJobExecution {
     def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {
       prepareJob()
     }
     override protected def validatePaths(pathConfig: PathConfig): Unit = {}
-    override def repartitionDataFrame(df:  DataFrame, minBlockSize: Option[Long], maxBlockSize: Option[Long])
-                                               (implicit spark: SparkSession): DataFrame =
-      super.repartitionDataFrame(df, minBlockSize, maxBlockSize)
   }
 
   Seq(
@@ -70,7 +67,7 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase 
     val df = spark.read.schema(schema).parquet("src/test/resources/data/empty")
     df.rdd.getNumPartitions shouldBe 0 // ensure there are 0 partitions for the test
     val commonJob = new CommonJobExecutionTest
-    val result = commonJob.repartitionDataFrame(df, Option(1), Option(2))
+    val result = df.repartitionByPlanSize(Option(1), Option(2))
     result shouldBe df
   }
 

@@ -32,7 +32,10 @@ import za.co.absa.enceladus.rest_api.integration.repositories.BaseRepositoryTest
 import scala.concurrent.Future
 import scala.reflect.ClassTag
 
-abstract class BaseRestApiTest extends BaseRepositoryTest {
+abstract class BaseRestApiTestV2 extends BaseRestApiTest("/api/login", "/api")
+abstract class BaseRestApiTestV3 extends BaseRestApiTest("/api/login", "/api-v3")
+
+abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseRepositoryTest {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -50,7 +53,9 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   @Value("${menas.auth.inmemory.admin.password}")
   val adminPasswd: String = ""
 
-  private lazy val baseUrl = s"http://localhost:$port/api"
+  // expecting apiPath to be /api for v2 and /api-v3 for v3
+  private lazy val baseUrl = s"http://localhost:$port$apiPath"
+  private lazy val loginBaseUrl = s"http://localhost:$port$loginPath"
   private lazy val authHeaders = getAuthHeaders(user, passwd)
   private lazy val authHeadersAdmin = getAuthHeaders(adminUser, adminPasswd)
 
@@ -71,7 +76,7 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   }
 
   def getAuthHeaders(username: String, password: String): HttpHeaders = {
-    val loginUrl = s"$baseUrl/login?username=$username&password=$password&submit=Login"
+    val loginUrl = s"$loginBaseUrl?username=$username&password=$password&submit=Login"
 
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 
@@ -112,6 +117,15 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     upload(urlPath, headers, fileParamName, fileName, parameters)
   }
 
+  def sendPostUploadFileByAdmin[T](urlPath: String,
+                            fileName: String,
+                            parameters: Map[String, Any],
+                            fileParamName: String = "file",
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    upload(urlPath, headers, fileParamName, fileName, parameters, byAdmin = true)
+  }
+
   def sendPostRemoteFile[T](urlPath: String,
                             parameters: Map[String, Any],
                             headers: HttpHeaders = new HttpHeaders())
@@ -119,6 +133,15 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
 
     fromRemote(urlPath, headers, parameters)
+  }
+
+  def sendPostRemoteFileByAdmin[T](urlPath: String,
+                            parameters: Map[String, Any],
+                            headers: HttpHeaders = new HttpHeaders())
+                           (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("remoteUrl"), s"parameters map must contain the 'remoteUrl' entry, but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters, byAdmin = true)
   }
 
   def sendPostSubject[T](urlPath: String,
@@ -131,14 +154,29 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     fromRemote(urlPath, headers, parameters)
   }
 
+  def sendPostSubjectByAdmin[T](urlPath: String,
+                         parameters: Map[String, Any],
+                         headers: HttpHeaders = new HttpHeaders())
+                        (implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    require(parameters.keySet.contains("subject"),
+      s"parameters map must contain the 'subject', but only $parameters was found")
+
+    fromRemote(urlPath, headers, parameters, byAdmin = true)
+  }
+
   def sendPostAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
                  bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): Future[ResponseEntity[T]] = {
     sendAsync(HttpMethod.POST, urlPath, headers, bodyOpt)
   }
 
   def sendPut[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+                    bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.PUT, urlPath, headers, bodyOpt)
+  }
+
+  def sendPutByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
+                       bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+    sendByAdmin(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
   def sendPutAsync[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
@@ -146,13 +184,13 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     sendAsync(HttpMethod.PUT, urlPath, headers, bodyOpt)
   }
 
-  def sendDelete[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                 bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+  def sendDelete[T](urlPath: String, headers: HttpHeaders = new HttpHeaders())
+                   (implicit ct: ClassTag[T]): ResponseEntity[T] = {
     send(HttpMethod.DELETE, urlPath, headers)
   }
 
-  def sendDeleteByAdmin[B, T](urlPath: String, headers: HttpHeaders = new HttpHeaders(),
-                       bodyOpt: Option[B] = None)(implicit ct: ClassTag[T]): ResponseEntity[T] = {
+  def sendDeleteByAdmin[T](urlPath: String, headers: HttpHeaders = new HttpHeaders())
+                          (implicit ct: ClassTag[T]): ResponseEntity[T] = {
     sendByAdmin(HttpMethod.DELETE, urlPath, headers)
   }
 
@@ -194,7 +232,8 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
                 headers: HttpHeaders = HttpHeaders.EMPTY,
                 fileParamName: String,
                 fileName: String,
-                additionalParams: Map[String, Any])
+                additionalParams: Map[String, Any],
+                byAdmin: Boolean = false)
                (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
     val parameters = new LinkedMultiValueMap[String, Any]
@@ -204,7 +243,11 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     }
 
     val url = s"$baseUrl/$urlPath"
-    headers.addAll(authHeaders)
+    if (byAdmin) {
+      headers.addAll(authHeadersAdmin)
+    } else {
+      headers.addAll(authHeaders)
+    }
     headers.setContentType(MediaType.MULTIPART_FORM_DATA)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
@@ -215,7 +258,8 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
 
   def fromRemote[T](urlPath: String,
                     headers: HttpHeaders = HttpHeaders.EMPTY,
-                    params: Map[String, Any])
+                    params: Map[String, Any],
+                    byAdmin: Boolean = false)
                    (implicit ct: ClassTag[T]): ResponseEntity[T] = {
 
     val parameters: MultiValueMap[String, String] = new LinkedMultiValueMap()
@@ -224,7 +268,11 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
     }
 
     val url = s"$baseUrl/$urlPath"
-    headers.addAll(authHeaders)
+    if (byAdmin) {
+      headers.addAll(authHeadersAdmin)
+    } else {
+      headers.addAll(authHeaders)
+    }
     headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
 
     val clazz = ct.runtimeClass.asInstanceOf[Class[T]]
@@ -248,5 +296,7 @@ abstract class BaseRestApiTest extends BaseRepositoryTest {
   def assertCreated(responseEntity: ResponseEntity[_]): Unit = {
     assert(responseEntity.getStatusCode == HttpStatus.CREATED)
   }
+
+  def stripBaseUrl(fullUrl: String): String = fullUrl.stripPrefix(baseUrl)
 
 }

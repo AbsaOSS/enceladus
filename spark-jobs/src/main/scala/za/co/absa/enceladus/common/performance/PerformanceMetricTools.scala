@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 object PerformanceMetricTools extends ProjectMetadata {
 
@@ -189,7 +189,7 @@ object PerformanceMetricTools extends ProjectMetadata {
     * when running a Standardization or a Dynamic Conformance job. */
   private def getNumberOfErrors(spark: SparkSession, outputPath: String): (Long, Long, Long) = {
     val df = spark.read.parquet(outputPath)
-    val errorCountColumn = SchemaUtils.getClosestUniqueName("enceladus_error_count", df.schema)
+    val errorCountColumn = df.schema.getClosestUniqueName("enceladus_error_count")
     val errCol = col(ErrorMessage.errorColumnName)
     val numRecordsFailed = df.filter(size(errCol) > 0).count
     val numRecordsSuccessful = df.filter(size(errCol) === 0).count

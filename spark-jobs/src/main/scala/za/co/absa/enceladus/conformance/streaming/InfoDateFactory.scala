@@ -22,7 +22,7 @@ import org.apache.spark.sql.{Column, DataFrame}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.Constants.ReportDateFormat
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
  * Info date factory allows to create an expression for the information date based on the strategy used.
@@ -46,7 +46,7 @@ object InfoDateFactory {
 
   private class InfoDateFromColumnFactory(columnName: String, pattern: String) extends InfoDateFactory {
     override def getInfoDateColumn(df: DataFrame): Column = {
-      val dt = SchemaUtils.getFieldType(columnName, df.schema)
+      val dt = df.schema.getFieldType(columnName)
       dt match {
         case Some(TimestampType) =>
           col(columnName).cast(DateType)

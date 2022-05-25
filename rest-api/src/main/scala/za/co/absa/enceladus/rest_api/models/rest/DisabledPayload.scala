@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.testUtils
+package za.co.absa.enceladus.rest_api.models.rest
 
-trait SparkLocalMaster {
-  System.getProperties.setProperty("spark.master", "local[4]")
-}
+case class DisabledPayload(disabled: Boolean)

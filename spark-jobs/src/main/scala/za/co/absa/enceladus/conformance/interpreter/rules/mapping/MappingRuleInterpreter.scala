@@ -25,10 +25,10 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
 import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.{StructTypeEnhancementsArrays}
 
 case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: ConfDataset)
   extends RuleInterpreter with JoinMappingRuleInterpreter {
@@ -74,7 +74,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       }
     }
     val errNested = errorsDf.groupBy(idField).agg(collect_list(col(ErrorMessage.errorColumnName)) as ErrorMessage.errorColumnName)
-    val errNestedSchema = SchemaUtils.getFieldType(ErrorMessage.errorColumnName, errNested.schema).get.asInstanceOf[ArrayType]
+    val errNestedSchema = errNested.schema.getFieldType(ErrorMessage.errorColumnName).get.asInstanceOf[ArrayType]
 
     // errNested will duplicate error values if the previous rule has any errCol
     // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
@@ -95,7 +95,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
   private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType) = {
     val paths = mappings.flatMap { mapping =>
-      SchemaUtils.getAllArraysInPath(mapping.mappedDatasetColumn, schema)
+      schema.getAllArraysInPath(mapping.mappedDatasetColumn)
     }
     MappingRuleInterpreter.includeErrorsCondition(paths, schema)
   }
@@ -117,7 +117,7 @@ object MappingRuleInterpreter {
       .map(x => (x, ArrayTransformations.arraySizeCols(x)))
       .foldLeft(lit(true)) {
         case (acc: Column, (origPath, sizePath)) =>
-          val nullable = lit(SchemaUtils.getFieldNullability(origPath, schema).get)
+          val nullable = lit(schema.getFieldNullability(origPath).get)
           val nll = col(sizePath) === lit(-1)
           val empty = col(sizePath) === lit(0)
 

@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.{StructField, StructType}
@@ -30,12 +29,12 @@ import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 import scala.io.Source.fromFile
 import scala.util.control.NonFatal
 
-trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
+trait MultipleMappingFixture extends BeforeAndAfterAll with TZNormalizedSparkTestBase {
 
   this: Suite =>
 

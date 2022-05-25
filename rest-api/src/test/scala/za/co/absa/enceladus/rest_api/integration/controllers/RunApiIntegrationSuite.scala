@@ -30,7 +30,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class RunApiIntegrationSuite extends BaseRestApiTest {
+class RunApiIntegrationSuite extends BaseRestApiTestV2 {
 
   import za.co.absa.enceladus.rest_api.integration.RunImplicits.RunExtensions
   import za.co.absa.enceladus.model.Validation._

@@ -22,7 +22,7 @@ import za.co.absa.enceladus.standardization.fixtures.CsvFileFixture
 
 class StandardizationCsvSuite extends FixtureAnyFunSuite with CsvFileFixture{
 
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val csvContent: String =
     """1¡2¡3¡4¡5

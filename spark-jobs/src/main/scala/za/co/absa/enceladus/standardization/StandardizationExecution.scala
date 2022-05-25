@@ -17,15 +17,17 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
+import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -36,7 +38,7 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
@@ -196,11 +198,9 @@ trait StandardizationExecution extends CommonJobExecution {
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
-    val minPartitionSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxPartitionSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-      repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
+      val repartitioner = new Repartitioner(configReader, log)
+      repartitioner.repartition(standardizedDF)
     } else {
       standardizedDF
     }

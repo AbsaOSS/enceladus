@@ -17,15 +17,13 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.types.TypedStructField.TypedStructFieldTagged
-import za.co.absa.enceladus.utils.types.parsers.NumericParser
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFResult}
 
 import scala.util.Success
 
-class TypeParserSuite extends AnyFunSuite with SparkTestBase {
+class TypeParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   private implicit val udfLib: UDFLibrary = new UDFLibrary
   private implicit val defaults: Defaults = GlobalDefaults

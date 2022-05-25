@@ -25,7 +25,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration, Repartitioner}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -37,7 +37,7 @@ import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -118,7 +118,7 @@ trait ConformanceExecution extends CommonJobExecution {
         spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
-        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
+        if (conformedDF.schema.fieldExists(Constants.EnceladusRecordId)) {
           conformedDF // no new id regeneration
         } else {
           RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
@@ -154,9 +154,8 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    val minBlockSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxBlockSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-    val withRepartitioning = repartitionDataFrame(withPartCols, minBlockSize, maxBlockSize)
+    val repartitioner = new Repartitioner(configReader, log)
+    val withRepartitioning = repartitioner.repartition(withPartCols)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
