@@ -24,7 +24,7 @@ import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import za.co.absa.enceladus.menas.exceptions.LockedEntityException
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.models.RestError
 import za.co.absa.enceladus.rest_api.models.rest.RestResponse

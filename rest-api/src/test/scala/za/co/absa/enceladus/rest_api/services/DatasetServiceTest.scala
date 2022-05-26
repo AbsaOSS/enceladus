@@ -19,7 +19,7 @@ import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.menas.exceptions.LockedEntityException
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}

@@ -29,7 +29,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
 import VersionedModelService._
-import za.co.absa.enceladus.menas.exceptions.LockedEntityException
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 
 // scalastyle:off number.of.methods
 abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
