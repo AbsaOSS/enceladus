@@ -293,8 +293,6 @@ class StandardizationInterpreter_TimestampSuite extends AnyFunSuite with TZNorma
 
     val src = seq.toDF(fieldName)
 
-    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
-
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     logDataFrameContent(std)
 
@@ -325,8 +323,6 @@ class StandardizationInterpreter_TimestampSuite extends AnyFunSuite with TZNorma
     )
 
     val src = seq.toDF(fieldName)
-
-    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
 
     val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
     logDataFrameContent(std)
