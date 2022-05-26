@@ -38,8 +38,8 @@ import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, Sche
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.restapi.TestResourcePath
-
 import java.io.File
+import java.nio.charset.Charset
 import java.nio.file.{Files, Path}
 import scala.collection.immutable.HashMap
 
@@ -516,7 +516,8 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
 
   import com.github.tomakehurst.wiremock.client.WireMock._
 
-  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+  private def readTestResourceAsString(path: String): String =
+    IOUtils.toString(getClass.getResourceAsStream(path), Charset.defaultCharset())
 
   /**
    * will prepare the a response from file with correct `ContentType`
