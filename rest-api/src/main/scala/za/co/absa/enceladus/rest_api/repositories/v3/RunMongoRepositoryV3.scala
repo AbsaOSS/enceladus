@@ -21,7 +21,7 @@ import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.{Filters, _}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.rest_api.models.RunSummary
@@ -46,22 +46,41 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
    * @param uniqueId
    * @return
    */
-  def getLatestOfEachRunSummary(startDate: Option[String] = None,
+  def getLatestOfEachRunSummary(datasetName: Option[String] = None,
+                                datasetVersion: Option[Int] = None,
+                                startDate: Option[String] = None,
                                 sparkAppId: Option[String] = None,
                                 uniqueId: Option[String] = None
                                ): Future[Seq[RunSummary]] = {
-    require(Seq(startDate, sparkAppId, uniqueId).filter(_.isDefined).length <= 1,
-      "You may only supply one of startDate|sparkAppId|uniqueId")
-    val prefilter = (startDate, sparkAppId, uniqueId) match {
-      case (None, None, None) => BsonDocument() // empty filter
-      case (Some(startDate), None, None) => startDateFromFilter(startDate)
-      case (None, Some(sparkAppId), None) => sparkIdFilter(sparkAppId)
-      case (None, None, Some(uniqueId)) => Filters.eq("uniqueId", uniqueId)
+    val exclusiveOptsFilter: Option[Bson] = (startDate, sparkAppId, uniqueId) match {
+      case (None, None, None) => None
+      case (Some(startDate), None, None) => Some(startDateFromFilter(startDate))
+      case (None, Some(sparkAppId), None) => Some(sparkIdFilter(sparkAppId))
+      case (None, None, Some(uniqueId)) => Some(Filters.eq("uniqueId", uniqueId))
       case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
     }
 
+    val datasetFilter: Option[Bson] = (datasetName, datasetVersion) match {
+      case (None, None) => None // all entities
+      case (Some(datasetName), None) => Some(Filters.eq("dataset", datasetName))
+      case (Some(datasetName), Some(datasetVersion)) => Some(Filters.and(
+        Filters.eq("dataset", datasetName),
+        Filters.eq("datasetVersion", datasetVersion)
+      ))
+      case _ => throw new IllegalArgumentException("Disallowed dataset name/version combination." +
+        "For dataset (name, version) filtering, the only allowed combinations are:" +
+        "(None, None), (Some, None) and (Some, Some)")
+    }
+
+    val combinedFilter: Bson = (exclusiveOptsFilter, datasetFilter) match {
+      case (None, None) => BsonDocument() // empty filter
+      case (Some(filter1), None) => filter1
+      case (None, Some(filter2)) => filter2
+      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
+    }
+
     val pipeline = Seq(
-        filter(prefilter),
+        filter(combinedFilter),
         sort(descending("runId")), // this results in Accumulator.first to pickup max version
         group(
           // the fields are specifically selected for RunSummary usage

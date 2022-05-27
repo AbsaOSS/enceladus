@@ -68,7 +68,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
       assert(actual == expected)
     }
 
-    "return only RunSummaries on startDate or later" in {
+    "return only latest RunSummaries on startDate or later" in {
       val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
       val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
@@ -90,7 +90,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
       assert(actual == expected)
     }
 
-    "return only RunSummaries with the correct uniqueId" in {
+    "return only the RunSummaries with the correct uniqueId" in {
       val r1id = UUID.randomUUID().toString
       val run1 = RunFactory.getDummyRun(dataset = "dataset1", runId = 1, uniqueId = Some(r1id))
       val run2 = RunFactory.getDummyRun(dataset = "dataset1", runId = 2, uniqueId = Some(UUID.randomUUID().toString)) // some other id
@@ -123,6 +123,83 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
 
       // get nothing by a different sparkAppId
       await(runMongoRepository.getLatestOfEachRunSummary(sparkAppId = Some("application_1653565036000_12345"))) shouldBe Seq.empty
+    }
+
+    "return only latest RunSummaries with specific dataset name" in {
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1) // not the latest run
+      val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+
+      val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
+      val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1) // not dataset1
+
+      runFixture.add(
+        dataset1ver1run1, dataset1ver1run2,
+        dataset1ver2run1, dataset2ver1run1
+      )
+
+      val actual = await(runMongoRepository.getLatestOfEachRunSummary(datasetName = Some("dataset1")))
+      val expected = List(dataset1ver1run2, dataset1ver2run1).map(_.toSummary)
+      assert(actual == expected)
+    }
+
+    "return only latest RunSummaries with specific dataset name and version" in {
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1) // not the latest run
+      val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+
+      val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1) // not dataset1 and v1
+      val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1) // not dataset1
+
+      runFixture.add(
+        dataset1ver1run1, dataset1ver1run2,
+        dataset1ver2run1, dataset2ver1run1
+      )
+
+      val actual = await(runMongoRepository.getLatestOfEachRunSummary(datasetName = Some("dataset1"), datasetVersion = Some(1)))
+      val expected = List(dataset1ver1run2).map(_.toSummary)
+      assert(actual == expected)
+    }
+
+    "return only latest RunSummaries with combination of specific dataset and startDate" in {
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+      val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
+
+      val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
+      val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "22-05-2022 15:01:12 +0200")
+      val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+
+      val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
+      val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "20-05-2022 13:01:12 +0200")
+
+      runFixture.add(
+        dataset1ver1run1, dataset1ver1run2,
+        dataset1ver2run1, dataset1ver2run2, dataset1ver2run3,
+        dataset2ver1run1, dataset3ver1run1
+      )
+
+      val actual = await(runMongoRepository.getLatestOfEachRunSummary(startDate = Some("20-05-2022"), datasetName = Some("dataset1")))
+      val expected = List(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
+      assert(actual == expected)
+    }
+
+    "fail" when {
+      "multiple options of startDate|sparkAppId|uniqueId are given" in {
+        val TheExpectedErrorMessage = "At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!"
+
+        (the[IllegalArgumentException] thrownBy {
+          await(runMongoRepository.getLatestOfEachRunSummary(sparkAppId = Some("sampleAppId1"), uniqueId = Some("adf")))
+        }).getMessage shouldBe TheExpectedErrorMessage
+
+        (the[IllegalArgumentException] thrownBy {
+          await(runMongoRepository.getLatestOfEachRunSummary(startDate = Some("05-05-2020"), uniqueId = Some("adf")))
+        }).getMessage shouldBe TheExpectedErrorMessage
+      }
+
+      "incorrect combination of dataset, datasetVersion is given (None, Some)" in {
+        val caught = the[IllegalArgumentException] thrownBy {
+          await(runMongoRepository.getLatestOfEachRunSummary(datasetName = None, datasetVersion = Some(2)))
+        }
+        caught.getMessage should include("Disallowed dataset name/version combination.")
+      }
     }
   }
 
