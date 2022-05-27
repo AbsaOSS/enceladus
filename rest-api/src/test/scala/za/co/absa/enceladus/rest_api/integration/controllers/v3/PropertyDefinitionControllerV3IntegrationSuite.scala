@@ -287,7 +287,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
   s"POST $apiUrl/{name}/import" should {
     val importablePd =
-      """{"todo":{"exportVersion":1},"item":{
+      """{"metadata":{"exportVersion":1},"item":{
         |"name":"propertyDefinitionXYZ",
         |"description":"Hi, I am the import",
         |"propertyType":{"_t":"StringPropertyType"},
