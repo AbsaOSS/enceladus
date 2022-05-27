@@ -15,19 +15,16 @@
 
 package za.co.absa.enceladus.rest_api.integration.repositories.v3
 
-import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{RunState, RunStatus}
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.rest_api.integration.fixtures.{FixtureService, RunFixtureService}
 import za.co.absa.enceladus.rest_api.integration.repositories.BaseRepositoryTest
-import za.co.absa.enceladus.rest_api.repositories.RunMongoRepository
 import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
