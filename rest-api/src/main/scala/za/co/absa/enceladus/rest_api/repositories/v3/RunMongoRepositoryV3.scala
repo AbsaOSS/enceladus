@@ -34,10 +34,6 @@ import scala.concurrent.Future
 class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongoRepository(mongoDb) {
 
   /**
-   * Grouped by datasetName, datasetVersion
-   */
-
-  /**
    * Yields Latest-of-each run summaries (grouped by datasetName, datasetVersion).
    * Optionally filtered by one of `startDate` (>=)|`sparkAppId`(==)|`uniqueId`(==)
    * The result is ordered by datasetName, datasetVersion (both ascending)

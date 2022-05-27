@@ -27,6 +27,7 @@ import RunControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.rest_api.services.RunService
+import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -39,27 +40,26 @@ object RunControllerV3 {
 
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
-class RunControllerV3 @Autowired()(runService: RunService) extends BaseController {
+class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // fix incorrect startDate filter implementation, return Seq[RunSummary]
   @GetMapping()
   @ResponseStatus(HttpStatus.OK)
   def list(@RequestParam startDate: Optional[String],
            @RequestParam sparkAppId: Optional[String],
            @RequestParam uniqueId: Optional[String]
-          ): CompletableFuture[Seq[Run]] = {
+          ): CompletableFuture[Seq[RunSummary]] = {
+    require(Seq(startDate, sparkAppId, uniqueId).filter(_.isPresent).length <= 1,
+      "You may only supply one of [startDate|sparkAppId|uniqueId].")
 
+    runService.getLatestOfEachRunSummary(
+      startDate = startDate.toScalaOption,
+      sparkAppId = sparkAppId.toScalaOption,
+      uniqueId = uniqueId.toScalaOption
+    )
     // todo pagination #2060
-    (startDate.toScalaOption, sparkAppId.toScalaOption, uniqueId.toScalaOption) match {
-      case (None, None, None) => runService.getAllLatest() // no filter
-      case (Some(startDate), None, None) => runService.getByStartDate(startDate)
-      case (None, Some(sparkAppId), None) => runService.getRunBySparkAppId(sparkAppId)
-      case (None, None, Some(uniqueId)) => runService.getRunByUniqueId(uniqueId).map(_.toSeq)
-      case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
-    }
   }
 
   // todo pagination #2060
@@ -68,8 +68,10 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
                                 @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
-    // todo implement startDate
-    runService.getSummariesByDatasetName(datasetName)
+    runService.getLatestOfEachRunSummary(
+      datasetName = Some(datasetName),
+      startDate = startDate.toScalaOption
+    )
   }
 
   // todo pagination #2060
@@ -79,6 +81,7 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
                                           @PathVariable datasetVersion: Int,
                                           @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
     // todo implement startDate option
+    // todo not latestOfEach, get summaries of all runs
     runService.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
   }
 
@@ -141,9 +144,9 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/checkpoints/{checkpointName}"))
   @ResponseStatus(HttpStatus.OK)
   def getRunCheckpointByName(@PathVariable datasetName: String,
-                        @PathVariable datasetVersion: Int,
-                        @PathVariable runId: String,
-                        @PathVariable checkpointName: String): CompletableFuture[Checkpoint] = {
+                             @PathVariable datasetVersion: Int,
+                             @PathVariable runId: String,
+                             @PathVariable checkpointName: String): CompletableFuture[Checkpoint] = {
     for {
       checkpoints <- getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.checkpoints)
       cpByName = checkpoints.find(_.name == checkpointName).getOrElse(
@@ -157,8 +160,8 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/metadata"))
   @ResponseStatus(HttpStatus.OK)
   def getRunMetadata(@PathVariable datasetName: String,
-                        @PathVariable datasetVersion: Int,
-                        @PathVariable runId: String): CompletableFuture[ControlMeasureMetadata] = {
+                     @PathVariable datasetVersion: Int,
+                     @PathVariable runId: String): CompletableFuture[ControlMeasureMetadata] = {
     getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.metadata)
   }
 
@@ -171,17 +174,18 @@ class RunControllerV3 @Autowired()(runService: RunService) extends BaseControlle
    * For run's dataset name, version and runId (either a number of 'latest'), the `forVersionFn` is called.
    */
   protected def forRunIdExpression[T](datasetName: String, datasetVersion: Int, runIdStr: String)
-                                       (forVersionFn: (String, Int, Int) => Future[T]): Future[T] = {
-    getRunForRunIdExpression(datasetName, datasetVersion, runIdStr).flatMap {run =>
+                                     (forVersionFn: (String, Int, Int) => Future[T]): Future[T] = {
+    getRunForRunIdExpression(datasetName, datasetVersion, runIdStr).flatMap { run =>
       forVersionFn(datasetName, datasetVersion, run.runId)
     }
   }
 
   /**
    * Retrieves a Run by dataset name, version and runId (either a number of 'latest')
-   * @param datasetName dataset name
+   *
+   * @param datasetName    dataset name
    * @param datasetVersion dateset version
-   * @param runIdStr runId (either a number of 'latest')
+   * @param runIdStr       runId (either a number of 'latest')
    * @return Run object
    */
   protected def getRunForRunIdExpression(datasetName: String, datasetVersion: Int, runIdStr: String): Future[Run] = {

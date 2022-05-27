@@ -30,7 +30,7 @@ import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-@Service
+@Service("runService") // by-name qualifier: making V2 autowiring un-ambiguous
 class RunService @Autowired()(val mongoRepository: RunMongoRepository)
   extends ModelService[Run] {
 

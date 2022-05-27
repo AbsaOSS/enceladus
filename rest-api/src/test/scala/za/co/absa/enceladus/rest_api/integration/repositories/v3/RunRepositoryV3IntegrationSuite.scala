@@ -210,6 +210,5 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
     val metadata = RunFactory.getDummyMetadata(additionalInfo = additionalInfo)
     val controlMeasure = RunFactory.getDummyControlMeasure(metadata = metadata)
     RunFactory.getDummyRun(runId = runId, controlMeasure = controlMeasure)
-
   }
 }

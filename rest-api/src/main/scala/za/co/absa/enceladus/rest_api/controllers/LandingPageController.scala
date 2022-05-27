@@ -36,11 +36,11 @@ import za.co.absa.enceladus.rest_api.services.RunService
 @RestController
 @RequestMapping(Array("/api/landing"))
 class LandingPageController @Autowired() (datasetRepository: DatasetMongoRepository,
-    mappingTableRepository: MappingTableMongoRepository,
-    schemaRepository: SchemaMongoRepository,
-    runsService: RunService,
-    landingPageRepository: LandingPageStatisticsMongoRepository,
-    statisticsService: StatisticsService) extends BaseController {
+                                          mappingTableRepository: MappingTableMongoRepository,
+                                          schemaRepository: SchemaMongoRepository,
+                                          runService: RunService,
+                                          landingPageRepository: LandingPageStatisticsMongoRepository,
+                                          statisticsService: StatisticsService) extends BaseController {
 
   import scala.concurrent.ExecutionContext.Implicits.global
   import za.co.absa.enceladus.rest_api.utils.implicits._
@@ -54,7 +54,7 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
     val dsCountFuture = datasetRepository.distinctCount()
     val mappingTableFuture = mappingTableRepository.distinctCount()
     val schemaFuture = schemaRepository.distinctCount()
-    val runFuture = runsService.getCount()
+    val runFuture = runService.getCount()
     val propertiesWithMissingCountsFuture = statisticsService.getPropertiesWithMissingCount()
     val propertiesTotalsFuture: Future[(Int, Int, Int)] = propertiesWithMissingCountsFuture.map(props => {
       props.foldLeft(0, 0, 0) { (acum, item) =>
@@ -66,7 +66,7 @@ class LandingPageController @Autowired() (datasetRepository: DatasetMongoReposit
         }
       }
     })
-    val todaysStatsfuture = runsService.getTodaysRunsStatistics()
+    val todaysStatsfuture = runService.getTodaysRunsStatistics()
     for {
       dsCount <- dsCountFuture
       mtCount <- mappingTableFuture
