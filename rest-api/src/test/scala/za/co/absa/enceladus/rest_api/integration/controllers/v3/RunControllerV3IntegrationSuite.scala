@@ -160,7 +160,6 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         runFixture.add(dataset2ver1run1) // unrelated to dataset1
 
         val response = sendGet[String](s"$apiUrl/dataset1")
-
         assertOk(response)
 
         val actual = response.getBody
@@ -186,6 +185,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         )
 
         val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1?startDate=20-05-2022")
+        response.getStatusCode shouldBe HttpStatus.OK
         val expected = Array(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
         response.getBody shouldBe expected
       }
@@ -198,6 +198,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         runFixture.add(run1, run2, run3, run4)
 
         val response = sendGet[Array[RunSummary]](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
+        response.getStatusCode shouldBe HttpStatus.OK
         val expected = Array(run1).map(_.toSummary)
         response.getBody shouldBe expected
       }
@@ -208,13 +209,54 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         runFixture.add(run1, run2)
 
         val response = sendGet[String](s"$apiUrl/dataset1?startDate=24-05-2022")
+        response.getStatusCode shouldBe HttpStatus.OK
         response.getBody shouldBe "[]" // empty array
       }
     }
 
   }
 
-   // todo cover @GetMapping(Array("/{datasetName}/{datasetVersion}"))
+  s"GET $apiUrl/{datasetName}/{datasetVersion}" can {
+    "return 200" when {
+      "return RunSummaries by dataset name and version" in {
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+        runFixture.add(dataset1ver1run1, dataset1ver1run2)
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
+        val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
+        runFixture.add(dataset1ver2run1, dataset2ver1run1)
+
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        val expected = List(dataset1ver1run1, dataset1ver1run2).map(_.toSummary)
+        response.getBody shouldBe expected
+      }
+
+      "return RunSummaries on combination of (startDate, dsName, and dsVersion)" in {
+        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
+
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
+        val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "20-05-2022 15:01:12 +0200")
+        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+
+        val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "21-05-2022 13:01:12 +0200")
+
+        runFixture.add(
+          dataset1ver1run2,
+          dataset1ver2run1, dataset1ver2run2, dataset1ver2run3,
+          dataset3ver1run1
+        )
+
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2?startDate=20-05-2022")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        val expected = List(dataset1ver2run2, dataset1ver2run3).map(_.toSummary)
+        response.getBody shouldBe expected
+
+      }
+    }
+  }
 
   // todo add other endpoints test cases
 
