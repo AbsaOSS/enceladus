@@ -37,17 +37,18 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
    * Yields Latest-of-each run summaries (grouped by datasetName, datasetVersion).
    * Optionally filtered by one of `startDate` (>=)|`sparkAppId`(==)|`uniqueId`(==)
    * The result is ordered by datasetName, datasetVersion (both ascending)
+   *
    * @param startDate
    * @param sparkAppId
    * @param uniqueId
    * @return
    */
-  def getLatestOfEachRunSummary(datasetName: Option[String] = None,
-                                datasetVersion: Option[Int] = None,
-                                startDate: Option[String] = None,
-                                sparkAppId: Option[String] = None,
-                                uniqueId: Option[String] = None
-                               ): Future[Seq[RunSummary]] = {
+  def getRunSummariesLatestOfEach(datasetName: Option[String] = None,
+                                  datasetVersion: Option[Int] = None,
+                                  startDate: Option[String] = None,
+                                  sparkAppId: Option[String] = None,
+                                  uniqueId: Option[String] = None
+                                 ): Future[Seq[RunSummary]] = {
     val exclusiveOptsFilter: Option[Bson] = (startDate, sparkAppId, uniqueId) match {
       case (None, None, None) => None
       case (Some(startDate), None, None) => Some(startDateFromFilter(startDate))
@@ -56,7 +57,69 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
       case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
     }
 
-    val datasetFilter: Option[Bson] = (datasetName, datasetVersion) match {
+    val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
+
+    val combinedFilter: Bson = (exclusiveOptsFilter, datasetFilter) match {
+      case (None, None) => BsonDocument() // empty filter
+      case (Some(filter1), None) => filter1
+      case (None, Some(filter2)) => filter2
+      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
+    }
+
+    val pipeline = Seq(
+      filter(combinedFilter),
+      sort(descending("runId")), // this results in Accumulator.first to pickup max version
+      group(
+        // the fields are specifically selected for RunSummary usage
+        id = BsonDocument("""{"dataset": "$dataset", "datasetVersion": "$datasetVersion"}"""),
+        Accumulators.first("datasetName", "$dataset"),
+        Accumulators.first("datasetVersion", "$datasetVersion"),
+        Accumulators.first("runId", "$runId"),
+        Accumulators.first("status", "$runStatus.status"),
+        Accumulators.first("startDateTime", "$startDateTime"),
+        Accumulators.first("runUniqueId", "$uniqueId")
+      ),
+      project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
+      sort(ascending("datasetName", "datasetVersion"))
+    )
+
+    collection
+      .aggregate[RunSummary](pipeline)
+      .toFuture()
+  }
+
+  def getRunSummaries(datasetName: Option[String] = None,
+                      datasetVersion: Option[Int] = None,
+                      startDate: Option[String] = None): Future[Seq[RunSummary]] = {
+
+    val dateFilter: Option[Bson] = startDate.map(date => startDateFromFilter(date))
+    val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
+
+    val combinedFilter: Bson = (dateFilter, datasetFilter) match {
+      case (None, None) => BsonDocument() // empty filter
+      case (Some(filter1), None) => filter1
+      case (None, Some(filter2)) => filter2
+      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
+    }
+
+    val pipeline = Seq(
+      filter(combinedFilter),
+      summaryProjection,
+      sort(ascending("datasetName", "datasetVersion", "runId"))
+    )
+
+    collection
+      .aggregate[RunSummary](pipeline)
+      .toFuture()
+  }
+
+  protected def startDateFromFilter(startDate: String): Bson = {
+    // todo use LocalDateTime?
+    Filters.gte("startDateTime", startDate)
+  }
+
+  protected def datasetNameVersionOptFilter(datasetName: Option[String], datasetVersion: Option[Int]): Option[Bson] = {
+    (datasetName, datasetVersion) match {
       case (None, None) => None // all entities
       case (Some(datasetName), None) => Some(Filters.eq("dataset", datasetName))
       case (Some(datasetName), Some(datasetVersion)) => Some(Filters.and(
@@ -67,38 +130,5 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
         "For dataset (name, version) filtering, the only allowed combinations are:" +
         "(None, None), (Some, None) and (Some, Some)")
     }
-
-    val combinedFilter: Bson = (exclusiveOptsFilter, datasetFilter) match {
-      case (None, None) => BsonDocument() // empty filter
-      case (Some(filter1), None) => filter1
-      case (None, Some(filter2)) => filter2
-      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
-    }
-
-    val pipeline = Seq(
-        filter(combinedFilter),
-        sort(descending("runId")), // this results in Accumulator.first to pickup max version
-        group(
-          // the fields are specifically selected for RunSummary usage
-          id =  BsonDocument("""{"dataset": "$dataset", "datasetVersion": "$datasetVersion"}"""),
-          Accumulators.first("datasetName", "$dataset"),
-          Accumulators.first("datasetVersion", "$datasetVersion"),
-          Accumulators.first("runId", "$runId" ),
-          Accumulators.first("status", "$runStatus.status" ),
-          Accumulators.first("startDateTime", "$startDateTime"),
-          Accumulators.first("runUniqueId", "$uniqueId" )
-        ),
-        project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
-        sort(ascending("datasetName", "datasetVersion"))
-      )
-
-    collection
-      .aggregate[RunSummary](pipeline)
-      .toFuture()
-  }
-
-  protected def startDateFromFilter(startDate: String): Bson = {
-    // todo use LocalDateTime?
-    Filters.gte("startDateTime", startDate)
   }
 }

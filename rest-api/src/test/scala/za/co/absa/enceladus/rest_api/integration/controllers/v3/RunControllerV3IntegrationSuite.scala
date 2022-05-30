@@ -213,7 +213,9 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     }
 
   }
-  // todo add other endpoints test cases
 
+   // todo cover @GetMapping(Array("/{datasetName}/{datasetVersion}"))
+
+  // todo add other endpoints test cases
 
 }

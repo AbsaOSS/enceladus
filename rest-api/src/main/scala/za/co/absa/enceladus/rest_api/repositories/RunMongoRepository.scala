@@ -51,7 +51,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private[rest_api] override def collectionBaseName: String = RunMongoRepository.collectionBaseName
 
-  private val summaryProjection: Bson = project(fields(
+  protected val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),
     computed("status", "$runStatus.status"),
     computed("runUniqueId", "$uniqueId"),

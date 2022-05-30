@@ -80,9 +80,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
                                           @PathVariable datasetVersion: Int,
                                           @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
-    // todo implement startDate option
-    // todo not latestOfEach, get summaries of all runs
-    runService.getSummariesByDatasetNameAndVersion(datasetName, datasetVersion)
+    runService.getRunSummaries(Some(datasetName), Some(datasetVersion), startDate.toScalaOption)
   }
 
   @PostMapping(Array("/{datasetName}/{datasetVersion}"))

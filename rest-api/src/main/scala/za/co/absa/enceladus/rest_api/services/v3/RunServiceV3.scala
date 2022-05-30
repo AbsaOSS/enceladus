@@ -42,7 +42,13 @@ class RunServiceV3 @Autowired()(override val mongoRepository: RunMongoRepository
                                 sparkAppId: Option[String] = None,
                                 uniqueId: Option[String] = None
                                ): Future[Seq[RunSummary]] = {
-    mongoRepository.getLatestOfEachRunSummary(datasetName, datasetVersion, startDate, sparkAppId, uniqueId)
+    mongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId)
+  }
+
+  def getRunSummaries(datasetName: Option[String] = None,
+                      datasetVersion: Option[Int] = None,
+                      startDate: Option[String] = None): Future[Seq[RunSummary]] = {
+    mongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
   }
 
 }
