@@ -17,6 +17,7 @@ package za.co.absa.enceladus.rest_api.services.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3
 import za.co.absa.enceladus.rest_api.services.RunService
@@ -24,8 +25,24 @@ import za.co.absa.enceladus.rest_api.services.RunService
 import scala.concurrent.Future
 
 @Service
-class RunServiceV3 @Autowired()(override val mongoRepository: RunMongoRepositoryV3)
+class RunServiceV3 @Autowired()(override val mongoRepository: RunMongoRepositoryV3, datasetServiceV3: DatasetServiceV3)
   extends RunService(mongoRepository) {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
+
+  override def validate(run: Run): Future[Validation] = {
+    for {
+      uniqueness <- validateUniqueId(run)
+      dsExistence <- validateDatasetExists(run.dataset, run.datasetVersion)
+    } yield uniqueness.merge(dsExistence)
+  }
+
+  protected def validateDatasetExists(datasetName: String, datasetVersion: Int): Future[Validation] = {
+    datasetServiceV3.getVersion(datasetName, datasetVersion).map {
+      case None => Validation.empty.withError("dataset", s"Dataset $datasetName v$datasetVersion not found!")
+      case Some(_) => Validation.empty
+    }
+  }
 
   /**
    * Yields Latest-of-each run summaries (grouped by datasetName, datasetVersion).

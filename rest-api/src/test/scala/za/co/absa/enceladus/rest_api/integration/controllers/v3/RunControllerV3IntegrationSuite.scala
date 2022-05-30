@@ -24,10 +24,10 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
 import za.co.absa.atum.utils.SerializationUtils
-import za.co.absa.enceladus.model.test.factories.RunFactory
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
-import za.co.absa.enceladus.rest_api.integration.fixtures.{FixtureService, RunFixtureService}
+import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService, RunFixtureService}
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 
 import java.util.UUID
@@ -37,13 +37,15 @@ import java.util.UUID
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
-  import za.co.absa.enceladus.model.Validation._
   import za.co.absa.enceladus.rest_api.integration.RunImplicits.RunExtensions
 
   @Autowired
   private val runFixture: RunFixtureService = null
 
-  override def fixtures: List[FixtureService[_]] = List(runFixture)
+  @Autowired
+  private val datasetFixture: DatasetFixtureService = null
+
+  override def fixtures: List[FixtureService[_]] = List(runFixture, datasetFixture)
 
   private val apiUrl = "/runs"
 
@@ -261,6 +263,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
   s"POST $apiUrl/{datasetName}/{datasetVersion}" can {
     "return 201" when {
       "new Run is created (basic case)" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset")) // dataset ref'd by the run
         val run = RunFactory.getDummyRun()
 
         val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
@@ -270,6 +273,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         assert(body == run)
       }
       "created run provides a uniqueId if none is specified" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val run = RunFactory.getDummyRun(uniqueId = None)
         val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
 
@@ -281,6 +285,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         assert(body == expected)
       }
       "created run generates a runId=1 for the first run" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val run = RunFactory.getDummyRun(runId = 123) // specified runId is ignored
 
         val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
@@ -291,6 +296,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         assert(body == run.copy(runId = 1)) // no runs present, so runId = 1
       }
       "created run generates a subsequent runId" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         runFixture.add(
           RunFactory.getDummyRun(runId = 1),
           RunFactory.getDummyRun(runId = 2)
@@ -305,6 +311,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         assert(body == run.copy(runId = 3)) // runs 1, and 2 were already presents
       }
       "handles two runs being started simultaneously" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val run1 = RunFactory.getDummyRun()
         val run2 = RunFactory.getDummyRun()
         run1.uniqueId should not be run2.uniqueId
@@ -348,6 +355,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         response2.getBody should include("URL and payload entity version mismatch: 2 != 3")
       }
       "a Run with the given uniqueId already exists" in {
+        datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
         val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
         runFixture.add(presentRun)
@@ -361,7 +369,15 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         assert(!body.isValid)
         assert(body == Validation().withError("uniqueId", s"run with this uniqueId already exists: $uniqueId"))
       }
-      // todo non-existent dataset/version failing
+      "a Run references a non-existing dataset" in {
+        // dataset ref'd by the run does not exits
+        val run = RunFactory.getDummyRun()
+
+        val response = sendPost[Run, Validation](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+        response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+
+        response.getBody shouldBe Validation.empty.withError("dataset", "Dataset dummyDataset v1 not found!")
+      }
     }
   }
 

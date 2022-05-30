@@ -112,7 +112,7 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
   def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {
     for {
       latestOpt  <- runMongoRepository.getLatestRun(newRun.dataset, newRun.datasetVersion)
-      run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
+      run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt) // adds uniqueId, replaces runId
       validation <- validate(run)
       createdRun <-
         if (validation.isValid) {
@@ -203,7 +203,7 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
     }
   }
 
-  private def validateUniqueId(run: Run): Future[Validation] = {
+  protected def validateUniqueId(run: Run): Future[Validation] = {
     val validation = Validation()
 
     run.uniqueId match {
