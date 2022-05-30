@@ -258,6 +258,113 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     }
   }
 
+  s"POST $apiUrl/{datasetName}/{datasetVersion}" can {
+    "return 201" when {
+      "new Run is created (basic case)" in {
+        val run = RunFactory.getDummyRun()
+
+        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+        assertCreated(response)
+
+        val body = response.getBody
+        assert(body == run)
+      }
+      "created run provides a uniqueId if none is specified" in {
+        val run = RunFactory.getDummyRun(uniqueId = None)
+        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+
+        assertCreated(response)
+
+        val body = response.getBody
+        assert(body.uniqueId.isDefined)
+        val expected = run.copy(uniqueId = body.uniqueId)
+        assert(body == expected)
+      }
+      "created run generates a runId=1 for the first run" in {
+        val run = RunFactory.getDummyRun(runId = 123) // specified runId is ignored
+
+        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+
+        assertCreated(response)
+
+        val body = response.getBody
+        assert(body == run.copy(runId = 1)) // no runs present, so runId = 1
+      }
+      "created run generates a subsequent runId" in {
+        runFixture.add(
+          RunFactory.getDummyRun(runId = 1),
+          RunFactory.getDummyRun(runId = 2)
+        )
+        val run = RunFactory.getDummyRun(runId = 222) // specified runId is ignored, subsequent is used
+
+        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+
+        assertCreated(response)
+
+        val body = response.getBody
+        assert(body == run.copy(runId = 3)) // runs 1, and 2 were already presents
+      }
+      "handles two runs being started simultaneously" in {
+        val run1 = RunFactory.getDummyRun()
+        val run2 = RunFactory.getDummyRun()
+        run1.uniqueId should not be run2.uniqueId
+
+        val eventualResponse1 = sendPostAsync[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run1))
+        val eventualResponse2 = sendPostAsync[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run2))
+
+        val response1 = await(eventualResponse1)
+        val response2 = await(eventualResponse2)
+
+        assertCreated(response1)
+        assertCreated(response2)
+
+        val body1 = response1.getBody
+        val body2 = response2.getBody
+        body1 shouldBe body1.copy(runId = body1.runId) // still the same run object, just different runId
+        body2 shouldBe body2.copy(runId = body2.runId)
+
+        Set(body1.runId, body2.runId) shouldBe Set(1, 2)
+      }
+    }
+
+    "return 400" when {
+      "sending incorrect run data" in {
+        val response = sendPost[String, String](s"$apiUrl/dummyDataset/1", bodyOpt = Some("{}"))
+
+        assertBadRequest(response)
+
+        val body = response.getBody
+        body should include("URL and payload entity name mismatch: 'dummyDataset' != 'null'")
+      }
+      "sending mismatched URL/payload data" in {
+        val response1 = sendPost[Run, String](s"$apiUrl/datasetB/2",
+          bodyOpt = Some(RunFactory.getDummyRun(dataset = "datasetA", datasetVersion = 2)))
+        assertBadRequest(response1)
+        response1.getBody should include("URL and payload entity name mismatch: 'datasetB' != 'datasetA'")
+
+        val response2 = sendPost[Run, String](s"$apiUrl/datasetC/2",
+          bodyOpt = Some(RunFactory.getDummyRun(dataset = "datasetC", datasetVersion = 3)))
+        assertBadRequest(response2)
+        response2.getBody should include("URL and payload entity version mismatch: 2 != 3")
+      }
+      "a Run with the given uniqueId already exists" in {
+        val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
+        val presentRun = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
+        runFixture.add(presentRun)
+        val run = RunFactory.getDummyRun(uniqueId = Option(uniqueId))
+
+        val response = sendPost[Run, Validation](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+
+        assertBadRequest(response)
+
+        val body = response.getBody
+        assert(!body.isValid)
+        assert(body == Validation().withError("uniqueId", s"run with this uniqueId already exists: $uniqueId"))
+      }
+      // todo non-existent dataset/version failing
+    }
+  }
+
   // todo add other endpoints test cases
 
 }

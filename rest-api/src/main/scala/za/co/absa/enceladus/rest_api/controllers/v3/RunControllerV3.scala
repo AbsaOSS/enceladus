@@ -63,7 +63,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   }
 
   // todo pagination #2060
-  // todo implement this with startDate filter & latestOfEach
   @GetMapping(Array("/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
@@ -93,7 +92,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     if (datasetName != run.dataset) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$datasetName' != '${run.dataset}'"))
     } else if (datasetVersion != run.datasetVersion) {
-      Future.failed(new IllegalArgumentException(s"URL and payload version mismatch: $datasetVersion != ${run.datasetVersion}"))
+      Future.failed(new IllegalArgumentException(s"URL and payload entity version mismatch: $datasetVersion != ${run.datasetVersion}"))
     } else {
       runService.create(run, principal.getUsername)
     }
