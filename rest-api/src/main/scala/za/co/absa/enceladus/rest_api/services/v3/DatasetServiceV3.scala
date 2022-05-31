@@ -18,11 +18,11 @@ package za.co.absa.enceladus.rest_api.services.v3
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
-import za.co.absa.enceladus.model.{Dataset, Validation}
+import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.rest_api.services.DatasetService._
-import za.co.absa.enceladus.rest_api.services.{DatasetService, MappingTableService, PropertyDefinitionService, SchemaService}
+import za.co.absa.enceladus.rest_api.services.DatasetService
 
 import scala.concurrent.Future
 
@@ -30,11 +30,11 @@ import scala.concurrent.Future
 @Service
 class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoRepository,
                                     oozieRepository: OozieRepository,
-                                    datasetPropertyDefinitionService: PropertyDefinitionService,
-                                    mappingTableService: MappingTableService,
-                                    val schemaService: SchemaService)
-  extends DatasetService(datasetMongoRepository, oozieRepository, datasetPropertyDefinitionService)
-  with HavingSchemaService {
+                                    propertyDefinitionService: PropertyDefinitionServiceV3,
+                                    mappingTableService: MappingTableServiceV3,
+                                    val schemaService: SchemaServiceV3)
+  extends DatasetService(datasetMongoRepository, oozieRepository, propertyDefinitionService)
+  with HavingSchemaService with VersionedModelServiceV3[Dataset] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -89,6 +89,10 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
         Future.successful(latest.copy(properties = Some(removeBlankProperties(updatedProperties))))
       }
     } yield update
+  }
+
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    super.getUsedIn(name, version).map(_.normalized)
   }
 
 }

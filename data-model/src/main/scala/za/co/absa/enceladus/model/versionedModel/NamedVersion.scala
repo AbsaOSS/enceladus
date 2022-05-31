@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest_api.exceptions
+package za.co.absa.enceladus.model.versionedModel
 
-import za.co.absa.enceladus.model.UsedIn
-
-case class EntityInUseException(message: String = "There are dependencies present preventing the action",
-                                usedIn: UsedIn) extends Exception()
+/**
+ * V3 Wrapper for [[za.co.absa.enceladus.model.versionedModel.VersionedSummary]]
+ */
+case class NamedVersion(name: String, version: Int, disabled: Boolean)

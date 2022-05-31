@@ -13,6 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.versionedModel
+package za.co.absa.enceladus.rest_api.models.rest
 
-case class NamedLatestVersion(name: String, version: Int)
+case class DisabledPayload(disabled: Boolean)
