@@ -381,6 +381,49 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     }
   }
 
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}" can {
+    "return 200" when {
+      "return Run by dataset name, version, and runId" in {
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
+        runFixture.add(dataset1ver1run1, dataset1ver1run2)
+
+        val response = sendGet[String](s"$apiUrl/dataset1/1/2")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        response.getBody shouldBe
+          s"""{
+             |"uniqueId":"${dataset1ver1run2.uniqueId.get}",
+             |"runId":2,
+             |"dataset":"dataset1",
+             |"datasetVersion":1,
+             |"splineRef":{"sparkApplicationId":"dummySparkApplicationId","outputPath":"dummyOutputPath"},
+             |"startDateTime":"${dataset1ver1run2.startDateTime}",
+             |"runStatus":{"status":{"enumClass":"za.co.absa.atum.model.RunState","value":"allSucceeded"},"error":null},
+             |"controlMeasure":{
+             |"metadata":{
+             |"sourceApplication":"dummySourceApplication",
+             |"country":"dummyCountry",
+             |"historyType":"dummyHistoryType",
+             |"dataFilename":"dummyDataFilename",
+             |"sourceType":"dummySourceType",
+             |"version":1,
+             |"informationDate":"04-12-2017 16:19:17 +0200",
+             |"additionalInfo":{}
+             |},
+             |"runUniqueId":"${dataset1ver1run2.controlMeasure.runUniqueId.get}",
+             |"checkpoints":[]
+             |}
+             |}""".stripMargin.replaceAll("\n", "")
+      }
+    }
+    "return 400" when {
+      "run does not exists" in {
+        val response = sendGet[String](s"$apiUrl/dataset1/1/2")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
   // todo add other endpoints test cases
 
 }
