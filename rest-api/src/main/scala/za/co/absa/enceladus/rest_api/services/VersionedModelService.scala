@@ -276,14 +276,8 @@ trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
     mongoRepository.isDisabled(name)
   }
 
-  /**
-   * Provides common validation (currently entity name validation). Override to extend for further specific validations.
-   *
-   * @param item
-   * @return
-   */
   def setLock(name: String, isLocked: Boolean, principal: UserDetails): Future[UpdateResult] = {
-    versionedMongoRepository.setLockState(name, isLocked, principal.getUsername)
+    mongoRepository.setLockState(name, isLocked, principal.getUsername)
   }
 
   def validate(item: C): Future[Validation] = {
