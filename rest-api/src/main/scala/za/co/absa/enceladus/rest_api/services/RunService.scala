@@ -31,8 +31,10 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 @Service
-class RunService @Autowired()(runMongoRepository: RunMongoRepository)
-  extends ModelService(runMongoRepository) {
+class RunService @Autowired()(val mongoRepository: RunMongoRepository)
+  extends ModelService[Run] {
+
+  protected val runMongoRepository: RunMongoRepository = mongoRepository // alias
 
   def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
     runMongoRepository.getRunSummariesPerDatasetName()

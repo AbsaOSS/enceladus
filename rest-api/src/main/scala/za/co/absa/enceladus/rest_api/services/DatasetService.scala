@@ -36,10 +36,12 @@ import scala.util.{Failure, Success}
 
 
 @Service
-class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository,
+class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
                                   oozieRepository: OozieRepository,
                                   propertyDefinitionService: PropertyDefinitionService)
-  extends VersionedModelService(datasetMongoRepository) {
+  extends VersionedModelService[Dataset] {
+
+  protected val datasetMongoRepository: DatasetMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

@@ -15,15 +15,12 @@
 
 package za.co.absa.enceladus.rest_api.services.v3
 
-import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
+import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
-import za.co.absa.enceladus.rest_api.services.{SchemaService, VersionedModelService}
+import za.co.absa.enceladus.rest_api.services.SchemaService
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
-import scala.concurrent.ExecutionContext.Implicits.global
-
 
 import scala.concurrent.Future
 
@@ -32,12 +29,21 @@ class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    mappingTableMongoRepository: MappingTableMongoRepository,
                                    datasetMongoRepository: DatasetMongoRepository,
                                    sparkMenasConvertor: SparkMenasSchemaConvertor)
-  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor) {
+  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
+  with VersionedModelServiceV3[Schema]{
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def validate(item: Schema): Future[Validation] = {
-    if (item.fields.isEmpty) {
+    for {
+      originalValidation <- super.validate(item)
+      fieldsValidation <- validateSchemaFields(item.fields)
+    } yield originalValidation.merge(fieldsValidation)
+
+  }
+
+  protected def validateSchemaFields(fields: Seq[SchemaField]): Future[Validation] = {
+    if (fields.isEmpty) {
       // V3 disallows empty schema fields - V2 allowed it at first that to get updated by an attachment upload/remote-load
       Future.successful(Validation.empty.withError("schema-fields","No fields found! There must be fields defined for actual usage."))
     } else {

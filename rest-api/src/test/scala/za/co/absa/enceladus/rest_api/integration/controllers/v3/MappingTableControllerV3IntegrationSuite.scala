@@ -20,13 +20,12 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
@@ -122,7 +121,6 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           ))
         )
 
-
         val response = sendGet[Array[DefaultValue]](s"$apiUrl/mtA/latest/defaults")
         assertOk(response)
         response.getBody shouldBe Array(DefaultValue("columnX", "defaultXvalue"), DefaultValue("columnY", "defaultYvalue"))
@@ -142,7 +140,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
     }
 
     "return 400" when {
-      "when version is not the latest (only last version can be updated)" in {
+      "the version is not the latest (only last version can be updated)" in {
         val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1)
         val mtAv2 = MappingTableFactory.getDummyMappingTable("mtA", version = 2)
         val mtAv3 = MappingTableFactory.getDummyMappingTable("mtA", version = 3)
@@ -156,6 +154,18 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         responseBody shouldBe Validation(Map("version" ->
           List("Version 2 of mtA is not the latest version, therefore cannot be edited")
         ))
+      }
+      "the mapping table is disabled" in {
+        val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1, disabled = true)
+          .copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+        mappingTableFixture.add(mtAv1)
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
+
+        val response = sendPut[Array[DefaultValue], Validation](s"$apiUrl/mtA/1/defaults",
+          bodyOpt = Some(Array.empty[DefaultValue]))
+        assertBadRequest(response)
+
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity mtA is disabled!")
       }
     }
 
@@ -213,10 +223,20 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
           List("Version 2 of mtA is not the latest version, therefore cannot be edited")
         ))
       }
+      "the mapping table is disabled" in {
+        val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1, disabled = true)
+          .copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+        mappingTableFixture.add(mtAv1)
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
+
+        val response = sendPost[DefaultValue, Validation](s"$apiUrl/mtA/1/defaults", bodyOpt = Some(DefaultValue("colA", "defaultA")))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity mtA is disabled!")
+      }
     }
 
     "201 Created with location" when {
-      s"defaults are replaced with a new version" in {
+      "defaults are replaced with a new version" in {
         val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
         mappingTableFixture.add(mtAv1)
 
@@ -265,9 +285,9 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
         mappingTableFixture.add(mappingTable1, mappingTable2)
 
-        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable",1)))
-        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable",1)), disabled = true)
-        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable",2)))
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable", 1)))
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable", 1)), disabled = true)
+        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable", 2)))
         datasetFixture.add(datasetA, datasetB, datasetC)
 
         val response = sendGet[String](s"$apiUrl/mappingTable/used-in")
@@ -294,9 +314,9 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         val mappingTable2 = MappingTableFactory.getDummyMappingTable(name = "mappingTable", version = 2)
         mappingTableFixture.add(mappingTable1, mappingTable2)
 
-        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable",1)))
-        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable",1)), disabled = true)
-        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable",2)))
+        val datasetA = DatasetFactory.getDummyDataset(name = "datasetA", conformance = List(mcr("mappingTable", 1)))
+        val datasetB = DatasetFactory.getDummyDataset(name = "datasetB", conformance = List(mcr("mappingTable", 1)), disabled = true)
+        val datasetC = DatasetFactory.getDummyDataset(name = "datasetC", conformance = List(mcr("mappingTable", 2)))
         datasetFixture.add(datasetA, datasetB, datasetC)
 
         val response = sendGet[UsedIn](s"$apiUrl/mappingTable/1/used-in")
@@ -408,7 +428,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
           val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", conformance = List(mcr("mappingTable", 1)))
           val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 7, conformance = List(mcr("mappingTable", 2)))
-          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset3",conformance = List(mcr("anotherMappingTable", 8))) // moot
+          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset3", conformance = List(mcr("anotherMappingTable", 8))) // moot
           val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", conformance = List(mcr("mappingTable", 2)), disabled = true)
           datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
 

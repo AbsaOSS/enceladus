@@ -27,7 +27,7 @@ import scala.concurrent.Future
 @Service
 class PropertyDefinitionServiceV3 @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository,
                                                datasetMongoRepository: DatasetMongoRepository)
-  extends PropertyDefinitionService(propertyDefMongoRepository) {
+  extends PropertyDefinitionService(propertyDefMongoRepository) with VersionedModelServiceV3[PropertyDefinition] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 

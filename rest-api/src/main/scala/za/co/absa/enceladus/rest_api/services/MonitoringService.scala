@@ -17,18 +17,19 @@ package za.co.absa.enceladus.rest_api.services
 
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Service
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest_api.repositories.MonitoringMongoRepository
 
 import scala.concurrent.Future
 
 @Service
-class MonitoringService @Autowired()(monitoringMongoRepository: MonitoringMongoRepository)
-  extends ModelService(monitoringMongoRepository) {
+class MonitoringService @Autowired()(val mongoRepository: MonitoringMongoRepository)
+  extends ModelService[Run] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def getMonitoringDataPoints(datasetName: String, startDate: String, endDate: String): Future[String] = {
-    monitoringMongoRepository.getMonitoringDataPoints(datasetName, startDate, endDate).map(_.mkString("[", ",", "]"))
+    mongoRepository.getMonitoringDataPoints(datasetName, startDate, endDate).map(_.mkString("[", ",", "]"))
   }
 
 }
