@@ -399,7 +399,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
              |"datasetVersion":1,
              |"splineRef":{"sparkApplicationId":"dummySparkApplicationId","outputPath":"dummyOutputPath"},
              |"startDateTime":"${dataset1ver1run2.startDateTime}",
-             |"runStatus":{"status":{"enumClass":"za.co.absa.atum.model.RunState","value":"allSucceeded"},"error":null},
+             |"runStatus":{"status":"allSucceeded","error":null},
              |"controlMeasure":{
              |"metadata":{
              |"sourceApplication":"dummySourceApplication",
