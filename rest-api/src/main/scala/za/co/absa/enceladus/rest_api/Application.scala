@@ -54,7 +54,8 @@ class Application() {
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-      .setSerializationInclusion(Include.NON_ABSENT)
+      // todo consider including the following to unify serialization results - #2074
+      // .setSerializationInclusion(Include.NON_ABSENT)
       // ^ fields of `Option[T]` are not included if None (ame behavior as Atum's SerializationUtils.asJson)
       // explanation: https://github.com/FasterXML/jackson-module-scala/issues/46#issuecomment-128770969
   }
