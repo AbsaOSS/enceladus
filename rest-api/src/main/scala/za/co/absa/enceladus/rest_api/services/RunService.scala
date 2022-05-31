@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.services
 
 import java.util.UUID
-
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
@@ -24,17 +23,17 @@ import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics}
-import za.co.absa.enceladus.rest_api.repositories.RunMongoRepository
+import za.co.absa.enceladus.rest_api.repositories.{MongoRepository, RunMongoRepository}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 @Service("runService") // by-name qualifier: making V2 autowiring un-ambiguous
-class RunService @Autowired()(val mongoRepository: RunMongoRepository)
+class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService[Run] {
 
-  protected val runMongoRepository: RunMongoRepository = mongoRepository // alias
+  override val mongoRepository: MongoRepository[Run] = runMongoRepository
 
   def getGroupedRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
     runMongoRepository.getGroupedRunSummariesPerDatasetName()

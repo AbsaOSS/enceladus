@@ -25,8 +25,8 @@ import za.co.absa.enceladus.rest_api.services.RunService
 import scala.concurrent.Future
 
 @Service
-class RunServiceV3 @Autowired()(override val mongoRepository: RunMongoRepositoryV3, datasetServiceV3: DatasetServiceV3)
-  extends RunService(mongoRepository) {
+class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datasetServiceV3: DatasetServiceV3)
+  extends RunService(runMongoRepository) {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -59,13 +59,13 @@ class RunServiceV3 @Autowired()(override val mongoRepository: RunMongoRepository
                                 sparkAppId: Option[String] = None,
                                 uniqueId: Option[String] = None
                                ): Future[Seq[RunSummary]] = {
-    mongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId)
+    runMongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId)
   }
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
                       startDate: Option[String] = None): Future[Seq[RunSummary]] = {
-    mongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
+    runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
   }
 
 }

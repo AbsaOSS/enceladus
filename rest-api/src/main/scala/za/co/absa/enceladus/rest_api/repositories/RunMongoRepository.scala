@@ -43,7 +43,7 @@ object RunMongoRepository {
 }
 
 // scalastyle:off number.of.methods legacy code
-@Repository("mongoRepository") // by-name qualifier - for v2 repos
+@Repository("runMongoRepository") // by-name qualifier - for v2 repos
 class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 

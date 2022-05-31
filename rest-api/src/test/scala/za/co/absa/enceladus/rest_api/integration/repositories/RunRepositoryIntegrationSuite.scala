@@ -19,7 +19,7 @@ import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
 import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Qualifier}
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
@@ -44,6 +44,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   private val runFixture: RunFixtureService = null
 
   @Autowired
+  @Qualifier("runMongoRepository") // to correctly wire V2 runMongoRepository
   private val runMongoRepository: RunMongoRepository = null
 
   override def fixtures: List[FixtureService[_]] = List(runFixture)
