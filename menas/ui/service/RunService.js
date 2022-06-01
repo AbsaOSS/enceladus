@@ -97,7 +97,7 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
     //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
-    this._updateLineageIframeSrc(oRun.splineUrl)
+    this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
   };
 
   this._bindRunSummaries = function (oRunSummaries, oControl) {
@@ -120,7 +120,9 @@ var RunService = new function () {
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
 
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
-    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
+    let lineageInfo = this._buildLineageUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
+    oRun.lineageUrl = lineageInfo.lineageUrl;
+    oRun.lineageError = lineageInfo.lineageError;
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -128,19 +130,32 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-  this._buildSplineUrl = function (outputPath, applicationId) {
-    return this._getSplineUrlTemplate()
-      .replace("%s", outputPath)
-      .replace("%s", applicationId)
-  };
+  this._buildLineageUrl = function(outputPath, applicationId) {
+    const urlTemplate = "%s?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
+    if (window.lineageConsumerApiUrl) {
+      let lineageExecutionIdApiTemplate = window.lineageConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
+      const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
 
-  this._getSplineUrlTemplate = function () {
-    if (!this.splineUrlTemplate) {
-      const runRestDAO = new RunRestDAO();
-      runRestDAO.getSplineUrlTemplate()
-        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
+      if (lineageIdInfo.totalCount === 1) {
+        return {
+          lineageUrl: urlTemplate
+            .replace("%s", window.lineageUiCdn)
+            .replace("%s", window.lineageConsumerApiUrl)
+            .replace("%s", lineageIdInfo.executionEventId),
+          lineageError: ""
+        };
+      } else {
+        return {
+          lineageUrl: "",
+          lineageError: !!lineageIdInfo.totalCount ? "Multiple lineage records found" : "No lineage found"
+        };
+      }
+    } else {
+      return {
+        lineageUrl: "",
+        lineageError: "Lineage service not configured"
+      };
     }
-    return this.splineUrlTemplate
   };
 
   this._mapAdditionalInfo = function (info) {
@@ -248,12 +263,19 @@ var RunService = new function () {
     return this._durationAsString(duration);
   };
 
-  this._updateLineageIframeSrc = function (sNewUrl) {
+  this._updateLineageIframeSrc = function (oControl, sNewUrl, sErrorMessage) {
     let iframe = document.getElementById("lineage_iframe");
     if (iframe) {
       // the iframe doesn't necessary exists yet
       // (but if it doesn't it will be created, and initial data binding actually works)
+      iframe.visible = (sNewUrl !== "");
       iframe.src = sNewUrl;
+    }
+    let view = oControl.getParent();
+    let label = view.byId("LineageErrorLabel");
+    if (label) {
+      label.setVisible(sErrorMessage !== "");
+      label.setText(sErrorMessage);
     }
   };
 

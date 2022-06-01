@@ -21,7 +21,7 @@
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.28.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <properties>
@@ -71,6 +71,11 @@
             <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-partition-sizing_${scala.compat.version}</artifactId>
+            <version>0.1.0</version>
+        </dependency>
 
         <!-- Hyperdrive -->
         <dependency>
@@ -110,53 +115,11 @@
 
         <!-- Lineage tracking -->
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.compat.version}</artifactId>
+            <version>${spline.agent.version}</version>
         </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-mongo</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-hdfs</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-common</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -245,25 +208,6 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <arg>-feature</arg>
                     </args>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.antrun.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

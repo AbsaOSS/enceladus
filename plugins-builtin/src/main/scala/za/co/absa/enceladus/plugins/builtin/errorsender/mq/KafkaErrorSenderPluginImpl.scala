@@ -23,13 +23,13 @@ import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
 import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import KafkaErrorSenderPluginImpl._
 import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 import za.co.absa.enceladus.utils.modules._
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.{Failure, Success, Try}
 
@@ -49,7 +49,7 @@ case class KafkaErrorSenderPluginImpl(connectionParams: KafkaConnectionParams,
    * @param paramsMap Additional key/value parameters provided by Enceladus.
    */
   override def onDataReady(dataFrame: DataFrame, paramsMap: Map[String, String]): Unit = {
-    if (!SchemaUtils.fieldExists(ColumnNames.enceladusRecordId, dataFrame.schema)) {
+    if (!dataFrame.schema.fieldExists(ColumnNames.enceladusRecordId)) {
       throw new IllegalStateException(
         s"${this.getClass.getName} requires ${ColumnNames.enceladusRecordId} column to be present in the dataframe!"
       )

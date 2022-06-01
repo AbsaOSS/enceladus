@@ -13,26 +13,22 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa.enceladus</groupId>
     <artifactId>parent</artifactId>
-    <version>2.28.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-
     <name>Enceladus</name>
     <description>Enceladus is a Dynamic Conformance Engine which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference.</description>
     <url>https://github.com/AbsaOSS/enceladus</url>
     <inceptionYear>2018</inceptionYear>
-
     <scm>
         <connection>scm:git:git://github.com/AbsaOSS/enceladus.git</connection>
         <developerConnection>scm:git:ssh://github.com:AbsaOSS/enceladus.git</developerConnection>
         <url>http://github.com/AbsaOSS/enceladus/tree/master</url>
         <tag>HEAD</tag>
     </scm>
-
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -40,12 +36,10 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
     <organization>
         <name>ABSA Group Limited</name>
         <url>https://www.absa.africa</url>
     </organization>
-
     <developers>
         <developer>
             <id>lokm01</id>
@@ -96,7 +90,6 @@
             <url>https://github.com/AdrianOlosutean</url>
         </developer>
     </developers>
-
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
@@ -107,7 +100,6 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
     </distributionManagement>
-
     <repositories>
         <repository>
             <id>confluent</id>
@@ -117,25 +109,22 @@
             </releases>
         </repository>
     </repositories>
-
     <modules>
         <module>dao</module>
         <module>data-model</module>
         <module>examples</module>
         <module>menas</module>
-        <module>migrations-cli</module>
         <module>migrations</module>
+        <module>migrations-cli</module>
         <module>plugins-api</module>
         <module>plugins-builtin</module>
+        <module>rest-api</module>
         <module>spark-jobs</module>
         <module>utils</module>
     </modules>
-
     <properties>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
         <!--plugin versions-->
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
@@ -151,7 +140,8 @@
         <scoverage.maven.plugin.version>1.3.0</scoverage.maven.plugin.version>
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
-        <absa.commons.version>0.0.27</absa.commons.version>
+        <absa.commons.version>1.0.0</absa.commons.version>
+        <absa.spark.commons.version>0.2.0</absa.spark.commons.version>
         <atum.version>3.7.0</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
@@ -166,6 +156,7 @@
         <jackson.spark.version>2.10.4</jackson.spark.version>
         <jackson.version>2.9.8</jackson.version>
         <jjwt.version>0.10.7</jjwt.version>
+        <json4s.version>3.5.3</json4s.version>
         <junit.version>4.11</junit.version>
         <kafka.spark.version>0-10</kafka.spark.version>
         <lodash.version>4.17.10</lodash.version>
@@ -191,7 +182,7 @@
         <spark.version>2.4.4</spark.version>
         <spark.xml.version>0.5.0</spark.xml.version>
         <specs.version>2.4.16</specs.version>
-        <spline.version>0.3.9</spline.version>
+        <spline.agent.version>0.6.0</spline.agent.version>
         <spray.json.version>1.3.5</spray.json.version>
         <spring.kerberos.version>1.0.1.RELEASE</spring.kerberos.version>
         <spring.ldap.version>5.0.14.RELEASE</spring.ldap.version>
@@ -203,7 +194,8 @@
         <!--other properties-->
         <quiet.scalastyle.check>true</quiet.scalastyle.check>
         <scalastyle.configLocation>${project.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <dockerfile.repository>docker.io/absaoss/menas</dockerfile.repository>
+        <dockerfile.rest-api.repository>docker.io/absaoss/menas</dockerfile.rest-api.repository>
+        <dockerfile.menas.repository>docker.io/absaoss/menas-ui</dockerfile.menas.repository>
         <dockerfile.tag>${project.version}</dockerfile.tag>
         <!-- Name of property file that will be used by the Docker image. -->
         <dockerfile.property.file>docker</dockerfile.property.file>
@@ -214,7 +206,6 @@
         <log.pattern>[%p] %d{yy/MM/dd HH:mm:ss} %c{4}: %m%n</log.pattern>
         <log.specialfilters.acceptonmatch>false</log.specialfilters.acceptonmatch>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -349,7 +340,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -543,7 +533,6 @@
                                 <exclude>dependency-reduced-pom.xml</exclude>
                                 <exclude>scripts/cmd/tee.bat</exclude>
                                 <exclude>**/org.mockito.plugins.MockMaker</exclude>
-                                <exclude>**/.idea/**</exclude>
                             </excludes>
                         </configuration>
                     </plugin>

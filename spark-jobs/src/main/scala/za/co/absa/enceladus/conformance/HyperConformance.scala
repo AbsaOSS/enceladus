@@ -17,6 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import java.text.SimpleDateFormat
 import java.util.Date
+
 import org.apache.commons.configuration2.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
@@ -40,8 +41,7 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
-                        menasSetup: Option[String] = None
-                       )
+                        menasSetup: Option[String] = None)
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -68,7 +68,7 @@ class HyperConformance (menasBaseUrls: List[String],
 
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
                                      (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+    import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
     val schema: StructType = menasDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
     val schemaFields = if (schema == null) List() else schema.fields.toList
@@ -79,11 +79,13 @@ class HyperConformance (menasBaseUrls: List[String],
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
     implicit val hdfsUtils: HadoopFsUtils = HadoopFsUtils.getOrCreate(hdfs)
-
+    val dataFormat = coalesce(date_format(infoDateColumn, "yyyy-MM-dd"), lit(""))
+    val currentDateColumn = current_date()
+    import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
-      .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionColumn)
+      .withColumnOverwriteIfExists(InfoDateColumn, coalesce(infoDateColumn, currentDateColumn))
+      .withColumnOverwriteIfExists(InfoDateColumnString, dataFormat)
+      .withColumnOverwriteIfExists(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 

@@ -22,13 +22,14 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
-import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, SparkXMLHack, TypeParser}
+import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, TypeParser}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.schema.{SchemaUtils, SparkUtils}
+import za.co.absa.enceladus.utils.schema.SparkUtils
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.enceladus.utils.udf.{UDFLibrary, UDFNames}
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 /**
  * Object representing set of tools for performing the actual standardization
@@ -53,22 +54,13 @@ object StandardizationInterpreter {
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
-    // TODO: remove when spark-xml handles empty arrays #417
-    val dfXmlSafe: Dataset[Row] = if (inputType == "xml") {
-      df.select(expSchema.fields.map { field: StructField =>
-        SparkXMLHack.hack(field, "", df).as(field.name)
-      }: _*)
-    } else {
-      df
-    }
-
     logger.info(s"Step 2: Standardization")
-    val std = standardizeDataset(dfXmlSafe, expSchema, failOnInputNotPerSchema)
+    val std = standardizeDataset(df, expSchema, failOnInputNotPerSchema)
 
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
 
-    val idedStd = if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, cleanedStd.schema)) {
+    val idedStd = if (cleanedStd.schema.fieldExists(Constants.EnceladusRecordId)) {
       cleanedStd // no new id regeneration
     } else {
       RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, Constants.EnceladusRecordId, recordIdGenerationStrategy)
@@ -116,7 +108,7 @@ object StandardizationInterpreter {
 
   private def gatherRowErrors(origSchema: StructType)(implicit spark: SparkSession): List[Column] = {
     val corruptRecordColumn = spark.conf.get(SparkUtils.ColumnNameOfCorruptRecordConf)
-    SchemaUtils.getField(corruptRecordColumn, origSchema).map {_ =>
+    origSchema.getField(corruptRecordColumn).map {_ =>
       val column = col(corruptRecordColumn)
       when(column.isNotNull, // input row was not per expected schema
         array(callUDF(UDFNames.stdSchemaErr, column.cast(StringType)) //column should be StringType but better to be sure

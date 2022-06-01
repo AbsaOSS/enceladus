@@ -16,6 +16,10 @@
 package za.co.absa.enceladus.common.config
 
 object CommonConfConstants {
+  val partitionStrategy = "partition.strategy"
+  val maxRecordsPerPartitionKey = "max.record.partition.count"
+  val partitionSampleSizeKey = "partition.sample.size"
+
   val minPartitionSizeKey = "min.processing.partition.size"
   val maxPartitionSizeKey = "max.processing.partition.size"
 }

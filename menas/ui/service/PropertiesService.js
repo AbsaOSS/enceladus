@@ -15,7 +15,11 @@
 
 class PropertiesDAO {
   static getProperties() {
-    return RestClient.get(`api/properties/datasets`);
+    return RestClient.get(`/properties/datasets`);
+  }
+
+  static getProperty(propertyName) {
+    return RestClient.get(`/properties/datasets/${propertyName}`);
   }
 
   static getProperty(propertyName) {

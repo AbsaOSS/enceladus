@@ -71,14 +71,14 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
 
   private def getAuthHeaders(response: ResponseEntity[String]): HttpHeaders = {
     val headers = response.getHeaders
-    val sessionCookie = headers.get("set-cookie").asScala.head
+    val jwt = headers.get("JWT").asScala.head
     val csrfToken = headers.get("X-CSRF-TOKEN").asScala.head
 
-    log.info(s"Session Cookie: $sessionCookie")
+    log.info(s"JWT: $jwt")
     log.info(s"CSRF Token: $csrfToken")
 
     val resultHeaders = new HttpHeaders()
-    resultHeaders.add("cookie", sessionCookie)
+    resultHeaders.add("JWT", jwt)
     resultHeaders.add("X-CSRF-TOKEN", csrfToken)
     resultHeaders
   }

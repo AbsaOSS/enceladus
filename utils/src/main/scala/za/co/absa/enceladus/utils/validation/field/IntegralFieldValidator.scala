@@ -18,13 +18,14 @@ import za.co.absa.enceladus.utils.numeric.Radix
 import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.types.TypedStructField
 import za.co.absa.enceladus.utils.validation.{ValidationIssue, ValidationWarning}
+import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldMetadataEnhancements
 
 import scala.util.Try
 
 object IntegralFieldValidator extends NumericFieldValidator {
 
   private def radixIssues(field: TypedStructField): Seq[ValidationIssue] = {
-    field.getMetadataString(MetadataKeys.Radix).map { radixString =>
+    field.structField.metadata.getOptString(MetadataKeys.Radix).map { radixString =>
       val result = for {
         radix <- Try(Radix(radixString))
         pattern <- field.pattern

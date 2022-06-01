@@ -41,7 +41,7 @@ html, body {
 
 .menasAddMappingFlex div {
     width: calc(100% - 38px);
-  }
+}
 
 .monitoringBlockLayoutCell {
   min-width: 20rem !important;
@@ -130,6 +130,11 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 
 .missingPropertyValue{
   font-style: italic;
+}
+
+.lineageErrorLabel {
+  font-size: 200%;
+  padding-top: 2rem;
 }
 
 .sapMListNoDataText {

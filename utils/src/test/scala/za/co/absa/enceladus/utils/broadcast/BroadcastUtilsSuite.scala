@@ -19,11 +19,11 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 
 import scala.collection.mutable
 
-class BroadcastUtilsSuite extends AnyWordSpec with SparkTestBase with LoggerTestBase {
+class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase with LoggerTestBase {
 
   import spark.implicits._
 

@@ -15,36 +15,52 @@
 
 class RunRestDAO {
 
-  getSplineUrlTemplate() {
-    return RestClient.getSync(`api/runs/splineUrlTemplate`)
-  }
-
   getAllRunSummaries() {
-    return RestClient.get("api/runs/summaries")
+    return RestClient.get("/runs/summaries")
   }
 
   getRunsGroupedByDatasetName() {
-    return RestClient.get("api/runs/grouped")
+    return RestClient.get("/runs/grouped")
   }
 
   getRunsGroupedByDatasetVersion(datasetName) {
-    return RestClient.get(`api/runs/grouped/${encodeURI(datasetName)}`)
+    return RestClient.get(`/runs/grouped/${encodeURI(datasetName)}`)
   }
 
   getRunSummariesByDatasetNameAndVersion(datasetName, datasetVersion) {
-    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}`)
+    return RestClient.get(`/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}`)
   }
 
   getRun(datasetName, datasetVersion, runId) {
-    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/${encodeURI(runId)}`)
+    return RestClient.get(`/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/${encodeURI(runId)}`)
   }
 
   getLatestRun(datasetName, datasetVersion){
-    return RestClient.get(`api/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/latestrun`)
+    return RestClient.get(`/runs/${encodeURI(datasetName)}/${encodeURI(datasetVersion)}/latestrun`)
   }
 
   getLatestRunOfLatestVersion(datasetName){
-    return RestClient.get(`api/runs/${encodeURI(datasetName)}/latestrun`)
+    return RestClient.get(`/runs/${encodeURI(datasetName)}/latestrun`)
+  }
+
+  getLineageId(urlTemplate, outputPath, applicationId) {
+    const url = urlTemplate
+      .replace("%s", applicationId)
+      .replace("%s", outputPath);
+
+    RestClient.getSync(url,false,true).then((response) => {
+      this._totalCount = response.totalCount;
+      if (this._totalCount > 0) {
+        this._executionEventId = response.items[0].executionEventId;
+      } else {
+        this._executionEventId = undefined
+      }
+    });
+
+    return {
+      totalCount: this._totalCount,
+      executionEventId: this._executionEventId
+    }
   }
 
 }

@@ -26,7 +26,7 @@ sealed trait SourcePhase {
 
 object SourcePhase {
   def withIdentifier(name: String): SourcePhase = {
-    name match {
+    name.toLowerCase match {
       case "conformance" => SourcePhase.Conformance
       case "standardization" => SourcePhase.Standardization
       case _ => throw new NoSuchElementException(s"No value found for '$name'")

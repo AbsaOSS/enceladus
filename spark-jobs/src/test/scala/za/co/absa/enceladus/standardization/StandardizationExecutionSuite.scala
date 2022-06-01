@@ -18,6 +18,7 @@ package za.co.absa.enceladus.standardization
 import java.io.File
 import java.nio.file.Files
 import org.apache.commons.io.FileUtils
+import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
@@ -41,12 +42,12 @@ import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
 import scala.util.control.NonFatal
 
-class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with SparkTestBase with HadoopFsTestBase with MockitoSugar {
+class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase with MockitoSugar {
 
   private implicit val defaults: Defaults = GlobalDefaults
 

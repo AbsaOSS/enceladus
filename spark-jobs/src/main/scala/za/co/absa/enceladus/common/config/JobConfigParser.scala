@@ -94,7 +94,7 @@ object JobConfigParser extends ProjectMetadata {
       opt[String]("menas-auth-keytab").optional().action({ (file, config) => {
           config.withAuthKeytab(Option(file), new MenasKerberosCredentialsFactory(file))
       }
-      }).text("Path to keytab file used for authenticating to menas"),
+      }).text("Path to keytab file used for authenticating to rest_api"),
 
 
       opt[String]("performance-file").optional().action((value, config) =>
