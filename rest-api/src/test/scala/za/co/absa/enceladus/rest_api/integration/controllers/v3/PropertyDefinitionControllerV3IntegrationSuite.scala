@@ -23,13 +23,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.Validation
+import za.co.absa.enceladus.model.{UsedIn, Validation}
+import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
-import za.co.absa.enceladus.model.test.factories.PropertyDefinitionFactory
-import za.co.absa.enceladus.model.versionedModel.NamedLatestVersion
+import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
+import za.co.absa.enceladus.model.versionedModel.NamedVersion
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
+import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,10 +42,13 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
   @Autowired
   private val propertyDefinitionFixture: PropertyDefinitionFixtureService = null
 
+  @Autowired
+  private val datasetFixture: DatasetFixtureService = null
+
   private val apiUrl = "/property-definitions/datasets"
 
   // fixtures are cleared after each test
-  override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture)
+  override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture, datasetFixture)
 
 
   private def minimalPdCreatePayload(name: String, suggestedValue: Option[String]) = {
@@ -137,9 +143,9 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           version = 2, parent = Some(PropertyDefinitionFactory.toParent(pdV1)))
         propertyDefinitionFixture.add(pdV1, pdV2)
 
-        val response = sendGet[NamedLatestVersion](s"$apiUrl/pdA")
+        val response = sendGet[NamedVersion](s"$apiUrl/pdA")
         assertOk(response)
-        assert(response.getBody == NamedLatestVersion("pdA", 2))
+        assert(response.getBody == NamedVersion("pdA", 2, disabled = false))
       }
     }
 
@@ -234,6 +240,22 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response2.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
       }
+      "the pd is disabled" in {
+        val propertyDefinitionA1 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA")
+        val propertyDefinitionA2 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("second version"), version = 2, disabled = true)
+        propertyDefinitionFixture.add(propertyDefinitionA1, propertyDefinitionA2)
+
+        val propertyDefinitionA3 = PropertyDefinitionFactory.getDummyPropertyDefinition("propertyDefinitionA",
+          description = Some("updated"),
+          propertyType = EnumPropertyType("a", "b"),
+          version = 2 // update references the last version
+        )
+
+        val response = sendPutByAdmin[PropertyDefinition, Validation](s"$apiUrl/propertyDefinitionA/2", bodyOpt = Some(propertyDefinitionA3))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionA is disabled!")
+      }
     }
 
     "return 403" when {
@@ -265,7 +287,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
   s"POST $apiUrl/{name}/import" should {
     val importablePd =
-      """{"todo":{"exportVersion":1},"item":{
+      """{"metadata":{"exportVersion":1},"item":{
         |"name":"propertyDefinitionXYZ",
         |"description":"Hi, I am the import",
         |"propertyType":{"_t":"StringPropertyType"},
@@ -281,6 +303,16 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
           response.getBody should include("name mismatch: 'propertyDefinitionABC' != 'propertyDefinitionXYZ'")
         }
+      }
+      "the pd is disabled" in {
+        val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionXYZ",
+          description = Some("init version"), disabled = true)
+        propertyDefinitionFixture.add(propertyDefinition1)
+
+        val response = sendPostByAdmin[String, Validation](s"$apiUrl/propertyDefinitionXYZ/import", bodyOpt = Some(importablePd))
+        assertBadRequest(response)
+        response.getBody shouldBe Validation.empty.withError("disabled", "Entity propertyDefinitionXYZ is disabled!")
+
       }
     }
 
@@ -370,5 +402,172 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
     }
   }
 
-  // todo delete
+  s"GET $apiUrl/{name}/used-in" should {
+    "return 200" when {
+      "there are used-in records" in {
+        val propDefA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propA", version = 1)
+        val propDefA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propA", version = 2, description = Some("An update"))
+        val propDefB = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propB", version = 1) // moot
+        propertyDefinitionFixture.add(propDefA1, propDefA2, propDefB)
+
+        val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("propA" -> "something")))
+        val datasetB1 = DatasetFactory.getDummyDataset(name = "datasetB", properties = Some(Map("propA" -> "something")), disabled = true)
+        val datasetC1 = DatasetFactory.getDummyDataset(name = "datasetC", properties = Some(Map("propA" -> "something else")))
+        datasetFixture.add(datasetA1, datasetB1, datasetC1)
+
+        val response = sendGet[UsedIn](s"$apiUrl/propA/used-in")
+        assertOk(response)
+
+        // propDefB is moot.
+        // datasetB is not reported, because it is disabled
+        response.getBody shouldBe UsedIn(
+          datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
+          mappingTables = None
+        )
+      }
+    }
+  }
+
+  s"GET $apiUrl/{name}/{version}/used-in" should {
+    "return 200" when {
+      "there are used-in records for particular version" in {
+        val propDefA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propA", version = 1)
+        val propDefA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propA", version = 2, description = Some("An update"))
+        propertyDefinitionFixture.add(propDefA1, propDefA2)
+
+        val datasetA1 = DatasetFactory.getDummyDataset(name = "datasetA", properties = Some(Map("propA" -> "something")))
+        val datasetB1 = DatasetFactory.getDummyDataset(name = "datasetB", properties = Some(Map("propA" -> "something")), disabled = true)
+        val datasetC1 = DatasetFactory.getDummyDataset(name = "datasetC", properties = Some(Map("propA" -> "something else")))
+        datasetFixture.add(datasetA1, datasetB1, datasetC1)
+
+        val response = sendGet[UsedIn](s"$apiUrl/propA/1/used-in")
+        assertOk(response)
+
+        // same outcome as $apiUrl/{name}/used-in above -- because propDefs are not tied by version to datasets
+        response.getBody shouldBe UsedIn(
+          datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
+          mappingTables = None
+        )
+      }
+    }
+  }
+
+  s"DELETE $apiUrl/{name}" can {
+    "return 200" when {
+      "a PropertyDefinition with the given name exists" should {
+        "disable the propertyDefinition with the given name" in {
+          val propDefA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propDefA", version = 1)
+          val propDefA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propDefA", version = 2)
+          val propDefB = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propDefB", version = 1)
+          propertyDefinitionFixture.add(propDefA1, propDefA2, propDefB)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/propDefA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[PropertyDefinition](s"$apiUrl/propDefA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[PropertyDefinition](s"$apiUrl/propDefA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+
+          // unrelated propDef unaffected
+          val responseB = sendGet[PropertyDefinition](s"$apiUrl/propDefB/1")
+          assertOk(responseB)
+          responseB.getBody.disabled shouldBe false
+        }
+      }
+
+      "a PropertyDefinition with the given name exists and there have mixed (historical) disabled states " should {
+        "disable all versions the propertyDefinition with the given name" in {
+          val propDefA1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propDefA", version = 1, disabled = true)
+          val propDefA2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propDefA", version = 2, disabled = false)
+          propertyDefinitionFixture.add(propDefA1, propDefA2)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/propDefA")
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[PropertyDefinition](s"$apiUrl/propDefA/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[PropertyDefinition](s"$apiUrl/propDefA/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+      "the PropertyDefinition is only used in disabled Datasets" should {
+        "disable the PropertyDefinition" in {
+          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 1)
+          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinition", version = 2)
+          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2)
+
+          val dataset = DatasetFactory.getDummyDataset(disabled = true, properties = Some(Map("propertyDefinition" -> "value xyz")))
+          datasetFixture.add(dataset)
+
+          val response = sendDeleteByAdmin[DisabledPayload](s"$apiUrl/propertyDefinition")
+
+          assertOk(response)
+          response.getBody shouldBe DisabledPayload(disabled = true)
+
+          // all versions disabled
+          val responseA1 = sendGet[PropertyDefinition](s"$apiUrl/propertyDefinition/1")
+          assertOk(responseA1)
+          responseA1.getBody.disabled shouldBe true
+
+          val responseA2 = sendGet[PropertyDefinition](s"$apiUrl/propertyDefinition/2")
+          assertOk(responseA2)
+          responseA2.getBody.disabled shouldBe true
+        }
+      }
+    }
+
+    "return 400" when {
+      "the PropertyDefinition is used by an enabled Dataset" should {
+        "return a list of the entities the PropertyDefinition is used in" in {
+          val propertyDefinition1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "keyA", version = 1)
+          val propertyDefinition2 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "keyA", version = 2, propertyType = EnumPropertyType("x", "y", "z"))
+          val propertyDefinitionAsdf = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "keyASDF", version = 1) // moot support
+          propertyDefinitionFixture.add(propertyDefinition1, propertyDefinition2, propertyDefinitionAsdf)
+
+          val dataset1 = DatasetFactory.getDummyDataset(name = "dataset1", properties = Some(Map("keyA" -> "x")))
+          val dataset2 = DatasetFactory.getDummyDataset(name = "dataset2", version = 7, properties = Some(Map("keyA" -> "z")))
+          val dataset3 = DatasetFactory.getDummyDataset(name = "dataset3", properties = Some(Map("keyASDF" -> "ASDF"))) // moot
+          val disabledDs = DatasetFactory.getDummyDataset(name = "disabledDs", properties = Some(Map("keyA" -> "x")), disabled = true)
+          datasetFixture.add(dataset1, dataset2, dataset3, disabledDs)
+
+          val response = sendDeleteByAdmin[EntityInUseException](s"$apiUrl/keyA")
+
+          assertBadRequest(response)
+          response.getBody shouldBe EntityInUseException("""Cannot disable entity "keyA", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+          )
+        }
+      }
+    }
+
+    "return 404" when {
+      "no PropertyDefinition with the given name exists" should {
+        "disable nothing" in {
+          val response = sendDeleteByAdmin[String](s"$apiUrl/aPropertyDefinition")
+          assertNotFound(response)
+        }
+      }
+    }
+
+    "return 403" when {
+      s"admin auth is not used for DELETE" in {
+        val propertyDefinitionV1 = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "propertyDefinitionA", version = 1)
+        propertyDefinitionFixture.add(propertyDefinitionV1)
+
+        val response = sendDelete[Validation](s"$apiUrl/propertyDefinitionA")
+        response.getStatusCode shouldBe HttpStatus.FORBIDDEN
+      }
+    }
+  }
 }

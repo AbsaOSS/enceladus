@@ -62,8 +62,8 @@ class RestExceptionHandler {
     ResponseEntity.notFound().build[Any]()
   }
 
-  @ExceptionHandler(value = Array(classOf[EndpointDisabled]))
-  def handleEndpointDisabled(exception: EndpointDisabled): ResponseEntity[Any] = {
+  @ExceptionHandler(value = Array(classOf[EndpointDisabledException]))
+  def handleEndpointDisabled(exception: EndpointDisabledException): ResponseEntity[Any] = {
     ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build[Any]() // Could change for LOCKED but I like this more
   }
 
@@ -111,8 +111,8 @@ class RestExceptionHandler {
   }
 
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))
-  def handleValidationException(exception: EntityInUseException): ResponseEntity[UsedIn] = {
-    ResponseEntity.badRequest().body(exception.usedIn)
+  def handleValidationException(exception: EntityInUseException): ResponseEntity[EntityInUseException] = {
+    ResponseEntity.badRequest().body(exception)
   }
 
   @ExceptionHandler(value = Array(classOf[LockedEntityException]))

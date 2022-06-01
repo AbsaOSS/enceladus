@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
-import za.co.absa.enceladus.model.menas._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.repositories.VersionedMongoRepository
@@ -32,53 +31,51 @@ import VersionedModelService._
 import za.co.absa.enceladus.menas.exceptions.LockedEntityException
 
 // scalastyle:off number.of.methods
-abstract class VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
-(versionedMongoRepository: VersionedMongoRepository[C]) extends ModelService(versionedMongoRepository) {
+trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
+  extends ModelService[C] {
+
+  def mongoRepository: VersionedMongoRepository[C]
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
   def getLatestVersionsSummarySearch(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersionsSummarySearch(searchQuery)
+    mongoRepository.getLatestVersionsSummarySearch(searchQuery)
   }
 
   def getLatestVersions(): Future[Seq[C]] = {
-    versionedMongoRepository.getLatestVersions(None)
+    mongoRepository.getLatestVersions(None)
   }
 
   def getSearchSuggestions(): Future[Seq[String]] = {
-    versionedMongoRepository.getDistinctNamesEnabled()
+    mongoRepository.getDistinctNamesEnabled()
   }
 
   def getVersion(name: String, version: Int): Future[Option[C]] = {
-    versionedMongoRepository.getVersion(name, version)
+    mongoRepository.getVersion(name, version)
   }
 
   def getAllVersions(name: String): Future[Seq[C]] = {
-    versionedMongoRepository.getAllVersions(name)
+    mongoRepository.getAllVersions(name)
   }
 
   def getLatestVersion(name: String): Future[Option[C]] = {
-    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+    mongoRepository.getLatestVersionValue(name).flatMap({
       case Some(version) => getVersion(name, version)
       case _ => throw NotFoundException()
     })
   }
 
   def getLatestVersionNumber(name: String): Future[Int] = {
-    versionedMongoRepository.getLatestVersionValue(name).flatMap({
+    mongoRepository.getLatestVersionValue(name).flatMap({
       case Some(version) => Future(version)
       case _ => throw NotFoundException()
     })
   }
 
   def getLatestVersionValue(name: String): Future[Option[Int]] = {
-    versionedMongoRepository.getLatestVersionValue(name)
-  }
-
-  def getLatestVersionSummary(name: String): Future[Option[VersionedSummary]] = {
-    versionedMongoRepository.getLatestVersionSummary(name)
+    mongoRepository.getLatestVersionValue(name)
   }
 
   def exportSingleItem(name: String, version: Int): Future[String] = {
@@ -96,7 +93,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
   }
 
   // v2 has external validate validation applied only to imports (not create/edits) via validateSingleImport
-  def importSingleItemV2(item: C, username: String, metadata: Map[String, String]): Future[Option[C]] = {
+  def importSingleItem(item: C, username: String, metadata: Map[String, String]): Future[Option[(C, Validation)]] = {
     for {
       validation <- validateSingleImport(item, metadata)
       result <- {
@@ -106,12 +103,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
           throw ValidationException(validation)
         }
       }
-    } yield result.map(_._1) // v disregards internal common update-based validation
-  }
-
-  // v3 has internal validation on importItem (because it is based on update
-  def importSingleItemV3(item: C, username: String, metadata: Map[String, String]): Future[Option[(C, Validation)]] = {
-    importItem(item, username)
+    } yield result
   }
 
   private[services] def validateSingleImport(item: C, metadata: Map[String, String]): Future[Validation] = {
@@ -153,7 +145,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     for {
       versions <- {
         //store all in version ascending order
-        val all = versionedMongoRepository.getAllVersions(name, inclDisabled = true).map(_.sortBy(_.version))
+        val all = mongoRepository.getAllVersions(name, inclDisabled = true).map(_.sortBy(_.version))
         //get those relevant to us
         if (fromVersion.isDefined) {
           all.map(_.filter(_.version <= fromVersion.get))
@@ -198,10 +190,6 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   def getUsedIn(name: String, version: Option[Int]): Future[UsedIn]
 
-  private[rest_api] def getMenasRef(item: C): MenasReference = {
-    MenasReference(Some(versionedMongoRepository.collectionBaseName), item.name, item.version)
-  }
-
   private[rest_api] def create(item: C, username: String): Future[Option[(C, Validation)]] = {
     // individual validations are deliberately not run in parallel - the latter may not be needed if the former fails
     for {
@@ -210,7 +198,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
         creationValidation <- validateForCreation(item)
       } yield generalValidation.merge(creationValidation)
       _ <- if (validation.isValid) {
-        versionedMongoRepository.create(item, username)
+        mongoRepository.create(item, username)
           .recover {
             case e: MongoWriteException =>
               throw ValidationException(Validation().withError("name", s"entity with name already exists: '${item.name}'"))
@@ -250,7 +238,7 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
           throw ValidationException(validation)
         }
       }
-      update <- versionedMongoRepository.update(username, transformed)
+      update <- mongoRepository.update(username, transformed)
         .recover {
           case e: MongoWriteException =>
             throw ValidationException(Validation().withError("version", s"entity '$itemName' with this version already exists: ${itemVersion + 1}"))
@@ -266,10 +254,6 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
     }
   }
 
-  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
-    versionedMongoRepository.findRefEqual(refNameCol, refVersionCol, name, version)
-  }
-
   def disableVersion(name: String, version: Option[Int]): Future[UpdateResult] = {
     val auth = SecurityContextHolder.getContext.getAuthentication
     val principal = auth.getPrincipal.asInstanceOf[UserDetails]
@@ -281,31 +265,15 @@ abstract class VersionedModelService[C <: VersionedModel with Product with Audit
 
   private def disableVersion(name: String, version: Option[Int], usedIn: UsedIn, principal: UserDetails): Future[UpdateResult] = {
     if (usedIn.nonEmpty) {
-      throw EntityInUseException(usedIn)
+      val entityVersionStr = s"""entity "$name"${ version.map(" v" + _).getOrElse("")}""" // either "entity MyName" or "entity MyName v23"
+      throw EntityInUseException(s"""Cannot disable $entityVersionStr, because it is used in the following entities""", usedIn)
     } else {
-      versionedMongoRepository.disableVersion(name, version, principal.getUsername)
+      mongoRepository.disableVersion(name, version, principal.getUsername)
     }
   }
 
   def isDisabled(name: String): Future[Boolean] = {
-    versionedMongoRepository.isDisabled(name)
-  }
-
-  /**
-   * Retrieves model@version and calls
-   * [[za.co.absa.enceladus.rest_api.services.VersionedModelService#validate(java.lang.Object)]]
-   *
-   * In order to extend this behavior, override the mentioned method instead. (that's why this is `final`)
-   *
-   * @param name
-   * @param version
-   * @return
-   */
-  final def validate(name: String, version: Int): Future[Validation] = {
-    getVersion(name, version).flatMap({
-      case Some(entity) => validate(entity)
-      case _ => Future.failed(NotFoundException(s"Entity by name=$name, version=$version is not found!"))
-    })
+    mongoRepository.isDisabled(name)
   }
 
   /**

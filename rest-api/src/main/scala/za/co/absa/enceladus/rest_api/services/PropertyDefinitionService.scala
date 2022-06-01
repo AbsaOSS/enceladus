@@ -23,13 +23,16 @@ import za.co.absa.enceladus.model.properties.PropertyDefinition
 
 import scala.concurrent.Future
 
-@Service
-class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: PropertyDefinitionMongoRepository)
-  extends VersionedModelService(propertyDefMongoRepository) {
+@Service("propertyDefinitionService") // by-name qualifier: V2 implementations use the base implementation, not v3
+class PropertyDefinitionService @Autowired()(val mongoRepository: PropertyDefinitionMongoRepository)
+  extends VersionedModelService[PropertyDefinition] {
 
+  protected val propertyDefMongoRepository: PropertyDefinitionMongoRepository = mongoRepository // alias
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = Future.successful(UsedIn())
+  override def getUsedIn(name: String, version: Option[Int]): Future[UsedIn] = {
+    Future.successful(UsedIn())
+  }
 
   override def update(username: String, propertyDef: PropertyDefinition): Future[Option[(PropertyDefinition, Validation)]] = {
     super.update(username, propertyDef.name, propertyDef.version) { latest =>
@@ -42,7 +45,7 @@ class PropertyDefinitionService @Autowired()(propertyDefMongoRepository: Propert
   }
 
   def getDistinctCount(): Future[Int] = {
-    propertyDefMongoRepository.distinctCount()
+    mongoRepository.distinctCount()
   }
 
   override def create(newPropertyDef: PropertyDefinition, username: String): Future[Option[(PropertyDefinition, Validation)]] = {

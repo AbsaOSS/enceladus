@@ -15,11 +15,10 @@
 
 package za.co.absa.enceladus.rest_api.services
 
-import javax.ws.rs.NotAllowedException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
-import za.co.absa.enceladus.rest_api.services.DatasetService.{RuleValidationsAndFields, _}
+import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository, PropertyDefinitionMongoRepository}
+import za.co.absa.enceladus.rest_api.services.DatasetService.RuleValidationsAndFields
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
 import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -27,20 +26,22 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
 import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import DatasetService._
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
-import scala.language.reflectiveCalls
 import scala.concurrent.Future
-import scala.language.{postfixOps, reflectiveCalls}
+import scala.language.reflectiveCalls
 import scala.util.{Failure, Success}
 
 
 @Service
-class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository,
+class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
                                   oozieRepository: OozieRepository,
-                                  datasetPropertyDefinitionService: PropertyDefinitionService)
-  extends VersionedModelService(datasetMongoRepository) {
+                                  propertyDefinitionService: PropertyDefinitionService)
+  extends VersionedModelService[Dataset] {
+
+  protected val datasetMongoRepository: DatasetMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -209,7 +210,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
 
   def validateProperties(properties: Map[String, String], forRun: Boolean = false): Future[Validation] = {
 
-    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+    propertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
       val propDefsMap = Map(propDefs.map { propDef => (propDef.name, propDef) }: _*) // map(key, propDef)
 
       val existingPropsValidation = properties.toSeq.map { case (key, value) => validateExistingProperty(key, value, propDefsMap) }
@@ -221,7 +222,7 @@ class DatasetService @Autowired()(datasetMongoRepository: DatasetMongoRepository
   }
 
   def filterProperties(properties: Map[String, String], filter: PropertyDefinition => Boolean): Future[Map[String, String]] = {
-    datasetPropertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
+    propertyDefinitionService.getLatestVersions().map { propDefs: Seq[PropertyDefinition] =>
       val filteredPropDefNames = propDefs.filter(filter).map(_.name).toSet
       properties.filterKeys(filteredPropDefNames.contains)
     }
@@ -451,7 +452,7 @@ object DatasetService {
    * @return properties without empty-string value entries
    */
   private[services] def removeBlankProperties(properties: Map[String, String]): Map[String, String]  = {
-    properties.filter { case (_, propValue) => propValue.nonEmpty }
+      properties.filter { case (_, propValue) => propValue.nonEmpty }
   }
 
   private[services] def replacePrefixIfFound(fieldName: String, replacement: String, lookFor: String): Option[String] = {
