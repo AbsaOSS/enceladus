@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.{Dataset, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import DatasetService._
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 import scala.concurrent.Future

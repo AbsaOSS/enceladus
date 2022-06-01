@@ -13,6 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.menas.exceptions
+package za.co.absa.enceladus.rest_api.exceptions
 
 case class LockedEntityException(message: String) extends Exception()

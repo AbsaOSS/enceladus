@@ -19,7 +19,7 @@ import com.mongodb.{MongoWriteException, ServerAddress, WriteError}
 import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.menas.exceptions.LockedEntityException
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
 import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}
@@ -349,6 +349,7 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
     val maybeDataset: Option[(Dataset, Validation)] = await(service.update("datasetA",
       DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
     assertResult(Some("newdescr"))(maybeDataset.get._1.description)
+    assert(maybeDataset.get._2.isEmpty)
     assert(!maybeDataset.get._1.lockedWithDefault)
   }
 
