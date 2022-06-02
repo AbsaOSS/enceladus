@@ -189,11 +189,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.metadata)
   }
 
-  // todo: really do the following? what is the expected metaName?
-  // top-level (e.g. "country") or even lower (e.g. "additionalInfo.myFieldX")?
-  //@GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/metadata/{metadatumName}"))
-
-
   /**
    * For run's dataset name, version and runId (either a number of 'latest'), the `forVersionFn` is called.
    */
@@ -223,6 +218,5 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
       }
     }
   }
-
 
 }

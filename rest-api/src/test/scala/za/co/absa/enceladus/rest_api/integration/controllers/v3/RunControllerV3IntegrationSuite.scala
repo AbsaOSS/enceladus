@@ -22,7 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunError, RunState, RunStatus}
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, RunError, RunState, RunStatus}
 import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.model.test.factories.RunFactory.{getDummyMeasurement, getDummyRun}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
@@ -564,5 +564,27 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     }
   }
 
-  // todo add other endpoints test cases
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}/metadata" can {
+    "return 200" when {
+      "return Metadata by dataset name, version, and runId" in {
+        import RunFactory._
+        val testMetadata = getDummyMetadata(additionalInfo = Map("extra_field" -> "extra_value"))
+        val dataset1ver1run1 = getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+          controlMeasure = getDummyControlMeasure(metadata = testMetadata)
+        )
+        runFixture.add(dataset1ver1run1)
+
+        val response = sendGet[ControlMeasureMetadata](s"$apiUrl/dataset1/1/1/metadata")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        response.getBody shouldBe testMetadata
+      }
+    }
+    "return 404" when {
+      "run for metadata does not exists" in {
+        val response = sendGet[String](s"$apiUrl/dataset1/2/3/metadata")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
 }
