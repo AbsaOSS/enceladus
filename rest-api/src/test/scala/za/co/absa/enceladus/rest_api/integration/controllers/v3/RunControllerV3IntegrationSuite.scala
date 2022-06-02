@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunError, RunState, RunStatus}
 import za.co.absa.atum.utils.SerializationUtils
+import za.co.absa.enceladus.model.test.factories.RunFactory.{getDummyMeasurement, getDummyRun}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
@@ -301,7 +302,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
         val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
         assertOk(response2)
-        response2.getBody shouldBe run.copy(runId = 1)  // no runs present, so runId = 1
+        response2.getBody shouldBe run.copy(runId = 1) // no runs present, so runId = 1
       }
       "created run generates a subsequent runId" in {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
@@ -473,7 +474,8 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val body = response.getBody
         body should include("Invalid empty RunStatus submitted")
       }
-
+    }
+    "return 404" when {
       "a RunState-update references a non-existing run" in {
         // Run ref'd by the run does not exits
         val response = sendPut[RunStatus, Validation](s"$apiUrl/dummyDataset/1/1",
@@ -485,7 +487,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
   s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}/checkpoints" can {
     "return 200" when {
-      "return Checkpoint by dataset name, version, and runId (empty)" in {
+      "return Checkpoints by dataset name, version, and runId (empty)" in {
         val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
         runFixture.add(dataset1ver1run1)
 
@@ -494,12 +496,12 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
         response.getBody shouldBe Seq.empty[Checkpoint]
       }
-      "return Checkpoint by dataset name, version, and runId (non-empty)" in {
+      "return Checkpoints by dataset name, version, and runId (non-empty)" in {
         import RunFactory._
         val dataset1ver1run1 = getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
           controlMeasure = RunFactory.getDummyControlMeasure(checkpoints = List(
             RunFactory.getDummyCheckpoint(name = "cp1", order = 0, controls = List(getDummyMeasurement(controlValue = 3))),
-            RunFactory.getDummyCheckpoint(name = "cp2", order = 1,  controls = List(getDummyMeasurement(controlValue = "asdf")))
+            RunFactory.getDummyCheckpoint(name = "cp2", order = 1, controls = List(getDummyMeasurement(controlValue = "asdf")))
           )))
         runFixture.add(dataset1ver1run1)
 
@@ -522,9 +524,41 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
             |}]""".stripMargin.replaceAll("\n", "")
       }
     }
-    "return 400" when {
+    "return 404" when {
+      "run for checkpoint does not exists" in {
+        val response = sendGet[String](s"$apiUrl/dataset1/2/3/checkpoints")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
+
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}/checkpoints/{checkpointName}" can {
+    "return 200" when {
+      "return Checkpoint by dataset name, version, runId, and checkpoint name" in {
+        val cp1 = RunFactory.getDummyCheckpoint(name = "cp1", order = 0, controls = List(getDummyMeasurement(controlValue = 3)))
+        val cp2 = RunFactory.getDummyCheckpoint(name = "cp2", order = 1, controls = List(getDummyMeasurement(controlValue = "asdf")))
+        val dataset1ver1run1 = getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+          controlMeasure = RunFactory.getDummyControlMeasure(checkpoints = List(cp1, cp2))
+        )
+        runFixture.add(dataset1ver1run1)
+
+        val response = sendGet[Checkpoint](s"$apiUrl/dataset1/1/1/checkpoints/cp1")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        response.getBody shouldBe cp1
+      }
+
+    }
+    "return 404" when {
       "run does not exists" in {
-        val response = sendGet[String](s"$apiUrl/dataset1/1/2/checkpoints")
+        val response = sendGet[String](s"$apiUrl/dataset1/2/3/checkpoints/namedCp")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+      "cp in the run does not exists" in {
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        runFixture.add(dataset1ver1run1)
+
+        val response = sendGet[String](s"$apiUrl/dataset1/1/1/checkpoints/namedCp")
         response.getStatusCode shouldBe HttpStatus.NOT_FOUND
       }
     }

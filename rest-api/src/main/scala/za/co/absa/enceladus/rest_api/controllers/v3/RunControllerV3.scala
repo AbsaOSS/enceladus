@@ -176,10 +176,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                              @PathVariable checkpointName: String): CompletableFuture[Checkpoint] = {
     for {
       checkpoints <- getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.checkpoints)
-      cpByName = checkpoints.find(_.name == checkpointName).getOrElse(
-        throw NotFoundException(s"Checkpoint by name '$checkpointName' was not found for Run" +
-          s"(dataset=$datasetName, dsVer=$datasetVersion, runId=$runId")
-      )
+      cpByName = checkpoints.find(_.name == checkpointName).getOrElse(throw NotFoundException())
     } yield cpByName
   }
 
