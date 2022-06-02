@@ -26,7 +26,6 @@ import za.co.absa.enceladus.model.properties.{PropertyDefinition, PropertyDefini
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality.{Mandatory, Optional, Recommended}
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
-import za.co.absa.enceladus.rest_api.integration.repositories.BaseRepositoryTest
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

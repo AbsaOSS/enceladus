@@ -156,12 +156,18 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       set("userDisabled", username))).toFuture()
   }
 
-  // V3 only
-  def enableAllVersions(name: String, username: String): Future[UpdateResult] = {
-    collection.updateMany(getNameVersionFilter(name, version = None), combine(
-      set("disabled", false),
-      set("dateDisabled", ZonedDateTime.now()),
-      set("userDisabled", username))).toFuture()
+  def setLockState(name: String, isLocked: Boolean, username: String,
+                  datetime: ZonedDateTime = ZonedDateTime.now()): Future[UpdateResult] = {
+    val (dateLocked, userLocked) = if (isLocked) {
+      (datetime, username)
+    } else {
+      (null, null)
+    }
+
+    collection.updateMany(getNameFilter(name), combine(
+      set("locked", isLocked),
+      set("dateLocked", dateLocked),
+      set("userLocked", userLocked))).toFuture()
   }
 
   def isDisabled(name: String): Future[Boolean] = {
