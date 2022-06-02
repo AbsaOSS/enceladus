@@ -16,21 +16,24 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
+import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference}
+import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import RunControllerV3.LatestKey
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 import za.co.absa.enceladus.rest_api.services.RunService
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
+import java.net.URI
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import javax.servlet.http.HttpServletRequest
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
@@ -88,14 +91,38 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
               @PathVariable datasetName: String,
               @PathVariable datasetVersion: Int,
               @RequestBody run: Run,
-              @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
-    if (datasetName != run.dataset) {
+              @AuthenticationPrincipal principal: UserDetails,
+              request: HttpServletRequest): CompletableFuture[ResponseEntity[String]] = {
+    val createdRunFuture = if (datasetName != run.dataset) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$datasetName' != '${run.dataset}'"))
     } else if (datasetVersion != run.datasetVersion) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity version mismatch: $datasetVersion != ${run.datasetVersion}"))
     } else {
       runService.create(run, principal.getUsername)
     }
+
+    createdRunFuture.map { createdRun =>
+      val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+        .path("/{runId}")
+        .buildAndExpand(createdRun.runId.toString)
+        .toUri
+      ResponseEntity.created(location).body(s"Run ${createdRun.runId} with for dataset '$datasetName' v$datasetVersion created.")
+    }
+  }
+
+  protected def createdWithNameVersionLocationBuilder(name: String, version: Int, request: HttpServletRequest,
+                                                      stripLastSegments: Int = 0, suffix: String = ""): ResponseEntity.BodyBuilder = {
+    val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
+
+    val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+      .path(s"$strippingPrefix/{name}/{version}$suffix")
+      .buildAndExpand(name, version.toString)
+      .normalize // will normalize `/one/two/../three` into `/one/tree`
+      .toUri // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
+
+    // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
+
+    ResponseEntity.created(location)
   }
 
   // todo pagination #2060
@@ -199,5 +226,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
       }
     }
   }
+
 
 }

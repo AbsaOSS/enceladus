@@ -266,34 +266,42 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset")) // dataset ref'd by the run
         val run = RunFactory.getDummyRun()
 
-        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+        val response = sendPost[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
         assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("Location")
+        locationHeader should endWith("/api-v3/runs/dummyDataset/1/1")
 
-        val body = response.getBody
-        assert(body == run)
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        assertOk(response2)
+        response2.getBody shouldBe run
       }
       "created run provides a uniqueId if none is specified" in {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val run = RunFactory.getDummyRun(uniqueId = None)
-        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
+        val response = sendPost[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
 
         assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("Location")
+        locationHeader should endWith("/api-v3/runs/dummyDataset/1/1")
 
-        val body = response.getBody
-        assert(body.uniqueId.isDefined)
-        val expected = run.copy(uniqueId = body.uniqueId)
-        assert(body == expected)
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        assertOk(response2)
+        val body2 = response2.getBody
+        body2.uniqueId shouldBe defined
+        body2 shouldBe run.copy(uniqueId = body2.uniqueId)
       }
       "created run generates a runId=1 for the first run" in {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
         val run = RunFactory.getDummyRun(runId = 123) // specified runId is ignored
 
-        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
-
+        val response = sendPost[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
         assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("Location")
+        locationHeader should endWith("/api-v3/runs/dummyDataset/1/1")
 
-        val body = response.getBody
-        assert(body == run.copy(runId = 1)) // no runs present, so runId = 1
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        assertOk(response2)
+        response2.getBody shouldBe run.copy(runId = 1)  // no runs present, so runId = 1
       }
       "created run generates a subsequent runId" in {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
@@ -303,12 +311,14 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         )
         val run = RunFactory.getDummyRun(runId = 222) // specified runId is ignored, subsequent is used
 
-        val response = sendPost[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
-
+        val response = sendPost[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run))
         assertCreated(response)
+        val locationHeader = response.getHeaders.getFirst("Location")
+        locationHeader should endWith("/api-v3/runs/dummyDataset/1/3")
 
-        val body = response.getBody
-        assert(body == run.copy(runId = 3)) // runs 1, and 2 were already presents
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/3")
+        assertOk(response2)
+        response2.getBody shouldBe run.copy(runId = 3) // runs 1, and 2 were already presents
       }
       "handles two runs being started simultaneously" in {
         datasetFixture.add(DatasetFactory.getDummyDataset("dummyDataset"))
@@ -316,21 +326,20 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run2 = RunFactory.getDummyRun()
         run1.uniqueId should not be run2.uniqueId
 
-        val eventualResponse1 = sendPostAsync[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run1))
-        val eventualResponse2 = sendPostAsync[Run, Run](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run2))
+        // no guarantee which is first
+        val response1 = await(sendPostAsync[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run1)))
+        val response2 = await(sendPostAsync[Run, String](s"$apiUrl/dummyDataset/1", bodyOpt = Option(run2)))
 
-        val response1 = await(eventualResponse1)
-        val response2 = await(eventualResponse2)
+        Set(response1, response2).foreach(_.getStatusCode shouldBe HttpStatus.CREATED)
+        Set(response1, response2).map(resp => stripBaseUrl(resp.getHeaders.getFirst("Location"))) shouldBe
+          Set("/runs/dummyDataset/1/1", "/runs/dummyDataset/1/2")
 
-        assertCreated(response1)
-        assertCreated(response2)
+        val retrieved1 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        val retrieved2 = sendGet[Run](s"$apiUrl/dummyDataset/1/2")
+        Set(retrieved1, retrieved2).foreach(_.getStatusCode shouldBe HttpStatus.OK)
 
-        val body1 = response1.getBody
-        val body2 = response2.getBody
-        body1 shouldBe body1.copy(runId = body1.runId) // still the same run object, just different runId
-        body2 shouldBe body2.copy(runId = body2.runId)
-
-        Set(body1.runId, body2.runId) shouldBe Set(1, 2)
+        retrieved1.getBody shouldBe run1.copy(runId = retrieved1.getBody.runId) // actual runId from the assigned value is used
+        retrieved2.getBody shouldBe run2.copy(runId = retrieved2.getBody.runId)
       }
     }
 

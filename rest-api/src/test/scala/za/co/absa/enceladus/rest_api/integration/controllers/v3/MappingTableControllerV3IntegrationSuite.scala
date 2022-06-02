@@ -74,7 +74,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
         val response = sendPost[MappingTable, Validation](apiUrl, bodyOpt = Some(mtA))
         assertCreated(response)
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/mapping-tables/mtA/1")
 
         val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
