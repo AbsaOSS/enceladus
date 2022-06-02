@@ -22,7 +22,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunState, RunStatus}
+import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunError, RunState, RunStatus}
 import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
@@ -424,6 +424,55 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
     }
   }
-  // todo add other endpoints test cases
 
+  s"PUT $apiUrl/{datasetName}/{datasetVersion}/{runId}" can {
+    "return 200" when {
+      "run is updated (running -> allSucceeded)" in {
+        val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
+        runFixture.add(run)
+
+        val response = sendPut[RunStatus, Run](s"$apiUrl/dummyDataset/1/1",
+          bodyOpt = Option(RunStatus(RunState.allSucceeded, None)))
+        assertOk(response)
+
+        val body = response.getBody
+        assert(body == run.copy(runStatus = RunStatus(RunState.allSucceeded, None)))
+      }
+      "run is updated (running -> failed with error)" in {
+        val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
+        runFixture.add(run)
+
+        val runError = RunError("job1", "step2", "desc3", "details4")
+        val newRunStatus = RunStatus(RunState.failed, Some(runError))
+        val response = sendPut[RunStatus, Run](s"$apiUrl/dummyDataset/1/1",
+          bodyOpt = Option(newRunStatus))
+        assertOk(response)
+
+        val body = response.getBody
+        body.runStatus shouldBe newRunStatus
+      }
+    }
+
+    "return 400" when {
+      "sending incorrect run data" in {
+        val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
+        runFixture.add(run)
+        val response = sendPut[String, String](s"$apiUrl/dummyDataset/1/1",
+          bodyOpt = Some("""{"badField":123}"""))
+        assertBadRequest(response)
+
+        val body = response.getBody
+        body should include("Invalid empty RunStatus submitted")
+      }
+
+      "a RunState-update references a non-existing run" in {
+        // Run ref'd by the run does not exits
+        val response = sendPut[RunStatus, Validation](s"$apiUrl/dummyDataset/1/1",
+          bodyOpt = Option(RunStatus(RunState.allSucceeded, None)))
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
+
+  // todo add other endpoints test cases
 }

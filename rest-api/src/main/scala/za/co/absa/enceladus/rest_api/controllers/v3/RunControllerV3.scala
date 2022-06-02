@@ -108,14 +108,17 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   }
 
   @PutMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
-  @ResponseStatus(HttpStatus.CREATED)
+  @ResponseStatus(HttpStatus.OK)
   def updateRunStatus(
                        @PathVariable datasetName: String,
                        @PathVariable datasetVersion: Int,
                        @PathVariable runId: Int,
-                       @RequestBody newRunStatus: RunStatus,
-                       @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
-    runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus)
+                       @RequestBody newRunStatus: RunStatus): CompletableFuture[Run] = { // todo different response?
+    if (newRunStatus.status == null) {
+      Future.failed(new IllegalArgumentException("Invalid empty RunStatus submitted"))
+    } else {
+      runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus)
+    }
   }
 
   // todo pagination #2060 ???
