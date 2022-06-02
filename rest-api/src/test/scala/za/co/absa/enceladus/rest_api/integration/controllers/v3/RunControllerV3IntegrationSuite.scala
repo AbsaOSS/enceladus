@@ -483,5 +483,52 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     }
   }
 
+  s"GET $apiUrl/{datasetName}/{datasetVersion}/{runId}/checkpoints" can {
+    "return 200" when {
+      "return Checkpoint by dataset name, version, and runId (empty)" in {
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        runFixture.add(dataset1ver1run1)
+
+        val response = sendGet[Array[Checkpoint]](s"$apiUrl/dataset1/1/1/checkpoints")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        response.getBody shouldBe Seq.empty[Checkpoint]
+      }
+      "return Checkpoint by dataset name, version, and runId (non-empty)" in {
+        import RunFactory._
+        val dataset1ver1run1 = getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+          controlMeasure = RunFactory.getDummyControlMeasure(checkpoints = List(
+            RunFactory.getDummyCheckpoint(name = "cp1", order = 0, controls = List(getDummyMeasurement(controlValue = 3))),
+            RunFactory.getDummyCheckpoint(name = "cp2", order = 1,  controls = List(getDummyMeasurement(controlValue = "asdf")))
+          )))
+        runFixture.add(dataset1ver1run1)
+
+        val response = sendGet[String](s"$apiUrl/dataset1/1/1/checkpoints")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        response.getBody shouldBe
+          """[{
+            |"name":"cp1","software":null,"version":null,
+            |"processStartTime":"04-12-2017 16:19:17 +0200","processEndTime":"04-12-2017 16:19:17 +0200",
+            |"workflowName":"dummyWorkFlowName","order":0,"controls":[
+            |{"controlName":"dummyControlName","controlType":"dummyControlType","controlCol":"dummyControlCol","controlValue":3}
+            |]
+            |},{
+            |"name":"cp2","software":null,"version":null,
+            |"processStartTime":"04-12-2017 16:19:17 +0200","processEndTime":"04-12-2017 16:19:17 +0200",
+            |"workflowName":"dummyWorkFlowName","order":1,"controls":[
+            |{"controlName":"dummyControlName","controlType":"dummyControlType","controlCol":"dummyControlCol","controlValue":"asdf"}
+            |]
+            |}]""".stripMargin.replaceAll("\n", "")
+      }
+    }
+    "return 400" when {
+      "run does not exists" in {
+        val response = sendGet[String](s"$apiUrl/dataset1/1/2/checkpoints")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
+
   // todo add other endpoints test cases
 }

@@ -20,14 +20,13 @@ import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
-import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
-import za.co.absa.enceladus.rest_api.controllers.BaseController
-import RunControllerV3.LatestKey
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
+import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
+import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.rest_api.controllers.BaseController
+import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
-import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
-import za.co.absa.enceladus.rest_api.services.RunService
+import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.net.URI
@@ -46,6 +45,7 @@ object RunControllerV3 {
 class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   @GetMapping()
