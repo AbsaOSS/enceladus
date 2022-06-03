@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.standardization.interpreter
 
 import java.sql.Date
+import java.time.format.DateTimeFormatter
+
 import org.apache.spark.sql.types.{DateType, MetadataBuilder, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -167,8 +169,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
     assertResult(exp)(std.as[DateRow].collect().toList)
   }
 
-  // todo issue #1720
-  ignore("date + time pattern and named time zone") {
+  test("date + time pattern and named time zone") {
     val seq  = Seq(
       "01-00-00 01.01.1970 CET",
       "00-00-00 03.01.1970 EET",

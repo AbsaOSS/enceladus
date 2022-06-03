@@ -17,6 +17,8 @@ package za.co.absa.enceladus.standardization.interpreter.stages
 
 import java.security.InvalidParameterException
 import java.sql.{Date, Timestamp}
+import java.text.SimpleDateFormat
+
 import org.apache.log4j.{LogManager, Logger}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
@@ -216,10 +218,13 @@ trait TypeParserSuiteTemplate extends AnyFunSuite with TZNormalizedSparkTestBase
                                      target: StructField,
                                      castExpression: String,
                                      errorExpression: String): String = {
+    val timestampFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    val dateFormatter = new SimpleDateFormat("yyyy-MM-dd")
+
     val defaultValue = TypedStructField(target).defaultValueWithGlobal.get
     val default = defaultValue match {
-      case Some(d: Date) => s"DATE '${d.toString}'"
-      case Some(t: Timestamp) => s"TIMESTAMP('${t.toString}')"
+      case Some(d: Date) => s"DATE '${dateFormatter.format(d)}'"
+      case Some(t: Timestamp) => s"TIMESTAMP '${timestampFormatter.format(t)}'"
       case Some(s: String) => s
       case Some(x) => x.toString
       case None => "NULL"
