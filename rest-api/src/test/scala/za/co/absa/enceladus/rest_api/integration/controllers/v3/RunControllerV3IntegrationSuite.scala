@@ -441,12 +441,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
         runFixture.add(run)
 
-        val response = sendPut[RunStatus, Run](s"$apiUrl/dummyDataset/1/1",
+        val response = sendPut[RunStatus, String](s"$apiUrl/dummyDataset/1/1",
           bodyOpt = Option(RunStatus(RunState.allSucceeded, None)))
         assertOk(response)
 
-        val body = response.getBody
-        assert(body == run.copy(runStatus = RunStatus(RunState.allSucceeded, None)))
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        assertOk(response2)
+        response2.getBody shouldBe run.copy(runStatus = RunStatus(RunState.allSucceeded, None))
       }
       "run is updated (running -> failed with error)" in {
         val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
@@ -454,12 +455,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
         val runError = RunError("job1", "step2", "desc3", "details4")
         val newRunStatus = RunStatus(RunState.failed, Some(runError))
-        val response = sendPut[RunStatus, Run](s"$apiUrl/dummyDataset/1/1",
+        val response = sendPut[RunStatus, String](s"$apiUrl/dummyDataset/1/1",
           bodyOpt = Option(newRunStatus))
         assertOk(response)
 
-        val body = response.getBody
-        body.runStatus shouldBe newRunStatus
+        val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
+        assertOk(response2)
+        response2.getBody shouldBe run.copy(runStatus = newRunStatus)
       }
     }
 
@@ -527,6 +529,33 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     "return 404" when {
       "run for checkpoint does not exists" in {
         val response = sendGet[String](s"$apiUrl/dataset1/2/3/checkpoints")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
+    }
+  }
+
+  s"POST $apiUrl/{datasetName}/{datasetVersion}/{runId}/checkpoints" can {
+    "return 201" when {
+      "add a new checkpoint" in {
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
+        runFixture.add(dataset1ver1run1)
+
+        val checkpoint1 = RunFactory.getDummyCheckpoint("cp1")
+        val response = sendPost[Checkpoint, String](s"$apiUrl/dataset1/1/1/checkpoints", bodyOpt = Some(checkpoint1))
+        response.getStatusCode shouldBe HttpStatus.CREATED
+        val locationHeader = response.getHeaders.getFirst("Location")
+        locationHeader should endWith("/api-v3/runs/dataset1/1/1/checkpoints/cp1")
+
+        val response2 = sendGet[Array[Checkpoint]](s"$apiUrl/dataset1/1/1/checkpoints")
+        assertOk(response2)
+        response2.getBody shouldBe Seq(checkpoint1)
+      }
+    }
+    // todo checkpoint name duplicate?
+    "return 404" when {
+      "run for checkpoint does not exists" in {
+        val checkpoint1 = RunFactory.getDummyCheckpoint("cp1")
+        val response = sendPost[Checkpoint, String](s"$apiUrl/dataset1/1/1/checkpoints", bodyOpt = Some(checkpoint1))
         response.getStatusCode shouldBe HttpStatus.NOT_FOUND
       }
     }

@@ -110,21 +110,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     }
   }
 
-  protected def createdWithNameVersionLocationBuilder(name: String, version: Int, request: HttpServletRequest,
-                                                      stripLastSegments: Int = 0, suffix: String = ""): ResponseEntity.BodyBuilder = {
-    val strippingPrefix = Range(0, stripLastSegments).map(_ => "/..").mkString
-
-    val location: URI = ServletUriComponentsBuilder.fromRequest(request)
-      .path(s"$strippingPrefix/{name}/{version}$suffix")
-      .buildAndExpand(name, version.toString)
-      .normalize // will normalize `/one/two/../three` into `/one/tree`
-      .toUri // will create location e.g. http:/domain.ext/api-v3/dataset/MyExampleDataset/1
-
-    // hint on "/.." + normalize https://github.com/spring-projects/spring-framework/issues/14905#issuecomment-453400918
-
-    ResponseEntity.created(location)
-  }
-
   // todo pagination #2060
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}"))
   @ResponseStatus(HttpStatus.OK)
@@ -140,11 +125,13 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                        @PathVariable datasetName: String,
                        @PathVariable datasetVersion: Int,
                        @PathVariable runId: Int,
-                       @RequestBody newRunStatus: RunStatus): CompletableFuture[Run] = { // todo different response?
+                       @RequestBody newRunStatus: RunStatus): CompletableFuture[ResponseEntity[String]] = {
     if (newRunStatus.status == null) {
       Future.failed(new IllegalArgumentException("Invalid empty RunStatus submitted"))
     } else {
-      runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus)
+      runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map( _ =>
+        ResponseEntity.ok(s"New runStatus $newRunStatus applied.")
+      )
     }
   }
 
@@ -164,8 +151,14 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                      @PathVariable datasetVersion: Int,
                      @PathVariable runId: Int,
                      @RequestBody newCheckpoint: Checkpoint,
-                     @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
-    runService.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint)
+                     request: HttpServletRequest): CompletableFuture[ResponseEntity[String]] = {
+    runService.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map { _ =>
+        val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+          .path("/{cpName}")
+          .buildAndExpand(newCheckpoint.name)
+          .toUri
+        ResponseEntity.created(location).body(s"Checkpoint '${newCheckpoint.name}' added.")
+    }
   }
 
   @GetMapping(Array("/{datasetName}/{datasetVersion}/{runId}/checkpoints/{checkpointName}"))
