@@ -551,7 +551,22 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         response2.getBody shouldBe Seq(checkpoint1)
       }
     }
-    // todo checkpoint name duplicate?
+
+    "return 400" when {
+      "adding a checkpoint duplicate by name" in {
+        val checkpoint1 = RunFactory.getDummyCheckpoint("cp1")
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1,
+          controlMeasure = RunFactory.getDummyControlMeasure(checkpoints = List(checkpoint1)))
+        runFixture.add(dataset1ver1run1)
+
+        val cp1dupl = checkpoint1.copy(order = 1, workflowName = "wf2") // same name CP
+
+        val response = sendPost[Checkpoint, Validation](s"$apiUrl/dataset1/1/1/checkpoints", bodyOpt = Some(cp1dupl))
+        response.getStatusCode shouldBe HttpStatus.BAD_REQUEST
+        response.getBody shouldBe Validation.empty.withError("checkpoint.name", "Checkpoint with name cp1 already exists!")
+      }
+    }
+
     "return 404" when {
       "run for checkpoint does not exists" in {
         val checkpoint1 = RunFactory.getDummyCheckpoint("cp1")

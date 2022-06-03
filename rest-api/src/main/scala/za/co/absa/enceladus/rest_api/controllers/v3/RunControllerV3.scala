@@ -22,10 +22,10 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.Run
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
@@ -129,7 +129,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     if (newRunStatus.status == null) {
       Future.failed(new IllegalArgumentException("Invalid empty RunStatus submitted"))
     } else {
-      runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map( _ =>
+      runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map(_ =>
         ResponseEntity.ok(s"New runStatus $newRunStatus applied.")
       )
     }

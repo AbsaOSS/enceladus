@@ -17,7 +17,9 @@ package za.co.absa.enceladus.rest_api.services.v3
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import za.co.absa.atum.model.Checkpoint
 import za.co.absa.enceladus.model.{Run, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3
 import za.co.absa.enceladus.rest_api.services.RunService
@@ -66,6 +68,20 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
                       datasetVersion: Option[Int] = None,
                       startDate: Option[String] = None): Future[Seq[RunSummary]] = {
     runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
+  }
+
+  override def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {
+    // validating for non-duplicate cp name:
+    for {
+      optRun <- runMongoRepository.getRun(datasetName, datasetVersion, runId)
+      run = optRun.getOrElse(throw NotFoundException())
+      duplicateExists = run.controlMeasure.checkpoints.find(_.name == newCheckpoint.name).nonEmpty
+      _ = if (duplicateExists) {
+        throw ValidationException(Validation.empty.withError("checkpoint.name",
+          s"Checkpoint with name ${newCheckpoint.name} already exists!"))
+      }
+      run <- super.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint)
+    } yield run
   }
 
 }
