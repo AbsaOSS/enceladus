@@ -97,8 +97,7 @@ class TypeParser_FromLongTypeSuite extends TypeParserSuiteTemplate {
     doTestIntoDateFieldWithPatternAndDefault(input)
   }
 
-  // todo issue #1720
-  ignore("Into timestamp field with pattern and default") {
+  test("Into timestamp field with pattern and default") {
     doTestIntoTimestampFieldWithPatternAndDefault(input)
   }
 
@@ -106,8 +105,7 @@ class TypeParser_FromLongTypeSuite extends TypeParserSuiteTemplate {
     doTestIntoDateFieldWithPatternAndTimeZone(input)
   }
 
-  // todo issue #1720
-  ignore("Into timestamp field with pattern and fixed time zone") {
+  test("Into timestamp field with pattern and fixed time zone") {
     doTestIntoTimestampFieldWithPatternAndTimeZone(input)
   }
 
@@ -115,8 +113,7 @@ class TypeParser_FromLongTypeSuite extends TypeParserSuiteTemplate {
     doTestIntoDateFieldWithEpochPattern(input)
   }
 
-  // todo issue #1720
-  ignore("Into timestamp field with epoch pattern") {
+  test("Into timestamp field with epoch pattern") {
     doTestIntoTimestampFieldWithEpochPattern(input)
   }
 

@@ -57,6 +57,7 @@ object StandardizationInterpreter {
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
     logger.info(s"Step 2: Standardization")
+    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
     val std = standardizeDataset(df, expSchema, failOnInputNotPerSchema)
 
     logger.info(s"Step 3: Clean the final error column")

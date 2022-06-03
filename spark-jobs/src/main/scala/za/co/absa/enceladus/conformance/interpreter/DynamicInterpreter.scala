@@ -64,6 +64,8 @@ case class DynamicInterpreter()(implicit inputFs: FileSystem) {
 
     applyCheckpoint(inputDf, "Start")
 
+    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
+
     val conformedDf = applyConformanceRules(ensureErrorColumnExists(inputDf))
 
     applyCheckpoint(conformedDf, "End")
