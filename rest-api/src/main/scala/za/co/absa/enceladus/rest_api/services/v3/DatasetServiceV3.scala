@@ -38,7 +38,7 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def validateRules(item: Dataset): Future[Validation] =  {
+  def validateRules(item: Dataset): Future[Validation] = {
     val validationsFutList: Seq[Future[Validation]] = item.conformance.map {
       case r: MappingConformanceRule =>
         mappingTableService.getVersion(r.mappingTable, r.mappingTableVersion).map {
