@@ -355,3 +355,11 @@ A module containing [examples](examples/README.md) of the project usage.
 
 ## How to contribute
 Please see our [**Contribution Guidelines**](CONTRIBUTING.md).
+
+## Documentation
+Please see the [documentation pages](https://absaoss.github.io/enceladus/).
+
+# Extras
+ - For Menas migration, there is a useful script available in
+[scripts/migration/migrate_menas.py](scripts/migration/migrate_menas.py)
+   (`dependencies.txt` provided, to install missing ones, run `pip install -r scripts/migration/requirements.txt`) 

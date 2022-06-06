@@ -45,7 +45,7 @@ menas.auth.admin.role=ROLE_ADMIN
 #menas.auth.kerberos.debug=false
 #menas.auth.kerberos.krb5conf=/etc/krb5.conf
 #menas.auth.ad.domain=ad.domain.com
-#menas.auth.ad.server=ldap://ad.domain.com
+#menas.auth.ad.server=ldaps://ad.domain.com ldaps://ad.domain2.com ldaps://ad.domain3.com
 #menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
 #menas.auth.servicename.principal=/path/to/sysuser.keytab
 #menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com

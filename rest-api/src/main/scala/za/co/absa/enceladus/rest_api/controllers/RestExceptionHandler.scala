@@ -24,11 +24,11 @@ import org.springframework.http.converter.HttpMessageConversionException
 import org.springframework.web.bind.annotation.{ControllerAdvice, ExceptionHandler, RestController}
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.models.RestError
 import za.co.absa.enceladus.rest_api.models.rest.RestResponse
-import za.co.absa.enceladus.rest_api.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError,
-  SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.rest_api.models.rest.errors.{RemoteSchemaRetrievalError, RequestTimeoutExpiredError, SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.{RemoteSchemaRetrievalException, SchemaFormatException, SchemaParsingException}
 import za.co.absa.enceladus.model.properties.propertyType.PropertyTypeValidationException
 import za.co.absa.enceladus.model.{UsedIn, Validation}
@@ -113,6 +113,11 @@ class RestExceptionHandler {
   @ExceptionHandler(value = Array(classOf[EntityInUseException]))
   def handleValidationException(exception: EntityInUseException): ResponseEntity[EntityInUseException] = {
     ResponseEntity.badRequest().body(exception)
+  }
+
+  @ExceptionHandler(value = Array(classOf[LockedEntityException]))
+  def handleValidationException(exception: LockedEntityException): ResponseEntity[String] = {
+    ResponseEntity.status(HttpStatus.FORBIDDEN).body(exception.message)
   }
 
   @ExceptionHandler(value = Array(classOf[MethodArgumentTypeMismatchException]))

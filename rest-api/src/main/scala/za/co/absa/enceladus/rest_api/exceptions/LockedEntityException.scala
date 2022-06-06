@@ -13,11 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.versionedModel
+package za.co.absa.enceladus.rest_api.exceptions
 
-case class EndpointDisabledException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
-
-/**
- * V3 Wrapper for [[za.co.absa.enceladus.model.versionedModel.VersionedSummary]]
- */
-case class NamedVersion(name: String, version: Int, disabled: Boolean)
+case class LockedEntityException(message: String) extends Exception()

@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka
 
 import com.typesafe.config.Config
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig
 import org.apache.avro.{Schema => AvroSchema}
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.avro.SchemaConverters
@@ -61,6 +62,14 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
     KafkaConnectionParams.fromConfig(config, ClientIdKey, ErrorKafkaTopicKey)
   }
 
+  private[kafka] def getAuthParams(connectionParams: KafkaConnectionParams) = {
+    connectionParams.schemaRegistrySecurityParams match {
+      case None => Map.empty[String, String]
+      case Some(srParams) => Map(AbstractKafkaAvroSerDeConfig.BASIC_AUTH_CREDENTIALS_SOURCE -> srParams.credentialsSource) ++
+        srParams.userInfo.map(info => Map(AbstractKafkaAvroSerDeConfig.USER_INFO_CONFIG -> info)).getOrElse(Map.empty[String, String])
+    }
+  }
+
   def avroValueSchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {
     Map(
       // common part
@@ -71,7 +80,7 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
       SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Value.recordName,
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Value.namespaceName
-    )
+    ) ++ getAuthParams(connectionParams)
   }
 
   def avroKeySchemaRegistryConfig(connectionParams: KafkaConnectionParams): Map[String, String] = {
@@ -85,7 +94,7 @@ object KafkaErrorSenderPlugin extends PostProcessorFactory {
       SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> SchemaManager.SchemaStorageNamingStrategies.TOPIC_NAME,
       SchemaManager.PARAM_SCHEMA_NAME_FOR_RECORD_STRATEGY -> Key.recordName,
       SchemaManager.PARAM_SCHEMA_NAMESPACE_FOR_RECORD_STRATEGY -> Key.namespaceName
-    )
+    ) ++ getAuthParams(connectionParams)
   }
 
   private def getAvroSchemaString(resourcePath: String): String = {
