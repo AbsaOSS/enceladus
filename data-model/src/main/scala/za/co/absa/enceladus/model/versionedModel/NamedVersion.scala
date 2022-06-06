@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-case class EndpointDisabledException(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
-
 /**
  * V3 Wrapper for [[za.co.absa.enceladus.model.versionedModel.VersionedSummary]]
  */
