@@ -67,7 +67,7 @@ class MonitoringMongoRepository @Autowired()(mongoDb: MongoDatabase)
         Document(
           s"""{ $$match: {
              |    informationDateCasted: {$$gte: ISODate("${startDate}T00:00:00.0Z"),
-             |      $$lte: ISODate("${endDate}T00:00:00.0Z") }
+             |      $$lte: ISODate("${endDate}T23:59:59.9Z") }
              |}},""".stripMargin),
         // sort intermidiate results before further grouping (needed as we use $first to keep the latest run only)
         sort(orderBy(

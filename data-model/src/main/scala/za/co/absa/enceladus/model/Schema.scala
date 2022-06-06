@@ -36,6 +36,9 @@ case class Schema(name: String,
     dateDisabled: Option[ZonedDateTime] = None,
     userDisabled: Option[String] = None,
 
+    locked: Option[Boolean] = None,
+    dateLocked: Option[ZonedDateTime] = None,
+    userLocked: Option[String] = None,
     fields: List[SchemaField] = List(),
     parent: Option[MenasReference] = None) extends VersionedModel with Auditable[Schema] {
 
@@ -47,6 +50,9 @@ case class Schema(name: String,
   override def setUpdatedUser(user: String): VersionedModel = this.copy(userUpdated = user)
   override def setDescription(desc: Option[String]): VersionedModel = this.copy(description = desc)
   override def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel = this.copy(dateDisabled = time)
+  override def setLocked(locked: Option[Boolean]): VersionedModel = this.copy(locked = locked)
+  override def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel = this.copy(dateLocked = dateLocked)
+  override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
   override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
   override def setParent(newParent: Option[MenasReference]): Schema = this.copy(parent = newParent)
 

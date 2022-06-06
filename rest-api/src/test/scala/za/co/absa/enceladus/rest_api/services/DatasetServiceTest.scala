@@ -21,6 +21,7 @@ import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
@@ -327,6 +328,29 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
       "Beta.abc.def"
     )
 
+  }
+
+  test("DatasetService.lock works correctly") {
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"),locked = Some(true))
+    Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
+    Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
+    Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
+
+    assertThrows[LockedEntityException](await(service.update("datasetA",
+      DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr")))))
+  }
+
+  test("DatasetService.unlocked works correctly") {
+    val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))
+    Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
+    Mockito.when(modelRepository.getVersion("datasetA", 1)).thenReturn(Future.successful(Some(dataset)))
+    Mockito.when(modelRepository.getLatestVersionValue("datasetA")).thenReturn(Future.successful(Some(1)))
+
+    val maybeDataset: Option[(Dataset, Validation)] = await(service.update("datasetA",
+      DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"))))
+    assertResult(Some("newdescr"))(maybeDataset.get._1.description)
+    assert(maybeDataset.get._2.isEmpty)
+    assert(!maybeDataset.get._1.lockedWithDefault)
   }
 
 }

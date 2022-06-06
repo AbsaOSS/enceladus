@@ -28,6 +28,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException
 import VersionedModelService._
+import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 
 // scalastyle:off number.of.methods
 trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
@@ -225,6 +226,8 @@ trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
         Future.failed(NotFoundException(s"Version $itemVersion of $itemName not found"))
       } else if (versionToUpdate.get.version != itemVersion) {
         Future.failed(ValidationException(Validation().withError("version", s"Version $itemVersion of $itemName is not the latest version, therefore cannot be edited")))
+      } else if (versionToUpdate.get.lockedWithDefault) {
+        Future.failed(LockedEntityException(s"Entity $itemName is locked"))
       } else {
         for {
           updatedEntity <- transform(versionToUpdate.get)
@@ -271,6 +274,10 @@ trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
 
   def isDisabled(name: String): Future[Boolean] = {
     mongoRepository.isDisabled(name)
+  }
+
+  def setLock(name: String, isLocked: Boolean, principal: UserDetails): Future[UpdateResult] = {
+    mongoRepository.setLockState(name, isLocked, principal.getUsername)
   }
 
   /**

@@ -224,6 +224,10 @@ class EntityService {
     })
   }
 
+  canBeEdited(currentEntity, version) {
+    return currentEntity.version === version && !currentEntity.locked;
+  }
+
 }
 
 class DependentEntityService extends EntityService {

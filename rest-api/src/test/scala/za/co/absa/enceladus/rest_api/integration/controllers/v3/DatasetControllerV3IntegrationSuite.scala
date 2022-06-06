@@ -750,6 +750,24 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val responseBody = response.getBody
         responseBody shouldBe Validation(Map("disabled" -> List("Entity datasetA is disabled!")))
       }
+      "when dataset is disabled and properties are not valid (combination of disabled + another validaiton)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetV1 = DatasetFactory.getDummyDataset(name = "datasetA", version = 1, disabled = true)
+        datasetFixture.add(datasetV1)
+
+        propertyDefinitionFixture.add(
+          PropertyDefinitionFactory.getDummyPropertyDefinition("mandatoryA", essentiality = Essentiality.Mandatory)
+        )
+
+        val response1 = sendPut[Map[String, String], Validation](s"$apiUrl/datasetA/1/properties", bodyOpt = Some(Map("unknown1" -> "u")))
+
+        assertBadRequest(response1)
+        response1.getBody shouldBe Validation(Map(
+          "disabled" -> List("Entity datasetA is disabled!"), // this is the most important validation to appear
+          "unknown1" -> List("There is no property definition for key 'unknown1'."),
+          "mandatoryA" -> List("Dataset property 'mandatoryA' is mandatory, but does not exist!")
+        ))
+      }
     }
 
     "201 Created with location" when {
