@@ -575,10 +575,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
            |  },
            |  "startDateTime": "04-12-2017 16:19:17 +0200",
            |  "runStatus": {
-           |    "status": {
-           |      "enumClass": "za.co.absa.atum.model.RunState",
-           |      "value": "allSucceeded"
-           |    },
+           |    "status": "allSucceeded",
            |    "error": null
            |  },
            |  "controlMeasure": {
