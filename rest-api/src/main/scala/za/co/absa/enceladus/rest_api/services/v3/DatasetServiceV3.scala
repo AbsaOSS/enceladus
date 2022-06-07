@@ -34,11 +34,11 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
                                     mappingTableService: MappingTableServiceV3,
                                     val schemaService: SchemaServiceV3)
   extends DatasetService(datasetMongoRepository, oozieRepository, propertyDefinitionService)
-  with HavingSchemaService with VersionedModelServiceV3[Dataset] {
+    with HavingSchemaService with VersionedModelServiceV3[Dataset] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def validateRules(item: Dataset): Future[Validation] =  {
+  def validateRules(item: Dataset): Future[Validation] = {
     val validationsFutList: Seq[Future[Validation]] = item.conformance.map {
       case r: MappingConformanceRule =>
         mappingTableService.getVersion(r.mappingTable, r.mappingTableVersion).map {
@@ -79,12 +79,8 @@ class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoReposito
   def updateProperties(username: String, datasetName: String, datasetVersion: Int,
                        updatedProperties: Map[String, String]): Future[Option[(Dataset, Validation)]] = {
     for {
-      successfulValidation <- validateProperties(updatedProperties).flatMap {
-        case validation if !validation.isValid => Future.failed(ValidationException(validation)) // warnings are ok for update
-        case validation => Future.successful(validation) // empty or with warnings
-      }
-
       // updateFuture includes latest-check and version increase
+      // properties validation is included in general this.validate
       update <- updateFuture(username, datasetName, datasetVersion) { latest =>
         Future.successful(latest.copy(properties = Some(removeBlankProperties(updatedProperties))))
       }

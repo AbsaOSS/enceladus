@@ -49,18 +49,6 @@ trait VersionedModelServiceV3[C <: VersionedModel with Product with Auditable[C]
     }
   }
 
-  override private[services] def update(username: String, itemName: String, itemVersion: Int)
-                                       (transform: C => C): Future[Option[(C, Validation)]] = {
-    this.updateFuture(username, itemName, itemVersion) { item: C =>
-      for {
-        _ <- validate(item) // V3 validates the to-be-updated item, too (V2 does not)
-       updatedItem <- Future {
-        transform(item)
-        }
-      } yield updatedItem
-    }
-  }
-
   /**
    * Enables all versions of the entity by name.
    * @param name

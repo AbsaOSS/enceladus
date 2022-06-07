@@ -62,11 +62,6 @@ class RestExceptionHandler {
     ResponseEntity.notFound().build[Any]()
   }
 
-  @ExceptionHandler(value = Array(classOf[EndpointDisabledException]))
-  def handleEndpointDisabled(exception: EndpointDisabledException): ResponseEntity[Any] = {
-    ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).build[Any]() // Could change for LOCKED but I like this more
-  }
-
   @ExceptionHandler(value = Array(classOf[SchemaParsingException]))
   def handleBadRequestException(exception: SchemaParsingException): ResponseEntity[Any] = {
     val response = RestResponse(exception.message, Option(SchemaParsingError.fromException(exception)))

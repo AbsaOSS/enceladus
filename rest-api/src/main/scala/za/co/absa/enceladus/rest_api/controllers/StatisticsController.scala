@@ -19,8 +19,8 @@ import java.util.concurrent.CompletableFuture
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, RestController}
-import za.co.absa.enceladus.model.properties.PropertyDefinitionStats
 import za.co.absa.enceladus.rest_api.services.StatisticsService
+import za.co.absa.enceladus.model.properties.PropertyDefinitionStats
 
 @RestController
 @RequestMapping(Array("/api/statistics"))
