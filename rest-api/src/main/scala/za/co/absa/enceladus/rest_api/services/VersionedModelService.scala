@@ -40,8 +40,10 @@ trait VersionedModelService[C <: VersionedModel with Product with Auditable[C]]
 
   private[services] val logger = LoggerFactory.getLogger(this.getClass)
 
-  def getLatestVersionsSummarySearch(searchQuery: Option[String]): Future[Seq[VersionedSummary]] = {
-    mongoRepository.getLatestVersionsSummarySearch(searchQuery)
+  def getLatestVersionsSummarySearch(searchQuery: Option[String],
+                                     offset: Option[Int],
+                                     limit: Option[Int]): Future[Seq[VersionedSummary]] = {
+    mongoRepository.getLatestVersionsSummarySearch(searchQuery, offset, limit)
   }
 
   def getLatestVersions(): Future[Seq[C]] = {

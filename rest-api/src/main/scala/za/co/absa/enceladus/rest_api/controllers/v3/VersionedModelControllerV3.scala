@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
-import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestKey
+import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.{DefaultLimit, DefaultOffset, LatestKey}
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.v3.VersionedModelServiceV3
@@ -38,6 +38,9 @@ import scala.util.{Failure, Success, Try}
 
 object VersionedModelControllerV3 {
   final val LatestKey = "latest"
+
+  val DefaultLimit: Int = 20
+  val DefaultOffset: Int = 0
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
@@ -50,9 +53,31 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   // todo maybe offset/limit = pagination -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
-    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
+  def getList(@RequestParam searchQuery: Optional[String],
+              @RequestParam offset: Optional[String],
+              @RequestParam limit: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
+    val extractedOffset = extractDefinedValueOrDefault(offset.toScalaOption, DefaultOffset)
+    val extractedLimit = extractDefinedValueOrDefault(limit.toScalaOption, DefaultLimit)
+
+    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption, extractedOffset, extractedLimit)
       .map(_.map(_.toNamedVersion))
+    // todo add pagination wrapper with info (at least truncated:bool, perhaps even page size (limit) and skip size (offset)
+  }
+
+  /**
+   * For the `optField` we try to extract int value. Note, that this never yield `None`
+   * @param optField value to attempt to extract from
+   * @param defaultValue value to use if extraction fails
+   * @return On extraction success, Some(extractedIntValue) is returned, otherwise Some(defaultValue) is returned.
+   */
+  protected def extractDefinedValueOrDefault(optField: Option[String], defaultValue: Int): Some[Int] = {
+    optField match {
+      case None => Some(defaultValue)
+      case Some(intAsString) => Try(intAsString.toInt) match {
+        case Success(value) => Some(value)
+        case Failure(_) => Some(defaultValue)
+      }
+    }
   }
 
   @GetMapping(Array("/{name}"))

@@ -56,6 +56,45 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture, mappingTableFixture)
 
+  s"GET $apiUrl" should {
+    "return 200" when {
+      "paginated dataset by default params (offset=0, limit=20)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetsA = (1 to 15).map(i => DatasetFactory.getDummyDataset(name = "dsA", version = i))
+        val datasetA2disabled = DatasetFactory.getDummyDataset(name = "dsA2", version = 1, disabled = true) // skipped in listing
+        val datasetsB2M =  ('B' to 'V').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
+        datasetFixture.add(datasetsA:_*)
+        datasetFixture.add(datasetA2disabled)
+        datasetFixture.add(datasetsB2M:_*)
+
+        val response = sendGet[Array[NamedVersion]](s"$apiUrl")
+        assertOk(response)
+        response.getBody shouldBe Seq(
+          // scalastyle:off magic.number - expecting max version of 'dsA' = 15
+          NamedVersion("dsA", 15), NamedVersion("dsB", 1), NamedVersion("dsC", 1), NamedVersion("dsD", 1), NamedVersion("dsE", 1),
+          NamedVersion("dsF", 1), NamedVersion("dsG", 1), NamedVersion("dsH", 1), NamedVersion("dsI", 1), NamedVersion("dsJ", 1),
+          NamedVersion("dsK", 1), NamedVersion("dsL", 1), NamedVersion("dsM", 1), NamedVersion("dsN", 1), NamedVersion("dsO", 1),
+          NamedVersion("dsP", 1), NamedVersion("dsQ", 1), NamedVersion("dsR", 1), NamedVersion("dsS", 1), NamedVersion("dsT", 1)
+          // U, V are on the page 2
+        )
+      }
+
+      "paginated datasets with custom pagination (offset=10, limit=5" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetsA2 =  ('A' to 'Z').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
+        datasetFixture.add(datasetsA2:_*)
+
+        val response = sendGet[Array[NamedVersion]](s"$apiUrl?offset=10&limit=5")
+        assertOk(response)
+        response.getBody shouldBe Seq(
+          // A-E = page 1
+          // F-J = page 2
+          NamedVersion("dsK", 1), NamedVersion("dsL", 1), NamedVersion("dsM", 1), NamedVersion("dsN", 1), NamedVersion("dsO", 1)
+          // P-Z = rest
+        )
+      }
+    }
+  }
 
   s"POST $apiUrl" should {
     "return 201" when {

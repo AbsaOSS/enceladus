@@ -61,7 +61,7 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     collection.distinct[String]("name", getNotDisabledFilter).toFuture().map(_.sorted)
   }
 
-  def getLatestVersionsSummarySearch(searchQuery: Option[String] = None): Future[Seq[VersionedSummary]] = {
+  def getLatestVersionsSummarySearch(searchQuery: Option[String] = None, offset: Option[Int] = None, limit: Option[Int] = None): Future[Seq[VersionedSummary]] = {
     val searchFilter = searchQuery match {
       case Some(search) => Filters.regex("name", search, "i")
       case None => Filters.expr(true)
@@ -72,7 +72,10 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
         Accumulators.max("latestVersion", "$version")
       ),
       sort(Sorts.ascending("_id"))
-    )
+    ) ++
+      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++
+      limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
+
     collection.aggregate[VersionedSummaryV2](pipeline).toFuture()
       .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(false)))) // because of the notDisabled filter
   }

@@ -40,7 +40,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
   @GetMapping(Array("/list", "/list/{searchQuery}"))
   @ResponseStatus(HttpStatus.OK)
   def getList(@PathVariable searchQuery: Optional[String]): CompletableFuture[Seq[VersionedSummaryV2]] = {
-    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
+    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption, None, None) // V2 knows no skip/limit
       .map(_.map(_.toV2))
   }
 
