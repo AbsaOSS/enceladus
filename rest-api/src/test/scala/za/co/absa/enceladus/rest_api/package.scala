@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus
 
-package object restapi {
+package object rest_api { //scalastyle:ignore package.object.name - conforms to the package name
 
   /**
    * Resource paths of files for schema testing

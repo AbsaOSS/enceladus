@@ -32,4 +32,47 @@ package object controllers {
       .setUserLocked(actual.userLocked)
 
   }.asInstanceOf[T] // type of `expectedBase` will remain unchanged, good enough for testing support
+
+  trait TestPaginated[T] {
+    def page: Array[T]
+    def offset: Int
+    def limit: Int
+    def truncated: Boolean
+  }
+
+  trait CustomMatchers {
+
+    import org.scalatest._
+    import matchers._
+
+    class TestPaginatedConformsMatcher[T](expectedPaginated: TestPaginated[T]) extends Matcher[TestPaginated[T]] {
+
+      private def conforms(checked: TestPaginated[T]): Boolean = {
+        checked.page.toSeq == expectedPaginated.page.toSeq &&
+          checked.offset == expectedPaginated.offset &&
+          checked.limit == expectedPaginated.limit &&
+          checked.truncated == expectedPaginated.truncated
+      }
+
+      def apply(checked: TestPaginated[T]): MatchResult = {
+        MatchResult(
+          conforms(checked),
+          s"""TestPaginated-check: $checked did not conform to "$expectedPaginated"""",
+          s"""TestPaginated-check: $checked conformed to "$expectedPaginated""""
+        )
+      }
+    }
+
+    /**
+     * TestPaginated contains pages in an Array, that cannot be compare by ==, this matcher circumvents that
+     * @param expectedPagination
+     * @tparam T
+     * @return
+     */
+    def conformTo[T](expectedPagination: TestPaginated[T]): TestPaginatedConformsMatcher[T] = {
+      new TestPaginatedConformsMatcher(expectedPagination)
+    }
+  }
+
+  object CustomMatchers extends CustomMatchers
 }

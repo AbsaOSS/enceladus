@@ -30,9 +30,11 @@ import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
-import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
+import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers.conformTo
+import za.co.absa.enceladus.rest_api.integration.controllers.v3.DatasetControllerV3IntegrationSuite._
+import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, TestPaginated, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -56,42 +58,62 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(datasetFixture, propertyDefinitionFixture, schemaFixture, mappingTableFixture)
 
+  // scalastyle:off magic.number - the test deliberately contains test actual data (no need for DRY here)
   s"GET $apiUrl" should {
     "return 200" when {
       "paginated dataset by default params (offset=0, limit=20)" in {
+        import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetsA = (1 to 15).map(i => DatasetFactory.getDummyDataset(name = "dsA", version = i))
         val datasetA2disabled = DatasetFactory.getDummyDataset(name = "dsA2", version = 1, disabled = true) // skipped in listing
-        val datasetsB2M =  ('B' to 'V').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
-        datasetFixture.add(datasetsA:_*)
+        val datasetsB2M = ('B' to 'V').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
+        datasetFixture.add(datasetsA: _*)
         datasetFixture.add(datasetA2disabled)
-        datasetFixture.add(datasetsB2M:_*)
+        datasetFixture.add(datasetsB2M: _*)
 
-        val response = sendGet[Array[NamedVersion]](s"$apiUrl")
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl")
         assertOk(response)
-        response.getBody shouldBe Seq(
-          // scalastyle:off magic.number - expecting max version of 'dsA' = 15
+        response.getBody should conformTo(Paginated(offset = 0, limit = 20, truncated = true, page = Seq(
           NamedVersion("dsA", 15), NamedVersion("dsB", 1), NamedVersion("dsC", 1), NamedVersion("dsD", 1), NamedVersion("dsE", 1),
           NamedVersion("dsF", 1), NamedVersion("dsG", 1), NamedVersion("dsH", 1), NamedVersion("dsI", 1), NamedVersion("dsJ", 1),
           NamedVersion("dsK", 1), NamedVersion("dsL", 1), NamedVersion("dsM", 1), NamedVersion("dsN", 1), NamedVersion("dsO", 1),
           NamedVersion("dsP", 1), NamedVersion("dsQ", 1), NamedVersion("dsR", 1), NamedVersion("dsS", 1), NamedVersion("dsT", 1)
           // U, V are on the page 2
-        )
+        )).asTestPaginated)
       }
 
-      "paginated datasets with custom pagination (offset=10, limit=5" in {
+      "paginated datasets with custom pagination (offset=10, limit=5)" in {
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
-        val datasetsA2 =  ('A' to 'Z').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
-        datasetFixture.add(datasetsA2:_*)
+        val datasetsA2o = ('A' to 'O').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
+        datasetFixture.add(datasetsA2o: _*)
 
-        val response = sendGet[Array[NamedVersion]](s"$apiUrl?offset=10&limit=5")
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl?offset=10&limit=5")
         assertOk(response)
-        response.getBody shouldBe Seq(
+        response.getBody should conformTo(Paginated(offset = 10, limit = 5, truncated = false, page = Seq(
           // A-E = page 1
           // F-J = page 2
           NamedVersion("dsK", 1), NamedVersion("dsL", 1), NamedVersion("dsM", 1), NamedVersion("dsN", 1), NamedVersion("dsO", 1)
-          // P-Z = rest
-        )
+          // no truncation
+        )).asTestPaginated)
+      }
+      "paginated datasets as serialized string" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val datasetsA2o = ('A' to 'D').map(suffix => DatasetFactory.getDummyDataset(name = s"ds$suffix"))
+        datasetFixture.add(datasetsA2o: _*)
+
+        val response = sendGet[String](s"$apiUrl?limit=3")
+        assertOk(response)
+        response.getBody shouldBe
+          """{"page":[
+            |{"name":"dsA","version":1,"disabled":false},
+            |{"name":"dsB","version":1,"disabled":false},
+            |{"name":"dsC","version":1,"disabled":false}
+            |],
+            |"offset":0,
+            |"limit":3,
+            |"truncated":true
+            |}
+            |""".stripMargin.replace("\n", "")
       }
     }
   }
@@ -1194,6 +1216,22 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           assertNotFound(response)
         }
       }
+    }
+  }
+}
+
+object DatasetControllerV3IntegrationSuite {
+  case class TestPaginatedNamedVersion(page: Array[NamedVersion], offset: Int, limit: Int, truncated: Boolean)
+    extends TestPaginated[NamedVersion] {
+
+    override def toString: String = {
+      s"TestPaginatedNamedVersion(page=${page.mkString("[", ",", "]")},offset=$offset,limit=$limit,truncated=$truncated)"
+    }
+  }
+
+  implicit class PaginatedExt(val expected: Paginated[NamedVersion]) extends AnyVal {
+    def asTestPaginated: TestPaginatedNamedVersion = {
+      TestPaginatedNamedVersion(expected.page.toArray, expected.offset, expected.limit, expected.truncated)
     }
   }
 }

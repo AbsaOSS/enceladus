@@ -37,7 +37,7 @@ import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.restapi.TestResourcePath
+import za.co.absa.enceladus.rest_api.TestResourcePath
 
 import java.io.File
 import java.nio.file.{Files, Path}
