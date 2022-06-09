@@ -22,11 +22,12 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.{Run, Validation}
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
-import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.RunSummary
+import za.co.absa.enceladus.rest_api.models.rest.Paginated
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.net.URI
@@ -42,7 +43,7 @@ object RunControllerV3 {
 
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
-class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
+class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController with PaginatedController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
@@ -52,17 +53,25 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   @ResponseStatus(HttpStatus.OK)
   def list(@RequestParam startDate: Optional[String],
            @RequestParam sparkAppId: Optional[String],
-           @RequestParam uniqueId: Optional[String]
-          ): CompletableFuture[Seq[RunSummary]] = {
+           @RequestParam uniqueId: Optional[String],
+           @RequestParam offset: Optional[String],
+           @RequestParam limit: Optional[String]
+          ): CompletableFuture[Paginated[RunSummary]] = {
     require(Seq(startDate, sparkAppId, uniqueId).filter(_.isPresent).length <= 1,
       "You may only supply one of [startDate|sparkAppId|uniqueId].")
+
+    val extractedOffset = extractOffsetOrDefault(offset)
+    val extractedLimit = extractLimitOrDefault(limit)
 
     runService.getLatestOfEachRunSummary(
       startDate = startDate.toScalaOption,
       sparkAppId = sparkAppId.toScalaOption,
-      uniqueId = uniqueId.toScalaOption
-    )
-    // todo pagination #2060
+      uniqueId = uniqueId.toScalaOption,
+      offset = Some(extractedOffset),
+      limit = Some(extractedLimit + 1) // truncated? take one more and attempt to truncate
+    ).map {
+      Paginated.truncateToPaginated(_, extractedOffset, extractedLimit)
+    }
   }
 
   // todo pagination #2060
@@ -72,7 +81,9 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                                 @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
-      startDate = startDate.toScalaOption
+      startDate = startDate.toScalaOption,
+      offset = None, // todo use pagination here
+      limit = None
     )
   }
 
@@ -153,11 +164,11 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                      @RequestBody newCheckpoint: Checkpoint,
                      request: HttpServletRequest): CompletableFuture[ResponseEntity[String]] = {
     runService.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map { _ =>
-        val location: URI = ServletUriComponentsBuilder.fromRequest(request)
-          .path("/{cpName}")
-          .buildAndExpand(newCheckpoint.name)
-          .toUri
-        ResponseEntity.created(location).body(s"Checkpoint '${newCheckpoint.name}' added.")
+      val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+        .path("/{cpName}")
+        .buildAndExpand(newCheckpoint.name)
+        .toUri
+      ResponseEntity.created(location).body(s"Checkpoint '${newCheckpoint.name}' added.")
     }
   }
 

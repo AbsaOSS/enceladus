@@ -59,9 +59,11 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
                                 datasetVersion: Option[Int] = None,
                                 startDate: Option[String] = None,
                                 sparkAppId: Option[String] = None,
-                                uniqueId: Option[String] = None
+                                uniqueId: Option[String] = None,
+                                offset: Option[Int],
+                                limit: Option[Int]
                                ): Future[Seq[RunSummary]] = {
-    runMongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId)
+    runMongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId, offset, limit)
   }
 
   def getRunSummaries(datasetName: Option[String] = None,

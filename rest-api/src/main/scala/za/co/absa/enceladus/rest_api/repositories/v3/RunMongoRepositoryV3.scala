@@ -47,7 +47,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
                                   datasetVersion: Option[Int] = None,
                                   startDate: Option[String] = None,
                                   sparkAppId: Option[String] = None,
-                                  uniqueId: Option[String] = None
+                                  uniqueId: Option[String] = None,
+                                  offset: Option[Int] = None,
+                                  limit: Option[Int] = None
                                  ): Future[Seq[RunSummary]] = {
     val exclusiveOptsFilter: Option[Bson] = (startDate, sparkAppId, uniqueId) match {
       case (None, None, None) => None
@@ -81,7 +83,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
       ),
       project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
       sort(ascending("datasetName", "datasetVersion"))
-    )
+    ) ++
+      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // todo reconsider using skip for performance?
+      limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)

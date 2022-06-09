@@ -33,7 +33,7 @@ import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.TestResourcePath
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
-import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers.conformTo
+import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}

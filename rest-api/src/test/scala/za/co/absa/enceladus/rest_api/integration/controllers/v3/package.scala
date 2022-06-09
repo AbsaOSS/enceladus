@@ -16,21 +16,43 @@
 package za.co.absa.enceladus.rest_api.integration.controllers
 
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
+import za.co.absa.enceladus.rest_api.controllers.v3.PaginatedController
+import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.models.rest.Paginated
 
 package object v3 {
 
-  case class TestPaginatedNamedVersion(page: Array[NamedVersion], offset: Int, limit: Int, truncated: Boolean)
-    extends TestPaginated[NamedVersion] {
+  case class TestPaginatedNamedVersion(page: Array[NamedVersion],
+                                       offset: Int = PaginatedController.DefaultOffset,
+                                       limit: Int = PaginatedController.DefaultLimit,
+                                       truncated: Boolean = false) extends TestPaginated[NamedVersion] {
 
     override def toString: String = {
+      // just to print nicely, not directly used for comparisons
       s"TestPaginatedNamedVersion(page=${page.mkString("[", ",", "]")},offset=$offset,limit=$limit,truncated=$truncated)"
     }
   }
 
-  implicit class PaginatedExt(val expected: Paginated[NamedVersion]) extends AnyVal {
+  implicit class PaginatedExtNamedVersion(val expected: Paginated[NamedVersion]) extends AnyVal {
     def asTestPaginated: TestPaginatedNamedVersion = {
       TestPaginatedNamedVersion(expected.page.toArray, expected.offset, expected.limit, expected.truncated)
+    }
+  }
+
+  case class TestPaginatedRunSummary(page: Array[RunSummary],
+                                     offset: Int = PaginatedController.DefaultOffset,
+                                     limit: Int = PaginatedController.DefaultLimit,
+                                     truncated: Boolean = false) extends TestPaginated[RunSummary] {
+
+    override def toString: String = {
+      // just to print nicely, not directly used for comparisons
+      s"TestPaginatedRunSummary(page=${page.mkString("[", ",", "]")},offset=$offset,limit=$limit,truncated=$truncated)"
+    }
+  }
+
+  implicit class PaginatedExtRunSummary(val expected: Paginated[RunSummary]) extends AnyVal {
+    def asTestPaginated: TestPaginatedRunSummary = {
+      TestPaginatedRunSummary(expected.page.toArray, expected.offset, expected.limit, expected.truncated)
     }
   }
 

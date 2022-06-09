@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
-import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.{DefaultLimit, DefaultOffset, LatestKey}
+import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 import za.co.absa.enceladus.rest_api.services.v3.VersionedModelServiceV3
@@ -39,12 +39,10 @@ import scala.util.{Failure, Success, Try}
 object VersionedModelControllerV3 {
   final val LatestKey = "latest"
 
-  val DefaultLimit: Int = 20
-  val DefaultOffset: Int = 0
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
-  with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController {
+  with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController with PaginatedController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
@@ -56,8 +54,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def getList(@RequestParam searchQuery: Optional[String],
               @RequestParam offset: Optional[String],
               @RequestParam limit: Optional[String]): CompletableFuture[Paginated[NamedVersion]] = {
-    val extractedOffset = extractDefinedValueOrDefault(offset.toScalaOption, DefaultOffset)
-    val extractedLimit = extractDefinedValueOrDefault(limit.toScalaOption, DefaultLimit)
+    val extractedOffset = extractOffsetOrDefault(offset)
+    val extractedLimit = extractLimitOrDefault(limit)
 
     // crazy idea: how to find out if result of limit X got truncated? Fetch X+1 and strip if needed :)
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption, Some(extractedOffset), Some(extractedLimit + 1))
@@ -65,23 +63,6 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
         val namedVersions = summaries.map(_.toNamedVersion)
         Paginated.truncateToPaginated(namedVersions, extractedOffset, extractedLimit)
       }
-    // todo add pagination wrapper with info (at least truncated:bool, perhaps even page size (limit) and skip size (offset)
-  }
-
-  /**
-   * For the `optField` we try to extract int value
-   * @param optField value to attempt to extract from
-   * @param defaultValue value to use if extraction fails
-   * @return On extraction success, `extractedIntValue` is returned, otherwise (empty or invalid) `defaultValue` is returned.
-   */
-  protected def extractDefinedValueOrDefault(optField: Option[String], defaultValue: Int): Int = {
-    optField match {
-      case None => defaultValue
-      case Some(intAsString) => Try(intAsString.toInt) match {
-        case Success(value) => value
-        case Failure(_) => defaultValue
-      }
-    }
   }
 
   @GetMapping(Array("/{name}"))

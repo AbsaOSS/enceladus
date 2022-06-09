@@ -30,7 +30,7 @@ import za.co.absa.enceladus.model.properties.propertyType.EnumPropertyType
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, PropertyDefinitionFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
-import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers.conformTo
+import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}

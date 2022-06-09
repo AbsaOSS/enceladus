@@ -40,7 +40,7 @@ package object controllers {
     def truncated: Boolean
   }
 
-  trait CustomMatchers {
+  trait TestPaginatedMatchers {
 
     import org.scalatest._
     import matchers._
@@ -74,5 +74,5 @@ package object controllers {
     }
   }
 
-  object CustomMatchers extends CustomMatchers
+  object TestPaginatedMatchers extends TestPaginatedMatchers
 }
