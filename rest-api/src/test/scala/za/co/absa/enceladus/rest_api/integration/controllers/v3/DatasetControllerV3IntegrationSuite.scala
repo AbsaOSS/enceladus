@@ -31,8 +31,7 @@ import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFa
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers.conformTo
-import za.co.absa.enceladus.rest_api.integration.controllers.v3.DatasetControllerV3IntegrationSuite._
-import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, TestPaginated, toExpected}
+import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 
@@ -62,7 +61,6 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
   s"GET $apiUrl" should {
     "return 200" when {
       "paginated dataset by default params (offset=0, limit=20)" in {
-        import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
         val datasetsA = (1 to 15).map(i => DatasetFactory.getDummyDataset(name = "dsA", version = i))
         val datasetA2disabled = DatasetFactory.getDummyDataset(name = "dsA2", version = 1, disabled = true) // skipped in listing
@@ -1221,17 +1219,5 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 }
 
 object DatasetControllerV3IntegrationSuite {
-  case class TestPaginatedNamedVersion(page: Array[NamedVersion], offset: Int, limit: Int, truncated: Boolean)
-    extends TestPaginated[NamedVersion] {
 
-    override def toString: String = {
-      s"TestPaginatedNamedVersion(page=${page.mkString("[", ",", "]")},offset=$offset,limit=$limit,truncated=$truncated)"
-    }
-  }
-
-  implicit class PaginatedExt(val expected: Paginated[NamedVersion]) extends AnyVal {
-    def asTestPaginated: TestPaginatedNamedVersion = {
-      TestPaginatedNamedVersion(expected.page.toArray, expected.offset, expected.limit, expected.truncated)
-    }
-  }
 }

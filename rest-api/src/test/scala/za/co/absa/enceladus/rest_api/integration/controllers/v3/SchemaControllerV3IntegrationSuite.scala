@@ -24,20 +24,22 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.{HttpStatus, MediaType}
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
+import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.TestResourcePath
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
+import za.co.absa.enceladus.rest_api.integration.controllers.CustomMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, RestResponse}
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated, RestResponse}
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.TestResourcePath
 
 import java.io.File
 import java.nio.file.{Files, Path}
@@ -77,6 +79,62 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
 
   override def fixtures: List[FixtureService[_]] = List(schemaFixture, attachmentFixture, datasetFixture, mappingTableFixture)
+
+  // scalastyle:off magic.number - the test deliberately contains test actual data (no need for DRY here)
+  s"GET $apiUrl" should {
+    "return 200" when {
+      "paginated schema by default params (offset=0, limit=20)" in {
+        val schemasA = (1 to 15).map(i => SchemaFactory.getDummySchema(name = "schemaA", version = i))
+        val schemaA2disabled = SchemaFactory.getDummySchema(name = "schemaA2", version = 1, disabled = true) // skipped in listing
+        val schemasB2M = ('B' to 'V').map(suffix => SchemaFactory.getDummySchema(name = s"schema$suffix"))
+        schemaFixture.add(schemasA: _*)
+        schemaFixture.add(schemaA2disabled)
+        schemaFixture.add(schemasB2M: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 0, limit = 20, truncated = true, page = Seq(
+          NamedVersion("schemaA", 15), NamedVersion("schemaB", 1), NamedVersion("schemaC", 1), NamedVersion("schemaD", 1), NamedVersion("schemaE", 1),
+          NamedVersion("schemaF", 1), NamedVersion("schemaG", 1), NamedVersion("schemaH", 1), NamedVersion("schemaI", 1), NamedVersion("schemaJ", 1),
+          NamedVersion("schemaK", 1), NamedVersion("schemaL", 1), NamedVersion("schemaM", 1), NamedVersion("schemaN", 1), NamedVersion("schemaO", 1),
+          NamedVersion("schemaP", 1), NamedVersion("schemaQ", 1), NamedVersion("schemaR", 1), NamedVersion("schemaS", 1), NamedVersion("schemaT", 1)
+          // U, V are on the page 2
+        )).asTestPaginated)
+      }
+
+      "paginated schemas with custom pagination (offset=10, limit=5)" in {
+        val schemasA2o = ('A' to 'O').map(suffix => SchemaFactory.getDummySchema(name = s"schema$suffix"))
+        schemaFixture.add(schemasA2o: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl?offset=10&limit=5")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 10, limit = 5, truncated = false, page = Seq(
+          // A-E = page 1
+          // F-J = page 2
+          NamedVersion("schemaK", 1), NamedVersion("schemaL", 1), NamedVersion("schemaM", 1), NamedVersion("schemaN", 1), NamedVersion("schemaO", 1)
+          // no truncation
+        )).asTestPaginated)
+      }
+      "paginated schemas as serialized string" in {
+        val schemasA2o = ('A' to 'D').map(suffix => SchemaFactory.getDummySchema(name = s"schema$suffix"))
+        schemaFixture.add(schemasA2o: _*)
+
+        val response = sendGet[String](s"$apiUrl?limit=3")
+        assertOk(response)
+        response.getBody shouldBe
+          """{"page":[
+            |{"name":"schemaA","version":1,"disabled":false},
+            |{"name":"schemaB","version":1,"disabled":false},
+            |{"name":"schemaC","version":1,"disabled":false}
+            |],
+            |"offset":0,
+            |"limit":3,
+            |"truncated":true
+            |}
+            |""".stripMargin.replace("\n", "")
+      }
+    }
+  }
 
   s"POST $apiUrl" can {
     "return 201" when {
