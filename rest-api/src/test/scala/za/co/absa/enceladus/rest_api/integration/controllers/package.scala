@@ -64,7 +64,8 @@ package object controllers {
     }
 
     /**
-     * TestPaginated contains pages in an Array, that cannot be compare by ==, this matcher circumvents that
+     * TestPaginated contains pages in an Array, that cannot be compare by ==, this matcher comparest the content of
+     * the data arrays
      * @param expectedPagination
      * @tparam T
      * @return

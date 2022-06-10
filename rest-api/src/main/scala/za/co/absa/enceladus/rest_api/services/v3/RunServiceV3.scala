@@ -68,8 +68,10 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
-                      startDate: Option[String] = None): Future[Seq[RunSummary]] = {
-    runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
+                      startDate: Option[String] = None,
+                      offset: Option[Int],
+                      limit: Option[Int]): Future[Seq[RunSummary]] = {
+    runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate, offset, limit)
   }
 
   override def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {

@@ -94,7 +94,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
-                      startDate: Option[String] = None): Future[Seq[RunSummary]] = {
+                      startDate: Option[String] = None,
+                      offset: Option[Int] = None,
+                      limit: Option[Int] = None): Future[Seq[RunSummary]] = {
 
     val dateFilter: Option[Bson] = startDate.map(date => startDateFromFilter(date))
     val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
@@ -110,7 +112,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
       filter(combinedFilter),
       summaryProjection,
       sort(ascending("datasetName", "datasetVersion", "runId"))
-    )
+    ) ++
+      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++
+      limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)
