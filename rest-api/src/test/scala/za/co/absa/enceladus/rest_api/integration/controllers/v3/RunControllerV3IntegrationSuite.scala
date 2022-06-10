@@ -164,20 +164,27 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
   s"GET $apiUrl/{datasetName}" can {
     "return 200" when {
       "latest RunSummaries are queried" in {
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
-        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
-        runFixture.add(dataset1ver1run1, dataset1ver1run2)
-        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
-        runFixture.add(dataset1ver2run1)
+        runFixture.add(
+          (1 to 3).map(i => RunFactory.getDummyRun(dataset = s"dataset1", datasetVersion = i)): _*
+        ) // filler to show offset
+
+        val dataset1ver4run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 4, runId = 1)
+        val dataset1ver4run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 4, runId = 2)
+        runFixture.add(dataset1ver4run1, dataset1ver4run2)
+        val dataset1ver5run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 5, runId = 1)
+        runFixture.add(dataset1ver5run1)
         val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
         runFixture.add(dataset2ver1run1) // unrelated to dataset1
 
-        val response = sendGet[String](s"$apiUrl/dataset1")
+        runFixture.add(RunFactory.getDummyRun(dataset = s"dataset1", datasetVersion = 6)) // filler to show limit
+
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1?offset=3&limit=2")
         assertOk(response)
 
         val actual = response.getBody
-        val expected = SerializationUtils.asJson(Seq(dataset1ver1run2, dataset1ver2run1).map(_.toSummary))
-        actual shouldBe expected
+        val expected = Paginated(Seq(dataset1ver4run2, dataset1ver5run1).map(_.toSummary),
+          offset = 3, limit=2, truncated = true).asTestPaginated
+        actual should conformTo(expected)
       }
 
       "latest RunSummaries are queried on startDate" in {
@@ -197,10 +204,10 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset2ver1run1, dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1?startDate=20-05-2022")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1?startDate=20-05-2022")
         response.getStatusCode shouldBe HttpStatus.OK
-        val expected = Array(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expected = Paginated(Seq(dataset1ver1run2, dataset1ver2run3).map(_.toSummary), 0, 20, false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "latest RunSummaries are queried on uniqueId" in {
@@ -210,10 +217,10 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run4 = RunFactory.getDummyRun(dataset = "dataset2", uniqueId = None) // unrelated to dataset1
         runFixture.add(run1, run2, run3, run4)
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
         response.getStatusCode shouldBe HttpStatus.OK
-        val expected = Array(run1).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expected = Paginated(Seq(run1).map(_.toSummary), 0, 20, false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "latest RunSummaries are queried, but nothing is found" in {
@@ -223,7 +230,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
         val response = sendGet[String](s"$apiUrl/dataset1?startDate=24-05-2022")
         response.getStatusCode shouldBe HttpStatus.OK
-        response.getBody shouldBe "[]" // empty array
+        response.getBody shouldBe """{"page":[],"offset":0,"limit":20,"truncated":false}""" // empty page
       }
     }
 

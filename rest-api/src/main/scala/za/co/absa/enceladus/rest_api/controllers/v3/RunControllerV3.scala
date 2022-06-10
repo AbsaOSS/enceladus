@@ -74,17 +74,23 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     }
   }
 
-  // todo pagination #2060
   @GetMapping(Array("/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
-                                @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
+                                @RequestParam startDate: Optional[String],
+                                @RequestParam offset: Optional[String],
+                                @RequestParam limit: Optional[String]): CompletableFuture[Paginated[RunSummary]] = {
+    val extractedOffset = extractOffsetOrDefault(offset)
+    val extractedLimit = extractLimitOrDefault(limit)
+
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
       startDate = startDate.toScalaOption,
-      offset = None, // todo use pagination here
-      limit = None
-    )
+      offset = Some(extractedOffset),
+      limit = Some(extractedLimit + 1) // truncated? take one more and attempt to truncate
+    ).map {
+      Paginated.truncateToPaginated(_, extractedOffset, extractedLimit)
+    }
   }
 
   // todo pagination #2060

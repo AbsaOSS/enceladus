@@ -15,15 +15,16 @@
 
 package za.co.absa.enceladus.rest_api.models.rest
 
-case class Paginated[T](page: Seq[T], offset:Int, limit: Int, truncated: Boolean)
+case class Paginated[T](page: Seq[T], offset: Int, limit: Int, truncated: Boolean)
 
 object Paginated {
 
   /**
    * Wraps data in Paginated and possibly truncates the data to fit the limit. `truncated` flag is set based on that.
-   * @param data data to be embedded and truncated to length of `limit`
+   *
+   * @param data   data to be embedded and truncated to length of `limit`
    * @param offset is only passed to the wrapper object, has no effect to data
-   * @param limit passed to the wrapper object and it used for truncating the data
+   * @param limit  passed to the wrapper object and it used for truncating the data
    * @tparam T
    * @return truncated data wrapped in Paginated - `truncated` is true if data truncated, false otherwise.
    */
