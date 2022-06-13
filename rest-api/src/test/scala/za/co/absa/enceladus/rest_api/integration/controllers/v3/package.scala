@@ -16,15 +16,15 @@
 package za.co.absa.enceladus.rest_api.integration.controllers
 
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
-import za.co.absa.enceladus.rest_api.controllers.v3.PaginatedController
+import za.co.absa.enceladus.rest_api.controllers.v3.ControllerPagination
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.models.rest.Paginated
 
 package object v3 {
 
   case class TestPaginatedNamedVersion(page: Array[NamedVersion],
-                                       offset: Int = PaginatedController.DefaultOffset,
-                                       limit: Int = PaginatedController.DefaultLimit,
+                                       offset: Int = ControllerPagination.DefaultOffset,
+                                       limit: Int = ControllerPagination.DefaultLimit,
                                        truncated: Boolean = false) extends TestPaginated[NamedVersion] {
 
     override def toString: String = {
@@ -40,8 +40,8 @@ package object v3 {
   }
 
   case class TestPaginatedRunSummary(page: Array[RunSummary],
-                                     offset: Int = PaginatedController.DefaultOffset,
-                                     limit: Int = PaginatedController.DefaultLimit,
+                                     offset: Int = ControllerPagination.DefaultOffset,
+                                     limit: Int = ControllerPagination.DefaultLimit,
                                      truncated: Boolean = false) extends TestPaginated[RunSummary] {
 
     override def toString: String = {

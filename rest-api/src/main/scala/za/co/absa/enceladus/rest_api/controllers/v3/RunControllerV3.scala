@@ -24,6 +24,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest_api.controllers.BaseController
+import za.co.absa.enceladus.rest_api.controllers.v3.ControllerPagination._
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.RunSummary
@@ -43,7 +44,7 @@ object RunControllerV3 {
 
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
-class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController with PaginatedController {
+class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
@@ -60,8 +61,8 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     require(Seq(startDate, sparkAppId, uniqueId).filter(_.isPresent).length <= 1,
       "You may only supply one of [startDate|sparkAppId|uniqueId].")
 
-    val extractedOffset = extractOffsetOrDefault(offset)
-    val extractedLimit = extractLimitOrDefault(limit)
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
 
     runService.getLatestOfEachRunSummary(
       startDate = startDate.toScalaOption,
@@ -80,8 +81,8 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                                 @RequestParam startDate: Optional[String],
                                 @RequestParam offset: Optional[String],
                                 @RequestParam limit: Optional[String]): CompletableFuture[Paginated[RunSummary]] = {
-    val extractedOffset = extractOffsetOrDefault(offset)
-    val extractedLimit = extractLimitOrDefault(limit)
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
 
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
@@ -100,8 +101,8 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                                           @RequestParam startDate: Optional[String],
                                           @RequestParam offset: Optional[String],
                                           @RequestParam limit: Optional[String]): CompletableFuture[Paginated[RunSummary]] = {
-    val extractedOffset = extractOffsetOrDefault(offset)
-    val extractedLimit = extractLimitOrDefault(limit)
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
 
 
     runService.getRunSummaries(datasetName = Some(datasetName),

@@ -42,7 +42,7 @@ object VersionedModelControllerV3 {
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
-  with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController with PaginatedController {
+  with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
@@ -54,8 +54,8 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   def getList(@RequestParam searchQuery: Optional[String],
               @RequestParam offset: Optional[String],
               @RequestParam limit: Optional[String]): CompletableFuture[Paginated[NamedVersion]] = {
-    val extractedOffset = extractOffsetOrDefault(offset)
-    val extractedLimit = extractLimitOrDefault(limit)
+    val extractedOffset = ControllerPagination.extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = ControllerPagination.extractOptionalLimitOrDefault(limit)
 
     // crazy idea: how to find out if result of limit X got truncated? Fetch X+1 and strip if needed :)
     versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption, Some(extractedOffset), Some(extractedLimit + 1))
