@@ -58,13 +58,7 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
     }
 
     val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
-
-    val combinedFilter: Bson = (exclusiveOptsFilter, datasetFilter) match {
-      case (None, None) => BsonDocument() // empty filter
-      case (Some(filter1), None) => filter1
-      case (None, Some(filter2)) => filter2
-      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
-    }
+    val combinedFilter: Bson = combineOptFilters(exclusiveOptsFilter, datasetFilter)
 
     val pipeline = Seq(
       filter(combinedFilter),
@@ -94,13 +88,7 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
 
     val dateFilter: Option[Bson] = startDate.map(date => startDateFromFilter(date))
     val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
-
-    val combinedFilter: Bson = (dateFilter, datasetFilter) match {
-      case (None, None) => BsonDocument() // empty filter
-      case (Some(filter1), None) => filter1
-      case (None, Some(filter2)) => filter2
-      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
-    }
+    val combinedFilter: Bson = combineOptFilters(dateFilter, datasetFilter)
 
     val pipeline = Seq(
       filter(combinedFilter),
@@ -131,4 +119,12 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
         "(None, None), (Some, None) and (Some, Some)")
     }
   }
+
+  protected def combineOptFilters(optFilter1: Option[Bson], optFilter2: Option[Bson]): Bson = (optFilter1, optFilter2) match {
+    case (None, None) => BsonDocument() // empty filter
+    case (Some(filter1), None) => filter1
+    case (None, Some(filter2)) => filter2
+    case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
+  }
+
 }
