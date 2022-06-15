@@ -198,12 +198,13 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     val pipeline = Seq(
       project(fields(
         include("dataset"),
-        Document("""{start: {
-                   |  $dateFromString: {
-                   |    dateString: "$startDateTime",
-                   |    format: "%d-%m-%Y %H:%M:%S %z"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{start: {
+            |  $dateFromString: {
+            |    dateString: "$startDateTime",
+            |    format: "%d-%m-%Y %H:%M:%S %z"
+            |  }
+            |}},""".stripMargin),
         Document(
           """{timezone: {
             |  $substrBytes: [
@@ -220,13 +221,14 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       project(fields(
         computed("datasetName", "$_id"),
         include("numberOfRuns"),
-        Document("""{latestRunStartDateTime: {
-                   |  $dateToString: {
-                   |    date: "$latestStart",
-                   |    format: "%d-%m-%Y %H:%M:%S %z",
-                   |    timezone: "$timezone"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{latestRunStartDateTime: {
+            |  $dateToString: {
+            |    date: "$latestStart",
+            |    format: "%d-%m-%Y %H:%M:%S %z",
+            |    timezone: "$timezone"
+            |  }
+            |}},""".stripMargin),
         excludeId()
       )),
       sort(ascending("datasetName"))
@@ -242,12 +244,13 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       filter(equal("dataset", datasetName)),
       project(fields(
         include("dataset", "datasetVersion"),
-        Document("""{start: {
-                   |  $dateFromString: {
-                   |    dateString: "$startDateTime",
-                   |    format: "%d-%m-%Y %H:%M:%S %z"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{start: {
+            |  $dateFromString: {
+            |    dateString: "$startDateTime",
+            |    format: "%d-%m-%Y %H:%M:%S %z"
+            |  }
+            |}},""".stripMargin),
         Document(
           """{timezone: {
             |  $substrBytes: [
@@ -265,13 +268,14 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       project(fields(
         computed("datasetVersion", "$_id"),
         include("datasetName", "numberOfRuns"),
-        Document("""{latestRunStartDateTime: {
-                   |  $dateToString: {
-                   |    date: "$latestStart",
-                   |    format: "%d-%m-%Y %H:%M:%S %z",
-                   |    timezone: "$timezone"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{latestRunStartDateTime: {
+            |  $dateToString: {
+            |    date: "$latestStart",
+            |    format: "%d-%m-%Y %H:%M:%S %z",
+            |    timezone: "$timezone"
+            |  }
+            |}},""".stripMargin),
         excludeId()
       )),
       sort(descending("datasetVersion"))
@@ -328,10 +332,10 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .find[BsonDocument](filter)
       .headOption()
       .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
-      // why not just .find[Run]? Because Run.RunStatus.RunState is a Scala enum that does not play nice with bson-serde
+    // why not just .find[Run]? Because Run.RunStatus.RunState is a Scala enum that does not play nice with bson-serde
   }
 
-def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
+  def appendCheckpointByUniqueId(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
     val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(checkpoint))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),

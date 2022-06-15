@@ -54,7 +54,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
            @RequestParam sparkAppId: Optional[String],
            @RequestParam uniqueId: Optional[String]
           ): CompletableFuture[Seq[RunSummary]] = {
-    require(Seq(startDate, sparkAppId, uniqueId).filter(_.isPresent).length <= 1,
+    require(Seq(startDate, sparkAppId, uniqueId).count(_.isPresent) <= 1,
       "You may only supply one of [startDate|sparkAppId|uniqueId].")
 
     runService.getLatestOfEachRunSummary(
@@ -180,16 +180,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                      @PathVariable datasetVersion: Int,
                      @PathVariable runId: String): CompletableFuture[ControlMeasureMetadata] = {
     getRunForRunIdExpression(datasetName, datasetVersion, runId).map(_.controlMeasure.metadata)
-  }
-
-  /**
-   * For run's dataset name, version and runId (either a number of 'latest'), the `forVersionFn` is called.
-   */
-  protected def forRunIdExpression[T](datasetName: String, datasetVersion: Int, runIdStr: String)
-                                     (forVersionFn: (String, Int, Int) => Future[T]): Future[T] = {
-    getRunForRunIdExpression(datasetName, datasetVersion, runIdStr).flatMap { run =>
-      forVersionFn(datasetName, datasetVersion, run.runId)
-    }
   }
 
   /**
