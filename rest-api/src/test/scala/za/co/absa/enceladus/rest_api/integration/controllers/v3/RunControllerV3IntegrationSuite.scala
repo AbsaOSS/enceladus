@@ -71,7 +71,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
 
       "latest RunSummaries are queried on startDate" in {
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2000 13:01:12 +0200")
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
         val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
@@ -79,14 +79,14 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
 
         val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
-        val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "20-05-2022 13:01:12 +0200")
+        val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "01-06-2022 13:01:12 +0200")
         runFixture.add(
           dataset1ver1run1, dataset1ver1run2,
           dataset1ver2run1, dataset1ver2run2, dataset1ver2run3,
           dataset2ver1run1, dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?startDate=20-05-2022")
+        val response = sendGet[Array[RunSummary]](s"$apiUrl?startDate=2022-05-20")
         val expected = Array(dataset1ver1run2, dataset1ver2run3, dataset3ver1run1).map(_.toSummary)
         response.getBody shouldBe expected
       }
@@ -133,7 +133,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run2 = RunFactory.getDummyRun(dataset = "dataset3", uniqueId = None)
         runFixture.add(run1, run2)
 
-        val response = sendGet[String](s"$apiUrl?startDate=24-05-2022")
+        val response = sendGet[String](s"$apiUrl?startDate=2022-05-24")
         response.getBody shouldBe "[]" // empty array
       }
     }
@@ -171,12 +171,12 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
 
       "latest RunSummaries are queried on startDate" in {
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2022 13:01:12 +0200")
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
         val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
         val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "22-05-2022 15:01:12 +0200")
-        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "01-06-2022 15:01:12 +0200")
 
         // unrelated to dataset1:
         val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
@@ -187,7 +187,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset2ver1run1, dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1?startDate=20-05-2022")
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1?startDate=2022-05-20")
         response.getStatusCode shouldBe HttpStatus.OK
         val expected = Array(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
         response.getBody shouldBe expected
@@ -211,7 +211,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run2 = RunFactory.getDummyRun(dataset = "dataset3", uniqueId = None) // unrelated to dataset1
         runFixture.add(run1, run2)
 
-        val response = sendGet[String](s"$apiUrl/dataset1?startDate=24-05-2022")
+        val response = sendGet[String](s"$apiUrl/dataset1?startDate=2022-05-24")
         response.getStatusCode shouldBe HttpStatus.OK
         response.getBody shouldBe "[]" // empty array
       }
@@ -239,9 +239,9 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       "return RunSummaries on combination of (startDate, dsName, and dsVersion)" in {
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
-        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "30-01-2022 15:01:12 +0200")
         val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "20-05-2022 15:01:12 +0200")
-        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "01-06-2022 15:01:12 +0200")
 
         val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "21-05-2022 13:01:12 +0200")
 
@@ -251,7 +251,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2?startDate=20-05-2022")
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2?startDate=2022-05-20")
         response.getStatusCode shouldBe HttpStatus.OK
 
         val expected = List(dataset1ver2run2, dataset1ver2run3).map(_.toSummary)

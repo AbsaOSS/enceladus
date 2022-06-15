@@ -30,6 +30,7 @@ import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.net.URI
+import java.time.LocalDate
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
@@ -58,7 +59,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
       "You may only supply one of [startDate|sparkAppId|uniqueId].")
 
     runService.getLatestOfEachRunSummary(
-      startDate = startDate.toScalaOption,
+      startDate = parseYmdDate(startDate),
       sparkAppId = sparkAppId.toScalaOption,
       uniqueId = uniqueId.toScalaOption
     )
@@ -72,7 +73,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                                 @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
-      startDate = startDate.toScalaOption
+      startDate = parseYmdDate(startDate)
     )
   }
 
@@ -82,7 +83,11 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
                                           @PathVariable datasetVersion: Int,
                                           @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
-    runService.getRunSummaries(Some(datasetName), Some(datasetVersion), startDate.toScalaOption)
+    runService.getRunSummaries(
+      datasetName = Some(datasetName),
+      datasetVersion = Some(datasetVersion),
+      startDate = parseYmdDate(startDate)
+    )
   }
 
   @PostMapping(Array("/{datasetName}/{datasetVersion}"))
@@ -153,11 +158,11 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                      @RequestBody newCheckpoint: Checkpoint,
                      request: HttpServletRequest): CompletableFuture[ResponseEntity[String]] = {
     runService.addCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map { _ =>
-        val location: URI = ServletUriComponentsBuilder.fromRequest(request)
-          .path("/{cpName}")
-          .buildAndExpand(newCheckpoint.name)
-          .toUri
-        ResponseEntity.created(location).body(s"Checkpoint '${newCheckpoint.name}' added.")
+      val location: URI = ServletUriComponentsBuilder.fromRequest(request)
+        .path("/{cpName}")
+        .buildAndExpand(newCheckpoint.name)
+        .toUri
+      ResponseEntity.created(location).body(s"Checkpoint '${newCheckpoint.name}' added.")
     }
   }
 
@@ -198,6 +203,15 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
         case Failure(exception) =>
           Future.failed(new IllegalArgumentException(s"Cannot convert '$runIdStr' to a valid runId expression. " +
             s"Either use 'latest' or an actual runId number. Underlying problem: ${exception.getMessage}"))
+      }
+    }
+  }
+
+  protected def parseYmdDate(dateOptStr: Optional[String]): Option[LocalDate] = {
+    dateOptStr.toScalaOption.map { dateStr =>
+      Try(LocalDate.parse(dateStr)) match {
+        case Success(parsed) => parsed
+        case Failure(e) => throw new IllegalArgumentException(s"Could not parse YYYY-MM-DD date from $dateStr: ${e.getMessage}")
       }
     }
   }

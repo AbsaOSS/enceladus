@@ -24,6 +24,7 @@ import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3
 import za.co.absa.enceladus.rest_api.services.RunService
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 @Service
@@ -57,7 +58,7 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
    */
   def getLatestOfEachRunSummary(datasetName: Option[String] = None,
                                 datasetVersion: Option[Int] = None,
-                                startDate: Option[String] = None,
+                                startDate: Option[LocalDate] = None,
                                 sparkAppId: Option[String] = None,
                                 uniqueId: Option[String] = None
                                ): Future[Seq[RunSummary]] = {
@@ -66,7 +67,7 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
-                      startDate: Option[String] = None): Future[Seq[RunSummary]] = {
+                      startDate: Option[LocalDate] = None): Future[Seq[RunSummary]] = {
     runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate)
   }
 

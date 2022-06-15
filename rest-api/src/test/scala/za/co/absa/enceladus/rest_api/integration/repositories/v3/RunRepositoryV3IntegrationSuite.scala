@@ -66,7 +66,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
     }
 
     "return only latest RunSummaries on startDate or later" in {
-      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2022 13:01:12 +0200")
       val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
       val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
@@ -74,7 +74,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
       val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
 
       val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
-      val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "20-05-2022 13:01:12 +0200")
+      val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "01-06-2022 13:01:12 +0200")
 
       runFixture.add(
         dataset1ver1run1, dataset1ver1run2,
@@ -82,7 +82,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
         dataset2ver1run1, dataset3ver1run1
       )
 
-      val actual = await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some("20-05-2022")))
+      val actual = await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some(LocalDate.parse("2022-05-20"))))
       val expected = List(dataset1ver1run2, dataset1ver2run3, dataset3ver1run1).map(_.toSummary)
       assert(actual == expected)
     }
@@ -157,12 +157,12 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
     }
 
     "return only latest RunSummaries with combination of specific dataset and startDate" in {
-      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2000 13:01:12 +0200")
       val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
       val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
       val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "22-05-2022 15:01:12 +0200")
-      val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+      val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "12-12-2022 15:01:12 +0200")
 
       val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
       val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "20-05-2022 13:01:12 +0200")
@@ -173,7 +173,8 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
         dataset2ver1run1, dataset3ver1run1
       )
 
-      val actual = await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some("20-05-2022"), datasetName = Some("dataset1")))
+      val actual = await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some(LocalDate.parse("2022-05-20")),
+        datasetName = Some("dataset1")))
       val expected = List(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
       assert(actual == expected)
     }
@@ -187,7 +188,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
         }).getMessage shouldBe TheExpectedErrorMessage
 
         (the[IllegalArgumentException] thrownBy {
-          await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some("05-05-2020"), uniqueId = Some("adf")))
+          await(runMongoRepository.getRunSummariesLatestOfEach(startDate = Some(LocalDate.parse("2020-05-05")), uniqueId = Some("adf")))
         }).getMessage shouldBe TheExpectedErrorMessage
       }
 
@@ -247,12 +248,12 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
     }
 
     "return RunSummaries on startDate or later" in {
-      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "18-05-2022 13:01:12 +0200")
+      val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2000 13:01:12 +0200")
       val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
       val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
       val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "22-05-2022 15:01:12 +0200")
-      val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
+      val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "10-10-2022 15:01:12 +0200")
 
       val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1, startDateTime = "17-05-2022 13:01:12 +0200")
       val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "20-05-2022 13:01:12 +0200")
@@ -263,7 +264,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
         dataset2ver1run1, dataset3ver1run1
       )
 
-      val actual = await(runMongoRepository.getRunSummaries(startDate = Some("20-05-2022")))
+      val actual = await(runMongoRepository.getRunSummaries(startDate = Some(LocalDate.parse("2022-05-20"))))
       val expected = List(dataset1ver1run2, dataset1ver2run2, dataset1ver2run3, dataset3ver1run1).map(_.toSummary)
       assert(actual == expected)
     }
@@ -284,7 +285,7 @@ class RunRepositoryV3IntegrationSuite extends BaseRepositoryTest with Matchers {
       )
 
       val actual = await(runMongoRepository.getRunSummaries(datasetName = Some("dataset1"),
-        datasetVersion = Some(2), startDate = Some("20-05-2022"))
+        datasetVersion = Some(2), startDate = Some(LocalDate.parse("2022-05-20")))
       )
       val expected = List(dataset1ver2run2, dataset1ver2run3).map(_.toSummary)
       assert(actual == expected)
