@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.mockito.Mockito
 import org.springframework.web.client.ResourceAccessException
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.DefaultUrlsRetryCount
-import za.co.absa.enceladus.dao.{DaoException, UnauthorizedException}
+import za.co.absa.enceladus.dao.{CustomException, DaoException, UnauthorizedException}
 
 class CrossHostApiCallerSuite extends BaseTestSuite {
 
@@ -58,7 +58,11 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(DaoException("Something went wrong B"))
           .thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, Some(0)).call { str =>
+        val retryableExceptions: Set[CustomException] = Set(
+          DaoException("Something went wrong A"), DaoException("Something went wrong B")
+        )
+
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, Some(0), retryableExceptions).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -73,7 +77,11 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, Some(0)).call { str =>
+        val retryableExceptions: Set[CustomException] = Set(
+          DaoException("Something went wrong A"), DaoException("Something went wrong B")
+        )
+
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, Some(0), retryableExceptions).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -90,8 +98,14 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
+        val retryableExceptions: Set[CustomException] = Set(
+          DaoException("Something went wrong A"),
+          DaoException("Something went wrong B"),
+          DaoException("Something went wrong C")
+        )
+
         val exception = intercept[DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0), retryableExceptions).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -107,8 +121,14 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
+        val retryableExceptions: Set[CustomException] = Set(
+          DaoException("Something went wrong A"),
+          DaoException("Something went wrong B"),
+          DaoException("Something went wrong C")
+        )
+
         val exception = intercept[DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 1, Some(0)).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 1, Some(0), retryableExceptions).call { str =>
             restClient.sendGet[String](str)
           }
         }
