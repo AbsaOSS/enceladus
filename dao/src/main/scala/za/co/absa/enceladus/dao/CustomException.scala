@@ -15,17 +15,16 @@
 
 package za.co.absa.enceladus.dao
 
-abstract class RetryableException(message: String, cause: Throwable) extends Exception(message, cause)
-
+abstract class CustomException(message: String, cause: Throwable) extends Exception(message, cause)
 
 final case class DaoException(private val message: String,
                               private val cause: Throwable = None.orNull)
-  extends RetryableException(message, cause)
+  extends CustomException(message, cause)
 
 final case class UnauthorizedException(private val message: String,
                                        private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+  extends CustomException(message, cause)
 
 final case class NotFoundException(private val message: String,
                                    private val cause: Throwable = None.orNull)
-  extends Exception(message, cause)
+  extends CustomException(message, cause)
