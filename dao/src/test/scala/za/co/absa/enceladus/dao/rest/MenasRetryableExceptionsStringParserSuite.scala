@@ -69,7 +69,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
       "it is string with empty character" in {
         val inputExceptionsString = " "
-        val expectedExceptionsSet = Set()
+        val expectedExceptionsSet = Set[CustomException]()
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
