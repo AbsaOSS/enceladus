@@ -27,8 +27,8 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
-        result.size should be(expectedExceptionsSet.size)
-        (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
+        val areEqual = result.toList.map(_.getMessage).sorted == expectedExceptionsSet.toList.map(_.getMessage).sorted
+        areEqual should be(true)
       }
 
       "it is duplicated 404" in {
@@ -37,8 +37,8 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
-        result.size should be(expectedExceptionsSet.size)
-        (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
+        val areEqual = result.toList.map(_.getMessage).sorted == expectedExceptionsSet.toList.map(_.getMessage).sorted
+        areEqual should be(true)
       }
     }
 
@@ -52,8 +52,8 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
-        result.size should be(expectedExceptionsSet.size)
-        (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
+        val areEqual = result.toList.map(_.getMessage).sorted == expectedExceptionsSet.toList.map(_.getMessage).sorted
+        areEqual should be(true)
       }
     }
 

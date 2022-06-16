@@ -25,18 +25,17 @@ object MenasRetryableExceptionsStringParser {
 
   def parse(exceptionsString: String): Set[CustomException] = {
     exceptionsString
-      .trim
       .split(";")
       .flatMap(expandExceptions)
-      .toSet
+      .toSet[HttpStatus]
+      .map(statusCode => new CustomException(s"Optionally retryable exception - $statusCode", None.orNull) {})
   }
 
-  private def expandExceptions(singleExceptionString: String): Option[CustomException] = {
-    singleExceptionString match {
+  private def expandExceptions(singleExceptionString: String): Option[HttpStatus] = {
+    singleExceptionString.trim match {
       case exceptionRegex(exception) =>
-        val currStatus = HttpStatus.valueOf(exception.toInt)
-        val currException = new CustomException(s"Optionally retryable exception - $currStatus", None.orNull) {}
-        Some(currException)
+        val statusCode = HttpStatus.valueOf(exception.toInt)
+        Some(statusCode)
       case "" =>
         None
       case _ =>
