@@ -27,6 +27,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
+        result.size should be(expectedExceptionsSet.size)
         (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
       }
 
@@ -36,6 +37,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
+        result.size should be(expectedExceptionsSet.size)
         (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
       }
     }
@@ -50,6 +52,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
+        result.size should be(expectedExceptionsSet.size)
         (result zip expectedExceptionsSet).count(x => x._1.getMessage != x._2.getMessage) should be(0)
       }
     }
