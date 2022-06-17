@@ -21,6 +21,10 @@ final case class DaoException(private val message: String,
                               private val cause: Throwable = None.orNull)
   extends MenasException(message, cause)
 
+final case class AutoRecoverableException(private val message: String,
+                              private val cause: Throwable = None.orNull)
+  extends MenasException(message, cause)
+
 final case class UnauthorizedException(private val message: String,
                                        private val cause: Throwable = None.orNull)
   extends MenasException(message, cause)

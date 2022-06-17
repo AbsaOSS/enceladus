@@ -19,7 +19,7 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
-import za.co.absa.enceladus.dao.{MenasException, DaoException}
+import za.co.absa.enceladus.dao.{MenasException, AutoRecoverableException}
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
@@ -82,28 +82,29 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String],
         fn(url)
       }.recoverWith {
         case e @ (_: ResourceAccessException | _: RestClientException) =>
-          Failure(DaoException("Server non-responsive", e))
+          Failure(AutoRecoverableException("Server non-responsive", e))
       }
 
       //using match instead of recoverWith to make the function @tailrec
       result match {
-        case Failure(e: DaoException) if attemptNumber < maxTryCount =>
-          val nextUrl = nextBaseUrl()
-          logFailure(e, url, attemptNumber, Option(nextUrl))
-          attempt(nextUrl, 1, urlsTried + 1)
 
-        case Failure(e: MenasException) if retryableExceptions.contains(e) && attemptNumber < maxTryCount  =>
-          val nextUrl = nextBaseUrl()
-          logFailure(e, url, attemptNumber, Option(nextUrl))
-          attempt(nextUrl, 1, urlsTried + 1)
-
-        case Failure(e: DaoException) if attemptNumber < maxTryCount =>
+        case Failure(e: AutoRecoverableException) if attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
           attempt(url, attemptNumber + 1, urlsTried)
+
+        case Failure(e: AutoRecoverableException) if urlsTried < baseUrlsCount =>
+          val nextUrl = nextBaseUrl()
+          logFailure(e, url, attemptNumber, Option(nextUrl))
+          attempt(nextUrl, 1, urlsTried + 1)
 
         case Failure(e: MenasException) if retryableExceptions.contains(e) && attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
           attempt(url, attemptNumber + 1, urlsTried)
+
+        case Failure(e: MenasException) if retryableExceptions.contains(e) && urlsTried < baseUrlsCount =>
+          val nextUrl = nextBaseUrl()
+          logFailure(e, url, attemptNumber, Option(nextUrl))
+          attempt(nextUrl, 1, urlsTried + 1)
 
         case _ => result
       }
