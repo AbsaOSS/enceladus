@@ -329,27 +329,6 @@ class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matcher
 
   }
 
-  test("DatasetService.replacePrefixIfFound replaces field prefixes") {
-    DatasetService.replacePrefixIfFound("Alfa", "Beta", "Alfa") shouldBe Some("Beta")
-    DatasetService.replacePrefixIfFound("Omega", "Beta", "Alfa") shouldBe None
-
-    DatasetService.replacePrefixIfFound("Alfa.abc.def", "Beta", "Alfa") shouldBe Some("Beta.abc.def")
-    // not a .-separated prefix:
-    DatasetService.replacePrefixIfFound("Alfaville.there", "Beta", "Alfa") shouldBe None
-    // not a prefix
-    DatasetService.replacePrefixIfFound("some.Alfa.other", "Beta", "Alfa") shouldBe None
-
-    // all at once in an iterable:
-    DatasetService.replacePrefixIfFound(Seq(
-      "Alfa", "Omega",
-      "Alfa.abc.def", "Alfaville", "Alfaville.there"
-    ), "Beta", "Alfa") shouldBe Seq(
-      "Beta",
-      "Beta.abc.def"
-    )
-
-  }
-
   test("DatasetService.lock works correctly") {
     val dataset = DatasetFactory.getDummyDataset(name = "datasetA", description = Some("newdescr"),locked = Some(true))
     Mockito.when(modelRepository.update("datasetA", dataset)).thenReturn(Future.successful(dataset))
