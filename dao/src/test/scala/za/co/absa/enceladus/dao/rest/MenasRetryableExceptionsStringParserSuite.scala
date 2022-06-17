@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.CustomException
+import za.co.absa.enceladus.dao.MenasException
 
 class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
@@ -23,7 +23,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
     "parse a single retryable exception" when {
       "it is a single 404" in {
         val inputExceptionsString = "404"
-        val expectedExceptionsSet = Set(new CustomException("Optionally retryable exception - 404", None.orNull) {})
+        val expectedExceptionsSet = Set(new MenasException("Optionally retryable exception - 404", None.orNull) {})
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
@@ -33,7 +33,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
       "it is duplicated 404" in {
         val inputExceptionsString = "404;404"
-        val expectedExceptionsSet = Set(new CustomException("Optionally retryable exception - 404", None.orNull) {})
+        val expectedExceptionsSet = Set(new MenasException("Optionally retryable exception - 404", None.orNull) {})
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
@@ -46,8 +46,8 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
       "it is 400;404" in {
         val inputExceptionsString = "400;404"
         val expectedExceptionsSet = Set(
-          new CustomException("Optionally retryable exception - 400", None.orNull) {},
-          new CustomException("Optionally retryable exception - 404", None.orNull) {}
+          new MenasException("Optionally retryable exception - 400", None.orNull) {},
+          new MenasException("Optionally retryable exception - 404", None.orNull) {}
         )
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
@@ -60,7 +60,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
     "parse an empty retryable exception" when {
       "it is empty string" in {
         val inputExceptionsString = ""
-        val expectedExceptionsSet = Set[CustomException]()
+        val expectedExceptionsSet = Set[MenasException]()
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 
@@ -69,7 +69,7 @@ class MenasRetryableExceptionsStringParserSuite extends BaseTestSuite {
 
       "it is string with empty character" in {
         val inputExceptionsString = " "
-        val expectedExceptionsSet = Set[CustomException]()
+        val expectedExceptionsSet = Set[MenasException]()
 
         val result = MenasRetryableExceptionsStringParser.parse(inputExceptionsString)
 

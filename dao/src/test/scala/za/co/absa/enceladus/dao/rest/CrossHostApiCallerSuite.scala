@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.mockito.Mockito
 import org.springframework.web.client.ResourceAccessException
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.DefaultUrlsRetryCount
-import za.co.absa.enceladus.dao.{CustomException, DaoException, UnauthorizedException}
+import za.co.absa.enceladus.dao.{DaoException, MenasException, UnauthorizedException}
 
 class CrossHostApiCallerSuite extends BaseTestSuite {
 
@@ -58,7 +58,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(DaoException("Something went wrong B"))
           .thenReturn("success")
 
-        val retryableExceptions: Set[CustomException] = Set(
+        val retryableExceptions: Set[MenasException] = Set(
           DaoException("Something went wrong A"), DaoException("Something went wrong B")
         )
 
@@ -77,7 +77,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenReturn("success")
 
-        val retryableExceptions: Set[CustomException] = Set(
+        val retryableExceptions: Set[MenasException] = Set(
           DaoException("Something went wrong A"), DaoException("Something went wrong B")
         )
 
@@ -98,7 +98,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
-        val retryableExceptions: Set[CustomException] = Set(
+        val retryableExceptions: Set[MenasException] = Set(
           DaoException("Something went wrong A"),
           DaoException("Something went wrong B"),
           DaoException("Something went wrong C")
@@ -121,7 +121,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenThrow(DaoException("Something went wrong C"))
 
-        val retryableExceptions: Set[CustomException] = Set(
+        val retryableExceptions: Set[MenasException] = Set(
           DaoException("Something went wrong A"),
           DaoException("Something went wrong B"),
           DaoException("Something went wrong C")

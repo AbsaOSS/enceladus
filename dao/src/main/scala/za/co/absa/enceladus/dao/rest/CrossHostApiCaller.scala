@@ -19,7 +19,7 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
-import za.co.absa.enceladus.dao.{CustomException, DaoException}
+import za.co.absa.enceladus.dao.{MenasException, DaoException}
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
@@ -33,7 +33,7 @@ object CrossHostApiCaller {
   private def createInstance(apiBaseUrls: Seq[String],
                              urlsRetryCount: Int,
                              startWith: Option[Int],
-                             retryableExceptions: Set[CustomException]): CrossHostApiCaller = {
+                             retryableExceptions: Set[MenasException]): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
       logger.warn(s"Urls retry count cannot be negative ($urlsRetryCount). Using default number of retries instead ($DefaultUrlsRetryCount).") //scalastyle:ignore maxLineLength
       DefaultUrlsRetryCount
@@ -47,7 +47,7 @@ object CrossHostApiCaller {
   def apply(apiBaseUrls: Seq[String],
              urlsRetryCount: Int = DefaultUrlsRetryCount,
              startWith: Option[Int] = None,
-             retryableExceptions: Set[CustomException] = Set()): CrossHostApiCaller = {
+             retryableExceptions: Set[MenasException] = Set()): CrossHostApiCaller = {
     createInstance(apiBaseUrls, urlsRetryCount, startWith, retryableExceptions)
   }
 }
@@ -55,7 +55,7 @@ object CrossHostApiCaller {
 protected class CrossHostApiCaller private(apiBaseUrls: Vector[String],
                                            maxTryCount: Int,
                                            private var currentHostIndex: Int,
-                                           retryableExceptions: Set[CustomException])
+                                           retryableExceptions: Set[MenasException])
   extends ApiCaller {
 
   def baseUrlsCount: Int = apiBaseUrls.size
@@ -69,7 +69,6 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String],
 
 
   def call[T](fn: String => T): T = {
-    var canBeRecovered = false
 
     def logFailure(error: Throwable, url: String, attemptNumber: Int, nextUrl: Option[String]): Unit = {
       val rootCause = ExceptionUtils.getRootCauseMessage(error)
@@ -79,24 +78,33 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String],
 
     @tailrec
     def attempt(url: String, attemptNumber: Int, urlsTried: Int): Try[T] = {
-      canBeRecovered = false
       val result = Try {
         fn(url)
       }.recoverWith {
         case e @ (_: ResourceAccessException | _: RestClientException) =>
-          canBeRecovered = true
           Failure(DaoException("Server non-responsive", e))
       }
 
       //using match instead of recoverWith to make the function @tailrec
       result match {
-        case Failure(e: CustomException) if (attemptNumber < maxTryCount) && (canBeRecovered || retryableExceptions.contains(e)) =>
-          logFailure(e, url, attemptNumber, None)
-          attempt(url, attemptNumber + 1, urlsTried)
-        case Failure(e: CustomException) if (urlsTried < baseUrlsCount) && (canBeRecovered || retryableExceptions.contains(e)) =>
+        case Failure(e: DaoException) if attemptNumber < maxTryCount =>
           val nextUrl = nextBaseUrl()
           logFailure(e, url, attemptNumber, Option(nextUrl))
           attempt(nextUrl, 1, urlsTried + 1)
+
+        case Failure(e: MenasException) if retryableExceptions.contains(e) && attemptNumber < maxTryCount  =>
+          val nextUrl = nextBaseUrl()
+          logFailure(e, url, attemptNumber, Option(nextUrl))
+          attempt(nextUrl, 1, urlsTried + 1)
+
+        case Failure(e: DaoException) if attemptNumber < maxTryCount =>
+          logFailure(e, url, attemptNumber, None)
+          attempt(url, attemptNumber + 1, urlsTried)
+
+        case Failure(e: MenasException) if retryableExceptions.contains(e) && attemptNumber < maxTryCount =>
+          logFailure(e, url, attemptNumber, None)
+          attempt(url, attemptNumber + 1, urlsTried)
+
         case _ => result
       }
     }

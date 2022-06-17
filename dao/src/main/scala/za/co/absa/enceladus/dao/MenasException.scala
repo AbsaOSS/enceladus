@@ -15,16 +15,16 @@
 
 package za.co.absa.enceladus.dao
 
-abstract class CustomException(message: String, cause: Throwable) extends Exception(message, cause)
+abstract class MenasException(message: String, cause: Throwable) extends Exception(message, cause)
 
 final case class DaoException(private val message: String,
                               private val cause: Throwable = None.orNull)
-  extends CustomException(message, cause)
+  extends MenasException(message, cause)
 
 final case class UnauthorizedException(private val message: String,
                                        private val cause: Throwable = None.orNull)
-  extends CustomException(message, cause)
+  extends MenasException(message, cause)
 
 final case class NotFoundException(private val message: String,
                                    private val cause: Throwable = None.orNull)
-  extends CustomException(message, cause)
+  extends MenasException(message, cause)

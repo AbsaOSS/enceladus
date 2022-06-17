@@ -16,19 +16,19 @@
 package za.co.absa.enceladus.dao.rest
 
 import org.springframework.http.HttpStatus
-import za.co.absa.enceladus.dao.{CustomException, DaoException}
+import za.co.absa.enceladus.dao.{DaoException, MenasException}
 
 
 object MenasRetryableExceptionsStringParser {
 
   private val exceptionRegex = """^([1-5]\d{2})$""".r
 
-  def parse(exceptionsString: String): Set[CustomException] = {
+  def parse(exceptionsString: String): Set[MenasException] = {
     exceptionsString
       .split(";")
       .flatMap(expandExceptions)
       .toSet[HttpStatus]
-      .map(statusCode => new CustomException(s"Optionally retryable exception - $statusCode", None.orNull) {})
+      .map(statusCode => new MenasException(s"Optionally retryable exception - $statusCode", None.orNull) {})
   }
 
   private def expandExceptions(singleExceptionString: String): Option[HttpStatus] = {
