@@ -29,6 +29,7 @@ import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
 import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService, RunFixtureService}
+import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
 
 import java.util.UUID
@@ -326,7 +327,9 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
     "return 404" when {
       "RunSummaries for non-existent dataset name and version are queried" in {
         // datasets referenced by runs must exist
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
+        datasetFixture.add(DatasetFactory.getDummyDataset("dataset1", version = 1)) // v1 exists
+
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2") // but v2 does not
         response.getStatusCode shouldBe HttpStatus.NOT_FOUND
       }
     }
@@ -512,9 +515,10 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run = RunFactory.getDummyRun(runStatus = RunStatus(RunState.running, None))
         runFixture.add(run)
 
-        val response = sendPut[RunStatus, String](s"$apiUrl/dummyDataset/1/1",
+        val response = sendPut[RunStatus, MessageWrapper](s"$apiUrl/dummyDataset/1/1",
           bodyOpt = Option(RunStatus(RunState.allSucceeded, None)))
         assertOk(response)
+        response.getBody shouldBe MessageWrapper("New runStatus RunStatus(allSucceeded,None) applied.")
 
         val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
         assertOk(response2)
@@ -529,6 +533,8 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val response = sendPut[RunStatus, String](s"$apiUrl/dummyDataset/1/1",
           bodyOpt = Option(newRunStatus))
         assertOk(response)
+        response.getBody shouldBe
+          """{"message":"New runStatus RunStatus(failed,Some(RunError(job1,step2,desc3,details4))) applied."}"""
 
         val response2 = sendGet[Run](s"$apiUrl/dummyDataset/1/1")
         assertOk(response2)

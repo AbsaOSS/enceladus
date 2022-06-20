@@ -27,6 +27,7 @@ import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.RunSummary
+import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.net.URI
@@ -130,12 +131,12 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                        @PathVariable datasetName: String,
                        @PathVariable datasetVersion: Int,
                        @PathVariable runId: Int,
-                       @RequestBody newRunStatus: RunStatus): CompletableFuture[ResponseEntity[String]] = {
+                       @RequestBody newRunStatus: RunStatus): CompletableFuture[ResponseEntity[MessageWrapper]] = {
     if (newRunStatus.status == null) {
       Future.failed(new IllegalArgumentException("Invalid empty RunStatus submitted"))
     } else {
       runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map(_ =>
-        ResponseEntity.ok(s"New runStatus $newRunStatus applied.")
+        ResponseEntity.ok(MessageWrapper(s"New runStatus $newRunStatus applied."))
       )
     }
   }
