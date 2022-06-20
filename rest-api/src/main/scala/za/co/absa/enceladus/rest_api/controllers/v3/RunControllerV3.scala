@@ -84,8 +84,8 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                                           @PathVariable datasetVersion: Int,
                                           @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
     runService.getRunSummaries(
-      datasetName = Some(datasetName),
-      datasetVersion = Some(datasetVersion),
+      datasetName = datasetName,
+      datasetVersion = datasetVersion,
       startDate = parseYmdDate(startDate)
     )
   }

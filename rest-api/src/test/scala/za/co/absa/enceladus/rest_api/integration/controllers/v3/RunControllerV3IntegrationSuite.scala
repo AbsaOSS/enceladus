@@ -154,6 +154,11 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
   s"GET $apiUrl/{datasetName}" can {
     "return 200" when {
       "latest RunSummaries are queried" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1),
+          DatasetFactory.getDummyDataset("dataset1", version = 2),
+          DatasetFactory.getDummyDataset("dataset2", version = 1)
+        )
         val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
         runFixture.add(dataset1ver1run1, dataset1ver1run2)
@@ -171,6 +176,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
 
       "latest RunSummaries are queried on startDate" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1),
+          DatasetFactory.getDummyDataset("dataset1", version = 2),
+          DatasetFactory.getDummyDataset("dataset2", version = 1),
+          DatasetFactory.getDummyDataset("dataset3", version = 1)
+        )
+
         val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1, startDateTime = "30-01-2022 13:01:12 +0200")
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
@@ -207,6 +219,10 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
 
       "latest RunSummaries are queried, but nothing is found" in {
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1),
+          DatasetFactory.getDummyDataset("dataset3", version = 1)
+        )
         val run1 = RunFactory.getDummyRun(dataset = "dataset1", startDateTime = "22-05-2022 14:01:12 +0200")
         val run2 = RunFactory.getDummyRun(dataset = "dataset3", uniqueId = None) // unrelated to dataset1
         runFixture.add(run1, run2)
@@ -215,6 +231,26 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         response.getStatusCode shouldBe HttpStatus.OK
         response.getBody shouldBe "[]" // empty array
       }
+      "return RunSummaries by dataset name  - ok even for no runs for known dataset" in {
+        // datasets referenced by runs must exist, too
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1)
+        )
+
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        val expected = List.empty[RunSummary]
+        response.getBody shouldBe expected
+      }
+    }
+
+    "return 404" when {
+      "RunSummaries for non-existent dataset name is queried" in {
+        // datasets referenced by runs must exist
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+      }
     }
 
   }
@@ -222,6 +258,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
   s"GET $apiUrl/{datasetName}/{datasetVersion}" can {
     "return 200" when {
       "return RunSummaries by dataset name and version" in {
+        // datasets referenced by runs must exist, too
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1),
+          DatasetFactory.getDummyDataset("dataset1", version = 2),
+          DatasetFactory.getDummyDataset("dataset2", version = 1)
+        )
+
         val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
         runFixture.add(dataset1ver1run1, dataset1ver1run2)
@@ -237,6 +280,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
       }
 
       "return RunSummaries on combination of (startDate, dsName, and dsVersion)" in {
+        // datasets referenced by runs must exist, too
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1),
+          DatasetFactory.getDummyDataset("dataset1", version = 2),
+          DatasetFactory.getDummyDataset("dataset3", version = 1)
+        )
+
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
 
         val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "30-01-2022 15:01:12 +0200")
@@ -257,6 +307,27 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val expected = List(dataset1ver2run2, dataset1ver2run3).map(_.toSummary)
         response.getBody shouldBe expected
 
+      }
+
+      "return RunSummaries by dataset name and version - ok even for no runs for known dataset" in {
+        // datasets referenced by runs must exist, too
+        datasetFixture.add(
+          DatasetFactory.getDummyDataset("dataset1", version = 1)
+        )
+
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
+        response.getStatusCode shouldBe HttpStatus.OK
+
+        val expected = List.empty[RunSummary]
+        response.getBody shouldBe expected
+      }
+    }
+
+    "return 404" when {
+      "RunSummaries for non-existent dataset name and version are queried" in {
+        // datasets referenced by runs must exist
+        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
+        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
       }
     }
   }
