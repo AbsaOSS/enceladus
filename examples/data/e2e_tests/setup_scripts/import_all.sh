@@ -23,7 +23,6 @@ MAPPING_TABLE_DIR="${DATA_DIR}/mapping_tables"
 USER=""
 PASSWORD=""
 URL=""
-COOKIE_FILE=$(mktemp /tmp/cookie-jar.txt.XXXXXX)
 HEADERS_FILE=$(mktemp /tmp/headers.txt.XXXXXX)
 
 if [ "$1" != "with" ]; then
@@ -35,7 +34,7 @@ else
   if [ "$2" = "defaults" ]; then
     USER="user"
     PASSWORD="changeme"
-    URL="http://localhost:8080/menas"
+    URL="http://localhost:8080/rest_api"
   else
     USER=$2
     PASSWORD=$3
@@ -47,7 +46,6 @@ import_function () {
     for var in `ls -d ${PWD}/${1}/*`; do
         canonicalPath=$(realpath "${var}")
         curl -v \
-            -b $COOKIE_FILE \
             -H "@${HEADERS_FILE}" \
             -H 'Content-Type:application/json' \
             --data "@${canonicalPath}" \
@@ -57,7 +55,6 @@ import_function () {
 
 curl -v \
     -X POST \
-    -c $COOKIE_FILE \
     -D $HEADERS_FILE \
     "$URL/api/login?username=$USER&password=$PASSWORD"
 
@@ -65,5 +62,4 @@ import_function $SCHEMA_DIR "schema"
 import_function $MAPPING_TABLE_DIR "mappingTable"
 import_function $DATASET_DIR "dataset"
 
-rm $COOKIE_FILE
 rm $HEADERS_FILE
