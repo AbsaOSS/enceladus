@@ -88,7 +88,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         val response = sendPost[Schema, Validation](apiUrl, bodyOpt = Some(schema))
 
         assertCreated(response)
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/schemas/schemaA/1")
 
         response.getBody shouldBe Validation.empty
@@ -143,7 +143,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         val response = sendPut[Schema, Validation](s"$apiUrl/schemaA/1", bodyOpt = Some(schema2))
 
         assertCreated(response)
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/schemas/schemaA/2")
 
         response.getBody shouldBe Validation.empty
@@ -362,7 +362,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val responseUploaded = sendPostUploadFile[Validation](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Copybook.ok, schemaParams)
           assertCreated(responseUploaded)
-          val locationHeader = responseUploaded.getHeaders.getFirst("location")
+          val locationHeader = responseUploaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -384,7 +384,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val responseUploaded = sendPostUploadFile[Validation](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
           assertCreated(responseUploaded)
-          val locationHeader = responseUploaded.getHeaders.getFirst("location")
+          val locationHeader = responseUploaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -406,7 +406,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val responseUploaded = sendPostUploadFile[Schema](
             s"$apiUrl/schemaA/1/from-file", TestResourcePath.Avro.ok, schemaParams)
           assertCreated(responseUploaded)
-          val locationHeader = responseUploaded.getHeaders.getFirst("location")
+          val locationHeader = responseUploaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -574,7 +574,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertCreated(responseRemoteLoaded)
           responseRemoteLoaded.getBody shouldBe Validation.empty
 
-          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
+          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -599,7 +599,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           val responseRemoteLoaded = sendPostRemoteFile[Validation](s"$apiUrl/schemaA/1/from-remote-uri", params)
           assertCreated(responseRemoteLoaded)
           responseRemoteLoaded.getBody shouldBe Validation.empty
-          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
+          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -625,7 +625,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertCreated(responseRemoteLoaded)
           responseRemoteLoaded.getBody shouldBe Validation.empty
 
-          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
+          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -730,7 +730,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertCreated(responseRemoteLoaded)
           responseRemoteLoaded.getBody shouldBe Validation.empty
 
-          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
+          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")
@@ -757,7 +757,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertCreated(responseRemoteLoaded)
           responseRemoteLoaded.getBody shouldBe Validation.empty
 
-          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("location")
+          val locationHeader = responseRemoteLoaded.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/schemas/schemaA/2") // +1 version
 
           val response2 = sendGet[Schema]("/schemas/schemaA/2")

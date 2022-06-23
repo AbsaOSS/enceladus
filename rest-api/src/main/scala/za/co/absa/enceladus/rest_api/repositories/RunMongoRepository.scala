@@ -42,7 +42,8 @@ object RunMongoRepository {
   val collectionName: String = s"$collectionBaseName${model.CollectionSuffix}"
 }
 
-@Repository
+// scalastyle:off number.of.methods legacy code
+@Repository("runMongoRepository") // by-name qualifier - for v2 repos
 class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
   extends MongoRepository[Run](mongoDb) {
 
@@ -50,7 +51,7 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
 
   private[rest_api] override def collectionBaseName: String = RunMongoRepository.collectionBaseName
 
-  private val summaryProjection: Bson = project(fields(
+  protected val summaryProjection: Bson = project(fields(
     computed("datasetName", "$dataset"),
     computed("status", "$runStatus.status"),
     computed("runUniqueId", "$uniqueId"),
@@ -193,16 +194,17 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .aggregate[BsonDocument](pipeline)
   }
 
-  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+  def getGroupedRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
     val pipeline = Seq(
       project(fields(
         include("dataset"),
-        Document("""{start: {
-                   |  $dateFromString: {
-                   |    dateString: "$startDateTime",
-                   |    format: "%d-%m-%Y %H:%M:%S %z"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{start: {
+            |  $dateFromString: {
+            |    dateString: "$startDateTime",
+            |    format: "%d-%m-%Y %H:%M:%S %z"
+            |  }
+            |}},""".stripMargin),
         Document(
           """{timezone: {
             |  $substrBytes: [
@@ -219,13 +221,14 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       project(fields(
         computed("datasetName", "$_id"),
         include("numberOfRuns"),
-        Document("""{latestRunStartDateTime: {
-                   |  $dateToString: {
-                   |    date: "$latestStart",
-                   |    format: "%d-%m-%Y %H:%M:%S %z",
-                   |    timezone: "$timezone"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{latestRunStartDateTime: {
+            |  $dateToString: {
+            |    date: "$latestStart",
+            |    format: "%d-%m-%Y %H:%M:%S %z",
+            |    timezone: "$timezone"
+            |  }
+            |}},""".stripMargin),
         excludeId()
       )),
       sort(ascending("datasetName"))
@@ -236,17 +239,18 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+  def getGroupedRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
     val pipeline = Seq(
       filter(equal("dataset", datasetName)),
       project(fields(
         include("dataset", "datasetVersion"),
-        Document("""{start: {
-                   |  $dateFromString: {
-                   |    dateString: "$startDateTime",
-                   |    format: "%d-%m-%Y %H:%M:%S %z"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{start: {
+            |  $dateFromString: {
+            |    dateString: "$startDateTime",
+            |    format: "%d-%m-%Y %H:%M:%S %z"
+            |  }
+            |}},""".stripMargin),
         Document(
           """{timezone: {
             |  $substrBytes: [
@@ -264,13 +268,14 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       project(fields(
         computed("datasetVersion", "$_id"),
         include("datasetName", "numberOfRuns"),
-        Document("""{latestRunStartDateTime: {
-                   |  $dateToString: {
-                   |    date: "$latestStart",
-                   |    format: "%d-%m-%Y %H:%M:%S %z",
-                   |    timezone: "$timezone"
-                   |  }
-                   |}},""".stripMargin),
+        Document(
+          """{latestRunStartDateTime: {
+            |  $dateToString: {
+            |    date: "$latestStart",
+            |    format: "%d-%m-%Y %H:%M:%S %z",
+            |    timezone: "$timezone"
+            |  }
+            |}},""".stripMargin),
         excludeId()
       )),
       sort(descending("datasetVersion"))
@@ -281,12 +286,16 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       .toFuture()
   }
 
-  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
-    val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", appId)
-    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", appId)
+  protected def sparkIdFilter(sparkAppId: String): Bson = {
+    val stdAppIdFilter = equal("controlMeasure.metadata.additionalInfo.std_application_id", sparkAppId)
+    val conformAppIdFilter = equal("controlMeasure.metadata.additionalInfo.conform_application_id", sparkAppId)
 
+    or(stdAppIdFilter, conformAppIdFilter)
+  }
+
+  def getRunBySparkAppId(appId: String): Future[Seq[Run]] = {
     collection
-      .find[BsonDocument](or(stdAppIdFilter, conformAppIdFilter))
+      .find[BsonDocument](sparkIdFilter(appId))
       .toFuture()
       .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
@@ -316,10 +325,34 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     collection.withDocumentClass[BsonDocument].insertOne(bson).head()
   }
 
-  def appendCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
+  def getByUniqueId(uniqueId: String): Future[Option[Run]] = {
+    val filter = equal("uniqueId", uniqueId)
+
+    collection
+      .find[BsonDocument](filter)
+      .headOption()
+      .map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+    // why not just .find[Run]? Because Run.RunStatus.RunState is a Scala enum that does not play nice with bson-serde
+  }
+
+  def appendCheckpointByUniqueId(uniqueId: String, checkpoint: Checkpoint): Future[Option[Run]] = {
     val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(checkpoint))
     collection.withDocumentClass[BsonDocument].findOneAndUpdate(
       equal("uniqueId", uniqueId),
+      Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+  }
+
+  def appendCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Option[Run]] = {
+    val filter = and(
+      equal("dataset", datasetName),
+      equal("datasetVersion", datasetVersion),
+      equal("runId", runId)
+    )
+    val bsonCheckpoint = BsonDocument(SerializationUtils.asJson(newCheckpoint))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      filter,
       Updates.addToSet("controlMeasure.checkpoints", bsonCheckpoint),
       FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
     ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
@@ -352,12 +385,27 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
     ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
   }
 
+  def updateRunStatus(datasetName: String, datasetVersion: Int, runId: Int, newRunStatus: RunStatus): Future[Option[Run]] = {
+    val filter = and(
+      equal("dataset", datasetName),
+      equal("datasetVersion", datasetVersion),
+      equal("runId", runId)
+    )
+
+    val bsonRunStatus = BsonDocument(SerializationUtils.asJson(newRunStatus))
+    collection.withDocumentClass[BsonDocument].findOneAndUpdate(
+      filter,
+      Updates.set("runStatus", bsonRunStatus),
+      FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
+    ).headOption().map(_.map(bson => SerializationUtils.fromJson[Run](bson.toJson)))
+  }
+
   def existsId(uniqueId: String): Future[Boolean] = {
     collection.countDocuments(equal("uniqueId", uniqueId))
       .map(_ > 0).head()
   }
 
-  private def getDatasetFilter(datasetName: String, datasetVersion: Int): Bson = {
+  protected def getDatasetFilter(datasetName: String, datasetVersion: Int): Bson = {
     val datasetNameEq = equal("dataset", datasetName)
     val datasetVersionEq = equal("datasetVersion", datasetVersion)
 

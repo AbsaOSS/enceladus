@@ -77,7 +77,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         val response = sendPostByAdmin[PropertyDefinition, Validation](apiUrl, bodyOpt = Some(propertyDefinition))
         assertCreated(response)
 
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/property-definitions/datasets/dummyName/1")
 
         val response2 = sendGet[PropertyDefinition]("/property-definitions/datasets/dummyName/1")
@@ -93,7 +93,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           val response = sendPostByAdmin[String, Validation](apiUrl, bodyOpt = Some(propertyDefinition))
           assertCreated(response)
 
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/property-definitions/datasets/smallPd/1")
 
           val response2 = sendGet[PropertyDefinition]("/property-definitions/datasets/smallPd/1")
@@ -210,7 +210,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
           val response = sendPutByAdmin[PropertyDefinition, Validation](s"$apiUrl/propertyDefinitionA/2", bodyOpt = Some(propertyDefinitionA3))
           assertCreated(response)
           response.getBody shouldBe Validation.empty
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/property-definitions/datasets/propertyDefinitionA/3")
 
           val response2 = sendGet[PropertyDefinition](s"$apiUrl/propertyDefinitionA/3")
@@ -331,7 +331,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
           val response = sendPostByAdmin[String, Validation](s"$apiUrl/propertyDefinitionXYZ/import", bodyOpt = Some(importablePd))
           assertCreated(response)
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/property-definitions/datasets/propertyDefinitionXYZ/2")
           response.getBody shouldBe Validation.empty
 
@@ -353,7 +353,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         "a the version of propertyDefinition created" in {
           val response = sendPostByAdmin[String, String](s"$apiUrl/propertyDefinitionXYZ/import", bodyOpt = Some(importablePd))
           assertCreated(response)
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/property-definitions/datasets/propertyDefinitionXYZ/1") // this is the first version
 
           val response2 = sendGet[PropertyDefinition](s"$apiUrl/propertyDefinitionXYZ/1")

@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.menas.audit._
 import za.co.absa.enceladus.model.versionedModel._
 import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
-import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestVersionKey
+import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
 import za.co.absa.enceladus.rest_api.services.v3.VersionedModelServiceV3
@@ -37,7 +37,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 object VersionedModelControllerV3 {
-  final val LatestVersionKey = "latest"
+  final val LatestKey = "latest"
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
@@ -47,7 +47,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // todo maybe offset/limit -> Issue #2060
+  // todo maybe offset/limit = pagination -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
@@ -196,7 +196,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   protected def forVersionExpression[T](name: String, versionStr: String)
                                        (forVersionFn: (String, Int) => Future[T]): Future[T] = {
     versionStr.toLowerCase match {
-      case LatestVersionKey =>
+      case LatestKey =>
         versionedModelService.getLatestVersionValue(name).flatMap {
           case None => Future.failed(notFound())
           case Some(actualLatestVersion) => forVersionFn(name, actualLatestVersion)

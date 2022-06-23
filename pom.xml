@@ -142,7 +142,7 @@
         <abris.version>3.1.1</abris.version>
         <absa.commons.version>1.0.0</absa.commons.version>
         <absa.spark.commons.version>0.2.0</absa.spark.commons.version>
-        <atum.version>3.7.0</atum.version>
+        <atum.version>3.8.2</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
         <cobrix.version>2.4.2</cobrix.version>
@@ -154,7 +154,7 @@
         <httpclient.version>4.4.1</httpclient.version>
         <jackson.spark.datatype.version>2.10.4</jackson.spark.datatype.version>
         <jackson.spark.version>2.10.4</jackson.spark.version>
-        <jackson.version>2.9.8</jackson.version>
+        <jackson.version>2.10.4</jackson.version>
         <jjwt.version>0.10.7</jjwt.version>
         <json4s.version>3.5.3</json4s.version>
         <junit.version>4.11</junit.version>
@@ -269,6 +269,15 @@
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
                 </exclusion>
+                <!-- in order to use higher version instead of builtin 2.6.7 -->
+                <exclusion>
+                    <artifactId>jackson-databind</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>jackson-annotations</artifactId>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -284,6 +293,10 @@
                 <exclusion>
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpclient</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

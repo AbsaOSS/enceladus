@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.concurrent.CompletableFuture
-
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -63,13 +62,13 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @GetMapping(Array("/grouped"))
   @ResponseStatus(HttpStatus.OK)
   def getRunSummariesPerDatasetName(): CompletableFuture[Seq[RunDatasetNameGroupedSummary]] = {
-    runService.getRunSummariesPerDatasetName()
+    runService.getGroupedRunSummariesPerDatasetName()
   }
 
   @GetMapping(Array("/grouped/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getRunSummariesPerDatasetVersion(@PathVariable datasetName: String): CompletableFuture[Seq[RunDatasetVersionGroupedSummary]] = {
-    runService.getRunSummariesPerDatasetVersion(datasetName)
+    runService.getGroupedRunSummariesPerDatasetVersion(datasetName)
   }
 
   @GetMapping(Array("/bySparkAppId/{appId}"))

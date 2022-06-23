@@ -13,18 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model
+package za.co.absa.enceladus.rest_api.models.rest
 
-import za.co.absa.atum.model.{ControlMeasure, RunStatus}
-
-case class Run
-(
-  uniqueId: Option[String],
-  runId: Int,
-  dataset: String,
-  datasetVersion: Int,
-  splineRef: SplineReference,
-  startDateTime: String,
-  runStatus: RunStatus,
-  controlMeasure: ControlMeasure
-)
+case class MessageWrapper(message: String)

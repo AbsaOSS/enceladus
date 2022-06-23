@@ -19,7 +19,7 @@ import java.time.{LocalDate, ZoneId}
 import java.time.format.DateTimeFormatter
 import com.mongodb.MongoWriteException
 import org.junit.runner.RunWith
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.{Autowired, Qualifier}
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
@@ -30,6 +30,8 @@ import za.co.absa.enceladus.rest_api.repositories.RunMongoRepository
 import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
+
+import java.util.UUID
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -42,6 +44,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
   private val runFixture: RunFixtureService = null
 
   @Autowired
+  @Qualifier("runMongoRepository") // to correctly wire V2 runMongoRepository
   private val runMongoRepository: RunMongoRepository = null
 
   override def fixtures: List[FixtureService[_]] = List(runFixture)
@@ -87,6 +90,31 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
       val expected = List(dataset1ver2run1, dataset2ver1run1)
       assert(actual == expected)
+    }
+  }
+
+  val uuid1 = UUID.randomUUID().toString
+  "RunMongoRepository::getByUniqueId" should {
+    "return a defined Option of the Run when exists" when {
+      "there is a Run of the specified Dataset" in {
+        val dataset1run1 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 1)
+        val dataset1run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 1, runId = 2, uniqueId = Some(uuid1))
+        val dataset2run2 = RunFactory.getDummyRun(dataset = "dataset", datasetVersion = 2, runId = 2)
+        runFixture.add(dataset1run1, dataset1run2, dataset2run2)
+
+        val actual = await(runMongoRepository.getByUniqueId(uuid1))
+        assert(actual == Some(dataset1run2))
+      }
+    }
+
+    "return None when not found" when {
+      "there is no Run with the specified datasetName" in {
+        setUpSimpleRun()
+
+        val otherId = UUID.randomUUID().toString
+        val actual = await(runMongoRepository.getByUniqueId(otherId))
+        assert(actual == None)
+      }
     }
   }
 
@@ -213,7 +241,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset2v2run2 = RunFactory.getDummyRun(dataset = dataset2Name, datasetVersion = 2, runId = 2, startDateTime = "05-12-2018 06:00:00 +0200")
         runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1, dataset2v2run1, dataset2v2run2)
 
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetName())
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetName())
 
         val dataset1Summary = RunDatasetNameGroupedSummary("dataset1", 3, "04-12-2018 16:19:17 +0200")
         val dataset2Summary = RunDatasetNameGroupedSummary("dataset2", 3, "05-12-2018 06:00:00 +0200")
@@ -235,7 +263,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset1v1run2 = RunFactory.getDummyRun(dataset = dataset1Name, datasetVersion = 1, runId = 2, startDateTime = "04-12-2018 13:00:00 +0200")
         runFixture.add(dataset1v1run2)
 
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetName())
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetName())
 
         val dataset1Summary = RunDatasetNameGroupedSummary("dataset1", 3, "04-12-2018 16:19:17 +0200")
         val dataset2Summary = RunDatasetNameGroupedSummary("dataset2", 3, "05-12-2018 06:00:00 +0200")
@@ -246,7 +274,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
     "there are no Run entities stored in the database" should {
       "return an empty collection" in {
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetName())
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetName())
 
         assert(actual.isEmpty)
       }
@@ -267,7 +295,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset2v2run2 = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 2, runId = 2, startDateTime = "05-12-2018 06:00:00 +0200")
         runFixture.add(dataset1v1run1, dataset1v1run2, dataset1v2run1, dataset2v1run1, dataset2v2run1, dataset2v2run2)
 
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetVersion(queriedDatasetName))
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetVersion(queriedDatasetName))
 
         val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 2, "04-12-2018 13:00:00 +0200")
         val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
@@ -281,7 +309,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val dataset1v1run1 = RunFactory.getDummyRun(dataset = queriedDatasetName, datasetVersion = 1, runId = 1, startDateTime = "03-12-2018 12:00:00 +0200")
         runFixture.add(dataset1v1run1)
 
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetVersion(queriedDatasetName))
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetVersion(queriedDatasetName))
 
         val dataset1v1Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 1, 1, "03-12-2018 12:00:00 +0200")
         val dataset1v2Summary = RunDatasetVersionGroupedSummary(queriedDatasetName, 2, 1, "04-12-2018 16:19:17 +0200")
@@ -295,7 +323,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
         val run = RunFactory.getDummyRun(dataset = wrongDatasetName, datasetVersion = 1, runId = 1)
         runFixture.add(run)
 
-        val actual = await(runMongoRepository.getRunSummariesPerDatasetVersion(queriedDatasetName))
+        val actual = await(runMongoRepository.getGroupedRunSummariesPerDatasetVersion(queriedDatasetName))
 
         assert(actual.isEmpty)
       }
@@ -526,7 +554,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
 
-        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint1))
+        val actual = await(runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint1))
 
         val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
         val expected = run.copy(controlMeasure = expectedControlMeasure)
@@ -538,7 +566,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       "there is no Run with the specified uniqueId" in {
         val checkpoint = RunFactory.getDummyCheckpoint()
 
-        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint))
+        val actual = await(runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint))
 
         assert(actual.isEmpty)
       }
@@ -603,7 +631,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
-  "RunMongoRepository::updateRunStatus" should {
+  "RunMongoRepository::updateRunStatus(uniqueId, newRunStatus)" should {
     val uniqueId = "ed9fd163-f9ac-46f8-9657-a09a4e3fb6e9"
 
     "update the Run's RunStatus and return the updated Run" when {
@@ -627,6 +655,35 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val actual = await(runMongoRepository.updateRunStatus(uniqueId, runStatus))
 
+        assert(actual.isEmpty)
+      }
+    }
+  }
+
+  "RunMongoRepository::updateRunStatus(datasetName, datasetVersion, runId, newRunStatus)" should {
+    "update the Run's RunStatus and return the updated Run" when {
+      "there is a Run with the specified dsName, dsVersion, and runId" in {
+        val originalStatus = RunFactory.getDummyRunStatus(runState = RunState.running)
+        val run = RunFactory.getDummyRun(dataset = "dsA", datasetVersion = 3, runId = 2, runStatus = originalStatus)
+
+        val unrelatedRun1 = RunFactory.getDummyRun(dataset = "dsA", datasetVersion = 3, runId = 1, runStatus = originalStatus)
+        val unrelatedRun2 = RunFactory.getDummyRun(dataset = "dsA", datasetVersion = 1, runId = 2, runStatus = originalStatus)
+        runFixture.add(run, unrelatedRun1, unrelatedRun2)
+
+        val newlySetStatus = RunFactory.getDummyRunStatus(runState = RunState.allSucceeded)
+
+        val actual = await(runMongoRepository.updateRunStatus("dsA", 3, 2, newlySetStatus))
+        val expected = run.copy(runStatus = newlySetStatus)
+        assert(actual.contains(expected))
+
+        // check via query - run state changed, unrelated untouched:
+        // todo use runMongoRepository.getRunsForDatasetname or similar when available
+      }
+    }
+
+    "return None" when {
+      "there is no Run with the specified uniqueId" in {
+        val actual = await(runMongoRepository.updateRunStatus("dsA", 3, 2, RunFactory.getDummyRunStatus()))
         assert(actual.isEmpty)
       }
     }

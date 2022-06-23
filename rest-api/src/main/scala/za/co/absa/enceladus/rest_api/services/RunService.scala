@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.services
 
 import java.util.UUID
-
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
 import org.springframework.beans.factory.annotation.{Autowired, Value}
@@ -24,24 +23,24 @@ import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary, TodaysRunsStatistics}
-import za.co.absa.enceladus.rest_api.repositories.RunMongoRepository
+import za.co.absa.enceladus.rest_api.repositories.{MongoRepository, RunMongoRepository}
 import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-@Service
-class RunService @Autowired()(val mongoRepository: RunMongoRepository)
+@Service("runService") // by-name qualifier: making V2 autowiring un-ambiguous
+class RunService @Autowired()(runMongoRepository: RunMongoRepository)
   extends ModelService[Run] {
 
-  protected val runMongoRepository: RunMongoRepository = mongoRepository // alias
+  override val mongoRepository: MongoRepository[Run] = runMongoRepository
 
-  def getRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
-    runMongoRepository.getRunSummariesPerDatasetName()
+  def getGroupedRunSummariesPerDatasetName(): Future[Seq[RunDatasetNameGroupedSummary]] = {
+    runMongoRepository.getGroupedRunSummariesPerDatasetName()
   }
 
-  def getRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
-    runMongoRepository.getRunSummariesPerDatasetVersion(datasetName)
+  def getGroupedRunSummariesPerDatasetVersion(datasetName: String): Future[Seq[RunDatasetVersionGroupedSummary]] = {
+    runMongoRepository.getGroupedRunSummariesPerDatasetVersion(datasetName)
   }
 
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -91,6 +90,10 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
     runMongoRepository.getRunBySparkAppId(appId)
   }
 
+  def getRunByUniqueId(uniqueId: String): Future[Option[Run]] = {
+    runMongoRepository.getByUniqueId(uniqueId)
+  }
+
   def getRun(datasetName: String, datasetVersion: Int, runId: Int): Future[Run] = {
     runMongoRepository.getRun(datasetName, datasetVersion, runId).map {
       case Some(run) => run
@@ -108,7 +111,7 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
   def create(newRun: Run, username: String, retriesLeft: Int = 3): Future[Run] = {
     for {
       latestOpt  <- runMongoRepository.getLatestRun(newRun.dataset, newRun.datasetVersion)
-      run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt)
+      run        <- getRunIdentifiersIfAbsent(newRun, username, latestOpt) // adds uniqueId, replaces runId
       validation <- validate(run)
       createdRun <-
         if (validation.isValid) {
@@ -132,7 +135,14 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
   }
 
   def addCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Run] = {
-    runMongoRepository.appendCheckpoint(uniqueId, checkpoint).map {
+    runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {
+    runMongoRepository.appendCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }
@@ -154,6 +164,13 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
 
   def updateRunStatus(uniqueId: String, runStatus: RunStatus): Future[Run] = {
     runMongoRepository.updateRunStatus(uniqueId, runStatus).map {
+      case Some(run) => run
+      case None      => throw NotFoundException()
+    }
+  }
+
+  def updateRunStatus(datasetName: String, datasetVersion: Int, runId: Int, newRunStatus: RunStatus): Future[Run] = {
+    runMongoRepository.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }
@@ -185,7 +202,7 @@ class RunService @Autowired()(val mongoRepository: RunMongoRepository)
     }
   }
 
-  private def validateUniqueId(run: Run): Future[Validation] = {
+  protected def validateUniqueId(run: Run): Future[Validation] = {
     val validation = Validation()
 
     run.uniqueId match {

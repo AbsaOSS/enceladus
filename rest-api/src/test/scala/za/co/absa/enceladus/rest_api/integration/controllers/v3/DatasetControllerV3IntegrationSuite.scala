@@ -73,7 +73,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         val response = sendPost[Dataset, Validation](apiUrl, bodyOpt = Some(dataset))
         assertCreated(response)
         response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/datasets/dummyDs/1")
 
         val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
@@ -294,7 +294,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val response = sendPut[Dataset, Validation](s"$apiUrl/datasetA/2", bodyOpt = Some(datasetA3))
           assertCreated(response)
           response.getBody shouldBe Validation.empty.withWarning("keyD", "Property 'keyD' is recommended to be present, but was not found!")
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/datasets/datasetA/3")
 
           val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
@@ -498,7 +498,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
           val response = sendPost[String, Validation](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
           assertCreated(response)
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/2")
           response.getBody shouldBe Validation.empty.withWarning("key3", "Property 'key3' is recommended to be present, but was not found!")
 
@@ -528,7 +528,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
 
           val response = sendPost[String, String](s"$apiUrl/datasetXYZ/import", bodyOpt = Some(importableDs()))
           assertCreated(response)
-          val locationHeader = response.getHeaders.getFirst("location")
+          val locationHeader = response.getHeaders.getFirst("Location")
           locationHeader should endWith("/api-v3/datasets/datasetXYZ/1") // this is the first version
 
           val relativeLocation = stripBaseUrl(locationHeader) // because locationHeader contains domain, port, etc.
@@ -989,7 +989,7 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
         // if, in the future, there can be a rule update resulting in a warning, let's reflect that here
         response.getBody shouldBe Validation.empty
 
-        val locationHeader = response.getHeaders.getFirst("location")
+        val locationHeader = response.getHeaders.getFirst("Location")
         locationHeader should endWith("/api-v3/datasets/datasetA/2/rules/1") // increased version in the url and added rule #1
 
         val response2 = sendGet[Dataset](s"$apiUrl/datasetA/2")
