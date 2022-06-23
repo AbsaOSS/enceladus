@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import java.util.concurrent.CompletableFuture
-
 import scala.concurrent.Future
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Async

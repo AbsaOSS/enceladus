@@ -24,6 +24,7 @@ import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3
 import za.co.absa.enceladus.rest_api.services.RunService
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 @Service
@@ -56,22 +57,31 @@ class RunServiceV3 @Autowired()(runMongoRepository: RunMongoRepositoryV3, datase
    * @return
    */
   def getLatestOfEachRunSummary(datasetName: Option[String] = None,
-                                datasetVersion: Option[Int] = None,
-                                startDate: Option[String] = None,
+                                startDate: Option[LocalDate] = None,
                                 sparkAppId: Option[String] = None,
                                 uniqueId: Option[String] = None,
                                 offset: Option[Int],
                                 limit: Option[Int]
                                ): Future[Seq[RunSummary]] = {
-    runMongoRepository.getRunSummariesLatestOfEach(datasetName, datasetVersion, startDate, sparkAppId, uniqueId, offset, limit)
+    datasetName match {
+      case None => runMongoRepository.getRunSummariesLatestOfEach(None, None, startDate, sparkAppId, uniqueId, offset, limit)
+      case definedDsName @ Some(dsName) => datasetServiceV3.getLatestVersion(dsName).flatMap {
+        case None => Future.failed(NotFoundException(s"Dataset $datasetName at all."))
+        case Some(_) => runMongoRepository.getRunSummariesLatestOfEach(definedDsName, None, startDate, sparkAppId, uniqueId, offset, limit)
+
+      }
+    }
   }
 
-  def getRunSummaries(datasetName: Option[String] = None,
-                      datasetVersion: Option[Int] = None,
-                      startDate: Option[String] = None,
+  def getRunSummaries(datasetName: String,
+                      datasetVersion: Int,
+                      startDate: Option[LocalDate] = None,
                       offset: Option[Int],
                       limit: Option[Int]): Future[Seq[RunSummary]] = {
-    runMongoRepository.getRunSummaries(datasetName, datasetVersion, startDate, offset, limit)
+    datasetServiceV3.getVersion(datasetName, datasetVersion).flatMap {
+      case Some(_) => runMongoRepository.getRunSummaries(Some(datasetName), Some(datasetVersion), startDate, offset, limit)
+      case _ => Future.failed(NotFoundException(s"Dataset $datasetName v$datasetVersion does not exist."))
+    }
   }
 
   override def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {

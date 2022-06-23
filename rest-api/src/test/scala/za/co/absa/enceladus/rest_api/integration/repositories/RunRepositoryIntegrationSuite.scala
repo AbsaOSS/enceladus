@@ -554,7 +554,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
 
         val checkpoint1 = RunFactory.getDummyCheckpoint(name = "checkpoint1")
 
-        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint1))
+        val actual = await(runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint1))
 
         val expectedControlMeasure = run.controlMeasure.copy(checkpoints = List(checkpoint0, checkpoint1))
         val expected = run.copy(controlMeasure = expectedControlMeasure)
@@ -566,7 +566,7 @@ class RunRepositoryIntegrationSuite extends BaseRepositoryTest {
       "there is no Run with the specified uniqueId" in {
         val checkpoint = RunFactory.getDummyCheckpoint()
 
-        val actual = await(runMongoRepository.appendCheckpoint(uniqueId, checkpoint))
+        val actual = await(runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint))
 
         assert(actual.isEmpty)
       }

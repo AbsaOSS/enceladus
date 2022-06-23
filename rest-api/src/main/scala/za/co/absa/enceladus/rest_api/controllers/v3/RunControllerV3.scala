@@ -22,16 +22,19 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.Run
+
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.ControllerPagination._
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
-import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
+import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.models.rest.Paginated
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
+import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
 
 import java.net.URI
+import java.time.LocalDate
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import javax.servlet.http.HttpServletRequest
@@ -65,7 +68,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     val extractedLimit = extractOptionalLimitOrDefault(limit)
 
     runService.getLatestOfEachRunSummary(
-      startDate = startDate.toScalaOption,
+      startDate = parseYmdDate(startDate),
       sparkAppId = sparkAppId.toScalaOption,
       uniqueId = uniqueId.toScalaOption,
       offset = Some(extractedOffset),
@@ -86,7 +89,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
 
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
-      startDate = startDate.toScalaOption,
+      startDate = parseYmdDate(startDate),
       offset = Some(extractedOffset),
       limit = Some(extractedLimit + 1) // truncated? take one more and attempt to truncate
     ).map {
@@ -105,9 +108,10 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
     val extractedLimit = extractOptionalLimitOrDefault(limit)
 
 
-    runService.getRunSummaries(datasetName = Some(datasetName),
-      datasetVersion = Some(datasetVersion),
-      startDate = startDate.toScalaOption,
+    runService.getRunSummaries(
+      datasetName = datasetName,
+      datasetVersion = datasetVersion,
+      startDate = parseYmdDate(startDate),
       offset = Some(extractedOffset),
       limit = Some(extractedLimit + 1) // same logic as above
     ).map {
@@ -155,12 +159,12 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
                        @PathVariable datasetName: String,
                        @PathVariable datasetVersion: Int,
                        @PathVariable runId: Int,
-                       @RequestBody newRunStatus: RunStatus): CompletableFuture[ResponseEntity[String]] = {
+                       @RequestBody newRunStatus: RunStatus): CompletableFuture[ResponseEntity[MessageWrapper]] = {
     if (newRunStatus.status == null) {
       Future.failed(new IllegalArgumentException("Invalid empty RunStatus submitted"))
     } else {
       runService.updateRunStatus(datasetName, datasetVersion, runId, newRunStatus).map(_ =>
-        ResponseEntity.ok(s"New runStatus $newRunStatus applied.")
+        ResponseEntity.ok(MessageWrapper(s"New runStatus $newRunStatus applied."))
       )
     }
   }
@@ -213,16 +217,6 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   }
 
   /**
-   * For run's dataset name, version and runId (either a number of 'latest'), the `forVersionFn` is called.
-   */
-  protected def forRunIdExpression[T](datasetName: String, datasetVersion: Int, runIdStr: String)
-                                     (forVersionFn: (String, Int, Int) => Future[T]): Future[T] = {
-    getRunForRunIdExpression(datasetName, datasetVersion, runIdStr).flatMap { run =>
-      forVersionFn(datasetName, datasetVersion, run.runId)
-    }
-  }
-
-  /**
    * Retrieves a Run by dataset name, version and runId (either a number of 'latest')
    *
    * @param datasetName    dataset name
@@ -238,6 +232,15 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
         case Failure(exception) =>
           Future.failed(new IllegalArgumentException(s"Cannot convert '$runIdStr' to a valid runId expression. " +
             s"Either use 'latest' or an actual runId number. Underlying problem: ${exception.getMessage}"))
+      }
+    }
+  }
+
+  protected def parseYmdDate(dateOptStr: Optional[String]): Option[LocalDate] = {
+    dateOptStr.toScalaOption.map { dateStr =>
+      Try(LocalDate.parse(dateStr)) match {
+        case Success(parsed) => parsed
+        case Failure(e) => throw new IllegalArgumentException(s"Could not parse YYYY-MM-DD date from $dateStr: ${e.getMessage}")
       }
     }
   }

@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.repositories.v3
 
-import org.mongodb.scala.MongoDatabase
+import org.mongodb.scala.{Document, MongoDatabase}
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Aggregates._
@@ -26,7 +26,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.rest_api.models.RunSummary
 import za.co.absa.enceladus.rest_api.repositories.RunMongoRepository
+import za.co.absa.enceladus.rest_api.repositories.v3.RunMongoRepositoryV3.emptyBsonFilter
 
+import java.time.LocalDate
 import scala.concurrent.Future
 
 
@@ -45,47 +47,42 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
    */
   def getRunSummariesLatestOfEach(datasetName: Option[String] = None,
                                   datasetVersion: Option[Int] = None,
-                                  startDate: Option[String] = None,
+                                  startDate: Option[LocalDate] = None,
                                   sparkAppId: Option[String] = None,
                                   uniqueId: Option[String] = None,
                                   offset: Option[Int] = None,
                                   limit: Option[Int] = None
                                  ): Future[Seq[RunSummary]] = {
-    val exclusiveOptsFilter: Option[Bson] = (startDate, sparkAppId, uniqueId) match {
-      case (None, None, None) => None
-      case (Some(startDate), None, None) => Some(startDateFromFilter(startDate))
-      case (None, Some(sparkAppId), None) => Some(sparkIdFilter(sparkAppId))
-      case (None, None, Some(uniqueId)) => Some(Filters.eq("uniqueId", uniqueId))
+    val exclusiveFilterStage: Seq[Bson] = (startDate, sparkAppId, uniqueId) match {
+      case (None, None, None) => Seq()
+      case (Some(startDate), None, None) => startDateFilterAggStages(startDate)
+      case (None, Some(sparkAppId), None) => Seq(filter(sparkIdFilter(sparkAppId)))
+      case (None, None, Some(uniqueId)) => Seq(filter(Filters.eq("uniqueId", uniqueId)))
       case _ => throw new IllegalArgumentException("At most 1 filter of [startDate|sparkAppId|uniqueId] is allowed!")
     }
 
-    val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
+    val datasetFilter: Bson = datasetNameVersionFilter(datasetName, datasetVersion)
 
-    val combinedFilter: Bson = (exclusiveOptsFilter, datasetFilter) match {
-      case (None, None) => BsonDocument() // empty filter
-      case (Some(filter1), None) => filter1
-      case (None, Some(filter2)) => filter2
-      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
-    }
-
-    val pipeline = Seq(
-      filter(combinedFilter),
-      sort(descending("runId")), // this results in Accumulator.first to pickup max version
-      group(
-        // the fields are specifically selected for RunSummary usage
-        id = BsonDocument("""{"dataset": "$dataset", "datasetVersion": "$datasetVersion"}"""),
-        Accumulators.first("datasetName", "$dataset"),
-        Accumulators.first("datasetVersion", "$datasetVersion"),
-        Accumulators.first("runId", "$runId"),
-        Accumulators.first("status", "$runStatus.status"),
-        Accumulators.first("startDateTime", "$startDateTime"),
-        Accumulators.first("runUniqueId", "$uniqueId")
-      ),
-      project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
-      sort(ascending("datasetName", "datasetVersion"))
-    ) ++
-      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // todo reconsider using skip for performance?
-      limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
+    val pipeline =
+      Seq(filter(datasetFilter)) ++
+        exclusiveFilterStage ++ // may be empty
+        Seq(
+          sort(descending("runId")), // this results in Accumulator.first to pickup max version
+          group(
+            // the fields are specifically selected for RunSummary usage
+            id = BsonDocument("""{"dataset": "$dataset", "datasetVersion": "$datasetVersion"}"""),
+            Accumulators.first("datasetName", "$dataset"),
+            Accumulators.first("datasetVersion", "$datasetVersion"),
+            Accumulators.first("runId", "$runId"),
+            Accumulators.first("status", "$runStatus.status"),
+            Accumulators.first("startDateTime", "$startDateTime"),
+            Accumulators.first("runUniqueId", "$uniqueId")
+          ),
+          project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
+          sort(ascending("datasetName", "datasetVersion"))
+        ) ++
+        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // todo reconsider using skip for performance?
+        limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)
@@ -94,49 +91,71 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
-                      startDate: Option[String] = None,
+                      startDate: Option[LocalDate] = None,
                       offset: Option[Int] = None,
                       limit: Option[Int] = None): Future[Seq[RunSummary]] = {
 
-    val dateFilter: Option[Bson] = startDate.map(date => startDateFromFilter(date))
-    val datasetFilter: Option[Bson] = datasetNameVersionOptFilter(datasetName, datasetVersion)
+    val dateFilterStages: Seq[Bson] = startDate.map(startDateFilterAggStages).getOrElse(Seq.empty)
+    val datasetFilter: Bson = datasetNameVersionFilter(datasetName, datasetVersion)
 
-    val combinedFilter: Bson = (dateFilter, datasetFilter) match {
-      case (None, None) => BsonDocument() // empty filter
-      case (Some(filter1), None) => filter1
-      case (None, Some(filter2)) => filter2
-      case (Some(filter1), Some(filter2)) => Filters.and(filter1, filter2)
-    }
-
-    val pipeline = Seq(
-      filter(combinedFilter),
-      summaryProjection,
-      sort(ascending("datasetName", "datasetVersion", "runId"))
-    ) ++
-      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++
-      limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
+    val pipeline =
+      Seq(filter(datasetFilter)) ++
+        dateFilterStages ++ // may be empty
+        Seq(
+          summaryProjection,
+          sort(ascending("datasetName", "datasetVersion", "runId"))
+        ) ++
+        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++
+        limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)
       .toFuture()
   }
 
-  protected def startDateFromFilter(startDate: String): Bson = {
-    // todo use LocalDateTime?
-    Filters.gte("startDateTime", startDate)
+  /**
+   * Adds aggregation stages to create a typed version of `startDateTimeTyped` and filters on it to be >= `startDate`
+   *
+   * @param startDate
+   * @return
+   */
+  protected def startDateFilterAggStages(startDate: LocalDate): Seq[Bson] = {
+    Seq(
+      addFields(Field("startDateTimeTyped",
+        Document(
+          """{$dateFromString: {
+            |  dateString: "$startDateTime",
+            |  format: "%d-%m-%Y %H:%M:%S %z"
+            |}}""".stripMargin)
+      )),
+      filter(Filters.gte("startDateTimeTyped", startDate.atStartOfDay()))
+    )
   }
 
-  protected def datasetNameVersionOptFilter(datasetName: Option[String], datasetVersion: Option[Int]): Option[Bson] = {
+  protected def datasetNameVersionFilter(datasetName: Option[String], datasetVersion: Option[Int]): Bson = {
     (datasetName, datasetVersion) match {
-      case (None, None) => None // all entities
-      case (Some(datasetName), None) => Some(Filters.eq("dataset", datasetName))
-      case (Some(datasetName), Some(datasetVersion)) => Some(Filters.and(
+      case (None, None) => emptyBsonFilter // all entities
+      case (Some(datasetName), None) => Filters.eq("dataset", datasetName)
+      case (Some(datasetName), Some(datasetVersion)) => Filters.and(
         Filters.eq("dataset", datasetName),
         Filters.eq("datasetVersion", datasetVersion)
-      ))
+      )
       case _ => throw new IllegalArgumentException("Disallowed dataset name/version combination." +
         "For dataset (name, version) filtering, the only allowed combinations are:" +
         "(None, None), (Some, None) and (Some, Some)")
     }
+  }
+
+}
+
+object RunMongoRepositoryV3 {
+  val emptyBsonFilter = BsonDocument()
+
+  def combineFilters(filter1: Bson, filter2: Bson): Bson = (filter1, filter2) match {
+    case (doc1, doc2) if doc1 == emptyBsonFilter && doc2 == emptyBsonFilter => emptyBsonFilter
+    case (_, doc2) if doc2 == emptyBsonFilter => filter1
+    case (doc1, _) if doc1 == emptyBsonFilter => filter2
+    case (doc1, doc2) => Filters.and(doc1, doc2)
+
   }
 }

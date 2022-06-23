@@ -38,7 +38,6 @@ import scala.util.{Failure, Success, Try}
 
 object VersionedModelControllerV3 {
   final val LatestKey = "latest"
-
 }
 
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
@@ -48,7 +47,6 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // todo maybe offset/limit = pagination -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
   def getList(@RequestParam searchQuery: Optional[String],
