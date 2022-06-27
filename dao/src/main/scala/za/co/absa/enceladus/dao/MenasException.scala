@@ -17,18 +17,38 @@ package za.co.absa.enceladus.dao
 
 abstract class MenasException(message: String, cause: Throwable) extends Exception(message, cause)
 
-final case class DaoException(private val message: String,
-                              private val cause: Throwable = None.orNull)
-  extends MenasException(message, cause)
+abstract class RetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
 
-final case class AutoRecoverableException(private val message: String,
-                              private val cause: Throwable = None.orNull)
-  extends MenasException(message, cause)
+abstract class OptionallyRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
 
-final case class UnauthorizedException(private val message: String,
-                                       private val cause: Throwable = None.orNull)
-  extends MenasException(message, cause)
+object RetryableException {
 
-final case class NotFoundException(private val message: String,
-                                   private val cause: Throwable = None.orNull)
-  extends MenasException(message, cause)
+  type exceptionsTypeAlias = Class[_ <: MenasException]
+
+  final case class DaoException(private val message: String,
+                                private val cause: Throwable = None.orNull)
+    extends MenasException(message, cause)
+
+  final case class AutoRecoverableException(private val message: String,
+                                            private val cause: Throwable = None.orNull)
+    extends MenasException(message, cause)
+}
+
+object OptionallyRetryableException {
+
+  type exceptionsTypeAlias = Class[_ <: MenasException]
+
+  final case class UnauthorizedException(private val message: String,
+                                         private val cause: Throwable = None.orNull)
+    extends MenasException(message, cause)
+
+  final case class NotFoundException(private val message: String,
+                                     private val cause: Throwable = None.orNull)
+    extends MenasException(message, cause)
+
+  val mapIntToOptionallyRetryableException: Map[Int, exceptionsTypeAlias] = Map(
+    401 -> classOf[UnauthorizedException],
+    403 -> classOf[UnauthorizedException],
+    404 -> classOf[NotFoundException]
+  )
+}

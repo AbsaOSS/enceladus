@@ -19,7 +19,7 @@ import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import scala.util.{Failure, Try}
+
 
 object ConfigReader {
   type ConfigExceptionBadValue = ConfigException.BadValue
@@ -58,6 +58,14 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
 
   def getBoolean(path: String): Boolean = {
     config.getBoolean(path)
+  }
+
+  def getIntList(path: String): List[Int] = {
+    config
+      .getIntList(path)
+      .asScala
+      .map(_.toInt)
+      .toList
   }
 
   /**
@@ -177,5 +185,5 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
       None
     }
   }
-  
+
 }
