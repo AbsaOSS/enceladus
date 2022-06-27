@@ -19,7 +19,7 @@ import org.mockito.MockitoSugar.withObjectMocked
 import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.dao.{MenasException, UnauthorizedException}
+import za.co.absa.enceladus.dao.{MenasException, OptionallyRetryableException}
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 
@@ -31,66 +31,69 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
     "return a MenasRestDAO instance with a SpnegoAuthClient" when {
       "given a Keytab location" in {
         val keytabCredentials = MenasKerberosCredentials("user", "src/test/resources/user.keytab.example")
-        val restDao = RestDaoFactory.getInstance(keytabCredentials, menasApiBaseUrls)
+        val restDao = RestDaoFactory.getInstance(keytabCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
         getAuthClient(restDao.restClient).getClass should be(classOf[SpnegoAuthClient])
       }
     }
     "return a MenasRestDAO instance with a LdapAuthClient" when {
       "given plain MenasCredentials" in {
         val plainCredentials = MenasPlainCredentials("user", "changeme")
-        val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
+        val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
         getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
       }
     }
     "throw an error" when {
       "given invalid credentials" in {
-        val exception = intercept[UnauthorizedException] {
-          RestDaoFactory.getInstance(InvalidMenasCredentials, menasApiBaseUrls)
+        val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
+          RestDaoFactory.getInstance(InvalidMenasCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
         }
         exception.getMessage should be("No Menas credentials provided")
       }
     }
     "properly adjusts the starting URL based on the setup type " when {
-      val fooCrossHostApiCaller = CrossHostApiCaller(Seq.empty)
+      val fooCrossHostApiCaller = CrossHostApiCaller(Seq.empty, optionallyRetryableExceptions=Set())
       val plainCredentials = MenasPlainCredentials("user", "changeme")
       "when it's round-robin" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[MenasException]])
+            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
           ).thenReturn(fooCrossHostApiCaller)
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
             CrossHostApiCaller.DefaultUrlsRetryCount,
-            None)
+            None,
+            Set())
         }
       }
       "when it's fallback" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[MenasException]])
+            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
           ).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, AvailabilitySetup.Fallback)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, AvailabilitySetup.Fallback, Set())
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
             CrossHostApiCaller.DefaultUrlsRetryCount,
-            Option(0))
+            Option(0),
+            Set())
         }
       }
       "when the setup type is not specified" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[MenasException]])
+            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
           ).thenReturn(fooCrossHostApiCaller)
-          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
+          val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             menasApiBaseUrls,
             CrossHostApiCaller.DefaultUrlsRetryCount,
-            None)
+            None,
+            Set())
         }
       }
     }

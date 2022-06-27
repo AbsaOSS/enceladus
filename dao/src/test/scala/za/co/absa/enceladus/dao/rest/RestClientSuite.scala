@@ -71,10 +71,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubUnauthorizedGetRequest(url, expiredSessionHeaders)
       stubAuthFailure()
 
-      val exception = intercept[UnauthorizedException] {
+      val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe UnauthorizedException("Authentication failure")
+      exception shouldBe OptionallyRetryableException.UnauthorizedException("Authentication failure")
     }
 
     "return 200 OK after successful retry on 403 Forbidden" in {
@@ -92,28 +92,28 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubForbiddenGetRequest(url, expiredSessionHeaders)
       stubAuthFailure()
 
-      val exception = intercept[UnauthorizedException] {
+      val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe UnauthorizedException("Authentication failure")
+      exception shouldBe OptionallyRetryableException.UnauthorizedException("Authentication failure")
     }
 
     "throw an error on 404 Not Found" in {
       stubNotFoundGetRequest(url)
 
-      val exception = intercept[NotFoundException] {
+      val exception = intercept[OptionallyRetryableException.NotFoundException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe NotFoundException("Entity not found - 404")
+      exception shouldBe OptionallyRetryableException.NotFoundException("Entity not found - 404")
     }
 
     "throw an error on 500 Internal Server Error" in {
       stubInternalServerErrorGetRequest(url)
 
-      val exception = intercept[DaoException] {
+      val exception = intercept[RetryableException.DaoException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe DaoException("Response - 500 : None")
+      exception shouldBe RetryableException.DaoException("Response - 500 : None")
     }
   }
 
@@ -140,10 +140,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubUnauthorizedPostRequest(url, expiredSessionHeaders, requestBody)
       stubAuthFailure()
 
-      val exception = intercept[UnauthorizedException] {
+      val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe UnauthorizedException("Authentication failure")
+      exception shouldBe OptionallyRetryableException.UnauthorizedException("Authentication failure")
     }
 
     "return 201 CREATED after successful retry on 403 Forbidden" in {
@@ -161,28 +161,28 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubForbiddenPostRequest(url, expiredSessionHeaders, requestBody)
       stubAuthFailure()
 
-      val exception = intercept[UnauthorizedException] {
+      val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe UnauthorizedException("Authentication failure")
+      exception shouldBe OptionallyRetryableException.UnauthorizedException("Authentication failure")
     }
 
     "throw an error on 404 Not Found" in {
       stubNotFoundPostRequest(url, requestBody)
 
-      val exception = intercept[NotFoundException] {
+      val exception = intercept[OptionallyRetryableException.NotFoundException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe NotFoundException("Entity not found - 404")
+      exception shouldBe OptionallyRetryableException.NotFoundException("Entity not found - 404")
     }
 
     "throw an error on 500 Internal Server Error" in {
       stubInternalServerErrorPostRequest(url, requestBody)
 
-      val exception = intercept[DaoException] {
+      val exception = intercept[RetryableException.DaoException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe DaoException("Response - 500 : None")
+      exception shouldBe RetryableException.DaoException("Response - 500 : None")
     }
   }
 

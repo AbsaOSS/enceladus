@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.dao.rest
 
 import org.springframework.http.HttpStatus
-import za.co.absa.enceladus.dao.{DaoException, MenasException}
+import za.co.absa.enceladus.dao.{RetryableException, MenasException}
 
 
 object MenasRetryableExceptionsStringParser {
@@ -39,7 +39,7 @@ object MenasRetryableExceptionsStringParser {
       case "" =>
         None
       case _ =>
-        throw DaoException("Malformed Menas retryableExceptions string")
+        throw RetryableException.DaoException("Malformed Menas retryableExceptions string")
     }
   }
 }

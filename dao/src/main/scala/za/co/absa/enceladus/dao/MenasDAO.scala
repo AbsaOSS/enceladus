@@ -29,7 +29,7 @@ trait MenasDAO {
   /**
     * Authenticates user with Menas
     */
-  @throws[UnauthorizedException]
+  @throws[OptionallyRetryableException.UnauthorizedException]
   def authenticate(): Unit
 
   /**
