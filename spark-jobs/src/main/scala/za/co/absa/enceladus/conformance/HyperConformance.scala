@@ -17,7 +17,6 @@ package za.co.absa.enceladus.conformance
 
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import org.apache.commons.configuration2.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
@@ -30,7 +29,7 @@ import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.{MenasDAO, OptionallyRetryableException}
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -41,7 +40,8 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
-                        menasSetup: Option[String] = None)
+                        menasSetup: Option[String] = None,
+                        optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias])
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -54,7 +54,9 @@ class HyperConformance (menasBaseUrls: List[String],
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
 
     val menasSetupValue = menasSetup.map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(
+      menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue, optionallyRetryableExceptions
+    )
     dao.authenticate()
 
     logPreConformanceInfo(rawDf)
