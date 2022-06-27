@@ -30,12 +30,17 @@ object CrossHostApiCaller {
 
   final val DefaultUrlsRetryCount: Int = 0
 
-  private def createInstance(apiBaseUrls: Seq[String],
-                             urlsRetryCount: Int,
-                             startWith: Option[Int],
-                             optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]): CrossHostApiCaller = {
+  private def createInstance(
+      apiBaseUrls: Seq[String],
+      urlsRetryCount: Int,
+      startWith: Option[Int],
+      optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]
+  ): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
-      logger.warn(s"Urls retry count cannot be negative ($urlsRetryCount). Using default number of retries instead ($DefaultUrlsRetryCount).") //scalastyle:ignore maxLineLength
+      logger.warn(
+        s"Urls retry count cannot be negative ($urlsRetryCount). " +
+        s"Using default number of retries instead ($DefaultUrlsRetryCount)."
+      ) //scalastyle:ignore maxLineLength
       DefaultUrlsRetryCount
     } else {
       urlsRetryCount
@@ -54,10 +59,12 @@ object CrossHostApiCaller {
   }
 }
 
-protected class CrossHostApiCaller private(apiBaseUrls: Vector[String],
-                                           maxTryCount: Int,
-                                           private var currentHostIndex: Int,
-                                           optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias])
+protected class CrossHostApiCaller private(
+    apiBaseUrls: Vector[String],
+    maxTryCount: Int,
+    private var currentHostIndex: Int,
+    optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]
+)
   extends ApiCaller {
 
   private val retryableException: Set[Class[_ <: MenasException]] = optionallyRetryableExceptions.union(
