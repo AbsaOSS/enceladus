@@ -22,6 +22,7 @@ object HyperConformanceAttributes {
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
   val menasUriKey = "menas.rest.uri"
   val menasUriRetryCountKey = "menas.rest.retryCount"
+  val menasOptionallyRetryableExceptions = "menas.rest.optionallyRetryableExceptions"
   val menasAvailabilitySetupKey = "menas.rest.availability.setup"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"

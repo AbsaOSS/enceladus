@@ -169,7 +169,12 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup)
+    val optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias] = conf
+      .getIntList(menasOptionallyRetryableExceptions)
+      .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
+      .toSet
+
+    new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup, optionallyRetryableExceptions)
   }
 
   private def getReportVersion(conf: Configuration): Int = {
