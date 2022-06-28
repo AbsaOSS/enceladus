@@ -40,7 +40,7 @@ object CrossHostApiCaller {
       logger.warn(
         s"Urls retry count cannot be negative ($urlsRetryCount). " +
         s"Using default number of retries instead ($DefaultUrlsRetryCount)."
-      ) //scalastyle:ignore maxLineLength
+      )
       DefaultUrlsRetryCount
     } else {
       urlsRetryCount
