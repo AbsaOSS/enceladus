@@ -110,7 +110,8 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
       }
 
       "optionallyRetryable unauthorized exception is retried twice" in {
-        Mockito.when(restClient.sendGet[String]("a")).thenThrow(new ResourceAccessException("Something went wrong A"))
+        Mockito.when(restClient.sendGet[String]("a"))
+          .thenThrow(new ResourceAccessException("Something went wrong A"))
         Mockito.when(restClient.sendGet[String]("b"))
           .thenThrow(OptionallyRetryableException.UnauthorizedException("Something went wrong B"))
           .thenThrow(OptionallyRetryableException.UnauthorizedException("Something went wrong B"))

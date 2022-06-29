@@ -60,10 +60,11 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
-  protected val optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias] = configReader
-    .getIntList("menas.rest.optionallyRetryableExceptions")
-    .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
-    .toSet
+  protected val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType] =
+    configReader
+      .getIntList("menas.rest.optionallyRetryableExceptions")
+      .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
+      .toSet
 
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty

@@ -41,7 +41,7 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
                         menasSetup: Option[String] = None,
-                        optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias])
+                        optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType])
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,

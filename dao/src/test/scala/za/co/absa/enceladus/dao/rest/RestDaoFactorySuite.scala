@@ -56,7 +56,9 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       "when it's round-robin" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
+            CrossHostApiCaller.apply(
+              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptionsType]]
+            )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
@@ -70,7 +72,9 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       "when it's fallback" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
+            CrossHostApiCaller.apply(
+              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptionsType]]
+            )
           ).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, None, AvailabilitySetup.Fallback, Set())
@@ -85,7 +89,9 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       "when the setup type is not specified" in {
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
-            CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.exceptionsTypeAlias]])
+            CrossHostApiCaller.apply(
+              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptionsType]]
+            )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls, optionallyRetryableExceptions=Set())
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])

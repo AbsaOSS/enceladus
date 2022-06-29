@@ -34,7 +34,7 @@ object CrossHostApiCaller {
       apiBaseUrls: Seq[String],
       urlsRetryCount: Int,
       startWith: Option[Int],
-      optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]
+      optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
   ): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
       logger.warn(
@@ -53,7 +53,7 @@ object CrossHostApiCaller {
       apiBaseUrls: Seq[String],
       urlsRetryCount: Int = DefaultUrlsRetryCount,
       startWith: Option[Int] = None,
-      optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]
+      optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
    ): CrossHostApiCaller = {
     createInstance(apiBaseUrls, urlsRetryCount, startWith, optionallyRetryableExceptions)
   }
@@ -63,7 +63,7 @@ protected class CrossHostApiCaller private(
     apiBaseUrls: Vector[String],
     maxTryCount: Int,
     private var currentHostIndex: Int,
-    optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]
+    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
 )
   extends ApiCaller {
 

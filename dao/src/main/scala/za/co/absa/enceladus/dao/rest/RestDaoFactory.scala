@@ -32,11 +32,13 @@ object RestDaoFactory {
 
   private val restTemplate = RestTemplateSingleton.instance
 
-  def getInstance(authCredentials: MenasCredentials,
-                  apiBaseUrls: List[String],
-                  urlsRetryCount: Option[Int] = None,
-                  menasSetup: AvailabilitySetup = DefaultAvailabilitySetup,
-                  optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias]): MenasRestDAO = {
+  def getInstance(
+    authCredentials: MenasCredentials,
+    apiBaseUrls: List[String],
+    urlsRetryCount: Option[Int] = None,
+    menasSetup: AvailabilitySetup = DefaultAvailabilitySetup,
+    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
+  ): MenasRestDAO = {
     val startsWith = if (menasSetup == Fallback) {
       Option(0)
     } else {

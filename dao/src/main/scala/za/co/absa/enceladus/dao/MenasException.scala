@@ -23,7 +23,7 @@ abstract class OptionallyRetryableException(message: String, cause: Throwable) e
 
 object RetryableException {
 
-  type exceptionsTypeAlias = Class[_ <: MenasException]
+  type RetryableExceptionsType = Class[_ <: MenasException]
 
   final case class DaoException(private val message: String,
                                 private val cause: Throwable = None.orNull)
@@ -36,7 +36,7 @@ object RetryableException {
 
 object OptionallyRetryableException {
 
-  type exceptionsTypeAlias = Class[_ <: MenasException]
+  type OptRetryableExceptionsType = Class[_ <: MenasException]
 
   final case class UnauthorizedException(private val message: String,
                                          private val cause: Throwable = None.orNull)
@@ -46,7 +46,7 @@ object OptionallyRetryableException {
                                      private val cause: Throwable = None.orNull)
     extends MenasException(message, cause)
 
-  val mapIntToOptionallyRetryableException: Map[Int, exceptionsTypeAlias] = Map(
+  val mapIntToOptionallyRetryableException: Map[Int, OptRetryableExceptionsType] = Map(
     401 -> classOf[UnauthorizedException],
     403 -> classOf[UnauthorizedException],
     404 -> classOf[NotFoundException]
