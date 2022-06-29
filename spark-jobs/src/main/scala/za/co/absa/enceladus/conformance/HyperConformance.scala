@@ -24,6 +24,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import scala.collection.JavaConverters._
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
@@ -169,10 +170,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    val optionallyRetryableExceptions: Set[OptionallyRetryableException.exceptionsTypeAlias] = conf
-      .getIntList(menasOptionallyRetryableExceptions)
-      .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
-      .toSet
+    val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType] =
+      conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
+        .asScala
+        .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
+        .toSet
 
     new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup, optionallyRetryableExceptions)
   }

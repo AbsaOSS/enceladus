@@ -53,7 +53,7 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("Menas API optionally retryable HTTP exceptions",
         Some("""List of HTTP status codes that are allowed to be retryable, e.g. [404,402] (retry count is """ +
              """specified by `menasUriRetryCountKey` attribute, see its description for more details.) """),
-        required = false),
+        required = true),
     menasAvailabilitySetupKey ->
       PropertyMetadata("The setup type of Menas URLs",
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
