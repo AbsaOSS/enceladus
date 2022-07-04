@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import java.util.UUID
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
@@ -136,13 +136,6 @@ class RunService @Autowired()(runMongoRepository: RunMongoRepository)
 
   def addCheckpoint(uniqueId: String, checkpoint: Checkpoint): Future[Run] = {
     runMongoRepository.appendCheckpointByUniqueId(uniqueId, checkpoint).map {
-      case Some(run) => run
-      case None      => throw NotFoundException()
-    }
-  }
-
-  def addCheckpoint(datasetName: String, datasetVersion: Int, runId: Int, newCheckpoint: Checkpoint): Future[Run] = {
-    runMongoRepository.appendCheckpoint(datasetName, datasetVersion, runId, newCheckpoint).map {
       case Some(run) => run
       case None      => throw NotFoundException()
     }

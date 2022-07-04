@@ -22,17 +22,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, RunError, RunState, RunStatus}
+import za.co.absa.atum.model._
 import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.model.test.factories.RunFactory.{getDummyMeasurement, getDummyRun}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
-import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
 import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService, RunFixtureService}
-import za.co.absa.enceladus.rest_api.models.rest.Paginated
-import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
-import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
+import za.co.absa.enceladus.rest_api.models.RunSummary
+import za.co.absa.enceladus.rest_api.models.rest.{MessageWrapper, Paginated}
 
 import java.util.UUID
 

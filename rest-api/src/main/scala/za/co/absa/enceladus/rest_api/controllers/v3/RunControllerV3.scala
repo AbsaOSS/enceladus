@@ -22,16 +22,14 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-
-import za.co.absa.enceladus.model.{Run, Validation}
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.ControllerPagination._
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
-import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.RunSummary
-import za.co.absa.enceladus.rest_api.models.rest.Paginated
+import za.co.absa.enceladus.rest_api.models.rest.{MessageWrapper, Paginated}
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
-import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
 
 import java.net.URI
 import java.time.LocalDate
