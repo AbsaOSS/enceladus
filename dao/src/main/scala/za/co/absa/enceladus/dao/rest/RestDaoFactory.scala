@@ -37,7 +37,7 @@ object RestDaoFactory {
     apiBaseUrls: List[String],
     urlsRetryCount: Option[Int] = None,
     menasSetup: AvailabilitySetup = DefaultAvailabilitySetup,
-    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
+    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] = Set.empty
   ): MenasRestDAO = {
     val startsWith = if (menasSetup == Fallback) {
       Option(0)

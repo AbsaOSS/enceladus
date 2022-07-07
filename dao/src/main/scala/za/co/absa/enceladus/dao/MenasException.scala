@@ -19,34 +19,34 @@ abstract class MenasException(message: String, cause: Throwable) extends Excepti
 
 abstract class RetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
 
-abstract class OptionallyRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
-
 object RetryableException {
 
-  type RetryableExceptionsType = Class[_ <: MenasException]
+  type RetryableExceptions = Class[_ <: RetryableException]
 
   final case class DaoException(private val message: String,
                                 private val cause: Throwable = None.orNull)
-    extends MenasException(message, cause)
+    extends RetryableException(message, cause)
 
   final case class AutoRecoverableException(private val message: String,
                                             private val cause: Throwable = None.orNull)
-    extends MenasException(message, cause)
+    extends RetryableException(message, cause)
 }
+
+abstract class OptionallyRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
 
 object OptionallyRetryableException {
 
-  type OptRetryableExceptionsType = Class[_ <: MenasException]
+  type OptRetryableExceptions = Class[_ <: OptionallyRetryableException]
 
   final case class UnauthorizedException(private val message: String,
                                          private val cause: Throwable = None.orNull)
-    extends MenasException(message, cause)
+    extends OptionallyRetryableException(message, cause)
 
   final case class NotFoundException(private val message: String,
                                      private val cause: Throwable = None.orNull)
-    extends MenasException(message, cause)
+    extends OptionallyRetryableException(message, cause)
 
-  val mapIntToOptionallyRetryableException: Map[Int, OptRetryableExceptionsType] = Map(
+  val mapIntToOptionallyRetryableException: Map[Int, OptRetryableExceptions] = Map(
     401 -> classOf[UnauthorizedException],
     403 -> classOf[UnauthorizedException],
     404 -> classOf[NotFoundException]

@@ -42,7 +42,7 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
                         menasSetup: Option[String] = None,
-                        optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType])
+                        optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] = Set.empty)
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -170,11 +170,11 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType] =
+    val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] =
       conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
         .asScala
-        .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_))
         .toSet
+        .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_: Int))
 
     new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup, optionallyRetryableExceptions)
   }

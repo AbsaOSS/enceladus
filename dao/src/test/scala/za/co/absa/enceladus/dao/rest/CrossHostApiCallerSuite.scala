@@ -31,7 +31,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
   "CrossHostApiCaller" should {
     "cycle through urls" in {
       val crossHostApiCaller = CrossHostApiCaller(
-        Vector("a", "b", "c", "d"), DefaultUrlsRetryCount,  startWith = Some(1), Set())
+        Vector("a", "b", "c", "d"), DefaultUrlsRetryCount,  startWith = Some(1))
       crossHostApiCaller.nextBaseUrl() should be("c")
       crossHostApiCaller.nextBaseUrl() should be("d")
       crossHostApiCaller.nextBaseUrl() should be("a")
@@ -46,7 +46,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("a")).thenReturn("success")
 
         val result = CrossHostApiCaller(
-          Vector("a", "b", "c"), DefaultUrlsRetryCount, startWith = Some(0), Set()
+          Vector("a", "b", "c"), DefaultUrlsRetryCount, startWith = Some(0)
         ).call { str =>
           restClient.sendGet[String](str)
         }
@@ -62,7 +62,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong B"))
           .thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, Some(0), Set()).call { str =>
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, Some(0)).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -79,7 +79,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, Some(0), Set()).call { str =>
+        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, Some(0)).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -140,7 +140,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong C"))
 
         val exception = intercept[RetryableException.DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0), Set()).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -160,7 +160,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong C"))
 
         val exception = intercept[RetryableException.DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 1, Some(0), Set()).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 1, Some(0)).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -180,7 +180,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         )
 
         val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0), Set()).call { str =>
+          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -195,7 +195,7 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
     "fail on not having Urls" when {
       "none are provided" in {
         val exception = intercept[IndexOutOfBoundsException] {
-          CrossHostApiCaller(Vector(), optionallyRetryableExceptions=Set()).call { str =>
+          CrossHostApiCaller(Vector()).call { str =>
             restClient.sendGet[String](str)
           }
         }

@@ -19,7 +19,9 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
-import za.co.absa.enceladus.dao.{MenasException, RetryableException, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.MenasException
+import za.co.absa.enceladus.dao.RetryableException._
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
@@ -34,7 +36,7 @@ object CrossHostApiCaller {
       apiBaseUrls: Seq[String],
       urlsRetryCount: Int,
       startWith: Option[Int],
-      optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
+      optionallyRetryableExceptions: Set[OptRetryableExceptions]
   ): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
       logger.warn(
@@ -53,7 +55,7 @@ object CrossHostApiCaller {
       apiBaseUrls: Seq[String],
       urlsRetryCount: Int = DefaultUrlsRetryCount,
       startWith: Option[Int] = None,
-      optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
+      optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty
    ): CrossHostApiCaller = {
     createInstance(apiBaseUrls, urlsRetryCount, startWith, optionallyRetryableExceptions)
   }
@@ -63,13 +65,12 @@ protected class CrossHostApiCaller private(
     apiBaseUrls: Vector[String],
     maxTryCount: Int,
     private var currentHostIndex: Int,
-    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptionsType]
+    optionallyRetryableExceptions: Set[OptRetryableExceptions]
 )
   extends ApiCaller {
 
-  private val retryableException: Set[Class[_ <: MenasException]] = optionallyRetryableExceptions.union(
-    Set(classOf[RetryableException.DaoException], classOf[RetryableException.AutoRecoverableException])
-  )
+  private val retryableExceptions: Set[Class[_ <: MenasException]] = optionallyRetryableExceptions ++
+    Set(classOf[DaoException], classOf[AutoRecoverableException])
 
   def baseUrlsCount: Int = apiBaseUrls.size
 
@@ -95,16 +96,16 @@ protected class CrossHostApiCaller private(
         fn(url)
       }.recoverWith {
         case e @ (_: ResourceAccessException | _: RestClientException) =>
-          Failure(RetryableException.AutoRecoverableException("Server non-responsive", e))
+          Failure(AutoRecoverableException("Server non-responsive", e))
       }
 
       //using match instead of recoverWith to make the function @tailrec
       result match {
-        case Failure(e: MenasException) if retryableException.contains(e.getClass) && attemptNumber < maxTryCount =>
+        case Failure(e: MenasException) if retryableExceptions.contains(e.getClass) && attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
           attempt(url, attemptNumber + 1, urlsTried)
 
-        case Failure(e: MenasException) if retryableException.contains(e.getClass) && urlsTried < baseUrlsCount =>
+        case Failure(e: MenasException) if retryableExceptions.contains(e.getClass) && urlsTried < baseUrlsCount =>
           val nextUrl = nextBaseUrl()
           logFailure(e, url, attemptNumber, Option(nextUrl))
           attempt(nextUrl, 1, urlsTried + 1)
