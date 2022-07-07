@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference, Validation}
+import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 

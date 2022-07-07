@@ -21,7 +21,7 @@ import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.auth._
-import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.UnauthorizedException
 
 object AuthClient {
 
@@ -30,7 +30,7 @@ object AuthClient {
       case menasCredentials: MenasPlainCredentials    => createLdapAuthClient(apiCaller, menasCredentials)
       case menasCredentials: MenasKerberosCredentials => createSpnegoAuthClient(apiCaller, menasCredentials)
       case InvalidMenasCredentials                    =>
-        throw OptionallyRetryableException.UnauthorizedException("No Menas credentials provided")
+        throw UnauthorizedException("No Menas credentials provided")
     }
   }
 
@@ -52,7 +52,7 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @throws[OptionallyRetryableException.UnauthorizedException]
+  @throws[UnauthorizedException]
   def authenticate(): HttpHeaders = {
     apiCaller.call { baseUrl =>
       val response = requestAuthentication(url(baseUrl))
@@ -63,7 +63,7 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
           log.info(s"Authentication successful: $username")
           getAuthHeaders(response)
         case _             =>
-          throw OptionallyRetryableException.UnauthorizedException(s"Authentication failure ($statusCode): $username")
+          throw UnauthorizedException(s"Authentication failure ($statusCode): $username")
       }
     }
   }

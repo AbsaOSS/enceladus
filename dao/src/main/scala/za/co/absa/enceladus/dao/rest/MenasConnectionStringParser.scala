@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.RetryableException
+import za.co.absa.enceladus.dao.RetryableException.DaoException
 
 object MenasConnectionStringParser {
 
@@ -40,7 +40,7 @@ object MenasConnectionStringParser {
           multiHostUrl.replace(hosts, host)
         }
       case _ =>
-        throw RetryableException.DaoException("Malformed Menas connection string")
+        throw DaoException("Malformed Menas connection string")
     }
   }
 

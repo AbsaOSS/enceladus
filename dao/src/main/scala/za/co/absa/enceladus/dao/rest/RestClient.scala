@@ -18,7 +18,8 @@ package za.co.absa.enceladus.dao.rest
 import org.slf4j.LoggerFactory
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.{RetryableException, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.RetryableException._
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 
 import scala.annotation.tailrec
 import scala.reflect.ClassTag
@@ -34,17 +35,17 @@ protected class RestClient(authClient: AuthClient,
     authHeaders = authClient.authenticate()
   }
 
-  @throws[RetryableException.DaoException]
-  @throws[OptionallyRetryableException.NotFoundException]
-  @throws[OptionallyRetryableException.UnauthorizedException]
+  @throws[DaoException]
+  @throws[NotFoundException]
+  @throws[UnauthorizedException]
   def sendGet[T](url: String)
                 (implicit ct: ClassTag[T]): T = {
     send[T, T](HttpMethod.GET, url, new HttpHeaders())
   }
 
-  @throws[RetryableException.DaoException]
-  @throws[OptionallyRetryableException.NotFoundException]
-  @throws[OptionallyRetryableException.UnauthorizedException]
+  @throws[DaoException]
+  @throws[NotFoundException]
+  @throws[UnauthorizedException]
   def sendPost[B, T](url: String,
                      requestBody: B)
                     (implicit ct: ClassTag[T]): T = {
@@ -85,7 +86,7 @@ protected class RestClient(authClient: AuthClient,
         log.warn(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
         log.warn(s"Unauthorized $method request for Menas URL: $url")
         if (retriesLeft <= 0) {
-          throw OptionallyRetryableException.UnauthorizedException("Unable to reauthenticate, no retries left")
+          throw UnauthorizedException("Unable to reauthenticate, no retries left")
         }
 
         log.warn(s"Expired session, reauthenticating")
@@ -96,10 +97,10 @@ protected class RestClient(authClient: AuthClient,
         send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
       case HttpStatus.NOT_FOUND                           =>
-        throw OptionallyRetryableException.NotFoundException(s"Entity not found - $statusCode")
+        throw NotFoundException(s"Entity not found - $statusCode")
 
       case _                                              =>
-        throw RetryableException.DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
+        throw DaoException(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
     }
   }
 }
