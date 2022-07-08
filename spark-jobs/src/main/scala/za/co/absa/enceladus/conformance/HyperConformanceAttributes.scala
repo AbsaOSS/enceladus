@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.mapIntToOptionallyRetryableException
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
 object HyperConformanceAttributes {
@@ -51,8 +52,10 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
         required = false),
     menasOptionallyRetryableExceptions ->
       PropertyMetadata("Menas API optionally retryable HTTP exceptions",
-        Some("""List of HTTP status codes that are allowed to be retryable, e.g. [404,402] (retry count is """ +
-             """specified by `menasUriRetryCountKey` attribute, see its description for more details.) """),
+        Some("""List of HTTP status codes that are allowed to be retryable. """ +
+          s"""Currently we support these: [${mapIntToOptionallyRetryableException.keys.mkString(", ")}] """ +
+          """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
+        ),
         required = true),
     menasAvailabilitySetupKey ->
       PropertyMetadata("The setup type of Menas URLs",
