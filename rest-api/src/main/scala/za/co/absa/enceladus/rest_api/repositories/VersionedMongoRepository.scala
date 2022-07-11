@@ -73,17 +73,11 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
       ),
       sort(Sorts.ascending("_id"))
     ) ++
-      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // todo reconsider using skip for performance?
+      offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // is this ok performance-wise?
       limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection.aggregate[VersionedSummaryV2](pipeline).toFuture()
       .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(false)))) // because of the notDisabled filter
-
-    // todo, consider setting limit to batchsize, e.g. ?
-//    val aggregate =  collection.aggregate[VersionedSummaryV2](pipeline)
-//    limit.map(aggregate.batchSize).getOrElse(aggregate) // for defined limit, set batchsize to match
-//      .toFuture()
-//      .map(_.map(summaryV2 => VersionedSummary(summaryV2._id, summaryV2.latestVersion, Set(false)))) // because of the notDisabled filter
   }
 
   def getLatestVersions(missingProperty: Option[String]): Future[Seq[C]] = {

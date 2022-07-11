@@ -81,7 +81,7 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
           project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
           sort(ascending("datasetName", "datasetVersion"))
         ) ++
-        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // todo reconsider using skip for performance?
+        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // is this ok performance-wise?
         limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
