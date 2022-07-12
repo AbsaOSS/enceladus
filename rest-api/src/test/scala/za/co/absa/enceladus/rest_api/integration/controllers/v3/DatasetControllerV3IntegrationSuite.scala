@@ -114,6 +114,19 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
             |""".stripMargin.replace("\n", "")
       }
     }
+
+    "return 400" when {
+      "invalid pagination values are used is (limit=A)" in {
+        val response = sendGet[String](s"$apiUrl?limit=A")
+        assertBadRequest(response)
+        response.getBody shouldBe "'A' could not be interpreted as int for the 'limit' param."
+      }
+      "incorrect pagination values are used is (offset=-42)" in {
+        val response = sendGet[String](s"$apiUrl?offset=-42")
+        assertBadRequest(response)
+        response.getBody shouldBe "Value '-42' must be > 0 for the 'offset' param."
+      }
+    }
   }
 
   s"POST $apiUrl" should {

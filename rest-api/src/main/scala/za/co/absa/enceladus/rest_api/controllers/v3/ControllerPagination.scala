@@ -42,7 +42,7 @@ object ControllerPagination {
    * @return
    */
   def extractOptionOffsetOrDefault(optField: Option[String], defaultValue: Int = DefaultOffset): Int = {
-    extractDefinedValueOrDefault(optField, defaultValue)
+    extractDefinedValueOrDefault(optField, defaultValue, "offset")
   }
 
   /**
@@ -64,7 +64,7 @@ object ControllerPagination {
    * @return
    */
   def extractOptionLimitOrDefault(optField: Option[String], defaultValue: Int = DefaultLimit): Int = {
-    extractDefinedValueOrDefault(optField, defaultValue)
+    extractDefinedValueOrDefault(optField, defaultValue, "limit")
   }
 
   /**
@@ -74,12 +74,14 @@ object ControllerPagination {
    * @param defaultValue value to use if extraction fails
    * @return On extraction success, `extractedIntValue` is returned, otherwise (empty or invalid) `defaultValue` is returned.
    */
-  private def extractDefinedValueOrDefault(optField: Option[String], defaultValue: Int): Int = {
+  private def extractDefinedValueOrDefault(optField: Option[String], defaultValue: Int, paramNameHint: String): Int = {
     optField match {
       case None => defaultValue
       case Some(intAsString) => Try(intAsString.toInt) match {
-        case Success(value) => value
-        case Failure(_) => defaultValue
+        case Success(value) if value >= 0 => value
+        case Success(value) => throw new IllegalArgumentException(s"Value '$value' must be > 0 for the '$paramNameHint' param.")
+        case Failure(_) =>
+          throw new IllegalArgumentException(s"'$intAsString' could not be interpreted as int for the '$paramNameHint' param.")
       }
     }
   }
