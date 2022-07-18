@@ -56,7 +56,7 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
           s"""Currently we support these: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")} """ +
           """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
         ),
-        required = true),
+        required = false),
     menasAvailabilitySetupKey ->
       PropertyMetadata("The setup type of Menas URLs",
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
