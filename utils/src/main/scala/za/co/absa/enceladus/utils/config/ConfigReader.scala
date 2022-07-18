@@ -92,6 +92,10 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     getIfExists(path)(getBoolean)
   }
 
+  def getIntListOption(path: String): Option[List[Int]] = {
+    getIfExists(path)(getIntList)
+  }
+
   /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
   def withAnyRefValue(key: String, value: AnyRef) : ConfigReader = {
     ConfigReader(config.withValue(key, ConfigValueFactory.fromAnyRef(value)))
