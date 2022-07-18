@@ -24,7 +24,7 @@ import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Inside
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
-import za.co.absa.enceladus.restapi.TestResourcePath
+import za.co.absa.enceladus.rest_api.TestResourcePath
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor

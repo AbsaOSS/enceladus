@@ -26,11 +26,13 @@ import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory}
+import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
+import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 
 
 @RunWith(classOf[SpringRunner])
@@ -51,6 +53,65 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(mappingTableFixture, schemaFixture, datasetFixture)
+
+  // scalastyle:off magic.number - the test deliberately contains test actual data (no need for DRY here)
+  s"GET $apiUrl" should {
+    "return 200" when {
+      "paginated mappingTable by default params (offset=0, limit=20)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val mappingTablesA = (1 to 15).map(i => MappingTableFactory.getDummyMappingTable(name = "mtA", version = i))
+        val mappingTableA2disabled = MappingTableFactory.getDummyMappingTable(name = "mtA2", version = 1, disabled = true) // skipped in listing
+        val mappingTablesB2M = ('B' to 'V').map(suffix => MappingTableFactory.getDummyMappingTable(name = s"mt$suffix"))
+        mappingTableFixture.add(mappingTablesA: _*)
+        mappingTableFixture.add(mappingTableA2disabled)
+        mappingTableFixture.add(mappingTablesB2M: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 0, limit = 20, truncated = true, page = Seq(
+          NamedVersion("mtA", 15), NamedVersion("mtB", 1), NamedVersion("mtC", 1), NamedVersion("mtD", 1), NamedVersion("mtE", 1),
+          NamedVersion("mtF", 1), NamedVersion("mtG", 1), NamedVersion("mtH", 1), NamedVersion("mtI", 1), NamedVersion("mtJ", 1),
+          NamedVersion("mtK", 1), NamedVersion("mtL", 1), NamedVersion("mtM", 1), NamedVersion("mtN", 1), NamedVersion("mtO", 1),
+          NamedVersion("mtP", 1), NamedVersion("mtQ", 1), NamedVersion("mtR", 1), NamedVersion("mtS", 1), NamedVersion("mtT", 1)
+          // U, V are on the page 2
+        )).asTestPaginated)
+      }
+
+      "paginated mappingTables with custom pagination (offset=10, limit=5)" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val mappingTablesA2o = ('A' to 'O').map(suffix => MappingTableFactory.getDummyMappingTable(name = s"mt$suffix"))
+        mappingTableFixture.add(mappingTablesA2o: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl?offset=10&limit=5")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 10, limit = 5, truncated = false, page = Seq(
+          // A-E = page 1
+          // F-J = page 2
+          NamedVersion("mtK", 1), NamedVersion("mtL", 1), NamedVersion("mtM", 1), NamedVersion("mtN", 1), NamedVersion("mtO", 1)
+          // no truncation
+        )).asTestPaginated)
+      }
+      "paginated mappingTables as serialized string" in {
+        schemaFixture.add(SchemaFactory.getDummySchema("dummySchema"))
+        val mappingTablesA2o = ('A' to 'D').map(suffix => MappingTableFactory.getDummyMappingTable(name = s"mt$suffix"))
+        mappingTableFixture.add(mappingTablesA2o: _*)
+
+        val response = sendGet[String](s"$apiUrl?limit=3")
+        assertOk(response)
+        response.getBody shouldBe
+          """{"page":[
+            |{"name":"mtA","version":1,"disabled":false},
+            |{"name":"mtB","version":1,"disabled":false},
+            |{"name":"mtC","version":1,"disabled":false}
+            |],
+            |"offset":0,
+            |"limit":3,
+            |"truncated":true
+            |}
+            |""".stripMargin.replace("\n", "")
+      }
+    }
+  }
 
   s"POST $apiUrl" should {
     "return 400" when {

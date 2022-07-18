@@ -26,7 +26,7 @@ import za.co.absa.enceladus.model.{ExportableObject, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.controllers.BaseController
 import za.co.absa.enceladus.rest_api.controllers.v3.VersionedModelControllerV3.LatestKey
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
-import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 import za.co.absa.enceladus.rest_api.services.v3.VersionedModelServiceV3
 
 import java.net.URI
@@ -47,12 +47,20 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  // todo maybe offset/limit = pagination -> Issue #2060
   @GetMapping(Array(""))
   @ResponseStatus(HttpStatus.OK)
-  def getList(@RequestParam searchQuery: Optional[String]): CompletableFuture[Seq[NamedVersion]] = {
-    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption)
-      .map(_.map(_.toNamedVersion))
+  def getList(@RequestParam searchQuery: Optional[String],
+              @RequestParam offset: Optional[String],
+              @RequestParam limit: Optional[String]): CompletableFuture[Paginated[NamedVersion]] = {
+    val extractedOffset = ControllerPagination.extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = ControllerPagination.extractOptionalLimitOrDefault(limit)
+
+    // crazy idea: how to find out if result of limit X got truncated? Fetch X+1 and strip if needed :)
+    versionedModelService.getLatestVersionsSummarySearch(searchQuery.toScalaOption, Some(extractedOffset), Some(extractedLimit + 1))
+      .map { summaries: Seq[VersionedSummary] =>
+        val namedVersions = summaries.map(_.toNamedVersion)
+        Paginated.truncateToPaginated(namedVersions, extractedOffset, extractedLimit)
+      }
   }
 
   @GetMapping(Array("/{name}"))

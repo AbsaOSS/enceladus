@@ -49,7 +49,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
                                   datasetVersion: Option[Int] = None,
                                   startDate: Option[LocalDate] = None,
                                   sparkAppId: Option[String] = None,
-                                  uniqueId: Option[String] = None
+                                  uniqueId: Option[String] = None,
+                                  offset: Option[Int] = None,
+                                  limit: Option[Int] = None
                                  ): Future[Seq[RunSummary]] = {
     val exclusiveFilterStage: Seq[Bson] = (startDate, sparkAppId, uniqueId) match {
       case (None, None, None) => Seq()
@@ -78,7 +80,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
           ),
           project(fields(excludeId())), // id composed of dsName+dsVer no longer needed
           sort(ascending("datasetName", "datasetVersion"))
-        )
+        ) ++
+        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++ // is this ok performance-wise?
+        limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)
@@ -87,7 +91,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
 
   def getRunSummaries(datasetName: Option[String] = None,
                       datasetVersion: Option[Int] = None,
-                      startDate: Option[LocalDate] = None): Future[Seq[RunSummary]] = {
+                      startDate: Option[LocalDate] = None,
+                      offset: Option[Int] = None,
+                      limit: Option[Int] = None): Future[Seq[RunSummary]] = {
 
     val dateFilterStages: Seq[Bson] = startDate.map(startDateFilterAggStages).getOrElse(Seq.empty)
     val datasetFilter: Bson = datasetNameVersionFilter(datasetName, datasetVersion)
@@ -98,7 +104,9 @@ class RunMongoRepositoryV3 @Autowired()(mongoDb: MongoDatabase) extends RunMongo
         Seq(
           summaryProjection,
           sort(ascending("datasetName", "datasetVersion", "runId"))
-        )
+        ) ++
+        offset.map(skipVal => Seq(Aggregates.skip(skipVal))).getOrElse(Seq.empty) ++
+        limit.map(limitVal => Seq(Aggregates.limit(limitVal))).getOrElse(Seq.empty)
 
     collection
       .aggregate[RunSummary](pipeline)

@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import java.util.UUID
 import com.mongodb.MongoWriteException
 import org.joda.time.format.DateTimeFormat
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
 import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}

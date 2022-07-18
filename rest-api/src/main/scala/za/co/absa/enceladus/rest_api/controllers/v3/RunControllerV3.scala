@@ -22,12 +22,13 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import za.co.absa.atum.model.{Checkpoint, ControlMeasureMetadata, RunStatus}
-import za.co.absa.enceladus.model.{Run, Validation}
+import za.co.absa.enceladus.model.Run
 import za.co.absa.enceladus.rest_api.controllers.BaseController
+import za.co.absa.enceladus.rest_api.controllers.v3.ControllerPagination._
 import za.co.absa.enceladus.rest_api.controllers.v3.RunControllerV3.LatestKey
-import za.co.absa.enceladus.rest_api.exceptions.{NotFoundException, ValidationException}
+import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.models.RunSummary
-import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
+import za.co.absa.enceladus.rest_api.models.rest.{MessageWrapper, Paginated}
 import za.co.absa.enceladus.rest_api.services.v3.RunServiceV3
 
 import java.net.URI
@@ -54,41 +55,66 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
   @ResponseStatus(HttpStatus.OK)
   def list(@RequestParam startDate: Optional[String],
            @RequestParam sparkAppId: Optional[String],
-           @RequestParam uniqueId: Optional[String]
-          ): CompletableFuture[Seq[RunSummary]] = {
-    require(Seq(startDate, sparkAppId, uniqueId).count(_.isPresent) <= 1,
+           @RequestParam uniqueId: Optional[String],
+           @RequestParam offset: Optional[String],
+           @RequestParam limit: Optional[String]
+          ): CompletableFuture[Paginated[RunSummary]] = {
+    require(Seq(startDate, sparkAppId, uniqueId).filter(_.isPresent).length <= 1,
       "You may only supply one of [startDate|sparkAppId|uniqueId].")
+
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
 
     runService.getLatestOfEachRunSummary(
       startDate = parseYmdDate(startDate),
       sparkAppId = sparkAppId.toScalaOption,
-      uniqueId = uniqueId.toScalaOption
-    )
-    // todo pagination #2060
+      uniqueId = uniqueId.toScalaOption,
+      offset = Some(extractedOffset),
+      limit = Some(extractedLimit + 1) // truncated? take one more and attempt to truncate
+    ).map {
+      Paginated.truncateToPaginated(_, extractedOffset, extractedLimit)
+    }
   }
 
-  // todo pagination #2060
   @GetMapping(Array("/{datasetName}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetName(@PathVariable datasetName: String,
-                                @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
+                                @RequestParam startDate: Optional[String],
+                                @RequestParam offset: Optional[String],
+                                @RequestParam limit: Optional[String]): CompletableFuture[Paginated[RunSummary]] = {
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
+
     runService.getLatestOfEachRunSummary(
       datasetName = Some(datasetName),
-      startDate = parseYmdDate(startDate)
-    )
+      startDate = parseYmdDate(startDate),
+      offset = Some(extractedOffset),
+      limit = Some(extractedLimit + 1) // truncated? take one more and attempt to truncate
+    ).map {
+      Paginated.truncateToPaginated(_, extractedOffset, extractedLimit)
+    }
   }
 
-  // todo pagination #2060
   @GetMapping(Array("/{datasetName}/{datasetVersion}"))
   @ResponseStatus(HttpStatus.OK)
   def getSummariesByDatasetNameAndVersion(@PathVariable datasetName: String,
                                           @PathVariable datasetVersion: Int,
-                                          @RequestParam startDate: Optional[String]): CompletableFuture[Seq[RunSummary]] = {
+                                          @RequestParam startDate: Optional[String],
+                                          @RequestParam offset: Optional[String],
+                                          @RequestParam limit: Optional[String]): CompletableFuture[Paginated[RunSummary]] = {
+    val extractedOffset = extractOptionalOffsetOrDefault(offset)
+    val extractedLimit = extractOptionalLimitOrDefault(limit)
+
+
     runService.getRunSummaries(
       datasetName = datasetName,
       datasetVersion = datasetVersion,
-      startDate = parseYmdDate(startDate)
-    )
+      startDate = parseYmdDate(startDate),
+      offset = Some(extractedOffset),
+      limit = Some(extractedLimit + 1) // same logic as above
+    ).map {
+      Paginated.truncateToPaginated(_, extractedOffset, extractedLimit)
+    }
   }
 
   @PostMapping(Array("/{datasetName}/{datasetVersion}"))
