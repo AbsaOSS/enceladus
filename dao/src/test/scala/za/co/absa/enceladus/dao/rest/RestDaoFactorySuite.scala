@@ -19,7 +19,7 @@ import org.mockito.MockitoSugar.withObjectMocked
 import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.dao.{MenasException, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.{NotRetryableException, OptionallyRetryableException}
 import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentials, MenasKerberosCredentials, MenasPlainCredentials}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 
@@ -44,7 +44,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
     }
     "throw an error" when {
       "given invalid credentials" in {
-        val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
+        val exception = intercept[NotRetryableException.AuthentizationException] {
           RestDaoFactory.getInstance(InvalidMenasCredentials, menasApiBaseUrls)
         }
         exception.getMessage should be("No Menas credentials provided")

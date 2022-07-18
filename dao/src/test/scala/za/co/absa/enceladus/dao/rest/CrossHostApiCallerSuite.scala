@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.mockito.Mockito
 import org.springframework.web.client.ResourceAccessException
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.DefaultUrlsRetryCount
-import za.co.absa.enceladus.dao.{RetryableException, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.{NotRetryableException, OptionallyRetryableException, RetryableException}
 
 class CrossHostApiCallerSuite extends BaseTestSuite {
 
@@ -113,12 +113,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("a"))
           .thenThrow(new ResourceAccessException("Something went wrong A"))
         Mockito.when(restClient.sendGet[String]("b"))
-          .thenThrow(OptionallyRetryableException.UnauthorizedException("Something went wrong B"))
-          .thenThrow(OptionallyRetryableException.UnauthorizedException("Something went wrong B"))
+          .thenThrow(OptionallyRetryableException.ForbiddenException("Something went wrong B"))
+          .thenThrow(OptionallyRetryableException.ForbiddenException("Something went wrong B"))
           .thenReturn("success")
 
         val result = CrossHostApiCaller(
-          Vector("a", "b", "c"), 2, Some(0), Set(classOf[OptionallyRetryableException.UnauthorizedException])
+          Vector("a", "b", "c"), 2, Some(0), Set(classOf[OptionallyRetryableException.ForbiddenException])
         ).call { str =>
           restClient.sendGet[String](str)
         }
@@ -176,10 +176,10 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           new ResourceAccessException("Something went wrong A")
         )
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(
-          OptionallyRetryableException.UnauthorizedException("Wrong credentials")
+          NotRetryableException.AuthentizationException("Wrong credentials")
         )
 
-        val exception = intercept[OptionallyRetryableException.UnauthorizedException] {
+        val exception = intercept[NotRetryableException.AuthentizationException] {
           CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
             restClient.sendGet[String](str)
           }

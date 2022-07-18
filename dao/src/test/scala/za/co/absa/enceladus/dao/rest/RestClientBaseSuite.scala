@@ -20,7 +20,7 @@ import org.mockito.Mockito
 import org.mockito.stubbing.OngoingStubbing
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.NotRetryableException
 
 abstract class RestClientBaseSuite extends BaseTestSuite {
 
@@ -125,7 +125,7 @@ abstract class RestClientBaseSuite extends BaseTestSuite {
 
   def stubAuthFailure(): Unit = {
     Mockito.when(authClient.authenticate()).thenThrow(
-      OptionallyRetryableException.UnauthorizedException("Authentication failure"))
+      NotRetryableException.AuthentizationException("Authentication failure"))
   }
 
   def stubAuthSuccess(): HttpHeaders = {
