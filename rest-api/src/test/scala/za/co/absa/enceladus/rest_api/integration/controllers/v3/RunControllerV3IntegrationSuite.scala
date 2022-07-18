@@ -22,15 +22,16 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.atum.model.{Checkpoint, ControlMeasure, ControlMeasureMetadata, RunError, RunState, RunStatus}
+import za.co.absa.atum.model._
 import za.co.absa.atum.utils.SerializationUtils
 import za.co.absa.enceladus.model.test.factories.RunFactory.{getDummyMeasurement, getDummyRun}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, RunFactory}
-import za.co.absa.enceladus.model.{Run, SplineReference, Validation}
+import za.co.absa.enceladus.model.{Run, Validation}
 import za.co.absa.enceladus.rest_api.integration.controllers.BaseRestApiTestV3
+import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.fixtures.{DatasetFixtureService, FixtureService, RunFixtureService}
-import za.co.absa.enceladus.rest_api.models.rest.MessageWrapper
-import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDatasetVersionGroupedSummary, RunSummary}
+import za.co.absa.enceladus.rest_api.models.RunSummary
+import za.co.absa.enceladus.rest_api.models.rest.{MessageWrapper, Paginated}
 
 import java.util.UUID
 
@@ -51,23 +52,31 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
 
   private val apiUrl = "/runs"
 
+  // scalastyle:off magic.number - the test deliberately contains test actual data (no need for DRY here)
   s"GET $apiUrl" can {
     "return 200" when {
       "latest RunSummaries are queried" in {
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
-        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
-        runFixture.add(dataset1ver1run1, dataset1ver1run2)
-        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
-        runFixture.add(dataset1ver2run1)
-        val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
-        runFixture.add(dataset2ver1run1)
+        val extraRuns1 = ('A' to 'B').map(suffix => RunFactory.getDummyRun(dataset = s"dataset$suffix"))
+        runFixture.add(extraRuns1: _*) // filler to show offset
 
-        val response = sendGet[String](s"$apiUrl")
+        val datasetCver1run1 = RunFactory.getDummyRun(dataset = "datasetC", datasetVersion = 1, runId = 1)
+        val datasetCver1run2 = RunFactory.getDummyRun(dataset = "datasetC", datasetVersion = 1, runId = 2)
+        runFixture.add(datasetCver1run1, datasetCver1run2)
+        val datasetCver2run1 = RunFactory.getDummyRun(dataset = "datasetC", datasetVersion = 2, runId = 1)
+        runFixture.add(datasetCver2run1)
+        val datasetDver1run1 = RunFactory.getDummyRun(dataset = "datasetD", datasetVersion = 1, runId = 1)
+        runFixture.add(datasetDver1run1)
+        val extraRuns2 = ('E' to 'H').map(suffix => RunFactory.getDummyRun(dataset = s"dataset$suffix"))
+        runFixture.add(extraRuns2: _*) // filler to show limit
 
+        val response = sendGet[String](s"$apiUrl?offset=2&limit=3")
         assertOk(response)
 
         val actual = response.getBody
-        val expected = SerializationUtils.asJson(Seq(dataset1ver1run2, dataset1ver2run1, dataset2ver1run1).map(_.toSummary))
+        val expected = SerializationUtils.asJson(
+          Paginated(Seq(datasetCver1run2, datasetCver2run1, datasetDver1run1).map(_.toSummary),
+            offset = 2, limit = 3, truncated = true)
+        )
         actual shouldBe expected
       }
 
@@ -87,9 +96,10 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset2ver1run1, dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?startDate=2022-05-20")
-        val expected = Array(dataset1ver1run2, dataset1ver2run3, dataset3ver1run1).map(_.toSummary)
-        response.getBody shouldBe expected
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl?startDate=2022-05-20&limit=3")
+        val expected = Paginated(Seq(dataset1ver1run2, dataset1ver2run3, dataset3ver1run1).map(_.toSummary), offset = 0,
+          limit = 3, truncated = false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "latest RunSummaries are queried on uniqueId" in {
@@ -98,9 +108,9 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run3 = RunFactory.getDummyRun(dataset = "datasetX", uniqueId = None)
         runFixture.add(run1, run2, run3)
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
-        val expected = Array(run1).map(_.toSummary)
-        response.getBody shouldBe expected
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
+        val expected = Paginated(Seq(run1).map(_.toSummary), offset = 0, limit = 20, truncated = false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "latest RunSummaries are queried on sparkAppId reference" in {
@@ -122,12 +132,12 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         runFixture.add(run1, run2)
 
         // get summary of run1 by std app_id
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?sparkAppId=application_1653565036000_00001")
-        response.getBody shouldBe Seq(run1).map(_.toSummary)
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl?sparkAppId=application_1653565036000_00001")
+        response.getBody should conformTo(Paginated(Seq(run1).map(_.toSummary), offset = 0, limit = 20, truncated = false).asTestPaginated)
 
         // get summary of run2 by conform app_id
-        val response2 = sendGet[Array[RunSummary]](s"$apiUrl?sparkAppId=application_1653565036000_00002")
-        response2.getBody shouldBe Seq(run2).map(_.toSummary)
+        val response2 = sendGet[TestPaginatedRunSummary](s"$apiUrl?sparkAppId=application_1653565036000_00002")
+        response2.getBody should conformTo(Paginated(Seq(run2).map(_.toSummary), offset = 0, limit = 20, truncated = false).asTestPaginated)
       }
       "latest RunSummaries are queried, but nothing is found" in {
         val run1 = RunFactory.getDummyRun(dataset = "dataset1", startDateTime = "22-05-2022 14:01:12 +0200")
@@ -135,7 +145,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         runFixture.add(run1, run2)
 
         val response = sendGet[String](s"$apiUrl?startDate=2022-05-24")
-        response.getBody shouldBe "[]" // empty array
+        response.getBody shouldBe """{"page":[],"offset":0,"limit":20,"truncated":false}""" // empty page
       }
     }
 
@@ -158,22 +168,33 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         datasetFixture.add(
           DatasetFactory.getDummyDataset("dataset1", version = 1),
           DatasetFactory.getDummyDataset("dataset1", version = 2),
+          DatasetFactory.getDummyDataset("dataset1", version = 3),
+          DatasetFactory.getDummyDataset("dataset1", version = 4),
+          DatasetFactory.getDummyDataset("dataset1", version = 5),
           DatasetFactory.getDummyDataset("dataset2", version = 1)
         )
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
-        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
-        runFixture.add(dataset1ver1run1, dataset1ver1run2)
-        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
-        runFixture.add(dataset1ver2run1)
+
+        runFixture.add(
+          (1 to 3).map(i => RunFactory.getDummyRun(dataset = s"dataset1", datasetVersion = i)): _*
+        ) // filler to show offset
+
+        val dataset1ver4run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 4, runId = 1)
+        val dataset1ver4run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 4, runId = 2)
+        runFixture.add(dataset1ver4run1, dataset1ver4run2)
+        val dataset1ver5run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 5, runId = 1)
+        runFixture.add(dataset1ver5run1)
         val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
         runFixture.add(dataset2ver1run1) // unrelated to dataset1
 
-        val response = sendGet[String](s"$apiUrl/dataset1")
+        runFixture.add(RunFactory.getDummyRun(dataset = s"dataset1", datasetVersion = 6)) // filler to show limit
+
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1?offset=3&limit=2")
         assertOk(response)
 
         val actual = response.getBody
-        val expected = SerializationUtils.asJson(Seq(dataset1ver1run2, dataset1ver2run1).map(_.toSummary))
-        actual shouldBe expected
+        val expected = Paginated(Seq(dataset1ver4run2, dataset1ver5run1).map(_.toSummary), offset = 3, limit=2,
+          truncated = true).asTestPaginated
+        actual should conformTo(expected)
       }
 
       "latest RunSummaries are queried on startDate" in {
@@ -200,10 +221,11 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset2ver1run1, dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1?startDate=2022-05-20")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1?startDate=2022-05-20")
         response.getStatusCode shouldBe HttpStatus.OK
-        val expected = Array(dataset1ver1run2, dataset1ver2run3).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expected = Paginated(Seq(dataset1ver1run2, dataset1ver2run3).map(_.toSummary), offset = 0, limit = 20,
+          truncated = false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "latest RunSummaries are queried on uniqueId" in {
@@ -213,46 +235,46 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         val run4 = RunFactory.getDummyRun(dataset = "dataset2", uniqueId = None) // unrelated to dataset1
         runFixture.add(run1, run2, run3, run4)
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl?uniqueId=12345678-90ab-cdef-1234-567890abcdef")
         response.getStatusCode shouldBe HttpStatus.OK
-        val expected = Array(run1).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expected = Paginated(Seq(run1).map(_.toSummary), offset = 0, limit = 20, truncated = false).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
-      "latest RunSummaries are queried, but nothing is found" in {
-        datasetFixture.add(
-          DatasetFactory.getDummyDataset("dataset1", version = 1),
-          DatasetFactory.getDummyDataset("dataset3", version = 1)
-        )
-        val run1 = RunFactory.getDummyRun(dataset = "dataset1", startDateTime = "22-05-2022 14:01:12 +0200")
-        val run2 = RunFactory.getDummyRun(dataset = "dataset3", uniqueId = None) // unrelated to dataset1
-        runFixture.add(run1, run2)
+    "latest RunSummaries are queried, but nothing is found" in {
+      datasetFixture.add(
+        DatasetFactory.getDummyDataset("dataset1", version = 1),
+        DatasetFactory.getDummyDataset("dataset3", version = 1)
+      )
+      val run1 = RunFactory.getDummyRun(dataset = "dataset1", startDateTime = "22-05-2022 14:01:12 +0200")
+      val run2 = RunFactory.getDummyRun(dataset = "dataset3", uniqueId = None) // unrelated to dataset1
+      runFixture.add(run1, run2)
 
-        val response = sendGet[String](s"$apiUrl/dataset1?startDate=2022-05-24")
-        response.getStatusCode shouldBe HttpStatus.OK
-        response.getBody shouldBe "[]" // empty array
-      }
-      "return RunSummaries by dataset name  - ok even for no runs for known dataset" in {
-        // datasets referenced by runs must exist, too
-        datasetFixture.add(
-          DatasetFactory.getDummyDataset("dataset1", version = 1)
-        )
-
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1")
-        response.getStatusCode shouldBe HttpStatus.OK
-
-        val expected = List.empty[RunSummary]
-        response.getBody shouldBe expected
-      }
+      val response = sendGet[String](s"$apiUrl/dataset1?startDate=2022-05-24")
+      response.getStatusCode shouldBe HttpStatus.OK
+      response.getBody shouldBe """{"page":[],"offset":0,"limit":20,"truncated":false}""" // empty page
     }
+    "return RunSummaries by dataset name  - ok even for no runs for known dataset" in {
+      // datasets referenced by runs must exist, too
+      datasetFixture.add(
+        DatasetFactory.getDummyDataset("dataset1", version = 1)
+      )
 
-    "return 404" when {
-      "RunSummaries for non-existent dataset name is queried" in {
-        // datasets referenced by runs must exist
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1")
-        response.getStatusCode shouldBe HttpStatus.NOT_FOUND
-      }
+      val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1")
+      response.getStatusCode shouldBe HttpStatus.OK
+
+      val expected = Paginated(Seq.empty[RunSummary], offset = 0, limit = 20, truncated = false).asTestPaginated
+      response.getBody should conformTo(expected)
     }
+  }
+
+  "return 404" when {
+    "RunSummaries for non-existent dataset name is queried" in {
+      // datasets referenced by runs must exist
+      val response = sendGet[String](s"$apiUrl/dataset1")
+      response.getStatusCode shouldBe HttpStatus.NOT_FOUND
+    }
+  }
 
   }
 
@@ -266,18 +288,23 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           DatasetFactory.getDummyDataset("dataset2", version = 1)
         )
 
-        val dataset1ver1run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 1)
-        val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2)
-        runFixture.add(dataset1ver1run1, dataset1ver1run2)
+        val dataset1ver1runs = (1 to 8).map(i => RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = i))
+        runFixture.add(dataset1ver1runs: _*)
+
+        // some other runs that will not stand in the way (differ in dataset/version from the requested fitlering)
         val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1)
         val dataset2ver1run1 = RunFactory.getDummyRun(dataset = "dataset2", datasetVersion = 1, runId = 1)
         runFixture.add(dataset1ver2run1, dataset2ver1run1)
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1/1?offset=2&limit=3")
         response.getStatusCode shouldBe HttpStatus.OK
 
-        val expected = List(dataset1ver1run1, dataset1ver1run2).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expectedRuns = Seq(dataset1ver1runs(2), dataset1ver1runs(3), dataset1ver1runs(4))
+        // just to make absolutely sure:
+        expectedRuns.map(_.runId) shouldBe Seq(3, 4, 5)
+
+        val expected = Paginated(expectedRuns.map(_.toSummary), offset = 2, limit = 3, truncated = true).asTestPaginated
+        response.getBody should conformTo(expected)
       }
 
       "return RunSummaries on combination of (startDate, dsName, and dsVersion)" in {
@@ -289,11 +316,9 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         )
 
         val dataset1ver1run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 1, runId = 2, startDateTime = "22-05-2022 14:01:12 +0200")
-
-        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "30-01-2022 15:01:12 +0200")
+        val dataset1ver2run1 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 1, startDateTime = "19-05-2022 15:01:12 +0200")
         val dataset1ver2run2 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 2, startDateTime = "20-05-2022 15:01:12 +0200")
-        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "01-06-2022 15:01:12 +0200")
-
+        val dataset1ver2run3 = RunFactory.getDummyRun(dataset = "dataset1", datasetVersion = 2, runId = 3, startDateTime = "23-05-2022 15:01:12 +0200")
         val dataset3ver1run1 = RunFactory.getDummyRun(dataset = "dataset3", datasetVersion = 1, runId = 1, startDateTime = "21-05-2022 13:01:12 +0200")
 
         runFixture.add(
@@ -302,25 +327,13 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
           dataset3ver1run1
         )
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2?startDate=2022-05-20")
+        val response = sendGet[TestPaginatedRunSummary](s"$apiUrl/dataset1/2?startDate=2022-05-20")
         response.getStatusCode shouldBe HttpStatus.OK
 
-        val expected = List(dataset1ver2run2, dataset1ver2run3).map(_.toSummary)
-        response.getBody shouldBe expected
+        val expected = Paginated(Seq(dataset1ver2run2, dataset1ver2run3).map(_.toSummary), offset = 0, limit = 20,
+          truncated = false).asTestPaginated
+        response.getBody should conformTo(expected)
 
-      }
-
-      "return RunSummaries by dataset name and version - ok even for no runs for known dataset" in {
-        // datasets referenced by runs must exist, too
-        datasetFixture.add(
-          DatasetFactory.getDummyDataset("dataset1", version = 1)
-        )
-
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/1")
-        response.getStatusCode shouldBe HttpStatus.OK
-
-        val expected = List.empty[RunSummary]
-        response.getBody shouldBe expected
       }
     }
 
@@ -329,7 +342,7 @@ class RunControllerV3IntegrationSuite extends BaseRestApiTestV3 with Matchers {
         // datasets referenced by runs must exist
         datasetFixture.add(DatasetFactory.getDummyDataset("dataset1", version = 1)) // v1 exists
 
-        val response = sendGet[Array[RunSummary]](s"$apiUrl/dataset1/2") // but v2 does not
+        val response = sendGet[String](s"$apiUrl/dataset1/2") // but v2 does not
         response.getStatusCode shouldBe HttpStatus.NOT_FOUND
       }
     }

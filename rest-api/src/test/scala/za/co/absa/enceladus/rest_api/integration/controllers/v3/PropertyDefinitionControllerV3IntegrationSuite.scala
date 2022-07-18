@@ -23,16 +23,17 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.{UsedIn, Validation}
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
+import za.co.absa.enceladus.model.{UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
+import za.co.absa.enceladus.rest_api.integration.controllers.TestPaginatedMatchers.conformTo
 import za.co.absa.enceladus.rest_api.integration.controllers.{BaseRestApiTestV3, toExpected}
 import za.co.absa.enceladus.rest_api.integration.fixtures._
-import za.co.absa.enceladus.rest_api.models.rest.DisabledPayload
+import za.co.absa.enceladus.rest_api.models.rest.{DisabledPayload, Paginated}
 
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -50,6 +51,61 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
   // fixtures are cleared after each test
   override def fixtures: List[FixtureService[_]] = List(propertyDefinitionFixture, datasetFixture)
 
+  // scalastyle:off magic.number - the test deliberately contains test actual data (no need for DRY here)
+  s"GET $apiUrl" should {
+    "return 200" when {
+      "paginated propDef by default params (offset=0, limit=20)" in {
+        val propDefsA = (1 to 15).map(i => PropertyDefinitionFactory.getDummyPropertyDefinition(name = "pdA", version = i))
+        val propDefA2disabled = PropertyDefinitionFactory.getDummyPropertyDefinition(name = "pdA2", version = 1, disabled = true) // skipped in listing
+        val propDefsB2M = ('B' to 'V').map(suffix => PropertyDefinitionFactory.getDummyPropertyDefinition(name = s"pd$suffix"))
+        propertyDefinitionFixture.add(propDefsA: _*)
+        propertyDefinitionFixture.add(propDefA2disabled)
+        propertyDefinitionFixture.add(propDefsB2M: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 0, limit = 20, truncated = true, page = Seq(
+          NamedVersion("pdA", 15), NamedVersion("pdB", 1), NamedVersion("pdC", 1), NamedVersion("pdD", 1), NamedVersion("pdE", 1),
+          NamedVersion("pdF", 1), NamedVersion("pdG", 1), NamedVersion("pdH", 1), NamedVersion("pdI", 1), NamedVersion("pdJ", 1),
+          NamedVersion("pdK", 1), NamedVersion("pdL", 1), NamedVersion("pdM", 1), NamedVersion("pdN", 1), NamedVersion("pdO", 1),
+          NamedVersion("pdP", 1), NamedVersion("pdQ", 1), NamedVersion("pdR", 1), NamedVersion("pdS", 1), NamedVersion("pdT", 1)
+          // U, V are on the page 2
+        )).asTestPaginated)
+      }
+
+      "paginated propDefs with custom pagination (offset=10, limit=5)" in {
+        val propDefsA2o = ('A' to 'O').map(suffix => PropertyDefinitionFactory.getDummyPropertyDefinition(name = s"pd$suffix"))
+        propertyDefinitionFixture.add(propDefsA2o: _*)
+
+        val response = sendGet[TestPaginatedNamedVersion](s"$apiUrl?offset=10&limit=5")
+        assertOk(response)
+        response.getBody should conformTo(Paginated(offset = 10, limit = 5, truncated = false, page = Seq(
+          // A-E = page 1
+          // F-J = page 2
+          NamedVersion("pdK", 1), NamedVersion("pdL", 1), NamedVersion("pdM", 1), NamedVersion("pdN", 1), NamedVersion("pdO", 1)
+          // no truncation
+        )).asTestPaginated)
+      }
+      "paginated propDefs as serialized string" in {
+        val propDefsA2o = ('A' to 'D').map(suffix => PropertyDefinitionFactory.getDummyPropertyDefinition(name = s"pd$suffix"))
+        propertyDefinitionFixture.add(propDefsA2o: _*)
+
+        val response = sendGet[String](s"$apiUrl?limit=3")
+        assertOk(response)
+        response.getBody shouldBe
+          """{"page":[
+            |{"name":"pdA","version":1,"disabled":false},
+            |{"name":"pdB","version":1,"disabled":false},
+            |{"name":"pdC","version":1,"disabled":false}
+            |],
+            |"offset":0,
+            |"limit":3,
+            |"truncated":true
+            |}
+            |""".stripMargin.replace("\n", "")
+      }
+    }
+  }
 
   private def minimalPdCreatePayload(name: String, suggestedValue: Option[String]) = {
     val suggestedValuePart = suggestedValue match {

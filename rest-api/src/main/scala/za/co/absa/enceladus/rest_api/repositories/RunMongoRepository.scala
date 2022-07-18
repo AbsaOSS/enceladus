@@ -244,13 +244,12 @@ class RunMongoRepository @Autowired()(mongoDb: MongoDatabase)
       filter(equal("dataset", datasetName)),
       project(fields(
         include("dataset", "datasetVersion"),
-        Document(
-          """{start: {
-            |  $dateFromString: {
-            |    dateString: "$startDateTime",
-            |    format: "%d-%m-%Y %H:%M:%S %z"
-            |  }
-            |}},""".stripMargin),
+        Document("""{start: {
+                   |  $dateFromString: {
+                   |    dateString: "$startDateTime",
+                   |    format: "%d-%m-%Y %H:%M:%S %z"
+                   |  }
+                   |}},""".stripMargin),
         Document(
           """{timezone: {
             |  $substrBytes: [

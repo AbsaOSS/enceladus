@@ -28,7 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.{HttpStatus, MediaType}
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.restapi.TestResourcePath
+import za.co.absa.enceladus.rest_api.TestResourcePath
 import za.co.absa.enceladus.rest_api.integration.fixtures._
 import za.co.absa.enceladus.rest_api.models.rest.RestResponse
 import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, SchemaParsingError}
@@ -40,7 +40,6 @@ import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
-import za.co.absa.enceladus.restapi.TestResourcePath
 
 import scala.collection.immutable.HashMap
 
