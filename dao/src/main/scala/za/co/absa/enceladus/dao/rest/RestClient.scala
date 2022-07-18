@@ -18,6 +18,8 @@ package za.co.absa.enceladus.dao.rest
 import org.slf4j.LoggerFactory
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
+import za.co.absa.enceladus.dao.NotRetryableException.AuthentizationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException
 import za.co.absa.enceladus.dao.RetryableException._
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 
@@ -38,6 +40,8 @@ protected class RestClient(authClient: AuthClient,
   @throws[DaoException]
   @throws[NotFoundException]
   @throws[UnauthorizedException]
+  @throws[ForbiddenException]
+  @throws[AuthentizationException]
   def sendGet[T](url: String)
                 (implicit ct: ClassTag[T]): T = {
     send[T, T](HttpMethod.GET, url, new HttpHeaders())
@@ -46,6 +50,8 @@ protected class RestClient(authClient: AuthClient,
   @throws[DaoException]
   @throws[NotFoundException]
   @throws[UnauthorizedException]
+  @throws[ForbiddenException]
+  @throws[AuthentizationException]
   def sendPost[B, T](url: String,
                      requestBody: B)
                     (implicit ct: ClassTag[T]): T = {
@@ -77,23 +83,37 @@ protected class RestClient(authClient: AuthClient,
 
     val statusCode = response.getStatusCode
 
+    /**
+     * This function handles unauthorized response by trying to authenticate
+     * (if there are still some retries attempt left) - this might be due to an expired session.
+     *
+     * @param exceptionToThrow Instance of an exception that should be thrown if there are no retries left.
+     */
+    def handleUnauthorizedResponse(exceptionToThrow: OptionallyRetryableException): Unit = {
+      log.warn(s"Response - ${statusCode} : ${Option(response.getBody).getOrElse("None")}")
+      log.warn(s"Unauthorized $method request for Menas URL: $url")
+      if (retriesLeft <= 0) {
+        throw exceptionToThrow
+      }
+
+      log.warn(s"Expired session, reauthenticating")
+      authenticate()
+
+      log.info(s"Retrying $method request for Menas URL: $url")
+      log.info(s"Retries left: $retriesLeft")
+    }
+
     statusCode match {
       case HttpStatus.OK | HttpStatus.CREATED             =>
         log.info(s"Response (${response.getStatusCode}): ${response.getBody}")
         JsonSerializer.fromJson[T](response.getBody)
 
-      case HttpStatus.UNAUTHORIZED | HttpStatus.FORBIDDEN =>
-        log.warn(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
-        log.warn(s"Unauthorized $method request for Menas URL: $url")
-        if (retriesLeft <= 0) {
-          throw UnauthorizedException("Unable to reauthenticate, no retries left")
-        }
+      case HttpStatus.UNAUTHORIZED =>
+        handleUnauthorizedResponse(UnauthorizedException("Unauthorized, unable to reauthenticate, no retries left"))
+        send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
-        log.warn(s"Expired session, reauthenticating")
-        authenticate()
-
-        log.info(s"Retrying $method request for Menas URL: $url")
-        log.info(s"Retries left: $retriesLeft")
+      case HttpStatus.FORBIDDEN =>
+        handleUnauthorizedResponse(ForbiddenException("Forbidden, unable to reauthenticate, no retries left"))
         send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
       case HttpStatus.NOT_FOUND                           =>
