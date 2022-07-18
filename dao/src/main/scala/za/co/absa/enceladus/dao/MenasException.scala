@@ -21,7 +21,7 @@ abstract class NotRetryableException(message: String, cause: Throwable) extends 
 
 object NotRetryableException {
 
-  final case class AuthentizationException(private val message: String,
+  final case class AuthenticationException(private val message: String,
                                            private val cause: Throwable = None.orNull)
     extends NotRetryableException(message, cause)
 }

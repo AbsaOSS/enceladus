@@ -125,7 +125,7 @@ abstract class RestClientBaseSuite extends BaseTestSuite {
 
   def stubAuthFailure(): Unit = {
     Mockito.when(authClient.authenticate()).thenThrow(
-      NotRetryableException.AuthentizationException("Authentication failure"))
+      NotRetryableException.AuthenticationException("Authentication failure"))
   }
 
   def stubAuthSuccess(): HttpHeaders = {

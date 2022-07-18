@@ -44,7 +44,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
     }
     "throw an error" when {
       "given invalid credentials" in {
-        val exception = intercept[NotRetryableException.AuthentizationException] {
+        val exception = intercept[NotRetryableException.AuthenticationException] {
           RestDaoFactory.getInstance(InvalidMenasCredentials, menasApiBaseUrls)
         }
         exception.getMessage should be("No Menas credentials provided")

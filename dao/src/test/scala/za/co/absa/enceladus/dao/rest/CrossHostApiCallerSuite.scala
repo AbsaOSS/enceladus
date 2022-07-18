@@ -176,10 +176,10 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           new ResourceAccessException("Something went wrong A")
         )
         Mockito.when(restClient.sendGet[String]("b")).thenThrow(
-          NotRetryableException.AuthentizationException("Wrong credentials")
+          NotRetryableException.AuthenticationException("Wrong credentials")
         )
 
-        val exception = intercept[NotRetryableException.AuthentizationException] {
+        val exception = intercept[NotRetryableException.AuthenticationException] {
           CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
             restClient.sendGet[String](str)
           }

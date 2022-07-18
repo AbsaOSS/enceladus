@@ -71,10 +71,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubUnauthorizedGetRequest(url, expiredSessionHeaders)
       stubAuthFailure()
 
-      val exception = intercept[NotRetryableException.AuthentizationException] {
+      val exception = intercept[NotRetryableException.AuthenticationException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe NotRetryableException.AuthentizationException("Authentication failure")
+      exception shouldBe NotRetryableException.AuthenticationException("Authentication failure")
     }
 
     "return 200 OK after successful retry on 403 Forbidden" in {
@@ -92,10 +92,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubForbiddenGetRequest(url, expiredSessionHeaders)
       stubAuthFailure()
 
-      val exception = intercept[NotRetryableException.AuthentizationException] {
+      val exception = intercept[NotRetryableException.AuthenticationException] {
         restClient.sendGet[String](url)
       }
-      exception shouldBe NotRetryableException.AuthentizationException("Authentication failure")
+      exception shouldBe NotRetryableException.AuthenticationException("Authentication failure")
     }
 
     "throw an error on 404 Not Found" in {
@@ -140,10 +140,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubUnauthorizedPostRequest(url, expiredSessionHeaders, requestBody)
       stubAuthFailure()
 
-      val exception = intercept[NotRetryableException.AuthentizationException] {
+      val exception = intercept[NotRetryableException.AuthenticationException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe NotRetryableException.AuthentizationException("Authentication failure")
+      exception shouldBe NotRetryableException.AuthenticationException("Authentication failure")
     }
 
     "return 201 CREATED after successful retry on 403 Forbidden" in {
@@ -161,10 +161,10 @@ class RestClientSuite() extends RestClientBaseSuite {
       stubForbiddenPostRequest(url, expiredSessionHeaders, requestBody)
       stubAuthFailure()
 
-      val exception = intercept[NotRetryableException.AuthentizationException] {
+      val exception = intercept[NotRetryableException.AuthenticationException] {
         restClient.sendPost[String, String](url, requestBody)
       }
-      exception shouldBe NotRetryableException.AuthentizationException("Authentication failure")
+      exception shouldBe NotRetryableException.AuthenticationException("Authentication failure")
     }
 
     "throw an error on 404 Not Found" in {

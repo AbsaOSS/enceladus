@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.slf4j.LoggerFactory
 import org.springframework.http._
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.NotRetryableException.AuthentizationException
+import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
 import za.co.absa.enceladus.dao.OptionallyRetryableException
 import za.co.absa.enceladus.dao.RetryableException._
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
@@ -41,7 +41,7 @@ protected class RestClient(authClient: AuthClient,
   @throws[NotFoundException]
   @throws[UnauthorizedException]
   @throws[ForbiddenException]
-  @throws[AuthentizationException]
+  @throws[AuthenticationException]
   def sendGet[T](url: String)
                 (implicit ct: ClassTag[T]): T = {
     send[T, T](HttpMethod.GET, url, new HttpHeaders())
@@ -51,7 +51,7 @@ protected class RestClient(authClient: AuthClient,
   @throws[NotFoundException]
   @throws[UnauthorizedException]
   @throws[ForbiddenException]
-  @throws[AuthentizationException]
+  @throws[AuthenticationException]
   def sendPost[B, T](url: String,
                      requestBody: B)
                     (implicit ct: ClassTag[T]): T = {
