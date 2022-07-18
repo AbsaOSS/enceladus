@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.models.rest
 
-case class Paginated[T](page: Seq[T], offset: Int, limit: Int, truncated: Boolean) //, message: Option[String] = None)
+case class Paginated[T](page: Seq[T], offset: Int, limit: Int, truncated: Boolean)
 
 object Paginated {
 

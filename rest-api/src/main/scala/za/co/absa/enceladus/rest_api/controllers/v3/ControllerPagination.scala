@@ -75,15 +75,16 @@ object ControllerPagination {
    * @return On extraction success, `extractedIntValue` is returned, otherwise (empty or invalid) `defaultValue` is returned.
    */
   private def extractDefinedValueOrDefault(optField: Option[String], defaultValue: Int, paramNameHint: String): Int = {
-    optField match {
-      case None => defaultValue
-      case Some(intAsString) => Try(intAsString.toInt) match {
+    def tryToInt(intAsString: String): Int = {
+      Try(intAsString.toInt) match {
         case Success(value) if value >= 0 => value
         case Success(value) => throw new IllegalArgumentException(s"Value '$value' must be > 0 for the '$paramNameHint' param.")
         case Failure(_) =>
           throw new IllegalArgumentException(s"'$intAsString' could not be interpreted as int for the '$paramNameHint' param.")
       }
     }
+
+    optField.map(tryToInt).getOrElse(defaultValue)
   }
 
 }

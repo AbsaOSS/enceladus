@@ -1230,7 +1230,3 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
     }
   }
 }
-
-object DatasetControllerV3IntegrationSuite {
-
-}
