@@ -17,11 +17,18 @@ package za.co.absa.enceladus.dao
 
 abstract class MenasException(message: String, cause: Throwable) extends Exception(message, cause)
 
+abstract class NotRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
+
+object NotRetryableException {
+
+  final case class AuthentizationException(private val message: String,
+                                           private val cause: Throwable = None.orNull)
+    extends NotRetryableException(message, cause)
+}
+
 abstract class RetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
 
 object RetryableException {
-
-  type RetryableExceptions = Class[_ <: RetryableException]
 
   final case class DaoException(private val message: String,
                                 private val cause: Throwable = None.orNull)
@@ -42,13 +49,17 @@ object OptionallyRetryableException {
                                          private val cause: Throwable = None.orNull)
     extends OptionallyRetryableException(message, cause)
 
+  final case class ForbiddenException(private val message: String,
+                                      private val cause: Throwable = None.orNull)
+    extends OptionallyRetryableException(message, cause)
+
   final case class NotFoundException(private val message: String,
                                      private val cause: Throwable = None.orNull)
     extends OptionallyRetryableException(message, cause)
 
   val mapIntToOptionallyRetryableException: Map[Int, OptRetryableExceptions] = Map(
     401 -> classOf[UnauthorizedException],
-    403 -> classOf[UnauthorizedException],
+    403 -> classOf[ForbiddenException],
     404 -> classOf[NotFoundException]
   )
 }
