@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.OptRetryableExceptions
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup.{AvailabilitySetup, Fallback, RoundRobin}
 
@@ -37,7 +37,7 @@ object RestDaoFactory {
     apiBaseUrls: List[String],
     urlsRetryCount: Option[Int] = None,
     menasSetup: AvailabilitySetup = DefaultAvailabilitySetup,
-    optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] = Set.empty
+    optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty
   ): MenasRestDAO = {
     val startsWith = if (menasSetup == Fallback) {
       Option(0)

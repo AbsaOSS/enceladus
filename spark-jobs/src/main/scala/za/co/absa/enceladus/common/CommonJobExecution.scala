@@ -30,7 +30,8 @@ import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser,
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.dao.{MenasDAO, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
@@ -60,12 +61,12 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
-  protected val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] =
+  protected val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
     configReader
       .getIntListOption("menas.rest.optionallyRetryableExceptions")
       .getOrElse(Set.empty)
       .toSet
-      .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_: Int))
+      .map(mapIntToOptionallyRetryableException(_: Int))
 
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty

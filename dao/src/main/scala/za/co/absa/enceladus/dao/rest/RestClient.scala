@@ -90,7 +90,7 @@ protected class RestClient(authClient: AuthClient,
      * @param exceptionToThrow Instance of an exception that should be thrown if there are no retries left.
      */
     def handleUnauthorizedResponse(exceptionToThrow: OptionallyRetryableException): Unit = {
-      log.warn(s"Response - ${statusCode} : ${Option(response.getBody).getOrElse("None")}")
+      log.warn(s"Response - ${statusCode} : ${Option(response.getBody).getOrElse("<empty body>")}")
       log.warn(s"Unauthorized $method request for Menas URL: $url")
       if (retriesLeft <= 0) {
         throw exceptionToThrow

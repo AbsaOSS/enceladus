@@ -30,7 +30,8 @@ import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.{MenasDAO, OptionallyRetryableException}
+import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
@@ -42,7 +43,7 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 class HyperConformance (menasBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
                         menasSetup: Option[String] = None,
-                        optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] = Set.empty)
+                        optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty)
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -170,12 +171,12 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] =
+    val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
       if (conf.containsKey(menasAvailabilitySetupKey)) {
         conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
           .asScala
           .toSet
-          .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_: Int))
+          .map(mapIntToOptionallyRetryableException(_: Int))
       } else {
         Set.empty
       }
