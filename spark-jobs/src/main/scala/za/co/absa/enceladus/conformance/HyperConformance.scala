@@ -171,10 +171,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       None
     }
     val optionallyRetryableExceptions: Set[OptionallyRetryableException.OptRetryableExceptions] =
-      conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
-        .asScala
-        .toSet
-        .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_: Int))
+      if (conf.containsKey(menasAvailabilitySetupKey)) {
+        conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
+          .asScala
+          .toSet
+          .map(OptionallyRetryableException.mapIntToOptionallyRetryableException(_: Int))
+      } else {
+        Set.empty
+      }
 
     new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup, optionallyRetryableExceptions)
   }
