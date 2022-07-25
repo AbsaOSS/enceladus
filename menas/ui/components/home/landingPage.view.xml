@@ -30,13 +30,13 @@
             <Panel width="auto" class="sapUiResponsiveMargin" headerText="Totals" height="20rem">
                 <FlexBox height="100px" alignItems="Start" justifyContent="Center" class="sapUiResponsiveMargin">
                     <items>
-                        <GenericTile header="Datasets" class="sapUiResponsiveMargin" press="masterNavigate">
+                        <GenericTile header="Runs" class="sapUiResponsiveMargin" press="masterNavigate">
                             <customData>
-                                <core:CustomData key="target" value="datasets"></core:CustomData>
+                                <core:CustomData key="target" value="runs"></core:CustomData>
                             </customData>
                             <tileContent>
                                 <TileContent>
-                                    <NumericContent icon="sap-icon://database" value="{path: '/landingPageInfo/totalNumberDatasets', formatter: '.tileNumberFormatter'}"></NumericContent>
+                                    <NumericContent icon="sap-icon://physical-activity" value="{path: '/landingPageInfo/totalNumberRuns', formatter: '.tileNumberFormatter'}"></NumericContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
@@ -50,6 +50,16 @@
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
+                        <GenericTile header="Datasets" class="sapUiResponsiveMargin" press="masterNavigate">
+                            <customData>
+                                <core:CustomData key="target" value="datasets"></core:CustomData>
+                            </customData>
+                            <tileContent>
+                                <TileContent>
+                                    <NumericContent icon="sap-icon://database" value="{path: '/landingPageInfo/totalNumberDatasets', formatter: '.tileNumberFormatter'}"></NumericContent>
+                                </TileContent>
+                            </tileContent>
+                        </GenericTile>
                         <GenericTile header="Mapping Tables" class="sapUiResponsiveMargin" press="masterNavigate">
                             <customData>
                                 <core:CustomData key="target" value="mappingTables"></core:CustomData>
@@ -60,16 +70,6 @@
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
-                        <GenericTile header="Runs" class="sapUiResponsiveMargin" press="masterNavigate">
-                            <customData>
-                                <core:CustomData key="target" value="runs"></core:CustomData>
-                            </customData>
-                            <tileContent>
-                                <TileContent>
-                                    <NumericContent icon="sap-icon://physical-activity" value="{path: '/landingPageInfo/totalNumberRuns', formatter: '.tileNumberFormatter'}"></NumericContent>
-                                </TileContent>
-                            </tileContent>
-                        </GenericTile>
                         <GenericTile header="Dataset Properties" class="sapUiResponsiveMargin" press="masterNavigate">
                             <customData>
                                 <core:CustomData key="target" value="properties"></core:CustomData>
@@ -77,8 +77,6 @@
                             <tileContent>
                                 <TileContent>
                                     <NumericContent icon="sap-icon://multi-select" value="{path: '/landingPageInfo/totalNumberProperties', formatter: '.tileNumberFormatter'}"></NumericContent>
-                                </TileContent>
-                                <TileContent>
                                 </TileContent>
                             </tileContent>
                         </GenericTile>
