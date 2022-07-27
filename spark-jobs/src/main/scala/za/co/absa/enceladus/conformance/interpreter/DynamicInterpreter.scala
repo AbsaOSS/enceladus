@@ -27,9 +27,10 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter,
+  MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
+import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -38,6 +39,7 @@ import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -358,7 +360,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = persistStorageLevel match {
         case Some(level) => df.persist(level)
-        case None        => df.cache
+        case None        => df.cacheIfNotCachedYet()
       }
       cachedDf.filter(explodeFilter)
         .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")

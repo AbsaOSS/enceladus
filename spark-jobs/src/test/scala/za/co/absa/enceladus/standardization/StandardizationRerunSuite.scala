@@ -32,6 +32,7 @@ import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
@@ -109,7 +110,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
 
     val inputDf = getTestDataFrame(tmpFileName, schemaWithStringType)
 
-    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cacheIfNotCachedYet()
 
     val actualOutput = stdDf.dataAsString(truncate = false)
 
@@ -137,7 +138,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
     val inputDf = getTestDataFrame(tmpFileName, schemaStr)
 
     assertThrows[ValidationException] {
-      StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+      StandardizationInterpreter.standardize(inputDf, schema, "").cacheIfNotCachedYet()
     }
   }
 
@@ -162,7 +163,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
     val inputDf = getTestDataFrame(tmpFileName, schemaStr)
       .withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
 
-    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cacheIfNotCachedYet()
     val failedRecords = stdDf.filter(size(col(ErrorMessage.errorColumnName)) > 0).count
 
     assert(stdDf.schema.exists(field => field.name == ErrorMessage.errorColumnName))

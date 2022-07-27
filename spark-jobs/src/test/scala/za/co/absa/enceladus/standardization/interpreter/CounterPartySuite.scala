@@ -21,6 +21,7 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 case class Root(ConformedParty: Party, errCol: Seq[ErrorMessage] = Seq.empty)
 case class Party(key: Integer, clientKeys1: Seq[String], clientKeys2: Seq[String])
@@ -52,7 +53,7 @@ class CounterPartySuite extends AnyFunSuite with TZNormalizedSparkTestBase with 
       Root(Party(5, Seq(), null)),
       Root(Party(6, null, null))))
 
-    val std = StandardizationInterpreter.standardize(input, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(input, desiredSchema, "").cacheIfNotCachedYet()
 
     logDataFrameContent(std)
 

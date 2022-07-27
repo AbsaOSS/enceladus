@@ -23,6 +23,8 @@ import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTe
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with Matchers {
 
@@ -47,7 +49,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
     )
 
     val src = seq.toDF(fieldName)
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val result = std.as[BinaryRow].collect().toList
@@ -75,7 +77,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
     )
 
     val src = seq.toDF(fieldName)
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val result = std.as[BinaryRow].collect().toList
@@ -93,7 +95,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
 
     val src = seq.toDF(fieldName)
     val caught = intercept[ValidationException](
-      StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+      StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     )
 
     caught.errors.length shouldBe 1
@@ -119,7 +121,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
       )
 
       val src = seq.toDF(fieldName)
-      val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+      val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
       logDataFrameContent(std)
 
       val result = std.as[BinaryRow].collect().toList
@@ -149,7 +151,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
     )
 
     val src = seq.toDF(fieldName)
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val result = std.as[BinaryRow].collect().toList
@@ -182,7 +184,7 @@ class StandardizationInterpreter_BinarySuite extends AnyFunSuite with TZNormaliz
       )
 
       val src = seq.toDF(fieldName)
-      val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+      val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
       logDataFrameContent(std)
 
       val result = std.as[BinaryRow].collect().toList

@@ -22,6 +22,8 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -66,7 +68,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with TZNorm
     val src = seq.toDF("description","floatField", "doubleField")
     logDataFrameContent(src)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = Seq(
@@ -110,7 +112,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with TZNorm
       FractionalRow("03-Long", Option(-value.toFloat), Option(value.toDouble))
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
@@ -144,7 +146,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with TZNorm
         ErrorMessage.stdCastErr("doubleField", "NaN")))
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[FractionalRow].collect().sortBy(_.description).toList)
@@ -167,7 +169,7 @@ class StandardizationInterpreter_FractionalSuite extends AnyFunSuite with TZNorm
     val src = seq.toDF("description","floatField", "doubleField")
     logDataFrameContent(src)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithInfinity, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = Seq(

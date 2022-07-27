@@ -59,7 +59,12 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>spark-commons_${scala.compat.version}</artifactId>
+            <artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>${absa.spark.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-commons-test_${scala.compat.version}</artifactId>
             <version>${absa.spark.commons.version}</version>
         </dependency>
         <dependency>
@@ -116,6 +121,14 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
