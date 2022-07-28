@@ -89,6 +89,12 @@
             <timezone>Europe/Prague</timezone>
             <url>https://github.com/AdrianOlosutean</url>
         </developer>
+        <developer>
+            <id>lsulak</id>
+            <name>Ladislav Šulák </name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/lsulak</url>
+        </developer>
     </developers>
     <distributionManagement>
         <snapshotRepository>
