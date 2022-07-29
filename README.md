@@ -49,12 +49,17 @@ The project is comprised of four main components:
 
 ### REST API
 The REST API exposes the Enceladus endpoints for creating, reading, updating and deleting the models, as well as other functionalities.
-The main three models used are:
+The main models used are:
  - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
  - **Schema**: Specifies the schema towards which the dataset will be standardized
  - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
+ - **Property Definitions**: Datasets may be accompained by properties, but these are not free-form - they are bound by system-wide property definitions.
+ - **Runs**: Although not able to be defined by users, Runs provide important overview of Standardization & Conformance jobs that have been carried out.
 
-The REST API exposes a Swagger Documentation UI which documents all the HTTP exposed endpoints. It can be found at **REST_API_HOST/swagger-ui.html**
+The REST API exposes a Swagger Documentation UI which documents HTTP exposed endpoints. 
+It can be found at **REST_API_HOST/swagger-ui.html**
+In order to include legacy and development endpoint, too, please provide `-Dspring.profiles.active=dev` configuration option.
+
 
 ### Menas
 This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.   
