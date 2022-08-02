@@ -15,6 +15,7 @@ categories:
 - [Quick Start](#quick-start)
 - [Spark Jobs](#spark-jobs)
 - [Menas](#menas)
+- [REST API](#rest-api)
 - [General](#general)
 - [Details](#details)
 <!-- tocstop -->
@@ -38,7 +39,9 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 
 - [Configuration]({{ docs_path }}/usage/menas-config)
 - [Conformance Rules]({{ docs_path }}/usage/menas-conformance-rules)
-- [API]({{ docs_path }}/usage/menas-api)
+
+## REST API
+- [REST API Info]({{ docs_path }}/usage/rest-api)
 
 ## General
 
