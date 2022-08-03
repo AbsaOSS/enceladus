@@ -54,7 +54,7 @@ The main models used are:
  - **Schema**: Specifies the schema towards which the dataset will be standardized
  - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
  - **Property Definitions**: Datasets may be accompained by properties, but these are not free-form - they are bound by system-wide property definitions.
- - **Runs**: Although not able to be defined by users, Runs provide important overview of Standardization & Conformance jobs that have been carried out.
+ - **Runs**: Although not able to be defined by users, Runs provide important overview of _Standardization_ & _Conformance_ jobs that have been carried out.
 
 The REST API exposes a Swagger Documentation UI which documents HTTP exposed endpoints. 
 It can be found at **REST_API_HOST/swagger-ui.html**
