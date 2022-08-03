@@ -43,23 +43,22 @@ ___
 <!-- tocstop -->
 
 ## What is Enceladus?
-**Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. data for country designation which are **DE** in one source system and **Deutschland** in another, can be conformed to **Germany**).
+**Enceladus** is a **Dynamic Conformance Engine** which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference (e.g. data for country designation which are `DE` in one source system and `Deutschland` in another, can be conformed to `Germany`).
 
-The project is comprised of four main components:
+The project consists of four main components:
 
 ### REST API
 The REST API exposes the Enceladus endpoints for creating, reading, updating and deleting the models, as well as other functionalities.
 The main models used are:
- - **Dataset**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
- - **Schema**: Specifies the schema towards which the dataset will be standardized
- - **Mapping Table**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses **Germany**, which maps to the master reference **DE** in the mapping table)
- - **Property Definitions**: Datasets may be accompained by properties, but these are not free-form - they are bound by system-wide property definitions.
- - **Runs**: Although not able to be defined by users, Runs provide important overview of _Standardization_ & _Conformance_ jobs that have been carried out.
-
+- **Runs**: Although not able to be defined by users, Runs provide important overview of _Standardization_ & _Conformance_ jobs that have been carried out.
+ - **Schemas**: Specifies the schema towards which the dataset will be standardized
+ - **Datasets**: Specifies where the dataset will be read from on HDFS (**RAW**), the conformance rules that will be applied to it, and where it will land on HDFS once it is conformed (**PUBLISH**)
+ - **Mapping Tables**: Specifies where tables with master reference data can be found (parquet on HDFS), which are used when applying Mapping conformance rules (e.g. the dataset uses `Germany`, which maps to the master reference `DE` in the mapping table)
+ - **Dataset Property Definitions**: Datasets may be accompanied by properties, but these are not free-form - they are bound by system-wide property definitions.
+ 
 The REST API exposes a Swagger Documentation UI which documents HTTP exposed endpoints. 
-It can be found at **REST_API_HOST/swagger-ui.html**
+It can be found at `REST_API_HOST/swagger-ui.html`    
 In order to include legacy and development endpoint, too, please provide `-Dspring.profiles.active=dev` configuration option.
-
 
 ### Menas
 This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.   
@@ -100,19 +99,19 @@ The coverage reports are written in each module's `target` directory and aggrega
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
 - [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
  in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
-- **HADOOP_CONF_DIR** environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
+- `HADOOP_CONF_DIR` environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
 
 The _Spline UI_ can be omitted; in such case the **REST API** `spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying REST API
-Simply copy the **rest-api.war** file produced when building the project into Tomcat's webapps directory.
+Simply copy the `rest-api.war` file produced when building the project into Tomcat's webapps directory.
 Another possible method is building the Docker image based on the existing Dockerfile and deploying it as a container.
 
 #### Deploying Menas
 There are several ways of deploying Menas:
-- Tomcat deployment: copy the **menas.war** file produced when building the project into Tomcat's webapps directory. The **"apiUrl"** value in package.json should be set either before building or after building the artifact and modifying it in place
-- Docker deployment: build the Docker image based on the existing Dockerfile and deploy it as a container. The **API_URL** environment variable should be provided when running the container 
-- CDN deployment: copy the built contents in the **dist** directory into your preferred CDN server. The **"apiUrl"** value in package.json in the **dist** directory should be set
+- Tomcat deployment: copy the `menas.war` file produced when building the project into Tomcat's webapps directory. The `"apiUrl"` value in `package.json` should be set either before building or after building the artifact and modifying it in place
+- Docker deployment: build the Docker image based on the existing Dockerfile and deploy it as a container. The `API_URL` environment variable should be provided when running the container 
+- CDN deployment: copy the built contents in the `dist` directory into your preferred CDN server. The `"apiUrl"` value in `package.json` in the `dist` directory should be set
 
 #### Speed up initial loading time of REST API
 - Enable the HTTP compression
