@@ -24,6 +24,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreter_IntegralSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase{
 
@@ -61,7 +62,7 @@ class StandardizationInterpreter_IntegralSuite extends AnyFunSuite with TZNormal
       .csv(s"${pathToTestData}integral_overflow_test.csv")
     logDataFrameContent(src)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = Seq(

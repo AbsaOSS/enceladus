@@ -22,6 +22,7 @@ import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
   private val testCaseFactory = new SimpleTestCaseFactory()
@@ -41,7 +42,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
       testCaseFactory.getTestCase(true, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -52,7 +53,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
       testCaseFactory.getTestCase(false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -63,7 +64,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
       testCaseFactory.getTestCase(true, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))
@@ -74,7 +75,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
       testCaseFactory.getTestCase(false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))
