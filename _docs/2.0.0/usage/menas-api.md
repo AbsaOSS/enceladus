@@ -151,4 +151,4 @@ On failure, you will get a list of errors produced by the validation like bellow
 You have a key `errors`, which is a struct that will hold other keys from the JSON Payload sent and messages of the issues found with this key. 
 There can be multiple messages connected to one key.
 
-In this example we see that we have forgoten to send `name` of the entity and there was a mismatch between versions of export/import used. 
+In this example we see that we have forgotten to send `name` of the entity and there was a mismatch between versions of export/import used. 
