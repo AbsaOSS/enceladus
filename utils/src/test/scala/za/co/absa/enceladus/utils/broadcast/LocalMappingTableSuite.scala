@@ -54,7 +54,7 @@ class LocalMappingTableSuite extends AnyWordSpec with TZNormalizedSparkTestBase 
     """{"id":1,"arst":[{"a":"a1","b":11,"c":true}],"val":"v1","sval":{"d":"d1","e":21,"f":true},"flag":true}""" ::
       """{"id":2,"arst":[{"a":"a2","b":12,"c":false}],"val":"v2","sval":{"d":"d2","e":22,"f":false},"flag":true}""" ::
       """{"id":3,"arst":[{"a":"a3","b":13,"c":true}],"val":"v3","sval":{"d":"d3","e":23,"f":true},"flag":true}""" :: Nil
-    val dfComplexMt = JsonUtils.getDataFrameFromJson(spark, complexMt)
+    val dfComplexMt = JsonUtils.getDataFrameFromJson(complexMt)
 
     "be created" when {
       "a simple mapping table dataframe is provided" in {

@@ -23,8 +23,9 @@ trait TZNormalizedSparkTestBase extends SparkTestBase {
   override protected def initSpark(implicit sparkConfig: SparkTestConfig): SparkSession = {
     val result = super.initSpark
 
-    //TODO make conditional on empty SparkTestBase.timezone, once SparkCommons 0.3.0 will have been released
-    TimeZoneNormalizer.normalizeAll(result)
+    if (sparkConfig.timezone.isEmpty) {
+      TimeZoneNormalizer.normalizeAll(result)
+    }
 
     result
   }

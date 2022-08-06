@@ -21,6 +21,7 @@ import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.Nest
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory.{simpleMappingRule, simpleMappingRuleMultipleOutputs, simpleMappingRuleMultipleOutputsWithDefaults, simpleMappingRuleWithDefaultValue}
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class MappingGroupExplodeSuite extends MappingInterpreterSuite {
   import spark.implicits._
@@ -34,7 +35,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -52,7 +53,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -70,7 +71,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -88,7 +89,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -106,7 +107,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -125,7 +126,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1",
         $"array2", $"errCol", $"conformedNum1", $"conformedInt")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -143,7 +144,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum2")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -161,7 +162,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"conformedNum3", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -180,7 +181,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2",
         $"conformedNum3", $"conformedInt" , $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = dfOut.schema.treeString
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -198,7 +199,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -216,7 +217,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -234,7 +235,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -252,7 +253,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -270,7 +271,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -288,7 +289,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -306,7 +307,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -324,7 +325,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -342,7 +343,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -360,7 +361,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -378,7 +379,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
@@ -398,7 +399,7 @@ class MappingGroupExplodeSuite extends MappingInterpreterSuite {
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf2)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
-      .cache
+      .cacheIfNotCachedYet()
 
     val actualSchema = cleanupContainsNullProperty(dfOut.schema.treeString)
     val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
