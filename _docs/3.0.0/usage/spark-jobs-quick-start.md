@@ -88,7 +88,7 @@ spark-jobs_<build_version>.jar \
 --row-tag <tag>
 ```
 
-Here, nothing new is added for the quick run. Of course, there might be special options which are all documented in the [run documentation](https://absaoss.github.io/enceladus/docs/3.0.0/usage/run)
+Here, nothing new is added for the quick run. Of course, there might be special options which are all documented in the [run documentation](run)
 
 ## Running with helper scripts
 

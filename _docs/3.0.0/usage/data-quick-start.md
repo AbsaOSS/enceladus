@@ -23,7 +23,7 @@ Data quality is all about 2 things:
 
 ## Spline
 
-but as Spline is under heavy development, we will postpone extensive documentation about it. Enceladus currently runs with version 0.3.X and it works fine out of the box. Spline 0.3.X just needs to be deployed next to Menas.
+As Spline is under heavy development, we will postpone extensive documentation about it. Enceladus currently runs with version 0.7.X and it works fine out of the box. Spline 0.7.X just needs to be deployed next to _Menas_/_Rest Api_.
 
 Data for Spline are recorded even if the Spline UI is not up and running. This means they can be viewed later without the need to care about it now.
 
