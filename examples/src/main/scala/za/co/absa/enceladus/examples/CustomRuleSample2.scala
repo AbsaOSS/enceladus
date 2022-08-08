@@ -41,7 +41,7 @@ object CustomRuleSample2 extends CustomRuleSampleFs {
   def main(args: Array[String]) {
     // scalastyle:off magic.number
     val conf = ConfigFactory.load()
-    val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+    val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)

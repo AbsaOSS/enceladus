@@ -20,9 +20,9 @@ import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetad
 object HyperConformanceAttributes {
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "menas.rest.uri"
-  val menasUriRetryCountKey = "menas.rest.retryCount"
-  val menasAvailabilitySetupKey = "menas.rest.availability.setup"
+  val menasUriKey = "enceladus.rest.uri"
+  val menasUriRetryCountKey = "enceladus.rest.retryCount"
+  val menasAvailabilitySetupKey = "enceladus.rest.availability.setup"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"
   val datasetNameKey = "dataset.name"
