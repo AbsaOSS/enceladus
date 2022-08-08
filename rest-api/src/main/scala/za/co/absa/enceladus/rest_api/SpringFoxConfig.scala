@@ -57,7 +57,8 @@ class SpringFoxConfig extends ProjectMetadata {
 
     val v3paths = Seq(
       regex("/api-v3/datasets.*"), regex("/api-v3/schemas.*"),
-      regex("/api-v3/mapping-tables.*"), regex("/api-v3/property-definitions.*")
+      regex("/api-v3/mapping-tables.*"), regex("/api-v3/property-definitions.*"),
+      regex("/api-v3/runs.*")
     )
 
     val paths: Seq[Predicate[String]] = if (isDev) {
