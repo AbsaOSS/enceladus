@@ -14,7 +14,7 @@
 
 # The REST API URI can specify multiple semi-colon-separated base URIs
 # each can have multiple comma-separated hosts, these are used for fault-tolerance
-enceladus.rest.uri="http://localhost:8080,host2:9000/menas;https://localhost:8080,host2:9000/menas"
+enceladus.rest.uri="http://localhost:8080,host2:9000/rest_api;https://localhost:8080,host2:9000/rest_api"
 
 # system-wide time zone
 timezone="UTC"
