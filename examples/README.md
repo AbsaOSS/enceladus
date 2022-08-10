@@ -39,9 +39,9 @@
 * `<ProcessEndTime>` - End of the processing; String timestamp in format ‘dd-MM-yyyy HH:mm:ss’ or ‘dd-MM-yyyy HH:mm:ss ZZZ’(doesn't have to be the same for Raw and Source)
 * `<RecordCount>` - Number of records, should be the same for Raw and Source. In case of an unknown value, provide `""`(empty string) and ensure [`control.info.validation` configuration](https://absaoss.github.io/enceladus/docs/usage/config) is set to `Warning` or `None`
 
-[Template for bare minimum required data](examples/info_files/_INFO_file_template_minimal.json)
+[Template for bare minimum required data](info_files/_INFO_file_template_minimal.json)
 
-[Template of recommended _INFO file content](examples/info_files/_INFO_file_template_recommended.json)
+[Template of recommended _INFO file content](info_files/_INFO_file_template_recommended.json)
 
 ## Custom Rule Implementations and usage
 ### Requirements
