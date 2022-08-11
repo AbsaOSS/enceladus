@@ -23,7 +23,6 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
-import za.co.absa.standardization.Standardization
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationJob extends StandardizationExecution {
@@ -52,8 +51,7 @@ object StandardizationJob extends StandardizationExecution {
     }
 
     try {
-      handleControlInfoValidation()
-      val result = Standardization.standardize(inputData, schema, standardizationConfig)
+      val result = standardize(inputData, schema, standardizationConfig)
       processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
@@ -62,5 +60,3 @@ object StandardizationJob extends StandardizationExecution {
     }
   }
 }
-
-//object EnceladusStandardizationConfig extends DefaultStandardizationConfig

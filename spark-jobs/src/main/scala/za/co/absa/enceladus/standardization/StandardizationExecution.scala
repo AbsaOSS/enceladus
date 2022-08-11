@@ -35,7 +35,14 @@ import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
 import za.co.absa.enceladus.utils.types.Defaults
+import za.co.absa.standardization.Standardization
 import za.co.absa.standardization.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.validation.{ValidationException => EnceladusValidationException}
+import za.co.absa.standardization.{ValidationException => StandardizationValidationException}
+import za.co.absa.standardization.config.{StandardizationConfig => StandardizationLibraryConfig}
+
+import java.io.{PrintWriter, StringWriter}
+import scala.util.control.NonFatal
 
 
 trait StandardizationExecution extends CommonJobExecution {
@@ -138,6 +145,24 @@ trait StandardizationExecution extends CommonJobExecution {
       None
     } else {
       Option(columnNameOfCorruptRecord)
+    }
+  }
+
+  protected def standardize(inputData: DataFrame, schema: StructType, standardizationConfig: StandardizationLibraryConfig)
+                              (implicit spark: SparkSession): DataFrame = {
+    try {
+      handleControlInfoValidation()
+      Standardization.standardize(inputData, schema, standardizationConfig)
+    } catch {
+      case e@StandardizationValidationException(msg, errors) =>
+        val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
+        spark.setControlMeasurementError("Schema Validation", errorDescription, "")
+        throw e
+      case NonFatal(e) if !e.isInstanceOf[EnceladusValidationException] || !e.isInstanceOf[StandardizationValidationException] =>
+        val sw = new StringWriter
+        e.printStackTrace(new PrintWriter(sw))
+        spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
+        throw e
     }
   }
 
