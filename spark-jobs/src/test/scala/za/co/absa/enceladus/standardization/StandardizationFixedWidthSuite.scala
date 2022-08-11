@@ -21,19 +21,23 @@ import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.stages.PlainSchemaGenerator
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar{
-  private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")
+
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
   private implicit val defaults: Defaults = GlobalDefaults
@@ -57,7 +61,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_expected_non_trimmed.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(expected == actual)
@@ -76,7 +80,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_expected_trimmed.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(expected == actual)
@@ -95,7 +99,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_expected_with_nulls.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(expected == actual)

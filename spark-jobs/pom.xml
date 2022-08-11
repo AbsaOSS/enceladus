@@ -55,6 +55,12 @@
             <version>${atum.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-data-standardization_2.11</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+
         <!-- Data formats support -->
         <dependency>
             <groupId>com.databricks</groupId>

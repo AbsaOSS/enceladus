@@ -23,7 +23,8 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.standardization.Standardization
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationJob extends StandardizationExecution {
   private val jobName: String = "Enceladus Standardization"
@@ -33,7 +34,6 @@ object StandardizationJob extends StandardizationExecution {
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
-    implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
     implicit val configReader: ConfigReader = new ConfigReader()
 
@@ -44,9 +44,16 @@ object StandardizationJob extends StandardizationExecution {
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
+    val metadataColumns = BasicMetadataColumnsConfig.fromDefault().copy(prefix = "enceladus")
+    val standardizationConfigWithoutTZ = BasicStandardizationConfig.fromDefault().copy(metadataColumns = metadataColumns)
+    val standardizationConfig = configReader.getStringOption("timezone") match {
+      case Some(tz) => standardizationConfigWithoutTZ.copy(timezone = tz)
+      case None => standardizationConfigWithoutTZ
+    }
 
     try {
-      val result = standardize(inputData, schema, cmd)
+      handleControlInfoValidation()
+      val result = Standardization.standardize(inputData, schema, standardizationConfig)
       processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
@@ -55,3 +62,5 @@ object StandardizationJob extends StandardizationExecution {
     }
   }
 }
+
+//object EnceladusStandardizationConfig extends DefaultStandardizationConfig

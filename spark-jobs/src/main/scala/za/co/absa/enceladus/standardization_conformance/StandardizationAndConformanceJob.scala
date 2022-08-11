@@ -23,7 +23,8 @@ import za.co.absa.enceladus.standardization_conformance.config.StandardizationCo
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.standardization.Standardization
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
   private val jobName = "Enceladus Standardization&Conformance"
@@ -33,7 +34,6 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
-    implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
     implicit val configReader: ConfigReader = new ConfigReader()
 
@@ -45,8 +45,16 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     val schema = prepareStandardization(args, menasCredentials, preparationResult)
     val stdInputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
 
+    val metadataColumns = BasicMetadataColumnsConfig.fromDefault().copy(prefix = "enceladus")
+    val standardizationConfigWithoutTZ = BasicStandardizationConfig.fromDefault().copy(metadataColumns = metadataColumns)
+    val standardizationConfig = configReader.getStringOption("timezone") match {
+      case Some(tz) => standardizationConfigWithoutTZ.copy(timezone = tz)
+      case None => standardizationConfigWithoutTZ
+    }
+
     try {
-      val standardized = standardize(stdInputData, schema, cmd)
+      handleControlInfoValidation()
+      val standardized = Standardization.standardize(stdInputData, schema, standardizationConfig)
       processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)

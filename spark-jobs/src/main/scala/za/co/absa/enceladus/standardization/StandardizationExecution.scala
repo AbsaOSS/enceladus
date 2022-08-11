@@ -15,16 +15,13 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
@@ -32,18 +29,14 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
 import za.co.absa.enceladus.utils.types.Defaults
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.standardization.stages.PlainSchemaGenerator
 
-import scala.util.control.NonFatal
 
 trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
@@ -145,28 +138,6 @@ trait StandardizationExecution extends CommonJobExecution {
       None
     } else {
       Option(columnNameOfCorruptRecord)
-    }
-  }
-
-  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
-                              (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
-    //scalastyle:on parameter.number
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
-
-    try {
-      handleControlInfoValidation()
-      StandardizationInterpreter.standardize(inputData, schema, cmd.rawFormat,
-        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
-    } catch {
-      case e@ValidationException(msg, errors) =>
-        val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
-        spark.setControlMeasurementError("Schema Validation", errorDescription, "")
-        throw e
-      case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
-        val sw = new StringWriter
-        e.printStackTrace(new PrintWriter(sw))
-        spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
-        throw e
     }
   }
 
