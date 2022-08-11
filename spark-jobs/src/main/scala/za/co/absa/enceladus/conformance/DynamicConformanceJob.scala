@@ -33,9 +33,10 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
+    val restApiAvailabilitySetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
+    implicit val dao: MenasDAO = RestDaoFactory
+      .getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetupValue)
     implicit val configReader: ConfigReader = new ConfigReader()
 
     val preparationResult = prepareJob()
@@ -44,7 +45,7 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     try {
       val result = conform(inputData, preparationResult)
-      processConformanceResult(args, result, preparationResult, menasCredentials)
+      processConformanceResult(args, result, preparationResult, restApiCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {

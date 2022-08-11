@@ -49,7 +49,7 @@ trait CsvFileFixture extends MockitoSugar with TempFileFixture with TZNormalized
   protected val dataSet: Dataset = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
   protected val argumentsBase: FixtureParam =
     "--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-    "--menas-auth-keytab src/test/resources/user.keytab.example " +
+    "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format csv --header false "
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */

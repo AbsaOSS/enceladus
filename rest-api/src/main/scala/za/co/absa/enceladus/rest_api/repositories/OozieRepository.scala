@@ -344,10 +344,10 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
 
   private def getCredsOrKeytabArgument(filename: String, protocol: String): String = {
     if (filename.toLowerCase.trim.endsWith(".properties")) {
-      s"""<arg>--menas-credentials-file</arg>
+      s"""<arg>--rest-api-credentials-file</arg>
          |<arg>$protocol$filename</arg>""".stripMargin
     } else {
-      s"""<arg>--menas-auth-keytab</arg>
+      s"""<arg>--rest-api-auth-keytab</arg>
          |<arg>$protocol$filename</arg>""".stripMargin
     }
   }

@@ -357,13 +357,13 @@ IF "%1"=="--debug-set-raw-path" (
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--menas-credentials-file" (
+IF "%1"=="--rest-api-credentials-file" (
     SET MENAS_CREDENTIALS_FILE=%2
     SHIFT
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--menas-auth-keytab" (
+IF "%1"=="--rest-api-auth-keytab" (
     SET MENAS_AUTH_KEYTAB=%2
     SHIFT
     SHIFT
@@ -481,7 +481,7 @@ SET VALID="1"
 CALL :validate --dataset-name,%DATASET_NAME%
 CALL :validate --dataset-version,%DATASET_VERSION%
 CALL :validate --report-date,%REPORT_DATE%
-CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-auth-keytab,%MENAS_AUTH_KEYTAB%
+CALL :validate_either --rest-api-credentials-file,%MENAS_CREDENTIALS_FILE%,--rest-api-auth-keytab,%MENAS_AUTH_KEYTAB%
 
 :: For now this check is disabled in Windows version of the script
 :: IF NOT "%MASTER%"=="yarn" (
@@ -592,8 +592,8 @@ SET CMD_LINE=%CMD_LINE% --conf spark.executor.extraJavaOptions=%ADDITIONAL_JVM_E
 SET CMD_LINE=%CMD_LINE% --class %CLASS% %JAR%
 
 :: Adding command line parameters that go AFTER the jar file
-IF DEFINED MENAS_AUTH_KEYTAB SET CMD_LINE=%CMD_LINE% --menas-auth-keytab %MENAS_AUTH_KEYTAB%
-IF DEFINED MENAS_CREDENTIALS_FILE SET CMD_LINE=%CMD_LINE% --menas-credentials-file %MENAS_CREDENTIALS_FILE%
+IF DEFINED MENAS_AUTH_KEYTAB SET CMD_LINE=%CMD_LINE% --rest-api-auth-keytab %MENAS_AUTH_KEYTAB%
+IF DEFINED MENAS_CREDENTIALS_FILE SET CMD_LINE=%CMD_LINE% --rest-api-credentials-file %MENAS_CREDENTIALS_FILE%
 IF DEFINED DATASET_NAME SET CMD_LINE=%CMD_LINE% --dataset-name %DATASET_NAME%
 IF DEFINED DATASET_VERSION SET CMD_LINE=%CMD_LINE% --dataset-version %DATASET_VERSION%
 IF DEFINED REPORT_DATE SET CMD_LINE=%CMD_LINE% --report-date %REPORT_DATE%

@@ -26,26 +26,26 @@ import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 
 import scala.io.Source
 
-sealed abstract class MenasCredentials {
+sealed abstract class RestApiCredentials {
   val username: String
 }
 
-case class MenasPlainCredentials(username: String, password: String) extends MenasCredentials
+case class RestApiPlainCredentials(username: String, password: String) extends RestApiCredentials
 
-case class MenasKerberosCredentials(username: String, keytabLocation: String) extends MenasCredentials
+case class RestApiKerberosCredentials(username: String, keytabLocation: String) extends RestApiCredentials
 
-case object InvalidMenasCredentials extends MenasCredentials {
+case object InvalidRestApiCredentials extends RestApiCredentials {
   override val username: String = "invalid-credentials"
 }
 
-object MenasPlainCredentials {
+object RestApiPlainCredentials {
   /**
-    * Instantiates [[MenasCredentials]] from a credentials file located either on the local file system or on HDFS.
+    * Instantiates [[RestApiCredentials]] from a credentials file located either on the local file system or on HDFS.
     *
-    * @param path A path to a Menas Credentials file.
-    * @return An instance of Menas Credentials.
+    * @param path A path to a REST API Credentials file.
+    * @return An instance of REST API Credentials.
     */
-  def fromFile(path: String)(implicit spark: SparkSession): MenasPlainCredentials = {
+  def fromFile(path: String)(implicit spark: SparkSession): RestApiPlainCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
     val confString = fs match {
@@ -57,18 +57,18 @@ object MenasPlainCredentials {
       }
     }
     val conf = ConfigFactory.parseString(confString)
-    MenasPlainCredentials(conf.getString("username"), conf.getString("password"))
+    RestApiPlainCredentials(conf.getString("username"), conf.getString("password"))
   }
 }
 
-object MenasKerberosCredentials {
+object RestApiKerberosCredentials {
   /**
-    * Instantiates [[MenasCredentials]] from file either on the local file system or on HDFS.
+    * Instantiates [[RestApiCredentials]] from file either on the local file system or on HDFS.
     *
     * @param path A path to a Kerberos keytab file.
-    * @return An instance of Menas Credentials.
+    * @return An instance of REST API Credentials.
     */
-  def fromFile(path: String)(implicit spark: SparkSession): MenasKerberosCredentials = {
+  def fromFile(path: String)(implicit spark: SparkSession): RestApiKerberosCredentials = {
     val fs =  FileSystemUtils.getFileSystemFromPath(path)(spark.sparkContext.hadoopConfiguration)
 
     val localKeyTabPath = fs match {
@@ -84,6 +84,6 @@ object MenasKerberosCredentials {
     val keytab = KeyTab.getInstance(localKeyTabPath)
     val username = keytab.getOneName.getName
 
-    MenasKerberosCredentials(username, localKeyTabPath)
+    RestApiKerberosCredentials(username, localKeyTabPath)
   }
 }

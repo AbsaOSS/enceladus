@@ -16,26 +16,26 @@
 package za.co.absa.enceladus.dao.rest.auth
 
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
+import za.co.absa.enceladus.dao.auth.RestApiPlainCredentials
 import za.co.absa.enceladus.utils.fs.LocalFsUtils
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class MenasPlainCredentialsSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
+class RestApiPlainCredentialsSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
 
-  "MenasPlainCredentials" should {
+  "RestApiPlainCredentials" should {
     "be read from *.conf" in {
-      val credentials = MenasPlainCredentials.fromFile("src/test/resources/menas-credentials.conf")
-      assert(credentials == MenasPlainCredentials("user", "changeme"))
+      val credentials = RestApiPlainCredentials.fromFile("src/test/resources/rest-api-credentials.conf")
+      assert(credentials == RestApiPlainCredentials("user", "changeme"))
     }
 
     "be read from *.properties" in {
-      val credentials = MenasPlainCredentials.fromFile("src/test/resources/menas-credentials.properties")
-      assert(credentials == MenasPlainCredentials("user", "changeme"))
+      val credentials = RestApiPlainCredentials.fromFile("src/test/resources/rest-api-credentials.properties")
+      assert(credentials == RestApiPlainCredentials("user", "changeme"))
     }
 
     "be read from *.yml" in {
-      val credentials = MenasPlainCredentials.fromFile("src/test/resources/menas-credentials.yml")
-      assert(credentials == MenasPlainCredentials("user", "changeme"))
+      val credentials = RestApiPlainCredentials.fromFile("src/test/resources/rest-api-credentials.yml")
+      assert(credentials == RestApiPlainCredentials("user", "changeme"))
     }
 
     "replace tilde ('~') with home dir" in {

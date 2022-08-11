@@ -36,7 +36,7 @@ import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasu
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
+import za.co.absa.enceladus.dao.auth.RestApiPlainCredentials
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -61,7 +61,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
     private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
 
     def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig): Assertion = {
-      prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
+      prepareStandardization("some app args".split(' '), RestApiPlainCredentials("user", "pass"), prepResult)
       testDataset.write.csv(stdPath)
 
       // Atum framework initialization is part of the 'prepareStandardization'

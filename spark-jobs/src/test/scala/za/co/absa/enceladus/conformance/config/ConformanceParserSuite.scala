@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.config
 import java.time.ZonedDateTime
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.ConformanceExecution
-import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.auth.{RestApiKerberosCredentials, RestApiPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
@@ -31,10 +31,10 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
   private val hdfsRawPath = "/bigdatahdfs/datalake/raw/system/feed"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
-  private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
+  private val restApiCredentialsFile = "src/test/resources/rest-api-credentials.conf"
+  private val restApiCredentials = RestApiPlainCredentials.fromFile(restApiCredentialsFile)
   private val keytabPath = "src/test/resources/user.keytab.example"
-  private val menasKeytab = MenasKerberosCredentials("user@EXAMPLE.COM", keytabPath)
+  private val restApiKeytab = RestApiKerberosCredentials("user@EXAMPLE.COM", keytabPath)
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None
@@ -61,16 +61,16 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
   implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
 
   test("Test credentials file parsing "){
-    val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
+    val credentials = RestApiPlainCredentials.fromFile(restApiCredentialsFile)
 
     assert(credentials.username == "user")
     assert(credentials.password == "changeme")
   }
 
   test("Test keytab file parsing "){
-    val credentials = MenasKerberosCredentials.fromFile(keytabPath)
+    val credentials = RestApiKerberosCredentials.fromFile(keytabPath)
 
-    assert(credentials === menasKeytab)
+    assert(credentials === restApiKeytab)
   }
 
   test("folder-prefix parameter") {
@@ -80,9 +80,9 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile))
+        "--rest-api-credentials-file", restApiCredentialsFile))
 
-    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualPlainRestApiCredentials = cmdConfigNoFolderPrefix.restApiCredentialsFactory.getInstance()
 
     assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
@@ -90,7 +90,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
     assert(cmdConfigNoFolderPrefix.reportVersion.get === reportVersion)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
     assert(cmdConfigNoFolderPrefix.publishPathOverride.isEmpty)
-    assert(actualPlainMenasCredentials === menasCredentials)
+    assert(actualPlainRestApiCredentials === restApiCredentials)
 
     val cmdConfigFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
@@ -98,10 +98,10 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-auth-keytab", keytabPath,
+        "--rest-api-auth-keytab", keytabPath,
         "--folder-prefix", folderPrefix))
 
-    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualRestApiKerberosCredentials = cmdConfigFolderPrefix.restApiCredentialsFactory.getInstance()
 
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
@@ -110,7 +110,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.publishPathOverride.isEmpty)
-    assert(actualMenasKerberosCredentials === menasKeytab)
+    assert(actualRestApiKerberosCredentials === restApiKeytab)
 
     val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
@@ -118,7 +118,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride,
         "--folder-prefix", folderPrefix))
 
@@ -159,7 +159,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile
+        "--rest-api-credentials-file", restApiCredentialsFile
       ))
     val cmdConfigFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
@@ -167,7 +167,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--folder-prefix", folderPrefix))
     val cmdConfigPublishPathOverride = ConformanceConfig.getFromArguments(
       Array(
@@ -175,7 +175,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val cmdConfigPublishPathOverrideAndFolderPrefix = ConformanceConfig.getFromArguments(
       Array(
@@ -184,7 +184,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
         "--folder-prefix", folderPrefix,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--debug-set-publish-path", hdfsPublishPathOverride))
     val publishPathNoFolderPrefix = TestDynamicConformance
       .getPathConfig(cmdConfigNoFolderPrefix, conformanceDataset, cmdConfigNoFolderPrefix.reportVersion.get).publish.path

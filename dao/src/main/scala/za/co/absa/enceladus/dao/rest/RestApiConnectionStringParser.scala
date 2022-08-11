@@ -17,7 +17,7 @@ package za.co.absa.enceladus.dao.rest
 
 import za.co.absa.enceladus.dao.DaoException
 
-object MenasConnectionStringParser {
+object RestApiConnectionStringParser {
 
   private val hostsRegex = """^\s*http(?:s)?://([^\s]+?)(?:/[^\s]*)?\s*$""".r
 
@@ -40,7 +40,7 @@ object MenasConnectionStringParser {
           multiHostUrl.replace(hosts, host)
         }
       case _ =>
-        throw DaoException("Malformed Menas connection string")
+        throw DaoException("Malformed REST API connection string")
     }
   }
 

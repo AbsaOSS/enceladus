@@ -37,17 +37,18 @@ object StandardizationJob extends StandardizationExecution {
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
     implicit val configReader: ConfigReader = new ConfigReader()
 
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
+    val restApiAvailabilitySetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
+    implicit val dao: MenasDAO = RestDaoFactory
+      .getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetupValue)
 
     val preparationResult = prepareJob()
-    val schema =  prepareStandardization(args, menasCredentials, preparationResult)
+    val schema =  prepareStandardization(args, restApiCredentials, preparationResult)
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
 
     try {
       val result = standardize(inputData, schema, cmd)
-      processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
+      processStandardizationResult(args, result, preparationResult, schema, cmd, restApiCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
     } finally {

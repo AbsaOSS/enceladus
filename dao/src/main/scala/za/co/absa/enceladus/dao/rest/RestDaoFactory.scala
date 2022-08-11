@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.auth.MenasCredentials
+import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup.{Fallback, AvailabilitySetup, RoundRobin}
 
 object RestDaoFactory {
@@ -31,11 +31,11 @@ object RestDaoFactory {
 
   private val restTemplate = RestTemplateSingleton.instance
 
-  def getInstance(authCredentials: MenasCredentials,
+  def getInstance(authCredentials: RestApiCredentials,
                   apiBaseUrls: List[String],
                   urlsRetryCount: Option[Int] = None,
-                  menasSetup: AvailabilitySetup = DefaultAvailabilitySetup): MenasRestDAO = {
-    val startsWith = if (menasSetup == Fallback) {
+                  restApiAvailabilitySetup: AvailabilitySetup = DefaultAvailabilitySetup): MenasRestDAO = {
+    val startsWith = if (restApiAvailabilitySetup == Fallback) {
       Option(0)
     } else {
       None

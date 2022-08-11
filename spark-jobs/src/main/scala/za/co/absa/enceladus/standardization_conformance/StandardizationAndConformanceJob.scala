@@ -37,17 +37,17 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
     implicit val configReader: ConfigReader = new ConfigReader()
 
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
+    val restApiSetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiSetupValue)
 
     val preparationResult = prepareJob()
-    val schema = prepareStandardization(args, menasCredentials, preparationResult)
+    val schema = prepareStandardization(args, restApiCredentials, preparationResult)
     val stdInputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
 
     try {
       val standardized = standardize(stdInputData, schema, cmd)
-      processStandardizationResult(args, standardized, preparationResult, schema, cmd, menasCredentials)
+      processStandardizationResult(args, standardized, preparationResult, schema, cmd, restApiCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
       standardized.unpersist()
@@ -55,7 +55,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
       prepareConformance(preparationResult)
       val confInputData = readConformanceInputData(preparationResult.pathCfg)
       val result = conform(confInputData, preparationResult)
-      processConformanceResult(args, result, preparationResult, menasCredentials)
+      processConformanceResult(args, result, preparationResult, restApiCredentials)
 
       // post processing deliberately rereads the output ... same as above
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)

@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization.config
 
 import java.time.ZonedDateTime
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.dao.auth.{MenasKerberosCredentials, MenasPlainCredentials}
+import za.co.absa.enceladus.dao.auth.{RestApiKerberosCredentials, RestApiPlainCredentials}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationExecution
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
@@ -31,10 +31,10 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
   private val hdfsRawPath = "/bigdatahdfs/datalake/raw/system/feed"
   private val hdfsRawPathOverride = "/bigdatahdfs/datalake/raw/system/feed/override"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
-  private val menasCredentialsFile = "src/test/resources/menas-credentials.conf"
-  private val menasCredentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
+  private val restApiCredentialsFile = "src/test/resources/rest-api-credentials.conf"
+  private val restApiCredentials = RestApiPlainCredentials.fromFile(restApiCredentialsFile)
   private val keytabPath = "src/test/resources/user.keytab.example"
-  private val menasKeytab = MenasKerberosCredentials("user@EXAMPLE.COM", keytabPath)
+  private val restApiKeytab = RestApiKerberosCredentials("user@EXAMPLE.COM", keytabPath)
   private val datasetName = "test-dataset-name"
   private val datasetVersion = 2
   private val description = None
@@ -60,16 +60,16 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
   private object TestStandardization extends StandardizationExecution
 
   test("Test credentials file parsing "){
-    val credentials = MenasPlainCredentials.fromFile(menasCredentialsFile)
+    val credentials = RestApiPlainCredentials.fromFile(restApiCredentialsFile)
 
     assert(credentials.username == "user")
     assert(credentials.password == "changeme")
   }
 
   test("Test keytab file parsing "){
-    val credentials = MenasKerberosCredentials.fromFile(keytabPath)
+    val credentials = RestApiKerberosCredentials.fromFile(keytabPath)
 
-    assert(credentials === menasKeytab)
+    assert(credentials === restApiKeytab)
   }
 
   test("folder-prefix parameter") {
@@ -79,10 +79,10 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--raw-format", rawFormat))
 
-    val actualPlainMenasCredentials = cmdConfigNoFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualPlainRestApiCredentials = cmdConfigNoFolderPrefix.restApiCredentialsFactory.getInstance()
 
     assert(cmdConfigNoFolderPrefix.datasetName === datasetName)
     assert(cmdConfigNoFolderPrefix.datasetVersion === datasetVersion)
@@ -91,7 +91,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
     assert(cmdConfigNoFolderPrefix.rawFormat === rawFormat)
     assert(cmdConfigNoFolderPrefix.folderPrefix.isEmpty)
     assert(cmdConfigNoFolderPrefix.rawPathOverride.isEmpty)
-    assert(actualPlainMenasCredentials === menasCredentials)
+    assert(actualPlainRestApiCredentials === restApiCredentials)
 
     val cmdConfigFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
@@ -99,11 +99,11 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-auth-keytab", keytabPath,
+        "--rest-api-auth-keytab", keytabPath,
         "--raw-format", rawFormat,
         "--folder-prefix", folderPrefix))
 
-    val actualMenasKerberosCredentials = cmdConfigFolderPrefix.menasCredentialsFactory.getInstance()
+    val actualRestApiKerberosCredentials = cmdConfigFolderPrefix.restApiCredentialsFactory.getInstance()
 
     assert(cmdConfigFolderPrefix.datasetName === datasetName)
     assert(cmdConfigFolderPrefix.datasetVersion === datasetVersion)
@@ -113,7 +113,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
     assert(cmdConfigFolderPrefix.folderPrefix.nonEmpty)
     assert(cmdConfigFolderPrefix.folderPrefix.get === folderPrefix)
     assert(cmdConfigFolderPrefix.rawPathOverride.isEmpty)
-    assert(actualMenasKerberosCredentials === menasKeytab)
+    assert(actualRestApiKerberosCredentials === restApiKeytab)
   }
 
   test("Test buildRawPath") {
@@ -143,7 +143,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--raw-format", rawFormat))
     val cmdConfigFolderPrefix = StandardizationConfig.getFromArguments(
       Array(
@@ -151,7 +151,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--folder-prefix", folderPrefix,
         "--raw-format", rawFormat))
     val cmdConfigRawPathOverride = StandardizationConfig.getFromArguments(
@@ -160,7 +160,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))
     val cmdConfigRawPathOverrideAndFolderPrefix = StandardizationConfig.getFromArguments(
@@ -169,7 +169,7 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
         "--dataset-version", datasetVersion.toString,
         "--report-date", reportDate,
         "--report-version", reportVersion.toString,
-        "--menas-credentials-file", menasCredentialsFile,
+        "--rest-api-credentials-file", restApiCredentialsFile,
         "--folder-prefix", folderPrefix,
         "--debug-set-raw-path", hdfsRawPathOverride,
         "--raw-format", rawFormat))

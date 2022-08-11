@@ -61,7 +61,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalize
 
   private val argumentsBase =
     ("--dataset-name FixedLength --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format cobol --cobol-encoding ascii").split(' ')
 
   def withFixture(test: OneArgTest): Outcome = {

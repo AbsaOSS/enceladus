@@ -262,11 +262,11 @@ case $key in
     DEBUG_SET_RAW_PATH="$2"
     shift 2 # past argument and value
     ;;
-  --menas-credentials-file)
+  --rest-api-credentials-file)
     MENAS_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
     ;;
-  --menas-auth-keytab)
+  --rest-api-auth-keytab)
     MENAS_AUTH_KEYTAB="$2"
     shift 2 # past argument and value
     ;;
@@ -373,7 +373,7 @@ if [ "$HELP_CALL" == "0" ]; then
     validate "--dataset-version" "$DATASET_VERSION"
     validate "--report-date" "$REPORT_DATE"
 
-    validate_either "--menas-credentials-file" "$MENAS_CREDENTIALS_FILE" "--menas-auth-keytab" "$MENAS_AUTH_KEYTAB"
+    validate_either "--rest-api-credentials-file" "$MENAS_CREDENTIALS_FILE" "--rest-api-auth-keytab" "$MENAS_AUTH_KEYTAB"
 
     if [[ "$MASTER" != "yarn" ]]; then
       echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
@@ -523,8 +523,8 @@ CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_
 CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
-add_to_cmd_line "--menas-auth-keytab" "${MENAS_AUTH_KEYTAB}"
-add_to_cmd_line "--menas-credentials-file" "${MENAS_CREDENTIALS_FILE}"
+add_to_cmd_line "--rest-api-auth-keytab" "${MENAS_AUTH_KEYTAB}"
+add_to_cmd_line "--rest-api-credentials-file" "${MENAS_CREDENTIALS_FILE}"
 add_to_cmd_line "--dataset-name" "${DATASET_NAME}"
 add_to_cmd_line "--dataset-version" "${DATASET_VERSION}"
 add_to_cmd_line "--report-date" "${REPORT_DATE}"

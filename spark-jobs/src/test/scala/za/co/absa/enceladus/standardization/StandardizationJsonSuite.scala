@@ -40,7 +40,7 @@ class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBas
     implicit val dao: MenasDAO = mock[MenasDAO]
 
     val args = ("--dataset-name Foo --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format json").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)

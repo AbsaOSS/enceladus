@@ -32,7 +32,7 @@ import za.co.absa.enceladus.utils.udf.UDFLibrary
 class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar{
   private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
-    "--menas-auth-keytab src/test/resources/user.keytab.example " +
+    "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")
 
   private implicit val dao: MenasDAO = mock[MenasDAO]

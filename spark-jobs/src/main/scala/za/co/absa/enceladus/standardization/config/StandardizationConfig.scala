@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization.config
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
-import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{InvalidRestApiCredentialsFactory, RestApiCredentialsFactory}
 import za.co.absa.enceladus.standardization.CobolOptions
 
 import scala.util.Try
@@ -47,7 +47,7 @@ case class StandardizationConfig(rawFormat: String = "xml",
                                  datasetVersion: Int = 1,
                                  reportDate: String = "",
                                  reportVersion: Option[Int] = None,
-                                 menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                                 restApiCredentialsFactory: RestApiCredentialsFactory = InvalidRestApiCredentialsFactory,
                                  performanceMetricsFile: Option[String] = None,
                                  folderPrefix: Option[String] = None,
                                  persistStorageLevel: Option[StorageLevel] = None,
@@ -74,11 +74,11 @@ case class StandardizationConfig(rawFormat: String = "xml",
   override def withDatasetVersion(value: Int): StandardizationConfig = copy(datasetVersion = value)
   override def withReportDate(value: String): StandardizationConfig = copy(reportDate = value)
   override def withReportVersion(value: Option[Int]): StandardizationConfig = copy(reportVersion = value)
-  override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConfig = {
-    copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withCredsFile(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): StandardizationConfig = {
+    copy(credsFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
   }
-  override def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConfig = {
-    copy(keytabFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withAuthKeytab(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): StandardizationConfig = {
+    copy(keytabFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
   }
   override def withPerformanceMetricsFile(value: Option[String]): StandardizationConfig = copy(performanceMetricsFile = value)
   override def withFolderPrefix(value: Option[String]): StandardizationConfig = copy(folderPrefix = value)

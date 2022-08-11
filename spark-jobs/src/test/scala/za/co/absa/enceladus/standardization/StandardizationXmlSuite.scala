@@ -41,7 +41,7 @@ class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase
     implicit val dao: MenasDAO = mock[MenasDAO]
 
     val args = ("--dataset-name Foo --dataset-version 1 --report-date 2018-08-10 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format xml --row-tag instrument").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)

@@ -31,7 +31,7 @@ import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
+import za.co.absa.enceladus.dao.rest.RestApiConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
@@ -56,9 +56,9 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
-  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
-  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
-  protected val menasSetup: String = configReader.getString("enceladus.rest.availability.setup")
+  protected val restApiBaseUrls: List[String] = RestApiConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
+  protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
+  protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
@@ -170,7 +170,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
-      menasBaseUrls.map { menasBaseUrl =>
+      restApiBaseUrls.map { menasBaseUrl =>
         MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
       }.mkString(",")
     }
@@ -193,7 +193,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     MenasPlugin.runNumber.foreach { runNumber =>
-      menasBaseUrls.foreach { menasBaseUrl =>
+      restApiBaseUrls.foreach { menasBaseUrl =>
         val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
         val uiUrl = MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, name, version, runNumber)
 

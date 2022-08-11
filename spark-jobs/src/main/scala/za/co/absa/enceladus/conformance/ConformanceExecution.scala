@@ -30,7 +30,7 @@ import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceCo
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasCredentials
+import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
@@ -129,7 +129,7 @@ trait ConformanceExecution extends CommonJobExecution {
   protected def processConformanceResult[T](args: Array[String],
                                             result: DataFrame,
                                             preparationResult: PreparationResult,
-                                            menasCredentials: MenasCredentials)
+                                            restApiCredentials: RestApiCredentials)
                                            (implicit spark: SparkSession,
                                             cmd: ConformanceConfigParser[T],
                                             configReader: ConfigReader): Unit = {
@@ -141,7 +141,7 @@ trait ConformanceExecution extends CommonJobExecution {
       "conform",
       preparationResult.pathCfg.standardization,
       preparationResult.pathCfg.publish.path,
-      menasCredentials.username, cmdLineArgs
+      restApiCredentials.username, cmdLineArgs
     )
 
     val withPartCols = addInfoColumns(result, cmd.reportDate, preparationResult.reportVersion)
@@ -166,7 +166,7 @@ trait ConformanceExecution extends CommonJobExecution {
       "conform",
       preparationResult.pathCfg.standardization,
       preparationResult.pathCfg.publish,
-      menasCredentials.username, cmdLineArgs
+      restApiCredentials.username, cmdLineArgs
     )
 
     withRepartitioning.writeInfoFile(preparationResult.pathCfg.publish.path)(publishFs)

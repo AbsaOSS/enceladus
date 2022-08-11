@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common.config
 
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
-import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{InvalidRestApiCredentialsFactory, RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 import scala.util.matching.Regex
@@ -30,13 +30,13 @@ trait JobConfigParser[R] {
   def withReportVersion(value: Option[Int]): R
   def withPerformanceMetricsFile(value: Option[String]): R
   def withFolderPrefix(value: Option[String]): R
-  def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): R
-  def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): R
+  def withCredsFile(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): R
+  def withAuthKeytab(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): R
   def withPersistStorageLevel(value: Option[StorageLevel]): R
 
   def datasetName: String
   def reportDate: String
-  def menasCredentialsFactory: MenasCredentialsFactory
+  def restApiCredentialsFactory: RestApiCredentialsFactory
   def datasetVersion: Int
   def reportVersion: Option[Int]
   def performanceMetricsFile: Option[String]
@@ -87,14 +87,14 @@ object JobConfigParser extends ProjectMetadata {
             failure("Option --report-version must be >0")
           }),
 
-      opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
-        config.withCredsFile(Option(file), new MenasPlainCredentialsFactory(file))
-      }).text("Path to Menas credentials config file."),
+      opt[String]("rest-api-credentials-file").hidden.optional().action({ (file, config) =>
+        config.withCredsFile(Option(file), new RestApiPlainCredentialsFactory(file))
+      }).text("Path to REST API credentials config file."),
 
-      opt[String]("menas-auth-keytab").optional().action({ (file, config) => {
-          config.withAuthKeytab(Option(file), new MenasKerberosCredentialsFactory(file))
+      opt[String]("rest-api-auth-keytab").optional().action({ (file, config) => {
+          config.withAuthKeytab(Option(file), new RestApiKerberosCredentialsFactory(file))
       }
-      }).text("Path to keytab file used for authenticating to rest_api"),
+      }).text("Path to keytab file used for authenticating to REST API."),
 
 
       opt[String]("performance-file").optional().action((value, config) =>
@@ -109,8 +109,8 @@ object JobConfigParser extends ProjectMetadata {
         .text("Specifies persistence storage level to use when processing data. Spark's default is MEMORY_AND_DISK."),
 
       checkConfig { config =>
-        config.menasCredentialsFactory match {
-          case InvalidMenasCredentialsFactory => failure("No authentication method specified (e.g. --menas-auth-keytab)")
+        config.restApiCredentialsFactory match {
+          case InvalidRestApiCredentialsFactory => failure("No authentication method specified (e.g. --rest-api-auth-keytab)")
           case _ if config.credsFile.isDefined && config.keytabFile.isDefined =>
             failure("Only one authentication method is allowed at a time")
           case _ => success
