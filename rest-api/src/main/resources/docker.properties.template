@@ -35,12 +35,12 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
 # Generate your own secret, must be be at least 256-bit
-menas.auth.jwt.lifespan.hours=8
+enceladus.rest.auth.jwt.lifespan.hours=8
 
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 
-menas.spark.master=local[1]
+enceladus.rest.spark.master=local[1]
 
 #system-wide time zone
 timezone=UTC
@@ -62,4 +62,4 @@ management.health.jms.enabled=false
 
 #---------- Monitoring
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI
-menas.monitoring.fetch.limit=500
+enceladus.rest.monitoring.fetch.limit=500
