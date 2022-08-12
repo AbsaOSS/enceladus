@@ -156,8 +156,8 @@ class SchemaRegistryService @Autowired()() {
 
 object SchemaRegistryService {
 
-  val SchemaRegistryUrlConfigKey = "menas.schemaRegistry.baseUrl"
-  val SchemaRegsitryWarnUnsecureKey = "menas.schemaRegistry.warnUnsecured"
+  val SchemaRegistryUrlConfigKey = "enceladus.rest.schemaRegistry.baseUrl"
+  val SchemaRegsitryWarnUnsecureKey = "enceladus.rest.schemaRegistry.warnUnsecured"
 
   private val defaultStoreType = "JKS"
   private val defaultSslContextProtocol = "TLS"

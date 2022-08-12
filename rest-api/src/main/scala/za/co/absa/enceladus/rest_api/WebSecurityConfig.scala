@@ -36,7 +36,7 @@ import za.co.absa.enceladus.rest_api.auth.kerberos.MenasKerberosAuthentication
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
                                      jwtAuthFilter: JwtAuthenticationFilter,
-                                     @Value("${menas.auth.mechanism:}")
+                                     @Value("${enceladus.rest.auth.mechanism:}")
                                      authMechanism: String) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 

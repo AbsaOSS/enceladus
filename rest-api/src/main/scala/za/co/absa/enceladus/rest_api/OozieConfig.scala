@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory
 @Configuration
 class OozieConfig {
 
-  @Value("${menas.oozie.oozieUrl:}")
+  @Value("${enceladus.rest.oozie.oozieUrl:}")
   val oozieUrl: String = ""
 
-  @Value("${menas.oozie.proxyUser:}")
+  @Value("${enceladus.rest.oozie.proxyUser:}")
   val oozieProxyUser: String = ""
 
-  @Value("${menas.oozie.proxyUserKeytab:}")
+  @Value("${enceladus.rest.oozie.proxyUserKeytab:}")
   val oozieProxyUserKeytab: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)

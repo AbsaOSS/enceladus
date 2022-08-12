@@ -36,10 +36,10 @@ import za.co.absa.enceladus.model.{UsedIn, Validation}
 @ControllerAdvice(annotations = Array(classOf[RestController]))
 class RestExceptionHandler {
 
-  @Value("${menas.oozie.customImpersonationExceptionMessage:}")
+  @Value("${enceladus.rest.oozie.customImpersonationExceptionMessage:}")
   val oozieImpersonationExceptionMessage: String = ""
 
-  @Value("${menas.oozie.proxyGroup:}")
+  @Value("${enceladus.rest.oozie.proxyGroup:}")
   val oozieProxyGroup: String = ""
 
   private val logger = LoggerFactory.getLogger(this.getClass)

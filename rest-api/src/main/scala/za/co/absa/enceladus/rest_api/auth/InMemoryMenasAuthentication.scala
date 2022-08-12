@@ -23,15 +23,15 @@ import org.springframework.stereotype.Component
 
 @Component
 class InMemoryMenasAuthentication extends MenasAuthentication {
-  @Value("${menas.auth.inmemory.user:}")
+  @Value("${enceladus.rest.auth.inmemory.user:}")
   private val username: String = ""
-  @Value("${menas.auth.inmemory.password:}")
+  @Value("${enceladus.rest.auth.inmemory.password:}")
   private val password: String = ""
-  @Value("${menas.auth.inmemory.admin.user:}")
+  @Value("${enceladus.rest.auth.inmemory.admin.user:}")
   private val adminUsername: String = ""
-  @Value("${menas.auth.inmemory.admin.password:}")
+  @Value("${enceladus.rest.auth.inmemory.admin.password:}")
   private val adminPassword: String = ""
-  @Value("${menas.auth.admin.role}") // Spring throws errors if it is not here as well
+  @Value("${enceladus.rest.auth.admin.role}") // Spring throws errors if it is not here as well
   private val adminRole: String = ""
 
   protected val passwordEncoder = new BCryptPasswordEncoder()

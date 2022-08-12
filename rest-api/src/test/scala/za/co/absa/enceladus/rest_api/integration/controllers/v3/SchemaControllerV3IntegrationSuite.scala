@@ -50,7 +50,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAndAfterAll with Matchers {
 
-  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
+  private val port = 8877 // same  port as in test/resources/application.conf in the `enceladus.rest.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {

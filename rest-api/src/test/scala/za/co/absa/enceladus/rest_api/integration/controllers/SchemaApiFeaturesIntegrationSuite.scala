@@ -48,7 +48,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
-  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
+  private val port = 8877 // same  port as in test/resources/application.conf in the `enceladus.rest.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -1069,7 +1069,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
           assert(response.getStatusCode == HttpStatus.OK)
           val responseBody = response.getBody
 
-          // test-config contains populated menas.schemaRegistry.baseUrl
+          // test-config contains populated enceladus.rest.schemaRegistry.baseUrl
           assert(responseBody == SchemaApiFeatures(registry = true))
         }
       }

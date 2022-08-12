@@ -36,30 +36,30 @@ import za.co.absa.enceladus.rest_api.auth.MenasAuthentication
 import za.co.absa.enceladus.rest_api.auth.kerberos.MenasKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
-class MenasKerberosAuthentication @Autowired()(@Value("${menas.auth.ad.domain:}")
+class MenasKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.ad.domain:}")
                                                adDomain: String,
-                                               @Value("${menas.auth.ad.server:}")
+                                               @Value("${enceladus.rest.auth.ad.server:}")
                                                adServer: String,
-                                               @Value("${menas.auth.servicename.principal:}")
+                                               @Value("${enceladus.rest.auth.servicename.principal:}")
                                                servicePrincipal: String,
-                                               @Value("${menas.auth.servicename.keytab.location:}")
+                                               @Value("${enceladus.rest.auth.servicename.keytab.location:}")
                                                keytabLocation: String,
-                                               @Value("${menas.auth.ldap.search.base:}")
+                                               @Value("${enceladus.rest.auth.ldap.search.base:}")
                                                ldapSearchBase: String,
-                                               @Value("${menas.auth.ldap.search.filter:}")
+                                               @Value("${enceladus.rest.auth.ldap.search.filter:}")
                                                ldapSearchFilter: String,
-                                               @Value("${menas.auth.kerberos.debug:false}")
+                                               @Value("${enceladus.rest.auth.kerberos.debug:false}")
                                                kerberosDebug: Boolean,
-                                               @Value("${menas.auth.kerberos.krb5conf:}")
+                                               @Value("${enceladus.rest.auth.kerberos.krb5conf:}")
                                                krb5conf: String)
   extends MenasAuthentication with InitializingBean {
 
-  private lazy val requiredParameters = Seq((adDomain, "menas.auth.ad.domain"),
-    (adServer, "menas.auth.ad.server"),
-    (servicePrincipal, "menas.auth.servicename.principal"),
-    (keytabLocation, "menas.auth.servicename.keytab.location"),
-    (ldapSearchBase, "menas.auth.ldap.search.base"),
-    (ldapSearchFilter, "menas.auth.ldap.search.filter"))
+  private lazy val requiredParameters = Seq((adDomain, "enceladus.rest.auth.ad.domain"),
+    (adServer, "enceladus.rest.auth.ad.server"),
+    (servicePrincipal, "enceladus.rest.auth.servicename.principal"),
+    (keytabLocation, "enceladus.rest.auth.servicename.keytab.location"),
+    (ldapSearchBase, "enceladus.rest.auth.ldap.search.base"),
+    (ldapSearchFilter, "enceladus.rest.auth.ldap.search.filter"))
 
   override def afterPropertiesSet() {
     System.setProperty("javax.net.debug", kerberosDebug.toString)

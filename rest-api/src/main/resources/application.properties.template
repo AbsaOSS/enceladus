@@ -33,50 +33,50 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
 # Generate your own secret, must be be at least 256-bit
-menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
-menas.auth.jwt.lifespan.hours=8
+enceladus.rest.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
+enceladus.rest.auth.jwt.lifespan.hours=8
 
-# How will users authenticate to menas. Available options: inmemory, kerberos
-menas.auth.mechanism=inmemory
+# How will users authenticate to REST API. Available options: inmemory, kerberos
+enceladus.rest.auth.mechanism=inmemory
 # Must be defined and non empty
-menas.auth.admin.role=ROLE_ADMIN
-#menas.auth.roles.regex=^[A-z]+_ADMIN$
+enceladus.rest.auth.admin.role=ROLE_ADMIN
+#enceladus.rest.auth.roles.regex=^[A-z]+_ADMIN$
 
-#menas.auth.kerberos.debug=false
-#menas.auth.kerberos.krb5conf=/etc/krb5.conf
-#menas.auth.ad.domain=ad.domain.com
-#menas.auth.ad.server=ldaps://ad.domain.com ldaps://ad.domain2.com ldaps://ad.domain3.com
-#menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
-#menas.auth.servicename.principal=/path/to/sysuser.keytab
-#menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
-#menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
+#enceladus.rest.auth.kerberos.debug=false
+#enceladus.rest.auth.kerberos.krb5conf=/etc/krb5.conf
+#enceladus.rest.auth.ad.domain=ad.domain.com
+#enceladus.rest.auth.ad.server=ldaps://ad.domain.com ldaps://ad.domain2.com ldaps://ad.domain3.com
+#enceladus.rest.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
+#enceladus.rest.auth.servicename.principal=/path/to/sysuser.keytab
+#enceladus.rest.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
+#enceladus.rest.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
 
-menas.auth.inmemory.user=user
-menas.auth.inmemory.password=changeme
-menas.auth.inmemory.admin.user=menas_admin
-menas.auth.inmemory.admin.password=admin123
+enceladus.rest.auth.inmemory.user=user
+enceladus.rest.auth.inmemory.password=changeme
+enceladus.rest.auth.inmemory.admin.user=menas_admin
+enceladus.rest.auth.inmemory.admin.password=admin123
 
-# Define how menas authenticates to Hadoop. Supported options are:
+# Define how REST API authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
 #  "simple" -> will use authentication by a user name
-#  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
-menas.hadoop.auth.method=default
-menas.hadoop.auth.user=hdfs
-menas.hadoop.auth.krb5.debug=true
-menas.hadoop.auth.krb5.realm=EXAMPLE.COM
-menas.hadoop.auth.krb5.kdc=localhost
-menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
-menas.hadoop.auth.krb5.keytab=hdfs.keytab
+#  "krb5" -> will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
+enceladus.rest.hadoop.auth.method=default
+enceladus.rest.hadoop.auth.user=hdfs
+enceladus.rest.hadoop.auth.krb5.debug=true
+enceladus.rest.hadoop.auth.krb5.realm=EXAMPLE.COM
+enceladus.rest.hadoop.auth.krb5.kdc=localhost
+enceladus.rest.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
+enceladus.rest.hadoop.auth.krb5.keytab=hdfs.keytab
 
-menas.mongo.connection.string=mongodb://localhost:27017
-menas.mongo.connection.database=menas
+enceladus.rest.mongo.connection.string=mongodb://localhost:27017
+enceladus.rest.mongo.connection.database=menas
 
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 
-menas.environment=Dev
+enceladus.rest.environment=Dev
 
-menas.spark.master=local[1]
+enceladus.rest.spark.master=local[1]
 
 #system-wide time zone
 timezone=UTC
@@ -98,63 +98,63 @@ management.health.jms.enabled=false
 
 #---------- Monitoring
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI
-menas.monitoring.fetch.limit=500
+enceladus.rest.monitoring.fetch.limit=500
 
 #--------Oozie
-#menas.oozie.oozieUrl=http://localhost:11000/oozie/
+#enceladus.rest.oozie.oozieUrl=http://localhost:11000/oozie/
 
 #Path where oozie coordinators and workflows are stored on HDFS
-#menas.oozie.schedule.hdfs.path=/tmp
-#menas.oozie.timeZone=Africa/Ceuta
+#enceladus.rest.oozie.schedule.hdfs.path=/tmp
+#enceladus.rest.oozie.timeZone=Africa/Ceuta
 
 #This is passed into oozie.action.sharelib.for.spark
 #This ensures that schedules are run with correct version of spark without updating oozie sharelibs globally
-menas.oozie.sharelibForSpark=spark-menas
+enceladus.rest.oozie.sharelibForSpark=spark-menas
 
 #This parameter disables sharelibForSpark. It's the absolute path to a location containing all relevant spark sharelibs
-#menas.oozie.libpath=/some/path/libpath
+#enceladus.rest.oozie.libpath=/some/path/libpath
 
 #Enceladus jars are going to be loaded into this location
-menas.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
+enceladus.rest.oozie.enceladusJarLocation=hdfs:///tmp/enceladus-jars
 
 #Maven repo from which to resolve enceladus jars.. Can be local repo, maven central, nexus
-menas.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
+enceladus.rest.oozie.mavenRepoLocation=https://repo.maven.apache.org/maven2/
 
 #standardization and conformance path in the repo
-menas.oozie.mavenSparkJobsJarLocation=/za/co/absa/enceladus/spark-jobs/@project.version@/spark-jobs-@project.version@.jar
+enceladus.rest.oozie.mavenSparkJobsJarLocation=/za/co/absa/enceladus/spark-jobs/@project.version@/spark-jobs-@project.version@.jar
 
-#Menas URL for submitted std and conf jobs
-menas.oozie.menasApiURL=http://menasHostname:8080/menas/api
+#REST API URL for submitted std and conf jobs
+enceladus.rest.oozie.restApiURL=http://restApiHostname:8080/rest_api/api
 
 #The URL address of Spline for the submitted jobs
-menas.oozie.lineageWriteApiUrl=http://localhost:8080/spline-gw/producer
+enceladus.rest.oozie.lineageWriteApiUrl=http://localhost:8080/spline-gw/producer
 
 #In case the spline.mode is to be configured from default (see Spline documentation for details)
-#menas.oozie.spline.mode=
+#enceladus.rest.oozie.spline.mode=
 
 #In some cases extra driver options need to be surrounded by double quotes
 #This seems to depend of the version of oozie
-#menas.oozie.sparkConf.surroundingQuoteChar="
+#enceladus.rest.oozie.sparkConf.surroundingQuoteChar="
 
 #Configure the following three parameters to use oozie impersonation
-#menas.oozie.proxyUser=oozieProxyUser
-#menas.oozie.proxyGroup=oozieProxyGroup
-#menas.oozie.proxyUserKeytab=/path/to/keytab
+#enceladus.rest.oozie.proxyUser=oozieProxyUser
+#enceladus.rest.oozie.proxyGroup=oozieProxyGroup
+#enceladus.rest.oozie.proxyUserKeytab=/path/to/keytab
 
 #The following property allows customization of the error message presented to the user if they're missing the impersonation group
-#menas.oozie.customImpersonationExceptionMessage="Please add the system user into the '${menas.oozie.proxyGroup}' group to use this feature."
+#enceladus.rest.oozie.customImpersonationExceptionMessage="Please add the system user into the '${enceladus.rest.oozie.proxyGroup}' group to use this feature."
 
 #Provide optional spark config options to be passed onto standardization and conformance jobs
-#menas.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
+#enceladus.rest.oozie.extraSparkConfigs={"spark.eventLog.dir" : "hdfs:///spark2-history/", \
 #"spark.history.fs.logDirectory": "hdfs:///spark2-history" }
 
 #----------- Schema Registry
 # URL of schema registry [optional]:
 # when unset, the ability to load schema by subject name from the schema repository will not be present
-#menas.schemaRegistry.baseUrl=https://localhost:8081
+#enceladus.rest.schemaRegistry.baseUrl=https://localhost:8081
 
 # When schema registry is used and unsecured, there will be log warnings unless switched to false: (default=true)
-#menas.schemaRegistry.warnUnsecured=true
+#enceladus.rest.schemaRegistry.warnUnsecured=true
 
 # When using secure schema registry, following paths and passwords must be specified
 #javax.net.ssl.trustStore=/path/to/truststore.jks
