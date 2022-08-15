@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.menas
+package za.co.absa.enceladus.common.plugin.enceladus
 
 import com.typesafe.config.Config
 import org.apache.log4j.LogManager
@@ -29,18 +29,18 @@ import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 import scala.util.control.NonFatal
 
 /**
-  * This is Menas plugin. The plugin listens to Control Framework events and sends information to Menas using REST API.
+  * This is Enceladus plugin. The plugin listens to Control Framework events and sends information to Enceladus database.
   */
-class EventListenerMenas(config: Config,
-                         dao: EnceladusDAO,
-                         datasetName: String,
-                         datasetVersion: Int,
-                         reportDate: String,
-                         reportVersion: Int,
-                         isJobStageOnly: Boolean,
-                         generateNewRun: Boolean) extends EventListener {
+class EventListenerEnceladus(config: Config,
+                             dao: EnceladusDAO,
+                             datasetName: String,
+                             datasetVersion: Int,
+                             reportDate: String,
+                             reportVersion: Int,
+                             isJobStageOnly: Boolean,
+                             generateNewRun: Boolean) extends EventListener {
 
-  private val log = LogManager.getLogger("EventListenerMenas")
+  private val log = LogManager.getLogger("EventListenerEnceladus")
 
   private var _runUniqueId: Option[String] = None
   private var _runNumber: Option[Int] = None

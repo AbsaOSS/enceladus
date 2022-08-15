@@ -24,7 +24,7 @@ import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration, Repartitioner}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
@@ -70,7 +70,7 @@ trait ConformanceExecution extends CommonJobExecution {
     Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
+    EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,

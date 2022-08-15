@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.menas
+package za.co.absa.enceladus.common.plugin.enceladus
 
-object MenasRunUrl {
+object EnceladusRunUrl {
 
-  def getMenasApiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
-    s"$menasBaseUrl/api/runs/$datasetName/$datasetVersion/$runNumber"
+  def getApiRunUrl(baseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
+    s"$baseUrl/api/runs/$datasetName/$datasetVersion/$runNumber"
 
   def getMenasUiRunUrl(menasBaseUrl: String, datasetName: String, datasetVersion: Int, runNumber: Int): String =
     s"$menasBaseUrl/#/runs/$datasetName/$datasetVersion/$runNumber"

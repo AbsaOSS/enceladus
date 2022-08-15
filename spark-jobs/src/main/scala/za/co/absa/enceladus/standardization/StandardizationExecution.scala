@@ -26,7 +26,7 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.RestApiCredentials
@@ -69,7 +69,7 @@ trait StandardizationExecution extends CommonJobExecution {
     Atum.setAllowUnpersistOldDatasets(true)
 
     // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
+    EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,

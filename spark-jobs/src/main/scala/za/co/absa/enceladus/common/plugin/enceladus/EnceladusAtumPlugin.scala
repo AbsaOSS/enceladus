@@ -13,21 +13,21 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.common.plugin.menas
+package za.co.absa.enceladus.common.plugin.enceladus
 
 import com.typesafe.config.Config
 import za.co.absa.atum.plugins.PluginManager
 import za.co.absa.enceladus.dao.EnceladusDAO
 
 /**
-  * This is Menas plugin for Conformance Framework
+  * This is Enceladus plugin for Conformance Framework
   */
-object MenasPlugin {
+object EnceladusAtumPlugin {
 
-  private var listener: Option[EventListenerMenas] = None
+  private var listener: Option[EventListenerEnceladus] = None
 
   /**
-    * This is Menas plugin for Conformance Framework
+    * This is Enceladus plugin for Conformance Framework
     *
     * @param config         A configuration of the application plugins could use to init themselves.
     * @param datasetName    The name of the Dataset
@@ -35,15 +35,15 @@ object MenasPlugin {
     * @param isJobStageOnly true if the Spark job is only a stage of some job chain
     * @param generateNewRun true if a new run needs to be generated for the Spark job
     */
-  def enableMenas(config: Config,
-                  datasetName: String,
-                  datasetVersion: Int,
-                  reportDate: String,
-                  reportVersion: Int,
-                  isJobStageOnly: Boolean = false,
-                  generateNewRun: Boolean = false)
-                 (implicit dao: EnceladusDAO): Unit = {
-    val eventListener = new EventListenerMenas(config,
+  def enableEnceladusAtumPlugin(config: Config,
+                                datasetName: String,
+                                datasetVersion: Int,
+                                reportDate: String,
+                                reportVersion: Int,
+                                isJobStageOnly: Boolean = false,
+                                generateNewRun: Boolean = false)
+                               (implicit dao: EnceladusDAO): Unit = {
+    val eventListener = new EventListenerEnceladus(config,
       dao,
       datasetName,
       datasetVersion,

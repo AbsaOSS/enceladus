@@ -28,7 +28,7 @@ import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
-import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
+import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.rest.RestApiConnectionStringParser
@@ -166,12 +166,12 @@ trait CommonJobExecution extends ProjectMetadata {
 
     log.info(s"rereading outputPath $outputPath to run postProcessing")
     val df = spark.read.parquet(outputPath)
-    val runId = MenasPlugin.runNumber
+    val runId = EnceladusAtumPlugin.runNumber
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
-      restApiBaseUrls.map { menasBaseUrl =>
-        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
+      restApiBaseUrls.map { baseUrl =>
+        EnceladusRunUrl.getMenasUiRunUrl(baseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
       }.mkString(",")
     }
 
@@ -192,12 +192,12 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
-    MenasPlugin.runNumber.foreach { runNumber =>
-      restApiBaseUrls.foreach { menasBaseUrl =>
-        val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
-        val uiUrl = MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, name, version, runNumber)
+    EnceladusAtumPlugin.runNumber.foreach { runNumber =>
+      restApiBaseUrls.foreach { baseUrl =>
+        val apiUrl = EnceladusRunUrl.getApiRunUrl(baseUrl, name, version, runNumber)
+        val uiUrl = EnceladusRunUrl.getMenasUiRunUrl(baseUrl, name, version, runNumber)
 
-        log.info(s"Menas API Run URL: $apiUrl")
+        log.info(s"API Run URL: $apiUrl")
         log.info(s"Menas UI Run URL: $uiUrl")
       }
     }
