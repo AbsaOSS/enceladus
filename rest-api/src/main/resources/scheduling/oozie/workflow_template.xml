@@ -32,7 +32,7 @@
                 --num-executors $stdNumExecutors
                 --executor-memory $stdExecutorMemory
                 --driver-cores $driverCores
-                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Denceladus.rest.uri='$menasRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes $splineMode
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Denceladus.rest.uri='$enceladusRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties'$sparkConfQuotes $splineMode
                 $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>
@@ -62,7 +62,7 @@
                 --num-executors $confNumExecutors
                 --executor-memory $confExecutorMemory
                 --driver-cores $driverCores
-                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Denceladus.rest.uri='$menasRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes $splineModeConf
+                --conf $sparkConfQuotesspark.driver.extraJavaOptions=-Denceladus.rest.uri='$enceladusRestURI' -Dspline.producer.url='$lineageWriteApiUrl' -Dlog4j.configuration='spark-log4j.properties' -Dconformance.mappingtable.pattern='$mappingTablePattern'$sparkConfQuotes $splineModeConf
                 $extraSparkConfString
             </spark-opts>
             <arg>-D</arg>

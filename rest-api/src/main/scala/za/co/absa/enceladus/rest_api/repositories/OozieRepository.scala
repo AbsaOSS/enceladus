@@ -93,7 +93,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
   val mavenRepoLocation: String = ""
 
   @Value("${enceladus.rest.oozie.restApiURL:}")
-  val menasApiURL: String = ""
+  val enceladusApiURL: String = ""
 
   @Value("${enceladus.rest.oozie.sparkConf.surroundingQuoteChar:}")
   val sparkConfQuotes: String = ""
@@ -129,7 +129,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       (enceladusJarLocation, "enceladus.rest.oozie.enceladusJarLocation"),
       (sparkJobsJarPath, "enceladus.rest.oozie.mavenSparkJobsJarLocation"),
       (mavenRepoLocation, "enceladus.rest.oozie.mavenRepoLocation"),
-      (menasApiURL, "enceladus.rest.oozie.restApiURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
+      (enceladusApiURL, "enceladus.rest.oozie.restApiURL")).map(p => validateProperty(p._1, p._2, logWarnings)).reduce(_ && _)
   }
 
   private def validateProperty(prop: String, propName: String, logWarnings: Boolean = false): Boolean = {
@@ -330,7 +330,7 @@ class OozieRepository @Autowired() (oozieClientRes: Either[OozieConfigurationExc
       .replaceAllLiterally("$jobTracker", resourceManager)
       .replaceAllLiterally("$sharelibForSpark", shareLibConfig)
       .replaceAllLiterally("$nameNode", namenode)
-      .replaceAllLiterally("$menasRestURI", menasApiURL)
+      .replaceAllLiterally("$enceladusRestURI", enceladusApiURL)
       .replaceAllLiterally("$stdNumExecutors", runtimeParams.stdNumExecutors.toString)
       .replaceAllLiterally("$stdExecutorMemory", s"${runtimeParams.stdExecutorMemory}g")
       .replaceAllLiterally("$confNumExecutors", runtimeParams.confNumExecutors.toString)
