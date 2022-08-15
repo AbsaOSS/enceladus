@@ -117,9 +117,9 @@ There are several ways of deploying Menas:
 - [**Spark 2.4.4 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
 - [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
 - **REST API** running instance
-- **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
+- **REST API Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
    - **Use with in-memory authentication**
-e.g. `~/menas-credential.properties`:
+e.g. `~/rest-api-credential.properties`:
 ```
 username=user
 password=changeme
