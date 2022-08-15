@@ -18,7 +18,7 @@ package za.co.absa.enceladus.dao.rest
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import org.mockito.Mockito
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
@@ -53,7 +53,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
   private val apiCaller = new ApiCallerStub(apiBaseUrl)
   private val restClient = mock[RestClient]
 
-  private val menasDao: MenasDAO = new MenasRestDAO(apiCaller, restClient)
+  private val enceladusDao: EnceladusDAO = new EnceladusRestDAO(apiCaller, restClient)
 
   before {
     Mockito.reset(restClient)
@@ -61,7 +61,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
   "MenasRestDAO" can {
     "authenticate by calling AuthClient::authenticate" in {
-      menasDao.authenticate()
+      enceladusDao.authenticate()
 
       Mockito.verify(restClient, Mockito.only()).authenticate()
     }
@@ -71,7 +71,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/dataset/$name/$version"
       Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
 
-      val result = menasDao.getDataset(name, version, ValidationLevel.NoValidation)
+      val result = enceladusDao.getDataset(name, version, ValidationLevel.NoValidation)
 
       result should matchTo(expected)
     }
@@ -81,7 +81,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/dataset/$name/$version?validateProperties=${ValidationLevel.Strictest}"
       Mockito.when(restClient.sendGet[Dataset](url)).thenReturn(expected)
 
-      val result = menasDao.getDataset(name, version, ValidationLevel.Strictest)
+      val result = enceladusDao.getDataset(name, version, ValidationLevel.Strictest)
 
       result should matchTo(expected)
     }
@@ -91,7 +91,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/mappingTable/detail/$name/$version"
       Mockito.when(restClient.sendGet[MappingTable](url)).thenReturn(expected)
 
-      val result = menasDao.getMappingTable(name, version)
+      val result = enceladusDao.getMappingTable(name, version)
 
       result should matchTo(expected)
     }
@@ -110,7 +110,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
       Mockito.when(restClient.sendGet[String](s"$apiBaseUrl/api/schema/json/$name/$version")).thenReturn(schemaJson)
 
-      val result = menasDao.getSchema(name, version)
+      val result = enceladusDao.getSchema(name, version)
 
       result should be(expected)
     }
@@ -118,7 +118,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
     "getSchemaAttachment" in {
       Mockito.when(restClient.sendGet[String](s"$apiBaseUrl/api/schema/export/$name/$version")).thenReturn(schemaJson)
 
-      val result = menasDao.getSchemaAttachment(name, version)
+      val result = enceladusDao.getSchemaAttachment(name, version)
 
       result should be(schemaJson)
     }
@@ -129,7 +129,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/runs"
       Mockito.when(restClient.sendPost[Run, Run](url, requestRun)).thenReturn(responseRun)
 
-      val result = menasDao.storeNewRunObject(requestRun)
+      val result = enceladusDao.storeNewRunObject(requestRun)
 
       result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[Run, Run](url, requestRun)
@@ -141,7 +141,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/runs/updateControlMeasure/$uniqueId"
       Mockito.when(restClient.sendPost[ControlMeasure, Run](url, controlMeasure)).thenReturn(responseRun)
 
-      val result = menasDao.updateControlMeasure(uniqueId, controlMeasure)
+      val result = enceladusDao.updateControlMeasure(uniqueId, controlMeasure)
 
       result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[ControlMeasure, Run](url, controlMeasure)
@@ -153,7 +153,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/runs/updateRunStatus/$uniqueId"
       Mockito.when(restClient.sendPost[RunStatus, Run](url, runStatus)).thenReturn(responseRun)
 
-      val result = menasDao.updateRunStatus(uniqueId, runStatus)
+      val result = enceladusDao.updateRunStatus(uniqueId, runStatus)
 
       result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[RunStatus, Run](url, runStatus)
@@ -165,7 +165,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/runs/updateSplineReference/$uniqueId"
       Mockito.when(restClient.sendPost[SplineReference, Run](url, splineReference)).thenReturn(responseRun)
 
-      val result = menasDao.updateSplineReference(uniqueId, splineReference)
+      val result = enceladusDao.updateSplineReference(uniqueId, splineReference)
 
       result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[SplineReference, Run](url, splineReference)
@@ -178,7 +178,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
       val url = s"$apiBaseUrl/api/runs/addCheckpoint/$uniqueId"
       Mockito.when(restClient.sendPost[Checkpoint, Run](url, checkpoint)).thenReturn(responseRun)
 
-      val result = menasDao.appendCheckpointMeasure(uniqueId, checkpoint)
+      val result = enceladusDao.appendCheckpointMeasure(uniqueId, checkpoint)
 
       result should be(responseRun)
       Mockito.verify(restClient, Mockito.only()).sendPost[Checkpoint, Run](url, checkpoint)

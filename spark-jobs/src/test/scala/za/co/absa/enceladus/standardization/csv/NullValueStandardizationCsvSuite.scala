@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization.csv
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -35,7 +35,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--rest-api-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
     .split(" ")
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
   private implicit val defaults: Defaults = GlobalDefaults
 
   private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)

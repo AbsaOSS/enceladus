@@ -22,7 +22,7 @@ import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
 import za.co.absa.enceladus.common.RecordIdGeneration.IdType
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -42,7 +42,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
   import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val standardizationReader = new StandardizationPropertiesProvider()
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
   private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
   private implicit val defaults: Defaults = GlobalDefaults
 

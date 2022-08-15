@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
@@ -36,7 +36,7 @@ class UppercaseCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedS
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = mock[EnceladusDAO] // you may have to hard-code your own implementation here (if not working with menas)
 
 
   val experimentalMR = true

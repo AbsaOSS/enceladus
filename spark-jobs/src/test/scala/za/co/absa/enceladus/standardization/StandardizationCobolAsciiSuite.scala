@@ -20,7 +20,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
 import org.scalatest.funsuite.FixtureAnyFunSuite
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -32,7 +32,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalize
 
   type FixtureParam = String
 
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 

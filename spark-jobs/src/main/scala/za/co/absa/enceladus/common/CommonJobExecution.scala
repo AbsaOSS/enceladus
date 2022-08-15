@@ -30,7 +30,7 @@ import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser,
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.rest.RestApiConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
@@ -85,7 +85,7 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def prepareJob[T]()
-                             (implicit dao: MenasDAO,
+                             (implicit dao: EnceladusDAO,
                               cmd: JobConfigParser[T],
                               spark: SparkSession): PreparationResult = {
     configReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)

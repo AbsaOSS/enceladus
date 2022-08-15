@@ -17,16 +17,16 @@ package za.co.absa.enceladus.dao.rest
 
 import org.apache.spark.sql.types.{DataType, StructType}
 import za.co.absa.atum.model.{Checkpoint, ControlMeasure, RunStatus}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevel
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 /**
-  * Implementation of Menas REST API DAO
+  * Implementation of Enceladus REST API DAO
   */
-protected class MenasRestDAO(private[rest] val apiCaller: ApiCaller,
-                             private[rest] val restClient: RestClient) extends MenasDAO {
+protected class EnceladusRestDAO(private[rest] val apiCaller: ApiCaller,
+                                 private[rest] val restClient: RestClient) extends EnceladusDAO {
 
   def authenticate(): Unit = {
     restClient.authenticate()

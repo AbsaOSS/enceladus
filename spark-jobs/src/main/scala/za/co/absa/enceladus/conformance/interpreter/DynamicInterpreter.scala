@@ -28,8 +28,8 @@ import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
 import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -53,7 +53,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
                (implicit spark: SparkSession,
-                dao: MenasDAO,
+                dao: EnceladusDAO,
                 progArgs: ConformanceConfigParser[T],
                 featureSwitches: FeatureSwitches): DataFrame = {
 
@@ -84,7 +84,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
-    implicit val dao: MenasDAO = ictx.dao
+    implicit val dao: EnceladusDAO = ictx.dao
     implicit val progArgs: InterpreterContextArgs = ictx.progArgs
     implicit val udfLib: UDFLibrary = new UDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()

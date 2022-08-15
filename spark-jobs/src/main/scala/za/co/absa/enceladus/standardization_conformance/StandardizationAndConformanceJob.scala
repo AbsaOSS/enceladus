@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.standardization_conformance
 
 import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
@@ -39,7 +39,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
 
     val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
     val restApiSetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiSetupValue)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiSetupValue)
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, restApiCredentials, preparationResult)

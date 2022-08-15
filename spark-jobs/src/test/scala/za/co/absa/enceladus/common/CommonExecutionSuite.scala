@@ -21,7 +21,7 @@ import org.mockito.scalatest.MockitoSugar
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.common.config.PathConfig
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
@@ -31,7 +31,7 @@ import za.co.absa.spark.partition.sizing.DataFramePartitioner.DataFrameFunctions
 class CommonExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with MockitoSugar {
 
   private class CommonJobExecutionTest extends CommonJobExecution {
-    def testRun(implicit dao: MenasDAO, cmd: StandardizationConfig): PreparationResult = {
+    def testRun(implicit dao: EnceladusDAO, cmd: StandardizationConfig): PreparationResult = {
       prepareJob()
     }
     override protected def validatePaths(pathConfig: PathConfig): Unit = {}
@@ -43,7 +43,7 @@ class CommonExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSp
   ).foreach { case (caseName, mockedPropertiesValidation, expectedMessageSubstrings) =>
 
     "CommonExecution" should s"fail on invalid properties ($caseName)" in {
-      implicit val dao: MenasDAO = mock[MenasDAO]
+      implicit val dao: EnceladusDAO = mock[EnceladusDAO]
       implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
       val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil,

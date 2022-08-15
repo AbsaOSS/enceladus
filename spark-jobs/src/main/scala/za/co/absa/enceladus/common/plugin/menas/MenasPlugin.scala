@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common.plugin.menas
 
 import com.typesafe.config.Config
 import za.co.absa.atum.plugins.PluginManager
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 
 /**
   * This is Menas plugin for Conformance Framework
@@ -42,7 +42,7 @@ object MenasPlugin {
                   reportVersion: Int,
                   isJobStageOnly: Boolean = false,
                   generateNewRun: Boolean = false)
-                 (implicit dao: MenasDAO): Unit = {
+                 (implicit dao: EnceladusDAO): Unit = {
     val eventListener = new EventListenerMenas(config,
       dao,
       datasetName,

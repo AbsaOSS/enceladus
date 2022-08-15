@@ -22,7 +22,7 @@ import org.slf4j.Logger
 import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
@@ -51,12 +51,12 @@ trait CommonMappingRuleInterpreter {
   def conform(df: DataFrame)
              (implicit spark: SparkSession,
               explosionState: ExplosionState,
-              dao: MenasDAO,
+              dao: EnceladusDAO,
               progArgs: InterpreterContextArgs): DataFrame
 
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
-                                   dao: MenasDAO,
+                                   dao: EnceladusDAO,
                                    progArgs: InterpreterContextArgs): (DataFrame, Map[String, String]) = {
     if (enableCrossJoin) {
       //A fix for cases, where the join condition only uses columns previously created by a literal rule
@@ -131,7 +131,7 @@ trait CommonMappingRuleInterpreter {
    * @return A map of defaults as strings of Spark expressions, where the requested fields are the map's keys
    */
   private def getDefaultValues(mappingTableDef: MappingTable)
-                              (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
+                              (implicit spark: SparkSession, dao: EnceladusDAO): Map[String, String] = {
     val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
 
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")

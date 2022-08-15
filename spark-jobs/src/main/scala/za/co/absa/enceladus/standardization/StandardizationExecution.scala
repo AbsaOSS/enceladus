@@ -28,7 +28,7 @@ import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrat
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
@@ -51,7 +51,7 @@ trait StandardizationExecution extends CommonJobExecution {
   protected def prepareStandardization[T](args: Array[String],
                                           restApiCredentials: RestApiCredentials,
                                           preparationResult: PreparationResult)
-                                         (implicit dao: MenasDAO,
+                                         (implicit dao: EnceladusDAO,
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession,
                                           defaults: Defaults): StructType = {
@@ -121,7 +121,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 rawInput: PathWithFs,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                dao: MenasDAO): DataFrame = {
+                                                dao: EnceladusDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)

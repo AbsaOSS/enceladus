@@ -21,7 +21,7 @@ import org.apache.spark.sql.{DataFrame, DataFrameReader, SparkSession}
 import scopt.OptionParser
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.RestApiKerberosCredentials
 import za.co.absa.enceladus.dao.rest.{RestApiConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.examples.interpreter.rules.custom.{LPadCustomConformanceRule, UppercaseCustomConformanceRule}
@@ -144,7 +144,7 @@ object CustomRuleSample4 extends CustomRuleSampleFs {
     val restApiBaseUrls = RestApiConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
     val restApiCredentials = RestApiKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls) // you may have to hard-code your own implementation here
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read

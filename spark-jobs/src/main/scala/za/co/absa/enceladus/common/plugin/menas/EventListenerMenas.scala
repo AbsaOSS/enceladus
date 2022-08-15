@@ -22,7 +22,7 @@ import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils
 import za.co.absa.enceladus.common.plugin.PluginLoader
-import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
+import za.co.absa.enceladus.dao.{DaoException, EnceladusDAO}
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
   * This is Menas plugin. The plugin listens to Control Framework events and sends information to Menas using REST API.
   */
 class EventListenerMenas(config: Config,
-                         dao: MenasDAO,
+                         dao: EnceladusDAO,
                          datasetName: String,
                          datasetVersion: Int,
                          reportDate: String,

@@ -22,12 +22,12 @@ import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultVa
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 
 /**
-  * Trait for Menas API DAO.
+  * Trait for Enceladus DAO.
   */
-trait MenasDAO {
+trait EnceladusDAO {
 
   /**
-    * Authenticates user with Menas
+    * Authenticates user with Enceladus
     */
   @throws[UnauthorizedException]
   def authenticate(): Unit
@@ -81,10 +81,10 @@ trait MenasDAO {
   def getSchemaAttachment(name: String, version: Int): String
 
   /**
-    * Stores a new Run object in the database by sending REST request to Menas
+    * Stores a new Run object in the database
     *
     * @param run A Run object
-    * @return The Run as stored in Menas with a newly created unique ID and a run ID
+    * @return The Run as stored in database with a newly created unique ID and a run ID
     */
   def storeNewRunObject(run: Run): Run
 
@@ -103,7 +103,7 @@ trait MenasDAO {
     *
     * @param uniqueId  An unique id of a run object
     * @param runStatus Status of a run object
-    * @return The Run as stored in Menas with an updated run status
+    * @return The Run as stored in database with an updated run status
     */
   def updateRunStatus(uniqueId: String,
                       runStatus: RunStatus): Run

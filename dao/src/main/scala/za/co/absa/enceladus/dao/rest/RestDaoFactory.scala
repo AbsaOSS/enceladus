@@ -34,7 +34,7 @@ object RestDaoFactory {
   def getInstance(authCredentials: RestApiCredentials,
                   apiBaseUrls: List[String],
                   urlsRetryCount: Option[Int] = None,
-                  restApiAvailabilitySetup: AvailabilitySetup = DefaultAvailabilitySetup): MenasRestDAO = {
+                  restApiAvailabilitySetup: AvailabilitySetup = DefaultAvailabilitySetup): EnceladusRestDAO = {
     val startsWith = if (restApiAvailabilitySetup == Fallback) {
       Option(0)
     } else {
@@ -43,6 +43,6 @@ object RestDaoFactory {
     val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount), startsWith)
     val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
-    new MenasRestDAO(apiCaller, restClient)
+    new EnceladusRestDAO(apiCaller, restClient)
   }
 }

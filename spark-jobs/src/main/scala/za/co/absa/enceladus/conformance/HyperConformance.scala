@@ -30,7 +30,7 @@ import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.{RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.{RestApiConnectionStringParser, RestDaoFactory}
@@ -55,7 +55,7 @@ class HyperConformance (restApiBaseUrls: List[String],
 
     val restApiAvailabilitySetupValue = restApiAvailabilitySetup
       .map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
-    implicit val dao: MenasDAO = RestDaoFactory
+    implicit val dao: EnceladusDAO = RestDaoFactory
       .getInstance(restApiCredentials, restApiBaseUrls, urlsRetryCount, restApiAvailabilitySetupValue)
     dao.authenticate()
 
@@ -69,10 +69,10 @@ class HyperConformance (restApiBaseUrls: List[String],
   }
 
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
-                                     (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
+                                     (implicit sparkSession: SparkSession, enceladusDAO: EnceladusDAO): DataFrame = {
     import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-    val schema: StructType = menasDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
+    val schema: StructType = enceladusDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
     val schemaFields = if (schema == null) List() else schema.fields.toList
     val conformedSchema = ConformedSchema(schemaFields, conformance)
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)

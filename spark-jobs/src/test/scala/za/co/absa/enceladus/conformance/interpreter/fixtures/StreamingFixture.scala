@@ -28,7 +28,7 @@ import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
@@ -42,7 +42,7 @@ trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with M
                                                reportDate: String,
                                                reportVersionColumnKeyProvided: String
                                               )
-                                              (implicit menasDAO: MenasDAO): DataFrame = {
+                                              (implicit enceladusDAO: EnceladusDAO): DataFrame = {
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
     when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
@@ -63,7 +63,7 @@ trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with M
     when(configStub.getInt(restApiUriRetryCountKey)).thenReturn(0)
     when(configStub.containsKey(restApiAvailabilitySetupKey)).thenReturn(false)
 
-    when(menasDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
+    when(enceladusDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
       StructField("numerics.SmartObject.all_random", StringType)
     )))
 
@@ -93,7 +93,7 @@ trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with M
                                      sinkTableName: String,
                                      dataset: Dataset,
                                      catalystWorkaround: Boolean = true)
-                                    (implicit menasDAO: MenasDAO, infoDateFactory: InfoDateFactory,
+                                    (implicit enceladusDAO: EnceladusDAO, infoDateFactory: InfoDateFactory,
                                      infoVersionFactory: InfoVersionFactory): DataFrame = {
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(false)
