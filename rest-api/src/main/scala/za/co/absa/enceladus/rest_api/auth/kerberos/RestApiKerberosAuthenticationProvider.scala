@@ -30,10 +30,10 @@ import za.co.absa.enceladus.rest_api.auth.exceptions.{AuthHostTimeoutException, 
 
 import scala.util.control.NonFatal
 
-class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String, baseDN: String)
+class RestApiKerberosAuthenticationProvider(adServer: String, searchFilter: String, baseDN: String)
   extends AuthenticationProvider {
 
-  case class MenasKerberosLoginResult(loginContext: LoginContext, verifiedName: String)
+  case class RestApiKerberosLoginResult(loginContext: LoginContext, verifiedName: String)
 
   private val logger = LoggerFactory.getLogger(this.getClass)
 
@@ -58,7 +58,7 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
           case NonFatal(e) =>
             throw ex
         }
-      // This is thrown when there is an issue contacting an LDAP server specified in Menas configuration
+      // This is thrown when there is an issue contacting an LDAP server specified in REST API configuration
       case ex: PrivilegedActionException =>
         throw BadLdapHostException(ex.toString, ex)
       case NonFatal(ex) =>
@@ -72,12 +72,12 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
     classOf[UsernamePasswordAuthenticationToken].isAssignableFrom(authentication)
   }
 
-  private def login(username: String, password: String): MenasKerberosLoginResult = {
+  private def login(username: String, password: String): RestApiKerberosLoginResult = {
     val loginContext = new LoginContext("", null, getSpringCBHandler(username, password), getLoginConfig) // scalastyle:ignore null
     loginContext.login()
     val loggedInUser = loginContext.getSubject.getPrincipals.iterator.next.toString
     logger.debug(s"Logged In User: $loggedInUser")
-    MenasKerberosLoginResult(loginContext, loggedInUser)
+    RestApiKerberosLoginResult(loginContext, loggedInUser)
   }
 
   private def getSpringCBHandler(username: String, password: String) = {
@@ -92,7 +92,7 @@ class MenasKerberosAuthenticationProvider(adServer: String, searchFilter: String
   }
 
   private def getUserDetailService(subject: Subject) = {
-    val contextSource = new MenasKerberosLdapContextSource(adServer, subject)
+    val contextSource = new RestApiKerberosLdapContextSource(adServer, subject)
     contextSource.afterPropertiesSet()
     val userSearch = new KerberosLdapUserSearch(baseDN, searchFilter, contextSource)
     new LdapUserDetailsService(userSearch, new ActiveDirectoryLdapAuthoritiesPopulator())

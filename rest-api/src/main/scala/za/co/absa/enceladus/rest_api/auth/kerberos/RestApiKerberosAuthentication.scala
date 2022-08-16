@@ -127,7 +127,7 @@ class RestApiKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.a
     val originalLogLevel = Logger.getRootLogger.getLevel
     //something here changes the log level to WARN
     auth
-      .authenticationProvider(new MenasKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
+      .authenticationProvider(new RestApiKerberosAuthenticationProvider(adServer, ldapSearchFilter, ldapSearchBase))
       .authenticationProvider(kerberosServiceAuthenticationProvider())
     Logger.getRootLogger.setLevel(originalLogLevel)
   }
