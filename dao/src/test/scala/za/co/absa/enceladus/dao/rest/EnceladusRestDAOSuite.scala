@@ -24,7 +24,7 @@ import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFa
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, SplineReference}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
-class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
+class EnceladusRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
 
   private val name = "name"
   private val version = 1
@@ -59,7 +59,7 @@ class MenasRestDAOSuite extends BaseTestSuite with VersionedModelMatchers {
     Mockito.reset(restClient)
   }
 
-  "MenasRestDAO" can {
+  "EnceladusRestDAOSuite" can {
     "authenticate by calling AuthClient::authenticate" in {
       enceladusDao.authenticate()
 
