@@ -73,6 +73,50 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
     assert(credentials === restApiKeytab)
   }
 
+  test("Test credentials file config name backwards compatibility (< 3.0.0)") {
+    val cmdConfigDeprecated = ConformanceConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--menas-credentials-file", restApiCredentialsFile))
+    val cmdConfig = ConformanceConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--rest-api-credentials-file", restApiCredentialsFile))
+
+    val actualPlainRestApiCredentialsDeprecated = cmdConfigDeprecated.restApiCredentialsFactory.getInstance()
+    val actualPlainRestApiCredentials = cmdConfig.restApiCredentialsFactory.getInstance()
+
+    assert(actualPlainRestApiCredentialsDeprecated == actualPlainRestApiCredentials)
+  }
+
+  test("Test keytab file config name backwards compatibility (< 3.0.0)") {
+    val cmdConfigDeprecated = ConformanceConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--menas-auth-keytab", keytabPath))
+    val cmdConfig = ConformanceConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--rest-api-auth-keytab", keytabPath))
+
+    val actualRestApiKerberosDeprecated = cmdConfigDeprecated.restApiCredentialsFactory.getInstance()
+    val actualRestApiKerberos = cmdConfig.restApiCredentialsFactory.getInstance()
+
+    assert(actualRestApiKerberosDeprecated == actualRestApiKerberos)
+  }
+
   test("folder-prefix parameter") {
     val cmdConfigNoFolderPrefix = ConformanceConfig.getFromArguments(
       Array(

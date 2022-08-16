@@ -72,6 +72,54 @@ class StandardizationParserSuite extends AnyFunSuite with TZNormalizedSparkTestB
     assert(credentials === restApiKeytab)
   }
 
+  test("Test credentials file config name backwards compatibility (< 3.0.0)") {
+    val cmdConfigDeprecated = StandardizationConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--raw-format", rawFormat,
+        "--menas-credentials-file", restApiCredentialsFile))
+    val cmdConfig = StandardizationConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--raw-format", rawFormat,
+        "--rest-api-credentials-file", restApiCredentialsFile))
+
+    val actualPlainRestApiCredentialsDeprecated = cmdConfigDeprecated.restApiCredentialsFactory.getInstance()
+    val actualPlainRestApiCredentials = cmdConfig.restApiCredentialsFactory.getInstance()
+
+    assert(actualPlainRestApiCredentialsDeprecated == actualPlainRestApiCredentials)
+  }
+
+  test("Test keytab file config name backwards compatibility (< 3.0.0)") {
+    val cmdConfigDeprecated = StandardizationConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--raw-format", rawFormat,
+        "--menas-auth-keytab", keytabPath))
+    val cmdConfig = StandardizationConfig.getFromArguments(
+      Array(
+        "--dataset-name", datasetName,
+        "--dataset-version", datasetVersion.toString,
+        "--report-date", reportDate,
+        "--report-version", reportVersion.toString,
+        "--raw-format", rawFormat,
+        "--rest-api-auth-keytab", keytabPath))
+
+    val actualRestApiKerberosDeprecated = cmdConfigDeprecated.restApiCredentialsFactory.getInstance()
+    val actualRestApiKerberos = cmdConfig.restApiCredentialsFactory.getInstance()
+
+    assert(actualRestApiKerberosDeprecated == actualRestApiKerberos)
+  }
+
   test("folder-prefix parameter") {
     val cmdConfigNoFolderPrefix = StandardizationConfig.getFromArguments(
       Array(

@@ -87,15 +87,23 @@ object JobConfigParser extends ProjectMetadata {
             failure("Option --report-version must be >0")
           }),
 
+      opt[String]("menas-credentials-file").hidden.optional().action({ (file, config) =>
+        config.withCredsFile(Option(file), new RestApiPlainCredentialsFactory(file))
+      }).text("[DEPRECATED SINCE 3.0.0, use --rest-api-credentials-file instead]"),
+
       opt[String]("rest-api-credentials-file").hidden.optional().action({ (file, config) =>
         config.withCredsFile(Option(file), new RestApiPlainCredentialsFactory(file))
       }).text("Path to REST API credentials config file."),
+
+      opt[String]("menas-auth-keytab").hidden.optional().action({ (file, config) => {
+        config.withAuthKeytab(Option(file), new RestApiKerberosCredentialsFactory(file))
+      }
+      }).text("[DEPRECATED SINCE 3.0.0, use --rest-api-auth-keytab instead]"),
 
       opt[String]("rest-api-auth-keytab").optional().action({ (file, config) => {
           config.withAuthKeytab(Option(file), new RestApiKerberosCredentialsFactory(file))
       }
       }).text("Path to keytab file used for authenticating to REST API."),
-
 
       opt[String]("performance-file").optional().action((value, config) =>
         config.withPerformanceMetricsFile(Option(value)))
