@@ -186,7 +186,7 @@ class RpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkT
   private val restApiBaseUrls = RestApiConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
   private val restApiCredentials = RestApiKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls) // you may have to hard-code your own implementation here
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

@@ -36,7 +36,7 @@ class UppercaseCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedS
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: EnceladusDAO = mock[EnceladusDAO] // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = mock[EnceladusDAO] // you may have to hard-code your own implementation here
 
 
   val experimentalMR = true
