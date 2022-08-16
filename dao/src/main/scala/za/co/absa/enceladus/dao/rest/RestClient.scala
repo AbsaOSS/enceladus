@@ -83,7 +83,7 @@ protected class RestClient(authClient: AuthClient,
 
       case HttpStatus.UNAUTHORIZED | HttpStatus.FORBIDDEN =>
         log.warn(s"Response - $statusCode : ${Option(response.getBody).getOrElse("None")}")
-        log.warn(s"Unauthorized $method request for Menas URL: $url")
+        log.warn(s"Unauthorized $method request for REST API URL: $url")
         if (retriesLeft <= 0) {
           throw UnauthorizedException("Unable to reauthenticate, no retries left")
         }
@@ -91,7 +91,7 @@ protected class RestClient(authClient: AuthClient,
         log.warn(s"Expired session, reauthenticating")
         authenticate()
 
-        log.info(s"Retrying $method request for Menas URL: $url")
+        log.info(s"Retrying $method request for REST API URL: $url")
         log.info(s"Retries left: $retriesLeft")
         send[B, T](method, url, headers, bodyOpt, retriesLeft - 1)
 
