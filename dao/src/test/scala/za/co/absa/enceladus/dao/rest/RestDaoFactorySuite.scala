@@ -28,14 +28,14 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
   private val restApiBaseUrls = List("http://localhost:8080/rest_api/api")
 
   "RestDaoFactory::getInstance" should {
-    "return a MenasRestDAO instance with a SpnegoAuthClient" when {
+    "return a EnceladusRestDAO instance with a SpnegoAuthClient" when {
       "given a Keytab location" in {
         val keytabCredentials = RestApiKerberosCredentials("user", "src/test/resources/user.keytab.example")
         val restDao = RestDaoFactory.getInstance(keytabCredentials, restApiBaseUrls)
         getAuthClient(restDao.restClient).getClass should be(classOf[SpnegoAuthClient])
       }
     }
-    "return a MenasRestDAO instance with a LdapAuthClient" when {
+    "return a EnceladusRestDAO instance with a LdapAuthClient" when {
       "given plain RestApiCredentials" in {
         val plainCredentials = RestApiPlainCredentials("user", "changeme")
         val restDao = RestDaoFactory.getInstance(plainCredentials, restApiBaseUrls)
