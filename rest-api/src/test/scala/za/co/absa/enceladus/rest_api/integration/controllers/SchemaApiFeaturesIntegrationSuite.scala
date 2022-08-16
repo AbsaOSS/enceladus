@@ -35,7 +35,7 @@ import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, Sche
 import za.co.absa.enceladus.rest_api.models.SchemaApiFeatures
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
@@ -74,7 +74,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
   private val attachmentFixture: AttachmentFixtureService = null
 
   @Autowired
-  private val convertor: SparkMenasSchemaConvertor = null
+  private val convertor: SparkEnceladusSchemaConvertor = null
 
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()

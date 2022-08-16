@@ -31,7 +31,7 @@ import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingExcepti
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.services.{AttachmentService, SchemaRegistryService, SchemaService}
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.model.menas._
@@ -45,7 +45,7 @@ import scala.util.{Failure, Success, Try}
 class SchemaController @Autowired()(
                                      schemaService: SchemaService,
                                      attachmentService: AttachmentService,
-                                     sparkMenasConvertor: SparkMenasSchemaConvertor,
+                                     sparkEnceladusConvertor: SparkEnceladusSchemaConvertor,
                                      schemaRegistryService: SchemaRegistryService
                                      )
   extends VersionedModelController(schemaService) {
@@ -64,7 +64,7 @@ class SchemaController @Autowired()(
 
     val schemaType: SchemaType.Value = SchemaType.fromOptSchemaName(format.toScalaOption)
     val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
-    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
+    val sparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
@@ -94,7 +94,7 @@ class SchemaController @Autowired()(
       case Failure(_) => schemaRegistryService.loadSchemaBySubjectName(s"$subject-value") // fallback to -value
     }
 
-    val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
+    val valueSparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
 
     val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
@@ -118,7 +118,7 @@ class SchemaController @Autowired()(
     val fileContent = new String(file.getBytes)
 
     val schemaType = SchemaType.fromOptSchemaName(format.toScalaOption)
-    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
+    val sparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(fileContent)
 
     // for avro schema type, always force the same mime-type to be persisted
     val mime = if (schemaType == SchemaType.Avro) {
@@ -175,7 +175,7 @@ class SchemaController @Autowired()(
       case Some(schema) =>
         if (schema.fields.isEmpty) throw notFound()
 
-        val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
+        val sparkStruct = StructType(sparkEnceladusConvertor.convertEnceladusToSparkFields(schema.fields))
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
       case None =>
         throw notFound()

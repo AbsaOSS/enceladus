@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.rest_api.services
 
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.repositories.SchemaMongoRepository
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.menas._
@@ -27,9 +27,9 @@ import scala.concurrent.{Future, Await}
 class VersionedModelServiceAuditTest extends BaseServiceTest {
   val datasetMongoRepository = mock[DatasetMongoRepository]
   val mappingTableMongoRepository = mock[MappingTableMongoRepository]
-  val sparkMenasConvertor = mock[SparkMenasSchemaConvertor]
+  val sparkEnceladusConvertor = mock[SparkEnceladusSchemaConvertor]
   val modelRepository = mock[SchemaMongoRepository]
-  val service = new SchemaService(modelRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
+  val service = new SchemaService(modelRepository, mappingTableMongoRepository, datasetMongoRepository, sparkEnceladusConvertor)
 
   val testSchemas = Seq(Schema(name = "TestSchema", version = 0, description = None, fields = List(), parent = None),
     Schema(name = "TestSchema", version = 1, description = Some("Test desc"), fields = List(),

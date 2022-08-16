@@ -25,32 +25,32 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-class SparkMenasSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
+class SparkEnceladusSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
   private val objectMapper = new ObjectMapper()
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-  private val sparkConvertor = new SparkMenasSchemaConvertor(objectMapper)
+  private val sparkConvertor = new SparkEnceladusSchemaConvertor(objectMapper)
 
   private val sparkSimleFlat = Seq(
     StructField(name = "a", dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putString("format", "xyz.abc").putString("precision", "14.56").build),
     StructField(name = "b", dataType = DecimalType.apply(38, 18), nullable = false),
     StructField(name = "c", dataType = StringType))
 
-  private val menasSimpleFlat = Seq(
+  private val enceladusSimpleFlat = Seq(
     SchemaField(name = "a", `type` = "integer", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map("format" -> "xyz.abc", "precision" -> "14.56"), children = List()),
     SchemaField(name = "b", `type` = "decimal(38,18)", path = "", elementType = None, containsNull = None, nullable = false, metadata = Map(), children = List()),
     SchemaField(name = "c", `type` = "string", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))
 
-  test("convertSparkToMenasFields Simple Test") {
-    val res = sparkConvertor.convertSparkToMenasFields(sparkSimleFlat)
+  test("convertSparkToEnceladusFields Simple Test") {
+    val res = sparkConvertor.convertSparkToEnceladusFields(sparkSimleFlat)
 
-    assertResult(menasSimpleFlat)(res)
+    assertResult(enceladusSimpleFlat)(res)
 
-    assertResult(sparkConvertor.convertSparkToMenasFields(Seq[StructField]()))(Seq[SchemaField]())
+    assertResult(sparkConvertor.convertSparkToEnceladusFields(Seq[StructField]()))(Seq[SchemaField]())
   }
 
-  test("convertSparkToMenas Complex Test") {
+  test("convertSparkToEnceladus Complex Test") {
     val sparkComplex = Seq(
       StructField(name = "a", dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putString("format", "xyz.abc").putString("precision", "14.56").build),
       StructField(name = "b", dataType = StructType(Seq(
@@ -61,7 +61,7 @@ class SparkMenasSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkT
         StructField(name = "g", dataType = ArrayType.apply(ArrayType.apply(StructType(Seq(
           StructField(name = "h", dataType = IntegerType)))))))), nullable = false))
 
-    val menasComplex = Seq(
+    val enceladusComplex = Seq(
       SchemaField(name = "a", `type` = "integer", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map("format" -> "xyz.abc", "precision" -> "14.56"), children = List()),
       SchemaField(name = "b", `type` = "struct", path = "", elementType = None, containsNull = None, nullable = false, metadata = Map(), children = List(
         SchemaField(name = "c", `type` = "array", path = "b", elementType = Some("integer"), containsNull = Some(true), nullable = true, metadata = Map(), children = List()),
@@ -72,45 +72,45 @@ class SparkMenasSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSparkT
           SchemaField(name = "", `type` = "array", path = "b.g", elementType = Some("struct"), containsNull = Some(true), nullable = true, metadata = Map(), children = List(
             SchemaField(name = "h", `type` = "integer", path = "b.g", elementType = None, containsNull = None, nullable = true, metadata = Map(), children = List()))))))))
 
-    val res = sparkConvertor.convertSparkToMenasFields(sparkComplex)
+    val res = sparkConvertor.convertSparkToEnceladusFields(sparkComplex)
 
-    assertResult(menasComplex)(res)
+    assertResult(enceladusComplex)(res)
 
-    assertResult(sparkConvertor.convertMenasToSparkFields(menasComplex))(sparkComplex)
+    assertResult(sparkConvertor.convertEnceladusToSparkFields(enceladusComplex))(sparkComplex)
   }
 
-  test("convertMenasToSpark Simple Test") {
-    val res = sparkConvertor.convertMenasToSparkFields(menasSimpleFlat)
+  test("convertEnceladusToSpark Simple Test") {
+    val res = sparkConvertor.convertEnceladusToSparkFields(enceladusSimpleFlat)
 
     assertResult(sparkSimleFlat)(res)
   }
 
-  test("convertSparkToMenasFields with non-string values in metadata") {
+  test("convertSparkToEnceladusFields with non-string values in metadata") {
     val fieldName = "field_name"
     val sparkDefinition = Seq(
       StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putLong("default", 0).build)
     )
 
     val caught = intercept[SchemaParsingException] {
-      sparkConvertor.convertSparkToMenasFields(sparkDefinition)
+      sparkConvertor.convertSparkToEnceladusFields(sparkDefinition)
     }
 
     assert(caught == SchemaParsingException(schemaType = null, message = "Value for metadata key 'default' (of value 0) to be a string or null", field = Option(fieldName))) // scalastyle:ignore null
   }
 
-  test("convertSparkToMenasFields and convertMenasToSparkFields with nulls in values of metadata") {
+  test("convertSparkToEnceladusFields and convertEnceladusToSparkFields with nulls in values of metadata") {
     val fieldName = "field_with_null_metadata_values"
     val sparkDefinition = Seq(
       StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putNull("default").putString("foo", "bar").build)
     )
-    val menasDefinition = Seq(
+    val enceladusDefinition = Seq(
       SchemaField(name = fieldName, `type` = "integer", path = "", elementType = None, containsNull = None, nullable = true, metadata = Map("default" -> null, "foo" -> "bar"), children = List()) // scalastyle:ignore null
     )
 
-    val res1 = sparkConvertor.convertSparkToMenasFields(sparkDefinition)
-    assertResult(menasDefinition)(res1)
+    val res1 = sparkConvertor.convertSparkToEnceladusFields(sparkDefinition)
+    assertResult(enceladusDefinition)(res1)
 
-    val res2 = sparkConvertor.convertMenasToSparkFields(menasDefinition)
+    val res2 = sparkConvertor.convertEnceladusToSparkFields(enceladusDefinition)
     assertResult(sparkDefinition)(res2)
   }
 

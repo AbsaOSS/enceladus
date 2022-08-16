@@ -29,7 +29,7 @@ import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingExcepti
 import scala.util.control.NonFatal
 
 @Component
-class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
+class SparkEnceladusSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
 
   /**
     * Converts a JSON of any supported format into a Spark StructType
@@ -39,11 +39,11 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
     convertStructTypeJsonToStructType(inputJson) match {
       case Left(schema) => schema
       case Right(message1) =>
-        convertMenasModel0JsonToStructType(inputJson) match {
+        convertEnceladusModel0JsonToStructType(inputJson) match {
           case Left(schema) => schema
           case Right(message2) =>
             throw new IllegalStateException(
-              s"Unable to parse schema JSON\nStructType serializer: $message1\nMenas serializer: $message2")
+              s"Unable to parse schema JSON\nStructType serializer: $message1\nEnceladus serializer: $message2")
         }
     }
   }
@@ -62,9 +62,9 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   }
 
   /**
-    * Converts a model 0 JSON (pre-release Menas) format into an instance of Spark's StructType
+    * Converts a model 0 JSON (pre-release Enceladus) format into an instance of Spark's StructType
     */
-  def convertMenasModel0JsonToStructType(inputJson: String): Either[StructType, String] = {
+  def convertEnceladusModel0JsonToStructType(inputJson: String): Either[StructType, String] = {
     try {
       val schema = model0.Serializer.convertToStructType(inputJson)
       Left(schema)
@@ -75,24 +75,24 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   }
 
   /**
-    * Converts a seq of menas schema fields onto the spark structfields
+    * Converts a seq of Enceladus schema fields onto the spark structfields
     */
-  def convertMenasToSparkFields(menasFields: Seq[SchemaField]): Seq[StructField] = {
-    menasFields.map({ menas =>
-      menasToSparkField(menas)
+  def convertEnceladusToSparkFields(enceladusFields: Seq[SchemaField]): Seq[StructField] = {
+    enceladusFields.map({ field =>
+      enceladusToSparkField(field)
     })
   }
 
   /**
-    * Converts a menas array to a spark array
+    * Converts a Enceladus array to a spark array
     */
-  def convertMenasToSparkArray(arrayField: SchemaField): ArrayType = {
+  def convertEnceladusToSparkArray(arrayField: SchemaField): ArrayType = {
     if (arrayField.`type` != "array") {
       throw new IllegalStateException(s"An array is expected.")
     }
     arrayField.elementType match {
-      case Some("struct") => ArrayType(StructType(convertMenasToSparkFields(arrayField.children)))
-      case Some("array") => ArrayType(convertMenasToSparkArray(arrayField.children.head))
+      case Some("struct") => ArrayType(StructType(convertEnceladusToSparkFields(arrayField.children)))
+      case Some("array") => ArrayType(convertEnceladusToSparkArray(arrayField.children.head))
       case Some(primitive) => ArrayType(CatalystSqlParser.parseDataType(primitive))
       case None =>
         val fieldName = s"${arrayField.path} ${arrayField.name}"
@@ -101,16 +101,16 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
   }
 
   @throws[SchemaParsingException]
-  def convertSparkToMenasFields(sparkFields: Seq[StructField]): Seq[SchemaField] = {
-    convertSparkToMenasFields(sparkFields, "")
+  def convertSparkToEnceladusFields(sparkFields: Seq[StructField]): Seq[SchemaField] = {
+    convertSparkToEnceladusFields(sparkFields, "")
   }
 
-  /** Converts a seq of spark struct fields to menas representation */
-  def convertSparkToMenasFields(sparkFields: Seq[StructField], path: String): Seq[SchemaField] = {
-    sparkFields.map(sparkToMenasField(_, path))
+  /** Converts a seq of spark struct fields to Enceladus representation */
+  def convertSparkToEnceladusFields(sparkFields: Seq[StructField], path: String): Seq[SchemaField] = {
+    sparkFields.map(sparkToEnceladusField(_, path))
   }
 
-  private def sparkToMenasField(field: StructField, path: String): SchemaField = {
+  private def sparkToEnceladusField(field: StructField, path: String): SchemaField = {
     val arr = field.dataType match {
       case arrayType: ArrayType => Some(arrayType)
       case _                    => None
@@ -143,10 +143,10 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
     )
   }
 
-  /** Calculate the children field for the spark to menas conversion */
+  /** Calculate the children field for the spark to Enceladus conversion */
   private def getChildren(fieldDataType: DataType, path: String): List[SchemaField] = {
     fieldDataType match {
-      case s: StructType => convertSparkToMenasFields(s.fields, path).toList
+      case s: StructType => convertSparkToEnceladusFields(s.fields, path).toList
       case a@ArrayType(el: ArrayType, _) => List(SchemaField(
         name = "",
         `type` = el.typeName,
@@ -162,24 +162,24 @@ class SparkMenasSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
     }
   }
 
-  private def menasToSparkField(menasField: SchemaField): StructField = {
+  private def enceladusToSparkField(enceladusField: SchemaField): StructField = {
 
     val outStream = new ByteArrayOutputStream()
-    objMapper.writeValue(outStream, menasField.metadata)
+    objMapper.writeValue(outStream, enceladusField.metadata)
 
     val metadata = Metadata.fromJson(new String(outStream.toByteArray, "UTF-8"))
 
     StructField(
-      name = menasField.name,
-      dataType = getSparkDataType(menasField),
-      nullable = menasField.nullable,
+      name = enceladusField.name,
+      dataType = getSparkDataType(enceladusField),
+      nullable = enceladusField.nullable,
       metadata = metadata)
   }
 
-  private def getSparkDataType(menasField: SchemaField): DataType = {
-    menasField.`type` match {
-      case "array"  => convertMenasToSparkArray(menasField)
-      case "struct" => StructType(convertMenasToSparkFields(menasField.children))
+  private def getSparkDataType(enceladusField: SchemaField): DataType = {
+    enceladusField.`type` match {
+      case "array"  => convertEnceladusToSparkArray(enceladusField)
+      case "struct" => StructType(convertEnceladusToSparkFields(enceladusField.children))
       case s        => CatalystSqlParser.parseDataType(s)
     }
   }

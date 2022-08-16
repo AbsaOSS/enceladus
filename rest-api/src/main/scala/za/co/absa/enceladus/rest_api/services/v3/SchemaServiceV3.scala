@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 import za.co.absa.enceladus.rest_api.services.SchemaService
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 import scala.concurrent.Future
 
@@ -28,8 +28,8 @@ import scala.concurrent.Future
 class SchemaServiceV3 @Autowired()(schemaMongoRepository: SchemaMongoRepository,
                                    mappingTableMongoRepository: MappingTableMongoRepository,
                                    datasetMongoRepository: DatasetMongoRepository,
-                                   sparkMenasConvertor: SparkMenasSchemaConvertor)
-  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
+                                   sparkEnceladusConvertor: SparkEnceladusSchemaConvertor)
+  extends SchemaService(schemaMongoRepository, mappingTableMongoRepository, datasetMongoRepository, sparkEnceladusConvertor)
   with VersionedModelServiceV3[Schema]{
 
   import scala.concurrent.ExecutionContext.Implicits.global
