@@ -69,7 +69,7 @@ trait ConformanceExecution extends CommonJobExecution {
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
-    // Enable Menas plugin for Control Framework
+    // Enable Enceladus plugin for Control Framework
     EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
