@@ -22,7 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Component
 
 @Component
-class InMemoryMenasAuthentication extends MenasAuthentication {
+class InMemoryRestApiAuthentication extends RestApiAuthentication {
   @Value("${enceladus.rest.auth.inmemory.user:}")
   private val username: String = ""
   @Value("${enceladus.rest.auth.inmemory.password:}")

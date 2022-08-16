@@ -32,27 +32,27 @@ import org.springframework.security.kerberos.web.authentication.SpnegoAuthentica
 import org.springframework.security.ldap.userdetails.{LdapUserDetailsMapper, LdapUserDetailsService}
 import org.springframework.security.web.authentication.{AuthenticationFailureHandler, AuthenticationSuccessHandler}
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.rest_api.auth.MenasAuthentication
-import za.co.absa.enceladus.rest_api.auth.kerberos.MenasKerberosAuthentication._
+import za.co.absa.enceladus.rest_api.auth.RestApiAuthentication
+import za.co.absa.enceladus.rest_api.auth.kerberos.RestApiKerberosAuthentication._
 
 @Component("kerberosMenasAuthentication")
-class MenasKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.ad.domain:}")
+class RestApiKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.ad.domain:}")
                                                adDomain: String,
-                                               @Value("${enceladus.rest.auth.ad.server:}")
+                                                 @Value("${enceladus.rest.auth.ad.server:}")
                                                adServer: String,
-                                               @Value("${enceladus.rest.auth.servicename.principal:}")
+                                                 @Value("${enceladus.rest.auth.servicename.principal:}")
                                                servicePrincipal: String,
-                                               @Value("${enceladus.rest.auth.servicename.keytab.location:}")
+                                                 @Value("${enceladus.rest.auth.servicename.keytab.location:}")
                                                keytabLocation: String,
-                                               @Value("${enceladus.rest.auth.ldap.search.base:}")
+                                                 @Value("${enceladus.rest.auth.ldap.search.base:}")
                                                ldapSearchBase: String,
-                                               @Value("${enceladus.rest.auth.ldap.search.filter:}")
+                                                 @Value("${enceladus.rest.auth.ldap.search.filter:}")
                                                ldapSearchFilter: String,
-                                               @Value("${enceladus.rest.auth.kerberos.debug:false}")
+                                                 @Value("${enceladus.rest.auth.kerberos.debug:false}")
                                                kerberosDebug: Boolean,
-                                               @Value("${enceladus.rest.auth.kerberos.krb5conf:}")
+                                                 @Value("${enceladus.rest.auth.kerberos.krb5conf:}")
                                                krb5conf: String)
-  extends MenasAuthentication with InitializingBean {
+  extends RestApiAuthentication with InitializingBean {
 
   private lazy val requiredParameters = Seq((adDomain, "enceladus.rest.auth.ad.domain"),
     (adServer, "enceladus.rest.auth.ad.server"),
@@ -133,7 +133,7 @@ class MenasKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.ad.
   }
 }
 
-object MenasKerberosAuthentication {
+object RestApiKerberosAuthentication {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   def spnegoAuthenticationProcessingFilter(authenticationManager: AuthenticationManager,

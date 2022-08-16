@@ -29,7 +29,7 @@ import org.springframework.security.kerberos.web.authentication.{SpnegoAuthentic
 import org.springframework.security.web.authentication._
 import za.co.absa.enceladus.rest_api.auth._
 import za.co.absa.enceladus.rest_api.auth.jwt.JwtAuthenticationFilter
-import za.co.absa.enceladus.rest_api.auth.kerberos.MenasKerberosAuthentication
+import za.co.absa.enceladus.rest_api.auth.kerberos.RestApiKerberosAuthentication
 
 
 @EnableWebSecurity
@@ -46,7 +46,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
     extends WebSecurityConfigurerAdapter {
 
     override def configure(http: HttpSecurity) {
-      val kerberosFilter = MenasKerberosAuthentication
+      val kerberosFilter = RestApiKerberosAuthentication
         .spnegoAuthenticationProcessingFilter(authenticationManager, authenticationSuccessHandler)
 
       http
@@ -87,14 +87,14 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
       this.getMenasAuthentication().configure(auth)
     }
 
-    private def getMenasAuthentication(): MenasAuthentication = {
+    private def getMenasAuthentication(): RestApiAuthentication = {
       authMechanism.toLowerCase match {
         case "inmemory" =>
           logger.info("Using InMemory Menas authentication")
-          beanFactory.getBean(classOf[InMemoryMenasAuthentication])
+          beanFactory.getBean(classOf[InMemoryRestApiAuthentication])
         case "kerberos" =>
           logger.info("Using Kerberos Menas Authentication")
-          beanFactory.getBean(classOf[MenasKerberosAuthentication])
+          beanFactory.getBean(classOf[RestApiKerberosAuthentication])
         case _          =>
           throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")
       }

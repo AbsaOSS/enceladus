@@ -18,11 +18,11 @@ package za.co.absa.enceladus.rest_api.integration
 import org.springframework.context.annotation.Primary
 import org.springframework.security.config.annotation.authentication.configurers.provisioning.InMemoryUserDetailsManagerConfigurer
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.rest_api.auth.InMemoryMenasAuthentication
+import za.co.absa.enceladus.rest_api.auth.InMemoryRestApiAuthentication
 
 @Component
 @Primary
-class TestInMemoryMenasAuthentication extends InMemoryMenasAuthentication {
+class TestInMemoryRestApiAuthentication extends InMemoryRestApiAuthentication {
 
   override protected def addUsers(auth: InMemoryUserDetailsManagerConfigurer[_]): Unit = {
     super.addUsers(auth)

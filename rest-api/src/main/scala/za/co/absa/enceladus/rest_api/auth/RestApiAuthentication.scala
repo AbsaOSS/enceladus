@@ -17,6 +17,6 @@ package za.co.absa.enceladus.rest_api.auth
 
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 
-trait MenasAuthentication {
+trait RestApiAuthentication {
   def configure(auth: AuthenticationManagerBuilder)
 }
