@@ -73,8 +73,8 @@ class SpringFoxConfig extends ProjectMetadata {
 
   private def apiInfo(isDev: Boolean) =
     new ApiInfoBuilder()
-      .title(s"Menas API${ if (isDev) " - DEV " else ""}")
-      .description("Menas API reference for developers")
+      .title(s"Enceladus API${ if (isDev) " - DEV " else ""}")
+      .description("Enceladus API reference for developers")
       .license("Apache 2.0 License")
       .version(projectVersion) // api or project?
       .build
