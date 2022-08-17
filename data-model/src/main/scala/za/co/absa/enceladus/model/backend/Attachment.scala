@@ -15,11 +15,11 @@
 
 package za.co.absa.enceladus.model.backend
 
-object MenasAttachment {
+object Attachment {
   val ORIGINAL_SCHEMA_ATTACHMENT = "original_schema"
 }
 
-case class MenasAttachment(
+case class Attachment(
   refCollection: String,
   refName: String,
   refVersion: Int,

@@ -23,7 +23,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.rest_api.integration.fixtures.{AttachmentFixtureService, FixtureService}
 import za.co.absa.enceladus.rest_api.repositories.{AttachmentMongoRepository, RefCollection}
-import za.co.absa.enceladus.model.backend.MenasAttachment
+import za.co.absa.enceladus.model.backend.Attachment
 import za.co.absa.enceladus.model.test.factories.AttachmentFactory
 
 @RunWith(classOf[SpringRunner])
@@ -87,7 +87,7 @@ class AttachmentRepositoryIntegrationSuite extends BaseRepositoryTest {
     }
   }
 
-  private def assertAttachment(actualOpt: Option[MenasAttachment], expectedAttachment: MenasAttachment): Assertion = {
+  private def assertAttachment(actualOpt: Option[Attachment], expectedAttachment: Attachment): Assertion = {
     assert(actualOpt.isDefined)
 
     val actual = actualOpt.get

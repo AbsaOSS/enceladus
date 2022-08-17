@@ -106,15 +106,15 @@ class SchemaControllerV3 @Autowired()(
       file.getContentType
     }
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1, // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename,
       fileContent = file.getBytes,
       fileMIMEType = mime)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-file
     }
@@ -133,15 +133,15 @@ class SchemaControllerV3 @Autowired()(
     val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
     val sparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = schemaResponse.url.getFile,
       fileContent = schemaResponse.fileContent.getBytes,
       fileMIMEType = schemaResponse.mimeType)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-remote-uri
     }
@@ -166,27 +166,27 @@ class SchemaControllerV3 @Autowired()(
 
     val valueSparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = valueSchemaResponse.url.getFile, // only the value file gets saved as an attachment
       fileContent = valueSchemaResponse.fileContent.getBytes,
       fileMIMEType = valueSchemaResponse.mimeType)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, valueSparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, valueSparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-registry
     }
   }
 
-  private def uploadSchemaToMenas(username: String, menasAttachment: MenasAttachment, sparkStruct: StructType,
+  private def uploadSchema(username: String, attachment: Attachment, sparkStruct: StructType,
                                   schemaType: SchemaType.Value): Future[(Schema, Validation)] = {
     try {
       for {
         // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
-        (updated, validation) <- schemaService.schemaUpload(username, menasAttachment.refName, menasAttachment.refVersion - 1, sparkStruct)
-        _ <- attachmentService.uploadAttachment(menasAttachment)
+        (updated, validation) <- schemaService.schemaUpload(username, attachment.refName, attachment.refVersion - 1, sparkStruct)
+        _ <- attachmentService.uploadAttachment(attachment)
       } yield (updated, validation)
     } catch {
       case e: SchemaParsingException => throw e.copy(schemaType = schemaType) // adding schema type

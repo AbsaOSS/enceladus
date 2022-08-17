@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import org.mongodb.scala.Completed
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.backend.MenasAttachment
+import za.co.absa.enceladus.model.backend.Attachment
 import za.co.absa.enceladus.rest_api.repositories._
 
 import scala.concurrent.Future
@@ -29,13 +29,13 @@ class AttachmentService @Autowired()(val mongoRepository: AttachmentMongoReposit
                                      schemaMongoRepository: SchemaMongoRepository,
                                      datasetMongoRepository: DatasetMongoRepository,
                                      mappingTableMongoRepository: MappingTableMongoRepository)
-  extends ModelService[MenasAttachment] {
+  extends ModelService[Attachment] {
 
   protected val attachmentMongoRepository: AttachmentMongoRepository = mongoRepository // alias
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def uploadAttachment(attachment: MenasAttachment): Future[Completed] = {
+  def uploadAttachment(attachment: Attachment): Future[Completed] = {
     chooseRepository(attachment.refCollection).getLatestVersionValue(attachment.refName).flatMap {
       case Some(_) =>
         // the attachment version should already be increased by one from the currently latest by the caller
@@ -45,7 +45,7 @@ class AttachmentService @Autowired()(val mongoRepository: AttachmentMongoReposit
     }
   }
 
-  def getSchemaByNameAndVersion(name: String, version: Int): Future[MenasAttachment] = {
+  def getSchemaByNameAndVersion(name: String, version: Int): Future[Attachment] = {
     attachmentMongoRepository.getSchemaByNameAndVersion(name, version).map {
       case Some(attachment) => attachment
       case None             => throw NotFoundException()

@@ -23,7 +23,7 @@ import org.mongodb.scala.model.Sorts
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.backend.MenasAttachment
+import za.co.absa.enceladus.model.backend.Attachment
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag
@@ -35,17 +35,17 @@ object AttachmentMongoRepository {
 
 @Repository
 class AttachmentMongoRepository @Autowired()(mongoDb: MongoDatabase)
-  extends MongoRepository[MenasAttachment](mongoDb)(ClassTag(classOf[MenasAttachment])) {
+  extends MongoRepository[Attachment](mongoDb)(ClassTag(classOf[Attachment])) {
 
   private[rest_api] override def collectionBaseName: String = AttachmentMongoRepository.collectionBaseName
 
-  def getSchemaByNameAndVersion(name: String, version: Int): Future[Option[MenasAttachment]] = {
+  def getSchemaByNameAndVersion(name: String, version: Int): Future[Option[Attachment]] = {
     getByCollectionAndNameAndVersion(RefCollection.SCHEMA.name().toLowerCase(), name, version)
   }
 
   private def getByCollectionAndNameAndVersion(refCollection: String,
                                                name: String,
-                                               version: Int): Future[Option[MenasAttachment]] = {
+                                               version: Int): Future[Option[Attachment]] = {
 
     val pipeline = Seq(
       filter(equal("refCollection", refCollection)),
