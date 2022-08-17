@@ -39,8 +39,8 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private def getParent(oldEntity: C): MenasReference = {
-    MenasReference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
+  private def getParent(oldEntity: C): Reference = {
+    Reference(collection = Some(collectionBaseName), name = oldEntity.name, version = oldEntity.version)
   }
 
   def distinctCount(): Future[Int] = {
@@ -187,25 +187,25 @@ abstract class VersionedMongoRepository[C <: VersionedModel](mongoDb: MongoDatab
     }
   }
 
-  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[MenasReference]] = {
+  def findRefEqual(refNameCol: String, refVersionCol: String, name: String, version: Option[Int]): Future[Seq[Reference]] = {
     val filter = version match {
       case Some(ver) => Filters.and(getNotDisabledFilter, equal(refNameCol, name), equal(refVersionCol, ver))
       case None => Filters.and(getNotDisabledFilter, equal(refNameCol, name))
     }
     collection
-      .find[MenasReference](filter)
+      .find[Reference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .sort(Sorts.ascending("name", "version"))
       .toFuture()
   }
 
-  def findRefContainedAsKey(refNameCol: String, name: String): Future[Seq[MenasReference]] = {
+  def findRefContainedAsKey(refNameCol: String, name: String): Future[Seq[Reference]] = {
 
     // `refNameCol` contains a map where the `name` is the key, so this is e.g. {"properties.keyName" : {$exists : true}}
     val filter = Filters.and(getNotDisabledFilter, Filters.exists(s"$refNameCol.$name", true))
 
     collection
-      .find[MenasReference](filter)
+      .find[Reference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .sort(Sorts.ascending("name", "version"))
       .toFuture()

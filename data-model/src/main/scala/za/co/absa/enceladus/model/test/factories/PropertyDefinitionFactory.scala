@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringPropertyType}
@@ -43,7 +43,7 @@ object PropertyDefinitionFactory extends EntityFactory[PropertyDefinition] {
                                  userUpdated: String = "dummyUser",
                                  dateDisabled: Option[ZonedDateTime] = None,
                                  userDisabled: Option[String] = None,
-                                 parent: Option[MenasReference] = None): PropertyDefinition = {
+                                 parent: Option[Reference] = None): PropertyDefinition = {
 
     PropertyDefinition(name,
       version,

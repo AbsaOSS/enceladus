@@ -21,7 +21,7 @@ import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema}
 
 import scala.concurrent.Future
@@ -75,7 +75,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
    * @param refColVal a number of String, Any pairs, where String is column name, Any is a value. The given column will be compared with the specified value.
    * @return List of Menas references to Datasets, which contain the relevant conformance rules
    */
-  def containsMappingRuleRefEqual(refColVal: (String, Any)*): Future[Seq[MenasReference]] = {
+  def containsMappingRuleRefEqual(refColVal: (String, Any)*): Future[Seq[Reference]] = {
   // The gist of the find query that this method is based on; testable in a mongo client
   //      { $and : [
   //        {... non disabled filter here...},
@@ -91,7 +91,7 @@ class DatasetMongoRepository @Autowired()(mongoDb: MongoDatabase)
     val filter = Filters.and(getNotDisabledFilter, Filters.elemMatch("conformance", equalConditionsFilter))
 
     collection
-      .find[MenasReference](filter)
+      .find[Reference](filter)
       .projection(fields(include("name", "version"), computed("collection", collectionBaseName)))
       .sort(Sorts.ascending("name", "version"))
       .toFuture()

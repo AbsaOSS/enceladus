@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.model.backend
 
-case class MenasReference(
+case class Reference(
   collection: Option[String],
   name: String,
   version: Int

@@ -24,7 +24,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, UsedIn, Validation}
@@ -386,7 +386,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         // datasetB is disabled -> not reported
         // datasetC is not reported, because it depends on v2 of the MT
         response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
+          datasets = Some(Seq(Reference(None, "datasetA", 1))),
           mappingTables = None
         )
       }
@@ -497,7 +497,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
           assertBadRequest(response)
           response.getBody shouldBe EntityInUseException("""Cannot disable entity "mappingTable", because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+            UsedIn(Some(Seq(Reference(None, "dataset1", 1), Reference(None, "dataset2", 7))), None)
           )
         }
       }

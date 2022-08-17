@@ -16,6 +16,6 @@
 package za.co.absa.enceladus.model.backend
 
 case class MenasObject[T](
-  id: MenasReference,
-  value: T
+                           id: Reference,
+                           value: T
 )(mf: Manifest[T])

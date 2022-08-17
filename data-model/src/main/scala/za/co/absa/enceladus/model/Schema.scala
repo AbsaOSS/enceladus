@@ -20,7 +20,7 @@ import java.time.ZonedDateTime
 import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.backend.audit._
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 
 case class Schema(name: String,
     version: Int = 1,
@@ -40,7 +40,7 @@ case class Schema(name: String,
     dateLocked: Option[ZonedDateTime] = None,
     userLocked: Option[String] = None,
     fields: List[SchemaField] = List(),
-    parent: Option[MenasReference] = None) extends VersionedModel with Auditable[Schema] {
+    parent: Option[Reference] = None) extends VersionedModel with Auditable[Schema] {
 
   override def setVersion(value: Int): Schema = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -54,14 +54,14 @@ case class Schema(name: String,
   override def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel = this.copy(dateLocked = dateLocked)
   override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
   override def setUserDisabled(user: Option[String]): VersionedModel = this.copy(userDisabled = user)
-  override def setParent(newParent: Option[MenasReference]): Schema = this.copy(parent = newParent)
+  override def setParent(newParent: Option[Reference]): Schema = this.copy(parent = newParent)
 
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage = AuditTrailEntry(ref = Reference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
     AuditTrailChange(field = "", oldValue = None, newValue = None, s"Schema $name created.")))
 
   override def getAuditMessages(newRecord: Schema): AuditTrailEntry = {
-    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+    AuditTrailEntry(ref = Reference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,

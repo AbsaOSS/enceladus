@@ -15,15 +15,15 @@
 
 package za.co.absa.enceladus.model.backend.audit
 
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import java.time.ZonedDateTime
 
 case class AuditTrail(entries: Seq[AuditTrailEntry])
 
-case class AuditTrailEntry(menasRef: MenasReference,
-    updatedBy: String,
-    updated: ZonedDateTime,
-    changes: Seq[AuditTrailChange])
+case class AuditTrailEntry(ref: Reference,
+                           updatedBy: String,
+                           updated: ZonedDateTime,
+                           changes: Seq[AuditTrailChange])
 
 case class AuditTrailChange(field: String,
     oldValue: Option[String],

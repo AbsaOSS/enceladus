@@ -20,7 +20,7 @@ import java.time.ZonedDateTime
 import org.scalactic.{AbstractStringUniformity, Uniformity}
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
@@ -266,7 +266,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             value = "AAA"
           )
         ),
-        parent = Some(MenasReference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
+        parent = Some(Reference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
       )
 
       "serializing" in {

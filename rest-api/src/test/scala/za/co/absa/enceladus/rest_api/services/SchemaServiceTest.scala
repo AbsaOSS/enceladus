@@ -17,7 +17,7 @@ package za.co.absa.enceladus.rest_api.services
 import za.co.absa.enceladus.model.Schema
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
 import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
-import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.SchemaField
 import scala.concurrent.Future
 import org.mockito.Mockito
