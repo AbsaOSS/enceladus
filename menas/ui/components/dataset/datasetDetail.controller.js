@@ -261,7 +261,7 @@ sap.ui.define([
 
     auditVersionPress: function (oEv) {
       let oSrc = oEv.getSource();
-      let oRef = oSrc.data("menasRef");
+      let oRef = oSrc.data("ref");
       this._router.navTo("datasets", {
         id: oRef.name,
         version: oRef.version
@@ -447,11 +447,11 @@ sap.ui.define([
       const oAuditModel = this.byId("auditTrailTable").getModel("auditTrail");
       const aAuditEntries = !oAuditModel ? [] : oAuditModel.getProperty("/entries").map(e => {
         return {
-          menasRef: e.menasRef
+          ref: e.ref
         };
       });
       aAuditEntries.unshift({
-        menasRef: {
+        ref: {
           name: oCurrentDataset.name,
           description: "Version created by this update",
           version: oCurrentDataset.version + 1

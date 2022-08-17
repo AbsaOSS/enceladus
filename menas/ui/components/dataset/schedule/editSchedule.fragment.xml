@@ -133,7 +133,7 @@
                                 <form:FormElement label="Dataset Version">
                                     <form:fields>
                                         <Select id="datasetVersionSelect" forceSelection="true" selectedKey="{/newSchedule/datasetVersion}" items="{versions>/entries}" showSecondaryValues="true">
-                                            <core:ListItem key="{versions>menasRef/version}" text="{versions>menasRef/version}" additionalText="{versions>menasRef/description}" />
+                                            <core:ListItem key="{versions>ref/version}" text="{versions>ref/version}" additionalText="{versions>ref/description}" />
                                         </Select>
                                     </form:fields>
                                 </form:FormElement>

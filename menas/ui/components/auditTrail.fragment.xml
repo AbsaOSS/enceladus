@@ -37,7 +37,7 @@
                     <Text
                         text="{path: 'auditTrail>updated', formatter:'Formatters.stringDateShortFormatter'}"/>
                     <Text text="{auditTrail>updatedBy}"/>
-                    <Link text="v{auditTrail>menasRef/version}" press="auditVersionPress" cust:menasRef="{auditTrail>menasRef}"/>
+                    <Link text="v{auditTrail>ref/version}" press="auditVersionPress" cust:ref="{auditTrail>ref}"/>
                     <List id="auditChangesList" items="{path: 'auditTrail>changes', templateShareable: false}"
                           noDataText="No changes detected" class="auditTrailNestedList">
                         <CustomListItem id="auditChangesListItem" class="auditTrailNestedListItem">
