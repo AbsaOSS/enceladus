@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.model.backend
 
-case class MenasObject[T](
+case class GenericObject[T](
                            id: Reference,
                            value: T
 )(mf: Manifest[T])
