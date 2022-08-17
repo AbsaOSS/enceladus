@@ -498,7 +498,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         val response = sendPostUploadFile[String](
           s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
         assertBadRequest(response)
-        response.getBody should include("not a recognized schema format. Menas currently supports: struct, copybook, avro.")
+        response.getBody should include("not a recognized schema format. Enceladus currently supports: struct, copybook, avro.")
       }
 
       "a copybook with a syntax error" should {
