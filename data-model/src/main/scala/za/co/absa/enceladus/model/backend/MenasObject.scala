@@ -13,18 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas
+package za.co.absa.enceladus.model.backend
 
-object MenasAttachment {
-  val ORIGINAL_SCHEMA_ATTACHMENT = "original_schema"
-}
-
-case class MenasAttachment(
-  refCollection: String,
-  refName: String,
-  refVersion: Int,
-  attachmentType: String,
-  filename: String,
-  fileContent: Array[Byte],
-  fileMIMEType: String
-)
+case class MenasObject[T](
+  id: MenasReference,
+  value: T
+)(mf: Manifest[T])

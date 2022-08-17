@@ -19,8 +19,8 @@ import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, Mappi
 import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.repositories.SchemaMongoRepository
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.backend._
+import za.co.absa.enceladus.model.backend.audit._
 import org.mockito.Mockito
 import scala.concurrent.{Future, Await}
 

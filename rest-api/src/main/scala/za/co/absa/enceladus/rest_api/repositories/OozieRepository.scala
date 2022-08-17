@@ -53,7 +53,7 @@ import za.co.absa.enceladus.rest_api.exceptions.OozieActionException
 import za.co.absa.enceladus.rest_api.exceptions.OozieConfigurationException
 import za.co.absa.enceladus.rest_api.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
+import za.co.absa.enceladus.model.backend.scheduler.RuntimeConfig
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 
 object OozieRepository {

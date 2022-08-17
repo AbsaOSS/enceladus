@@ -21,7 +21,7 @@ import org.mongodb.scala.{Completed, MongoDatabase}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Schema}
 
 import scala.concurrent.Future

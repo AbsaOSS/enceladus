@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.audit
+package za.co.absa.enceladus.model.backend.audit
 
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.model.Dataset

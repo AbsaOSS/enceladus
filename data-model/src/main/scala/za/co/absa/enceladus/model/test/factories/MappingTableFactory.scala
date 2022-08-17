@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model.test.factories
 import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.{DefaultValue, MappingTable, Schema}
 
 object MappingTableFactory extends EntityFactory[Schema] {

@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.versionedModel.{NamedVersion, VersionedSummary}
 
 import java.time.ZonedDateTime

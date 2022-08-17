@@ -13,8 +13,17 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.scheduler.oozie
+package za.co.absa.enceladus.model.backend.jackson
 
-case class OozieScheduleInstance(workflowPath: String,
-    coordinatorPath: String,
-    coordinatorId: String)
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.core.JsonParser
+
+class OptCharDeserializer extends StdDeserializer[Option[Char]](classOf[Option[Char]]) {
+  override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): Option[Char] = {
+      Some(jsonParser.getText.head)
+  }
+
+  override def getNullValue: Option[Char] = None
+  override def getEmptyValue: Option[Char] = None
+}

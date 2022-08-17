@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.scheduler
+package za.co.absa.enceladus.model.backend.scheduler
 
 import RuntimeConfig._
 

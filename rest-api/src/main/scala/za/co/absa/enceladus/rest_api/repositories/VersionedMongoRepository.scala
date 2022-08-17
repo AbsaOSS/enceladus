@@ -26,7 +26,7 @@ import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Updates._
 import org.mongodb.scala.model._
 import org.mongodb.scala.result.UpdateResult
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary, VersionedSummaryV2}
 
 import scala.concurrent.Future

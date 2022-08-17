@@ -21,7 +21,7 @@ import za.co.absa.enceladus.rest_api.services.OozieService
 import java.util.concurrent.CompletableFuture
 import org.springframework.http.HttpStatus
 import za.co.absa.enceladus.rest_api.models.OozieCoordinatorStatus
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 import java.util.Optional
 
 @RestController

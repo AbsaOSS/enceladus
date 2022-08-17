@@ -24,7 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
 import za.co.absa.enceladus.model.{Schema, Validation}
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.rest_api.controllers.SchemaController
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException

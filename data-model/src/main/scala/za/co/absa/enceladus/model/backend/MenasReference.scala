@@ -13,11 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas
+package za.co.absa.enceladus.model.backend
 
-case class HDFSFolder
-(
-  path: String,
+case class MenasReference(
+  collection: Option[String],
   name: String,
-  children: Option[Seq[HDFSFolder]]
+  version: Int
 )

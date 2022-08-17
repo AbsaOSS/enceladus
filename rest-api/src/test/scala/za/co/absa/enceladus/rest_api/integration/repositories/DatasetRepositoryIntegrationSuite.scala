@@ -28,11 +28,11 @@ import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.DatasetFactory
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
-import za.co.absa.enceladus.model.menas.scheduler.ScheduleTiming
-import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
-import za.co.absa.enceladus.model.menas.scheduler.dataFormats.ParquetDataFormat
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieScheduleInstance
+import za.co.absa.enceladus.model.backend.scheduler.ScheduleTiming
+import za.co.absa.enceladus.model.backend.scheduler.RuntimeConfig
+import za.co.absa.enceladus.model.backend.scheduler.dataFormats.ParquetDataFormat
 import za.co.absa.enceladus.model.versionedModel.VersionedSummary
 
 @RunWith(classOf[SpringRunner])

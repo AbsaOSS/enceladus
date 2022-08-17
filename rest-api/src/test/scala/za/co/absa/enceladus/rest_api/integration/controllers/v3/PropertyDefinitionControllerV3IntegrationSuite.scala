@@ -23,7 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}

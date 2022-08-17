@@ -27,7 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}

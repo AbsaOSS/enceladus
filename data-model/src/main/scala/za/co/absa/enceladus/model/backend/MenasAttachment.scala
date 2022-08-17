@@ -13,17 +13,18 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.jackson
+package za.co.absa.enceladus.model.backend
 
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer
-import com.fasterxml.jackson.core.JsonParser
-
-class OptCharDeserializer extends StdDeserializer[Option[Char]](classOf[Option[Char]]) {
-  override def deserialize(jsonParser: JsonParser, deserializationContext: DeserializationContext): Option[Char] = {
-      Some(jsonParser.getText.head)
-  }
-
-  override def getNullValue: Option[Char] = None
-  override def getEmptyValue: Option[Char] = None
+object MenasAttachment {
+  val ORIGINAL_SCHEMA_ATTACHMENT = "original_schema"
 }
+
+case class MenasAttachment(
+  refCollection: String,
+  refName: String,
+  refVersion: Int,
+  attachmentType: String,
+  filename: String,
+  fileContent: Array[Byte],
+  fileMIMEType: String
+)

@@ -13,10 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas
+package za.co.absa.enceladus.model.backend.scheduler
 
-case class MenasReference(
-  collection: Option[String],
-  name: String,
-  version: Int
-)
+case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Seq[String], month: Seq[String], dayOfWeek: Seq[String]) {
+  def getCronSchedule: String = {
+    val minuteSep = minute.mkString(",")
+    val hourSep = hour.mkString(",")
+    val dayOfMonthSep = dayOfMonth.mkString(",")
+    val monthSep = month.mkString(",")
+    val dayOfWeekSep = dayOfWeek.mkString(",")
+
+    s"$minuteSep $hourSep $dayOfMonthSep $monthSep $dayOfWeekSep"
+  }
+}

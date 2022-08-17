@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.scheduler.oozie
+package za.co.absa.enceladus.model.backend.scheduler.oozie
 
-import za.co.absa.enceladus.model.menas.scheduler._
-import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
+import za.co.absa.enceladus.model.backend.scheduler._
+import za.co.absa.enceladus.model.backend.scheduler.dataFormats._
 
 case class OozieSchedule(
    scheduleTiming: ScheduleTiming,

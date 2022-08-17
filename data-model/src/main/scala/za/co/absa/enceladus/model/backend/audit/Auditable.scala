@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.audit
+package za.co.absa.enceladus.model.backend.audit
 
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import scala.reflect.ClassTag
 
 /**
- * Trait for all auditable Menas entities
+ * Trait for all auditable entities
  */
 trait Auditable[T <: Product] { self: T =>
 

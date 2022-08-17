@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 
 class UsedInTest extends AnyFlatSpec with Matchers {
 

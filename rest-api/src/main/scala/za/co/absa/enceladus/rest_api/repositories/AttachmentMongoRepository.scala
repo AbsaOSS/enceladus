@@ -23,7 +23,7 @@ import org.mongodb.scala.model.Sorts
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Repository
 import za.co.absa.enceladus.model
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.MenasAttachment
 
 import scala.concurrent.Future
 import scala.reflect.ClassTag

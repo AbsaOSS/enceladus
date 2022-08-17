@@ -16,7 +16,7 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 
 case class UsedIn(datasets: Option[Seq[MenasReference]] = None,
                   mappingTables: Option[Seq[MenasReference]] = None) {

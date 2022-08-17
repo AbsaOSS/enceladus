@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.{PropertyType, StringPropertyType}

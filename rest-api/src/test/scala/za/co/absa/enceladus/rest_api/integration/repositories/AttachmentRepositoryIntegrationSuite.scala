@@ -23,7 +23,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
 import za.co.absa.enceladus.rest_api.integration.fixtures.{AttachmentFixtureService, FixtureService}
 import za.co.absa.enceladus.rest_api.repositories.{AttachmentMongoRepository, RefCollection}
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.MenasAttachment
 import za.co.absa.enceladus.model.test.factories.AttachmentFactory
 
 @RunWith(classOf[SpringRunner])

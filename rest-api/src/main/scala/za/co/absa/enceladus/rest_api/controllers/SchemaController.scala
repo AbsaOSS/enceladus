@@ -34,7 +34,7 @@ import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.utils.parsers.SchemaParser
 import za.co.absa.enceladus.model.Schema
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}

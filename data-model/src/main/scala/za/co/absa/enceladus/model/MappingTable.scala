@@ -19,8 +19,8 @@ import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.backend.MenasReference
 
 case class MappingTable(name: String,
                         version: Int = 1,

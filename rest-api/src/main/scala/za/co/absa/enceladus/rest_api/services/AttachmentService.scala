@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import org.mongodb.scala.Completed
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.MenasAttachment
 import za.co.absa.enceladus.rest_api.repositories._
 
 import scala.concurrent.Future

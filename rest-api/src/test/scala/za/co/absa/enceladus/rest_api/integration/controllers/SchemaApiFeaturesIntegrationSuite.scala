@@ -36,7 +36,7 @@ import za.co.absa.enceladus.rest_api.models.SchemaApiFeatures
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException

@@ -23,7 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.rest_api.services.MappingTableService
 
 @RestController

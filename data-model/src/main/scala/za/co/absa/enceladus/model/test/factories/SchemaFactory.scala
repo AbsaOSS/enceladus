@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import za.co.absa.enceladus.model.{Schema, SchemaField}
 
 object SchemaFactory extends EntityFactory[Schema] {

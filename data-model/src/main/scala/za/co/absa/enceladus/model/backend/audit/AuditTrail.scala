@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.audit
+package za.co.absa.enceladus.model.backend.audit
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.MenasReference
 import java.time.ZonedDateTime
 
 case class AuditTrail(entries: Seq[AuditTrailEntry])

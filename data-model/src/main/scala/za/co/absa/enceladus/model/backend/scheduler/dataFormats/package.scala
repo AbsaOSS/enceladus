@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.model.menas.scheduler
+package za.co.absa.enceladus.model.backend.scheduler
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
 import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import za.co.absa.enceladus.model.menas.jackson._
+import za.co.absa.enceladus.model.backend.jackson._
 
 package object dataFormats {
 

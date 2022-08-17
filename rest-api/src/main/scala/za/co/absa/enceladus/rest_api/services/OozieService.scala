@@ -26,10 +26,10 @@ import org.springframework.stereotype.Component
 import za.co.absa.enceladus.rest_api.exceptions.OozieActionException
 import za.co.absa.enceladus.rest_api.models.OozieCoordinatorStatus
 import za.co.absa.enceladus.rest_api.repositories.OozieRepository
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
-import za.co.absa.enceladus.model.menas.scheduler.RuntimeConfig
+import za.co.absa.enceladus.model.backend.scheduler.RuntimeConfig
 
 @Component
 class OozieService @Autowired() (oozieRepository: OozieRepository, datasetMongoRepository: DatasetMongoRepository) {

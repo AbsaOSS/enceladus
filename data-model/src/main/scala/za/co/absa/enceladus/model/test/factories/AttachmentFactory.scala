@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.model.test.factories
 
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.MenasAttachment
 
 object AttachmentFactory {
 

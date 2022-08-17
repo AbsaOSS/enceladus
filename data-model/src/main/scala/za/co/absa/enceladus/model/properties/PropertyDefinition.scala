@@ -18,8 +18,8 @@ package za.co.absa.enceladus.model.properties
 import java.time.ZonedDateTime
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ObjectNode
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
+import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel

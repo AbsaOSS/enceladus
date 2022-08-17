@@ -20,7 +20,7 @@ import org.apache.hadoop.fs.Path
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation._
-import za.co.absa.enceladus.model.menas.HDFSFolder
+import za.co.absa.enceladus.model.backend.HDFSFolder
 import za.co.absa.enceladus.rest_api.services.HDFSService
 
 import scala.concurrent.Future

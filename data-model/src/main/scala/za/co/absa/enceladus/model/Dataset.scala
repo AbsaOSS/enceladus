@@ -20,9 +20,9 @@ import java.time.ZonedDateTime
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.backend.MenasReference
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 
 case class Dataset(name: String,
                    version: Int = 1,
