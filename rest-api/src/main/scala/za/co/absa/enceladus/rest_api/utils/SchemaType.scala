@@ -36,7 +36,7 @@ object SchemaType extends Enumeration {
     } catch {
       case e: NoSuchElementException =>
         throw SchemaFormatException(schemaName, s"'$schemaName' is not a recognized schema format. " +
-          s"Menas currently supports: ${SchemaType.values.mkString(", ")}.", cause = e)
+          s"Enceladus currently supports: ${SchemaType.values.mkString(", ")}.", cause = e)
     }
 
   /**
