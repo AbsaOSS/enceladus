@@ -41,8 +41,6 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 
 ## REST API
 - [REST API Info]({{ docs_path }}/usage/rest-api)
-
-## REST API
 - [Configuration]({{ docs_path }}/usage/rest-api-config)
 
 ## General
