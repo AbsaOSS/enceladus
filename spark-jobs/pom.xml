@@ -58,7 +58,7 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>spark-data-standardization_2.11</artifactId>
-            <version>0.1.0</version>
+            <version>0.1.1</version>
         </dependency>
 
         <!-- Data formats support -->
@@ -95,6 +95,11 @@
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
             <version>${absa.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>${absa.spark.commons.version}</version>
         </dependency>
 
         <!-- Libraries -->
