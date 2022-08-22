@@ -23,7 +23,6 @@ import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
 import za.co.absa.standardization.stages.PlainSchemaGenerator
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -40,7 +39,6 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     .copy(metadataColumns = metadataConfig)
 
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val defaults: Defaults = GlobalDefaults
 
   private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
 

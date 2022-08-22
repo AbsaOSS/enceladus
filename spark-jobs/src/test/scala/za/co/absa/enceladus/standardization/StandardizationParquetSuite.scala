@@ -165,7 +165,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field",
         DecimalType(20,2),
         nullable = false,
-        new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
+        new MetadataBuilder().putString("default", "3.14").build())
     )
     val schema = StructType(seq)
     val destDF = Standardization.standardize(sourceDF, schema, config)
@@ -224,7 +224,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString(MetadataKeys.DefaultValue, "-1")
+        .putString("default", "-1")
         .build())
     )
     val schema = StructType(seq)
@@ -293,7 +293,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString(MetadataKeys.DefaultValue, "-1")
+        .putString("default", "-1")
         .build())
     )
     val schema = StructType(seq)
@@ -462,7 +462,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = false),
-      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
+      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString("timezone", "CET").build())
     )
     val schema = StructType(seq)
     val destDF = Standardization.standardize(sourceDF, schema, config)

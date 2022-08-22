@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.SparkSession
+import za.co.absa.enceladus.common.GlobalDefaults
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationJob extends StandardizationExecution {
@@ -33,12 +33,13 @@ object StandardizationJob extends StandardizationExecution {
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName)
-    implicit val defaults: Defaults = new DefaultsByFormat(cmd.rawFormat)
     implicit val configReader: ConfigReader = new ConfigReader()
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     val menasSetupValue = AvailabilitySetup.withName(menasSetup)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+
+    implicit val defaults: GlobalDefaults.type = GlobalDefaults
 
     val preparationResult = prepareJob()
     val schema =  prepareStandardization(args, menasCredentials, preparationResult)

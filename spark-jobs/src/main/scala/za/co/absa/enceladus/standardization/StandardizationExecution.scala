@@ -34,12 +34,12 @@ import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
-import za.co.absa.enceladus.utils.types.Defaults
 import za.co.absa.standardization.Standardization
 import za.co.absa.standardization.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.validation.{ValidationException => EnceladusValidationException}
 import za.co.absa.standardization.{ValidationException => StandardizationValidationException}
 import za.co.absa.standardization.config.{StandardizationConfig => StandardizationLibraryConfig}
+import za.co.absa.standardization.types.TypeDefaults
 
 import java.io.{PrintWriter, StringWriter}
 import scala.util.control.NonFatal
@@ -54,7 +54,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                          (implicit dao: MenasDAO,
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession,
-                                          defaults: Defaults): StructType = {
+                                          defaults: TypeDefaults): StructType = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val rawFsUtils = HadoopFsUtils.getOrCreate(rawFs)
 
@@ -83,9 +83,10 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    val defaultTimeZoneForTimestamp = defaults.getDefaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    // TODO
+    val defaultTimeZoneForTimestamp = defaults.defaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_timestamps"-> defaultTimeZoneForTimestamp)
-    val defaultTimeZoneForDate = defaults.getDefaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    val defaultTimeZoneForDate = defaults.defaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_dates"-> defaultTimeZoneForDate)
 
     // Add Dataset properties marked with putIntoInfoFile=true
@@ -176,6 +177,7 @@ trait StandardizationExecution extends CommonJobExecution {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
+    // Todo for Standardization extraction
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
       case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)(rawFs)
