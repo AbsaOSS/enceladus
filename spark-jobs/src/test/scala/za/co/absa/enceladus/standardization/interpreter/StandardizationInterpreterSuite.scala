@@ -24,6 +24,7 @@ import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTe
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreterSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -57,11 +58,11 @@ class StandardizationInterpreterSuite  extends AnyFunSuite with TZNormalizedSpar
 
     val srcString:String = FileReader.readFileAsString("src/test/resources/data/patients.json")
 
-    val src = JsonUtils.getDataFrameFromJson(spark, Seq(srcString))
+    val src = JsonUtils.getDataFrameFromJson(Seq(srcString))
 
     logDataFrameContent(src)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val actualSchema = std.schema.treeString

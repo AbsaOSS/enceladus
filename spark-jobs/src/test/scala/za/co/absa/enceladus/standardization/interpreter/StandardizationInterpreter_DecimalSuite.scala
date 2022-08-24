@@ -24,6 +24,7 @@ import za.co.absa.enceladus.utils.schema.MetadataKeys
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -70,7 +71,7 @@ class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormali
     val src = seq.toDF("description","small", "big")
     logDataFrameContent(src)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = Seq(
@@ -131,7 +132,7 @@ class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormali
         ErrorMessage.stdCastErr("big", "NaN")))
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DecimalRow].collect().sortBy(_.description).toList)
@@ -168,7 +169,7 @@ class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormali
         .build())
     ))
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithAlters, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithAlters, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = List(
@@ -210,7 +211,7 @@ class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormali
         .build())
     ))
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = List(
@@ -262,7 +263,7 @@ class StandardizationInterpreter_DecimalSuite extends AnyFunSuite with TZNormali
         .build())
     ))
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchemaWithPatterns, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     val exp = List(

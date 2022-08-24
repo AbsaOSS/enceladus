@@ -22,6 +22,7 @@ import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase {
   import spark.implicits._
@@ -53,7 +54,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -79,7 +80,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -105,7 +106,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -131,7 +132,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -161,7 +162,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -191,7 +192,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -221,7 +222,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -254,7 +255,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -288,7 +289,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -320,7 +321,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
     val src = seq.toDF(fieldName)
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     logDataFrameContent(std)
 
     assertResult(exp)(std.as[DateRow].collect().toList)
@@ -351,7 +352,7 @@ class StandardizationInterpreter_DateSuite extends AnyFunSuite with TZNormalized
 
   val src = seq.toDF(fieldName)
 
-  val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+  val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
   logDataFrameContent(std)
 
   assertResult(exp)(std.as[DateRow].collect().toList)

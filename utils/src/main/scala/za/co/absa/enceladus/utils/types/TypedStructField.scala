@@ -26,13 +26,12 @@ import za.co.absa.enceladus.utils.typeClasses.{DoubleLike, LongLike}
 import za.co.absa.enceladus.utils.types.parsers._
 import za.co.absa.enceladus.utils.validation.ValidationIssue
 import za.co.absa.enceladus.utils.validation.field._
-import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldEnhancements
 import za.co.absa.spark.commons.implicits.StructFieldImplicits.StructFieldMetadataEnhancements
 
 import scala.util.{Failure, Success, Try}
 
-sealed abstract class TypedStructField(structField: StructField)(implicit defaults: Defaults)
-  extends StructFieldEnhancements(structField) with Serializable {
+sealed abstract class TypedStructField(val structField: StructField)(implicit defaults: Defaults)
+  extends Serializable {
 
   type BaseType
 
@@ -165,7 +164,7 @@ object TypedStructField {
   def asBinaryTypeStructField(structField: StructField)(implicit defaults: Defaults): BinaryTypeStructField =
     TypedStructField(structField).asInstanceOf[BinaryTypeStructField]
 
-  def unapply[T](typedStructField: TypedStructField): Option[StructField] = Some(typedStructField.structField)
+  def unapply(typedStructField: TypedStructField): Option[StructField] = Some(typedStructField.structField)
 
   abstract class TypedStructFieldTagged[T](structField: StructField)(implicit defaults: Defaults)
     extends TypedStructField(structField) {

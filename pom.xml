@@ -89,6 +89,12 @@
             <timezone>Europe/Prague</timezone>
             <url>https://github.com/AdrianOlosutean</url>
         </developer>
+        <developer>
+            <id>lsulak</id>
+            <name>Ladislav Šulák </name>
+            <timezone>Europe/Prague</timezone>
+            <url>https://github.com/lsulak</url>
+        </developer>
     </developers>
     <distributionManagement>
         <snapshotRepository>
@@ -141,7 +147,7 @@
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
         <absa.commons.version>1.0.0</absa.commons.version>
-        <absa.spark.commons.version>0.2.0</absa.spark.commons.version>
+        <absa.spark.commons.version>0.3.1</absa.spark.commons.version>
         <atum.version>3.8.2</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
         <bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>

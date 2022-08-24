@@ -26,6 +26,7 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.spark.commons.utils.JsonUtils
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class CastingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with HadoopFsTestBase {
   private val ruleName = "Casting rule"
@@ -44,15 +45,12 @@ class CastingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
 
     mockWhen(dao.getDataset("Orders Conformance", 1, ValidationLevel.NoValidation)) thenReturn CastingRuleSamples.ordersDS
 
-    val mappingTablePattern = "{0}/{1}/{2}"
-
-    import spark.implicits._
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(experimentalMR)
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter().interpret(CastingRuleSamples.ordersDS, inputDf).cache
+    val conformed = DynamicInterpreter().interpret(CastingRuleSamples.ordersDS, inputDf).cacheIfNotCachedYet()
 
     val conformedJSON = JsonUtils.prettySparkJSON(conformed.orderBy($"id").toJSON.collect)
 

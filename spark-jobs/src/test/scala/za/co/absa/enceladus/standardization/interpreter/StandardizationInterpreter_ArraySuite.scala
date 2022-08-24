@@ -70,7 +70,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
       " |    |-- element: timestamp (containsNull = true)"
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
   }
@@ -99,7 +99,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
       " |-- arrayField: array (nullable = true)\n" +
       " |    |-- element: timestamp (containsNull = true)"
     )
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
   }
@@ -113,7 +113,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
     val src = seq.toDF(fieldName)
     val desiredSchema = generateDesiredSchema(TimestampType, s""""${MetadataKeys.Pattern}": "fubar"""")
     val caught = intercept[ValidationException] {
-      StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+      StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     }
 
     caught.getMessage should startWith ("A fatal schema validation error occurred.")
@@ -145,7 +145,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
         " |    |-- element: integer (containsNull = true)"
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
   }
@@ -175,7 +175,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
         " |    |-- element: float (containsNull = true)"
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
   }
@@ -184,7 +184,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
     val seq = Seq(
       s"""{"$fieldName": [["a", "bb", "ccc"],["1", "12"],["Hello", null, "World"]]}"""
     )
-    val src = JsonUtils.getDataFrameFromJson(spark, seq)
+    val src = JsonUtils.getDataFrameFromJson(seq)
 
     val subArrayJson = """{"type": "array", "elementType": "string", "containsNull": false}"""
     val desiredSchema = generateDesiredSchema(subArrayJson, s""""${MetadataKeys.DefaultValue}": "Nope"""")
@@ -204,7 +204,7 @@ class StandardizationInterpreter_ArraySuite extends AnyFunSuite with TZNormalize
         " |    |    |-- element: string (containsNull = true)"
     )
 
-    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cache()
+    val std = StandardizationInterpreter.standardize(src, desiredSchema, "").cacheIfNotCachedYet()
 
     assert(std.schema.treeString == expectedSchema)
     assert(std.dataAsString(false) == expectedData)
