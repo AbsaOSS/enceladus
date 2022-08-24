@@ -19,6 +19,7 @@ import com.typesafe.config._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
+import scala.util.{Failure, Try}
 
 
 object ConfigReader {
@@ -61,11 +62,15 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
   }
 
   def getIntList(path: String): List[Int] = {
-    config
+    Try(config
       .getIntList(path)
       .asScala
       .map(_.toInt)
       .toList
+    ).recoverWith {
+      // if it fails try to decode it as a simple string, but if that fails too, throw the original exception
+      case e: ConfigException.WrongType => Try(getListFromString(path){_.toInt}).recoverWith { case _ => Failure(e)}
+    }.get
   }
 
   /**
@@ -188,6 +193,15 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     } else {
       None
     }
+  }
+
+  private def getListFromString[T](path: String)(converFnc: String => T): List[T] = {
+    import za.co.absa.enceladus.utils.implicits.StringImplicits._
+
+    val delimiter = ','
+    val source = getString(path).trimStartEndChar('[', ']')
+    val listDirty = source.splitWithQuotes(delimiter)
+    listDirty.map(item => converFnc(item.trim.trimStartEndChar('"'))).toList
   }
 
 }
