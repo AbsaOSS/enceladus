@@ -68,10 +68,6 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
           log.info(s"Authentication successful: $username")
           getAuthHeaders(response)
 
-//        case err if mapIntToOptionallyRetryableException.isDefinedAt(err.value) =>
-//          val exceptionToThrow = mapIntToOptionallyRetryableException(err.value).getClass
-//          throw exceptionToThrow(errMessage)
-
         case HttpStatus.UNAUTHORIZED =>
           throw UnauthorizedException(errMessage)
 
