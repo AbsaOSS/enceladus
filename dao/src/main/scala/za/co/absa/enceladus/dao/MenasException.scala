@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.dao
 
+import scala.util.{Success, Failure, Try}
+
 abstract class MenasException(message: String, cause: Throwable) extends Exception(message, cause)
 
 abstract class NotRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
@@ -62,4 +64,14 @@ object OptionallyRetryableException {
     403 -> classOf[ForbiddenException],
     404 -> classOf[NotFoundException]
   )
+
+  def getIntToOptionallyRetryableException(exceptionAsInt: Int): OptRetryableExceptions = {
+    Try(mapIntToOptionallyRetryableException(exceptionAsInt)) match {
+      case Success(retryableException) => retryableException
+      case Failure(exception) =>
+        throw new IllegalArgumentException(
+          s"The input optionallyRetryableExceptions '$exceptionAsInt' is not supported.", exception
+        )
+    }
+  }
 }

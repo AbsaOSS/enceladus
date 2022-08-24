@@ -176,7 +176,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
         conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
           .asScala
           .toSet
-          .map(mapIntToOptionallyRetryableException(_: Int))
+          .map(getIntToOptionallyRetryableException)
       } else {
         Set.empty
       }
