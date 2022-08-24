@@ -22,6 +22,8 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.auth._
 import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.{ForbiddenException, NotFoundException, UnauthorizedException}
 
 object AuthClient {
 
@@ -53,17 +55,34 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   @throws[AuthenticationException]
+  @throws[OptionallyRetryableException]
   def authenticate(): HttpHeaders = {
     apiCaller.call { baseUrl =>
       val response = requestAuthentication(url(baseUrl))
       val statusCode = response.getStatusCode
 
+      lazy val errMessage = s"Authentication failure ($statusCode): $username"
+
       statusCode match {
         case HttpStatus.OK =>
           log.info(s"Authentication successful: $username")
           getAuthHeaders(response)
-        case _             =>
-          throw AuthenticationException(s"Authentication failure ($statusCode): $username")
+
+//        case err if mapIntToOptionallyRetryableException.isDefinedAt(err.value) =>
+//          val exceptionToThrow = mapIntToOptionallyRetryableException(err.value).getClass
+//          throw exceptionToThrow(errMessage)
+
+        case HttpStatus.UNAUTHORIZED =>
+          throw UnauthorizedException(errMessage)
+
+        case HttpStatus.FORBIDDEN =>
+          throw ForbiddenException(errMessage)
+
+        case HttpStatus.NOT_FOUND =>
+          throw NotFoundException(errMessage)
+
+        case _ =>
+          throw AuthenticationException(errMessage)
       }
     }
   }

@@ -23,7 +23,7 @@ import org.scalatest.BeforeAndAfter
 import org.springframework.http.{HttpHeaders, ResponseEntity}
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.ForbiddenException
 import za.co.absa.enceladus.dao.rest.{ApiCaller, ApiCallerStub, AuthClient}
 
 abstract class AuthClientSuite() extends AnyWordSpec
@@ -64,10 +64,10 @@ abstract class AuthClientSuite() extends AnyWordSpec
     "throw an error on anything other than 200 OK" in {
       setUpUnsuccessfulAuthRequest()
 
-      val exception = intercept[AuthenticationException] {
+      val exception = intercept[ForbiddenException] {
         authClient.authenticate()
       }
-      exception shouldBe AuthenticationException("Authentication failure (403): user")
+      exception shouldBe ForbiddenException("Authentication failure (403): user")
     }
   }
 
