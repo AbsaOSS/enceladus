@@ -72,7 +72,7 @@ object OptionallyRetryableException {
     *  @param httpStatusCode an integer representation of HTTP status code that should be converted
     *                       to a custom class representing it.
     */
-  def getIntToOptionallyRetryableException(httpStatusCode: Int): OptRetryableExceptions = {
+  def getOptionallyRetryableException(httpStatusCode: Int): OptRetryableExceptions = {
     Try(mapIntToOptionallyRetryableException(httpStatusCode)) match {
       case Success(retryableException) => retryableException
       case Failure(exception) =>

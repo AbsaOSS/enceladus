@@ -66,7 +66,7 @@ trait CommonJobExecution extends ProjectMetadata {
       .getIntListOption("menas.rest.optionallyRetryableExceptions")
       .getOrElse(Set.empty)
       .toSet
-      .map(getIntToOptionallyRetryableException)
+      .map(getOptionallyRetryableException)
 
   protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
