@@ -83,7 +83,6 @@ trait StandardizationExecution extends CommonJobExecution {
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
 
-    // TODO
     val defaultTimeZoneForTimestamp = defaults.defaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_timestamps"-> defaultTimeZoneForTimestamp)
     val defaultTimeZoneForDate = defaults.defaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
@@ -177,7 +176,6 @@ trait StandardizationExecution extends CommonJobExecution {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
 
-    // Todo for Standardization extraction
     val fieldRenames = SchemaUtils.getRenamesInSchema(schema)
     fieldRenames.foreach {
       case (destinationName, sourceName) => standardizedDF.registerColumnRename(sourceName, destinationName)(rawFs)
