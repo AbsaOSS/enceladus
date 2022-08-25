@@ -19,7 +19,7 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
-import za.co.absa.enceladus.dao.MenasException
+import za.co.absa.enceladus.dao.RestApiException
 import za.co.absa.enceladus.dao.RetryableException._
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 
@@ -69,7 +69,7 @@ protected class CrossHostApiCaller private(
 )
   extends ApiCaller {
 
-  private val retryableExceptions: Set[Class[_ <: MenasException]] = optionallyRetryableExceptions ++
+  private val retryableExceptions: Set[Class[_ <: RestApiException]] = optionallyRetryableExceptions ++
     Set(classOf[DaoException], classOf[AutoRecoverableException])
 
   def baseUrlsCount: Int = apiBaseUrls.size
@@ -101,11 +101,11 @@ protected class CrossHostApiCaller private(
 
       //using match instead of recoverWith to make the function @tailrec
       result match {
-        case Failure(e: MenasException) if retryableExceptions.contains(e.getClass) && attemptNumber < maxTryCount =>
+        case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
           attempt(url, attemptNumber + 1, urlsTried)
 
-        case Failure(e: MenasException) if retryableExceptions.contains(e.getClass) && urlsTried < baseUrlsCount =>
+        case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && urlsTried < baseUrlsCount =>
           val nextUrl = nextBaseUrl()
           logFailure(e, url, attemptNumber, Option(nextUrl))
           attempt(nextUrl, 1, urlsTried + 1)

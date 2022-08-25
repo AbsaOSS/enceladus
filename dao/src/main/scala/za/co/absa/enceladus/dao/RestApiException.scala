@@ -17,9 +17,9 @@ package za.co.absa.enceladus.dao
 
 import scala.util.{Success, Failure, Try}
 
-abstract class MenasException(message: String, cause: Throwable) extends Exception(message, cause)
+abstract class RestApiException(message: String, cause: Throwable) extends Exception(message, cause)
 
-abstract class NotRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
+abstract class NotRetryableException(message: String, cause: Throwable) extends RestApiException(message, cause)
 
 object NotRetryableException {
 
@@ -28,7 +28,7 @@ object NotRetryableException {
     extends NotRetryableException(message, cause)
 }
 
-abstract class RetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
+abstract class RetryableException(message: String, cause: Throwable) extends RestApiException(message, cause)
 
 object RetryableException {
 
@@ -41,7 +41,7 @@ object RetryableException {
     extends RetryableException(message, cause)
 }
 
-abstract class OptionallyRetryableException(message: String, cause: Throwable) extends MenasException(message, cause)
+abstract class OptionallyRetryableException(message: String, cause: Throwable) extends RestApiException(message, cause)
 
 object OptionallyRetryableException {
 
