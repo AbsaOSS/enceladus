@@ -69,16 +69,16 @@ object OptionallyRetryableException {
     * This function returns a custom exception class from the input HTTP status code. If the HTTP status code is not
     * supported, then an exception will be raised.
     *
-    *  @param exceptionAsInt an integer representation of HTTP status code that should be converted
+    *  @param httpStatusCode an integer representation of HTTP status code that should be converted
     *                       to a custom class representing it.
     */
-  def getIntToOptionallyRetryableException(exceptionAsInt: Int): OptRetryableExceptions = {
-    Try(mapIntToOptionallyRetryableException(exceptionAsInt)) match {
+  def getIntToOptionallyRetryableException(httpStatusCode: Int): OptRetryableExceptions = {
+    Try(mapIntToOptionallyRetryableException(httpStatusCode)) match {
       case Success(retryableException) => retryableException
       case Failure(exception) =>
         throw new IllegalArgumentException(
-          s"The input HTTP status code '$exceptionAsInt' is not supported. " +
-          s"These are supported: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")}",
+          s"The input HTTP status code '$httpStatusCode' is not supported. " +
+          s"These are supported: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")} ",
           exception
         )
     }
