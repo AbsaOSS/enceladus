@@ -35,7 +35,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<enceladus_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
@@ -61,7 +61,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<enceladus_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
@@ -82,7 +82,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Dmenas.rest.uri=<menas_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<enceladus_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
 <spark-jobs_<build_version>.jar> \
 --menas-auth-keytab <path_to_keytab_file> \
