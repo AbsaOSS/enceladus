@@ -63,7 +63,7 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
   protected val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
     configReader
-      .getIntListOption("menas.rest.optionallyRetryableExceptions")
+      .getIntListOption("enceladus.rest.optionallyRetryableExceptions")
       .getOrElse(Set.empty)
       .toSet
       .map(getOptionallyRetryableException)

@@ -91,7 +91,7 @@ protected class RestClient(authClient: AuthClient,
      */
     def handleUnauthorizedResponse(exceptionToThrow: => OptionallyRetryableException): Unit = {
       log.warn(s"Response - ${statusCode} : ${Option(response.getBody).getOrElse("<empty body>")}")
-      log.warn(s"Unauthorized $method request for Menas URL: $url")
+      log.warn(s"Unauthorized $method request for Rest API URL: $url")
       if (retriesLeft <= 0) {
         throw exceptionToThrow
       }
@@ -99,7 +99,7 @@ protected class RestClient(authClient: AuthClient,
       log.warn(s"Expired session, reauthenticating")
       authenticate()
 
-      log.info(s"Retrying $method request for Menas URL: $url")
+      log.info(s"Retrying $method request for Rest API URL: $url")
       log.info(s"Retries left: $retriesLeft")
     }
 
