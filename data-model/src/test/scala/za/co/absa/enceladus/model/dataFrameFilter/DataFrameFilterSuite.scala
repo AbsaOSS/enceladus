@@ -67,6 +67,50 @@ class DataFrameFilterSuite extends AnyFunSuite {
     assert(filterExpr2.semanticEquals(expected))
   }
 
+  test("Two OR filters joined with an `or` condition") {
+    val leftF1 = DiffersFilter("column1", "v1")
+    val leftF2 = EqualsFilter("column1", "v1")
+    val childOrLeft = OrJoinedFilters(Set(leftF1, leftF2))
+
+    val rightF1 = DiffersFilter("column2", "v2")
+    val rightF2 = EqualsFilter("column2", "v2")
+    val rightF3 = EqualsFilter("column1", "v1")
+    val childOrRight = OrJoinedFilters(Set(rightF1, rightF2, rightF3))
+
+    val parentOr = childOrLeft or childOrRight
+
+    val actualFilterExpr = parentOr.filter.expr
+
+    val expected = ((col("column1") =!= lit("v1")) or
+      (col("column1") === lit("v1")) or
+      (col("column2") =!= lit("v2")) or
+      (col("column2") === lit("v2"))).expr
+
+    assert(actualFilterExpr semanticEquals expected)
+  }
+
+  test("Two AND filters joined with an `and` condition") {
+    val leftF1 = DiffersFilter("column1", "v1")
+    val leftF2 = EqualsFilter("column1", "v1")
+    val childAndLeft = AndJoinedFilters(Set(leftF1, leftF2))
+
+    val rightF1 = DiffersFilter("column2", "v2")
+    val rightF2 = EqualsFilter("column2", "v2")
+    val rightF3 = EqualsFilter("column1", "v1")
+    val childAndRight = AndJoinedFilters(Set(rightF1, rightF2, rightF3))
+
+    val parentAnd = childAndLeft and childAndRight
+
+    val actualFilterExpr = parentAnd.filter.expr
+
+    val expected = ((col("column1") =!= lit("v1")) and
+      (col("column1") === lit("v1")) and
+      (col("column2") =!= lit("v2")) and
+      (col("column2") === lit("v2"))).expr
+
+    assert(actualFilterExpr semanticEquals expected)
+  }
+
   test("Filter with or within and") {
     val f1 = EqualsFilter("column1", "v1")
     val f2 = EqualsFilter("column2", "2", IntegerType)
