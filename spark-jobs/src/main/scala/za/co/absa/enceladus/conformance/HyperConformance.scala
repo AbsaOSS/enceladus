@@ -172,8 +172,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       None
     }
     val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
-      if (conf.containsKey(restApiOptionallyRetryableExceptions)) {
-        conf.getList(classOf[Int], restApiOptionallyRetryableExceptions)
+      if (conf.containsKey(menasOptionallyRetryableExceptions)) {
+        conf.getList(classOf[Int], menasOptionallyRetryableExceptions)
           .asScala
           .toSet
           .map(getOptionallyRetryableException)

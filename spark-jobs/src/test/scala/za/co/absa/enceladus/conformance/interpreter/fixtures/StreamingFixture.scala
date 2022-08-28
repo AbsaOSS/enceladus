@@ -63,8 +63,8 @@ trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with M
     when(configStub.containsKey(menasUriRetryCountKey)).thenReturn(true)
     when(configStub.getInt(menasUriRetryCountKey)).thenReturn(0)
     when(configStub.containsKey(menasAvailabilitySetupKey)).thenReturn(false)
-    when(configStub.containsKey(restApiOptionallyRetryableExceptions)).thenReturn(true)
-    when(configStub.getList(classOf[Int], restApiOptionallyRetryableExceptions)).thenReturn(List[Int]().asJava)
+    when(configStub.containsKey(menasOptionallyRetryableExceptions)).thenReturn(true)
+    when(configStub.getList(classOf[Int], menasOptionallyRetryableExceptions)).thenReturn(List[Int]().asJava)
 
     when(menasDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
       StructField("numerics.SmartObject.all_random", StringType)

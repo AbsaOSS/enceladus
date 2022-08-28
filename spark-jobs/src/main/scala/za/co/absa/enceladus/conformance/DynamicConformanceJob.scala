@@ -36,7 +36,7 @@ object DynamicConformanceJob extends ConformanceExecution {
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     val menasSetupValue = AvailabilitySetup.withName(menasSetup)
     implicit val dao: MenasDAO = RestDaoFactory.getInstance(
-      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, optionallyRetryableExceptions
+      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, menasOptionallyRetryableExceptions
     )
     implicit val configReader: ConfigReader = new ConfigReader()
 
