@@ -61,7 +61,7 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
       val response = requestAuthentication(url(baseUrl))
       val statusCode = response.getStatusCode
 
-      def errMessage = s"Authentication failure ($statusCode): $username"
+      val errMessage = s"Authentication failure ($statusCode): $username"
 
       statusCode match {
         case HttpStatus.OK =>
