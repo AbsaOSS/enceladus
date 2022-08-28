@@ -141,7 +141,7 @@ object CustomRuleSample4 extends CustomRuleSampleFs {
     val cmd: CmdConfigLocal = getCmdLineArguments(args)
 
     val conf = ConfigFactory.load()
-    val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+    val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
 

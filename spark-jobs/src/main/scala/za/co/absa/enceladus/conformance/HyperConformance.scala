@@ -105,7 +105,7 @@ class HyperConformance (menasBaseUrls: List[String],
  * See https://github.com/AbsaOSS/hyperdrive#configuration for instructions how the component needs to be configured in Hyperdrive.
  * Example values are given below:
  * {{{
- * menas.rest.uri=http://localhost:8080
+ * enceladus.rest.uri=http://localhost:8080
  * dataset.name=example
  * dataset.version=1
  * report.date=2020-01-29

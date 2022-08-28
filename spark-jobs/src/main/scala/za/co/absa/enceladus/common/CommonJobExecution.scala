@@ -59,8 +59,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
 
-  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("menas.rest.uri"))
-  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("menas.rest.retryCount")
+  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
+  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
   protected val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
     configReader
       .getIntListOption("enceladus.rest.optionallyRetryableExceptions")
@@ -68,7 +68,7 @@ trait CommonJobExecution extends ProjectMetadata {
       .toSet
       .map(getOptionallyRetryableException)
 
-  protected val menasSetup: String = configReader.getString("menas.rest.availability.setup")
+  protected val menasSetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
