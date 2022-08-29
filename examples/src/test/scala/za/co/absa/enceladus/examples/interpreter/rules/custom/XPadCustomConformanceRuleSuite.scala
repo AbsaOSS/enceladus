@@ -24,8 +24,9 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.RestApiKerberosCredentials
-import za.co.absa.enceladus.dao.rest.{UrisConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.model.Dataset
+import za.co.absa.enceladus.utils.config.UrisConnectionStringParser
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 case class XPadTestInputRow(intField: Int, stringField: Option[String])

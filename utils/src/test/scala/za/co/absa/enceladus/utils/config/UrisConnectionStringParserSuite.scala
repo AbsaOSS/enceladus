@@ -13,11 +13,12 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.rest
+package za.co.absa.enceladus.utils.config
 
-import za.co.absa.enceladus.dao.DaoException
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-class UrisConnectionStringParserSuite extends BaseTestSuite {
+class UrisConnectionStringParserSuite extends AnyWordSpec with Matchers {
 
   "UrisConnectionStringParser::parse" should {
     "parse a single base URL" when {
@@ -168,38 +169,38 @@ class UrisConnectionStringParserSuite extends BaseTestSuite {
       "the connection string does not fit an http(s)://... pattern" in {
         val connectionString = "qwe://localhost/rest_api/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[IllegalArgumentException] {
           UrisConnectionStringParser.parse(connectionString)
         }
 
-        exception.getMessage should be("Malformed REST API connection string")
+        exception.getMessage should be("Malformed connection string")
       }
       "the connection string includes any url that does not fit an http(s)://... pattern" in {
         val connectionString = "http://localhost:8080/rest_api/api;qwe://localhost/rest_api/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[IllegalArgumentException] {
           UrisConnectionStringParser.parse(connectionString)
         }
 
-        exception.getMessage should be("Malformed REST API connection string")
+        exception.getMessage should be("Malformed connection string")
       }
       "the connection string includes whitespace characters in the hosts" in {
         val connectionString = "http://localhost:8080, localhost:9000/rest_api/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[IllegalArgumentException] {
           UrisConnectionStringParser.parse(connectionString)
         }
 
-        exception.getMessage should be("Malformed REST API connection string")
+        exception.getMessage should be("Malformed connection string")
       }
       "the connection string includes whitespace characters in the path" in {
         val connectionString = "http://localhost:8080,localhost:9000/rest_api /api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[IllegalArgumentException] {
           UrisConnectionStringParser.parse(connectionString)
         }
 
-        exception.getMessage should be("Malformed REST API connection string")
+        exception.getMessage should be("Malformed connection string")
       }
     }
 

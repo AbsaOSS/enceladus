@@ -31,11 +31,10 @@ import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.dao.rest.UrisConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
-import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig, UrisConnectionStringParser}
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization

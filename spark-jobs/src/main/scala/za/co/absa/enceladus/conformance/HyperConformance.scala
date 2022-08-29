@@ -33,8 +33,9 @@ import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionF
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.auth.{RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
-import za.co.absa.enceladus.dao.rest.{UrisConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
+import za.co.absa.enceladus.utils.config.UrisConnectionStringParser
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
