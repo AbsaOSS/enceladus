@@ -60,6 +60,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
 
+  val menasBaseUris: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.menas.uri"))
+
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
     log.info(s"Enceladus version $enceladusVersion")
@@ -169,7 +171,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
-      restApiBaseUrls.map { baseUrl =>
+      menasBaseUris.map { baseUrl =>
         EnceladusRunUrl.getMenasUiRunUrl(baseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
       }.mkString(",")
     }
@@ -191,15 +193,16 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
-    EnceladusAtumPlugin.runNumber.foreach { runNumber =>
+    EnceladusAtumPlugin.runNumber.foreach(runNumber => {
       restApiBaseUrls.foreach { baseUrl =>
         val apiUrl = EnceladusRunUrl.getApiRunUrl(baseUrl, name, version, runNumber)
-        val uiUrl = EnceladusRunUrl.getMenasUiRunUrl(baseUrl, name, version, runNumber)
-
         log.info(s"API Run URL: $apiUrl")
+      }
+      menasBaseUris.foreach { baseUrl =>
+        val uiUrl = EnceladusRunUrl.getMenasUiRunUrl(baseUrl, name, version, runNumber)
         log.info(s"Menas UI Run URL: $uiUrl")
       }
-    }
+    })
   }
 
   protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
