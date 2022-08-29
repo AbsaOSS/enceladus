@@ -31,7 +31,7 @@ import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
-import za.co.absa.enceladus.dao.rest.RestApiConnectionStringParser
+import za.co.absa.enceladus.dao.rest.UrisConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
@@ -56,7 +56,7 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
-  protected val restApiBaseUrls: List[String] = RestApiConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
+  protected val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
   protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty

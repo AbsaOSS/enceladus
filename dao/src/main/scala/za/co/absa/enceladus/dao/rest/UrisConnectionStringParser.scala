@@ -17,7 +17,7 @@ package za.co.absa.enceladus.dao.rest
 
 import za.co.absa.enceladus.dao.DaoException
 
-object RestApiConnectionStringParser {
+object UrisConnectionStringParser {
 
   private val hostsRegex = """^\s*http(?:s)?://([^\s]+?)(?:/[^\s]*)?\s*$""".r
 

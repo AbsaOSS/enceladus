@@ -17,35 +17,35 @@ package za.co.absa.enceladus.dao.rest
 
 import za.co.absa.enceladus.dao.DaoException
 
-class RestApiConnectionStringParserSuite extends BaseTestSuite {
+class UrisConnectionStringParserSuite extends BaseTestSuite {
 
-  "RestApiConnectionStringParser::parse" should {
+  "UrisConnectionStringParser::parse" should {
     "parse a single base URL" when {
       "it is http://" in {
         val connectionString = "http://localhost:8080/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List(connectionString))
       }
       "it is https://" in {
         val connectionString = "https://localhost:8080/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List(connectionString))
       }
       "it doesn't have a port" in {
         val connectionString = "https://localhost/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List(connectionString))
       }
       "it doesn't have a path" in {
         val connectionString = "https://localhost"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List(connectionString))
       }
@@ -55,14 +55,14 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
       "they are specified with or without port" in {
         val connectionString = "http://host1:8080,host2/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://host1:8080/rest_api", "http://host2/rest_api"))
       }
       "there are duplicates" in {
         val connectionString = "http://host1:8080,host1:8080/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://host1:8080/rest_api"))
       }
@@ -72,21 +72,21 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
       "they have single hosts specified" in {
         val connectionString = "https://localhost:8080/rest_api;http://localhost:9000/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("https://localhost:8080/rest_api", "http://localhost:9000/rest_api"))
       }
       "they have multiple hosts specified" in {
         val connectionString = "https://localhost:8080,host2:8080/rest_api;http://localhost:9000/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("https://localhost:8080/rest_api", "https://host2:8080/rest_api", "http://localhost:9000/rest_api"))
       }
       "they have duplicates" in {
         val connectionString = "https://localhost:8080,host2:8080/rest_api;https://localhost:8080/rest_api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("https://localhost:8080/rest_api", "https://host2:8080/rest_api"))
       }
@@ -96,21 +96,21 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
       "parsing a single url" in {
         val connectionString = "  http://localhost/rest_api/api "
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api"))
       }
       "parsing a multiple urls" in {
         val connectionString = "\thttp://localhost/rest_api/api  ;  https://localhost:8080/rest_api/api/ "
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api", "https://localhost:8080/rest_api"))
       }
       "parsing a multiple urls with multiple hosts" in {
         val connectionString = " http://localhost:8080,host2/rest_api/api\t;https://localhost/rest_api/api "
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost:8080/rest_api", "http://host2/rest_api", "https://localhost/rest_api"))
       }
@@ -120,21 +120,21 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
       "parsing a single url" in {
         val connectionString = "http://localhost/rest_api/api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api"))
       }
       "parsing a multiple urls" in {
         val connectionString = "http://localhost/rest_api/api;https://localhost:8080/rest_api/api/"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api", "https://localhost:8080/rest_api"))
       }
       "parsing a multiple urls with multiple hosts" in {
         val connectionString = "http://localhost:8080,host2/rest_api/api;https://localhost/rest_api/api"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost:8080/rest_api", "http://host2/rest_api", "https://localhost/rest_api"))
       }
@@ -144,21 +144,21 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
       "parsing a single url" in {
         val connectionString = "http://localhost/rest_api/"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api"))
       }
       "parsing a multiple urls" in {
         val connectionString = "http://localhost/rest_api/;https://localhost:8080/rest_api/api/"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost/rest_api", "https://localhost:8080/rest_api"))
       }
       "parsing a multiple urls with multiple hosts" in {
         val connectionString = "http://localhost:8080,host2/rest_api/;https://localhost/rest_api/api/"
 
-        val result = RestApiConnectionStringParser.parse(connectionString)
+        val result = UrisConnectionStringParser.parse(connectionString)
 
         result should be(List("http://localhost:8080/rest_api", "http://host2/rest_api", "https://localhost/rest_api"))
       }
@@ -169,7 +169,7 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
         val connectionString = "qwe://localhost/rest_api/api"
 
         val exception = intercept[DaoException] {
-          RestApiConnectionStringParser.parse(connectionString)
+          UrisConnectionStringParser.parse(connectionString)
         }
 
         exception.getMessage should be("Malformed REST API connection string")
@@ -178,7 +178,7 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
         val connectionString = "http://localhost:8080/rest_api/api;qwe://localhost/rest_api/api"
 
         val exception = intercept[DaoException] {
-          RestApiConnectionStringParser.parse(connectionString)
+          UrisConnectionStringParser.parse(connectionString)
         }
 
         exception.getMessage should be("Malformed REST API connection string")
@@ -187,7 +187,7 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
         val connectionString = "http://localhost:8080, localhost:9000/rest_api/api"
 
         val exception = intercept[DaoException] {
-          RestApiConnectionStringParser.parse(connectionString)
+          UrisConnectionStringParser.parse(connectionString)
         }
 
         exception.getMessage should be("Malformed REST API connection string")
@@ -196,7 +196,7 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
         val connectionString = "http://localhost:8080,localhost:9000/rest_api /api"
 
         val exception = intercept[DaoException] {
-          RestApiConnectionStringParser.parse(connectionString)
+          UrisConnectionStringParser.parse(connectionString)
         }
 
         exception.getMessage should be("Malformed REST API connection string")
@@ -213,11 +213,11 @@ class RestApiConnectionStringParserSuite extends BaseTestSuite {
         "http://localhost:8090/rest_api"
       )
       "they are full fledged urls separated by semicolon" in {
-        val result = RestApiConnectionStringParser.parse("http://host1:8080/rest_api;http://host2:9000/rest_api;http://host3:8080/rest_api;http://host4:9000/rest_api;http://localhost:8080/rest_api;http://localhost:8090/rest_api")
+        val result = UrisConnectionStringParser.parse("http://host1:8080/rest_api;http://host2:9000/rest_api;http://host3:8080/rest_api;http://host4:9000/rest_api;http://localhost:8080/rest_api;http://localhost:8090/rest_api")
         result should be(expectedList)
       }
       "varied hosts separated by comma within one url" in {
-        val result = RestApiConnectionStringParser.parse("http://host1:8080,host2:9000,host3:8080,host4:9000,localhost:8080,localhost:8090/rest_api")
+        val result = UrisConnectionStringParser.parse("http://host1:8080,host2:9000,host3:8080,host4:9000,localhost:8080,localhost:8090/rest_api")
         result should be(expectedList)
       }
     }
