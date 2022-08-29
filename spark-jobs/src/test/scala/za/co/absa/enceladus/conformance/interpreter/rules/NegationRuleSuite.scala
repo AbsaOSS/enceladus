@@ -26,6 +26,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class NegationRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
@@ -121,7 +122,7 @@ class NegationRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with 
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter().interpret(enceladusDataset, inputDf).cache
+    val conformed = DynamicInterpreter().interpret(enceladusDataset, inputDf).cacheIfNotCachedYet()
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
     if (conformedJSON != expectedJSON) {
       logger.error("EXPECTED:")

@@ -29,6 +29,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
 class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
@@ -128,7 +129,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cacheIfNotCachedYet()
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 

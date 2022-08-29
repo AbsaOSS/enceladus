@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.conformance.interpreter
 
-import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.LoggerFactory
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+
 
 class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(implicit spark: SparkSession) {
   import spark.implicits._
@@ -34,7 +35,7 @@ class OptimizerTimeTracker(inputDf: DataFrame, isWorkaroundEnabled: Boolean)(imp
   private val idField1 = inputDf.schema.getClosestUniqueName("tmpId")
   private val idField2 = s"${idField1}_2"
   private val dfWithId = inputDf.withColumn(idField1, lit(1))
-  private val dfJustId = Seq(1).toDF(idField2).cache()
+  private val dfJustId = Seq(1).toDF(idField2).cacheIfNotCachedYet()
 
   /**
     * Returns a dataframe prepared to apply the Catalyst workaround
