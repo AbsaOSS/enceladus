@@ -25,6 +25,7 @@ object HyperConformanceAttributes {
   val restApiAvailabilitySetupKey = "enceladus.rest.availability.setup"
   val restApiCredentialsFileKey = "enceladus.rest.credentials.file"
   val restApiAuthKeytabKey = "enceladus.rest.auth.keytab"
+  val menasBaseUris = "enceladus.menas.uri"
   val datasetNameKey = "dataset.name"
   val datasetVersionKey = "dataset.version"
   val reportDateKey = "report.date"
@@ -53,6 +54,8 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
           "Round-robin - start from random, fallback - start from first"),
         required = false),
+    menasBaseUris ->
+      PropertyMetadata("Menas (Enceladus UI) URL(s)", Some("E.g. http://localhost:8080/menas"), required = true),
     datasetNameKey ->
       PropertyMetadata("Dataset name", None, required = true),
     datasetVersionKey ->
