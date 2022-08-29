@@ -60,7 +60,8 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
 
-  val menasBaseUris: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.menas.uri"))
+  private val menasBaseUris: List[String] = UrisConnectionStringParser
+    .parse(configReader.getString("enceladus.menas.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
