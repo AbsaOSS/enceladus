@@ -24,6 +24,8 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
 
   private val restClient = mock[RestClient]
 
+  private def zeroWaitRetryBackoffStrategy(retryNumber: Int): Unit = {}
+
   before {
     Mockito.reset(restClient)
   }
@@ -46,7 +48,10 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         Mockito.when(restClient.sendGet[String]("a")).thenReturn("success")
 
         val result = CrossHostApiCaller(
-          Vector("a", "b", "c"), DefaultUrlsRetryCount, startWith = Some(0)
+          Vector("a", "b", "c"),
+          DefaultUrlsRetryCount,
+          startWith = Some(0),
+          retryBackoffStrategy = zeroWaitRetryBackoffStrategy
         ).call { str =>
           restClient.sendGet[String](str)
         }
@@ -62,7 +67,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong B"))
           .thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), 2, Some(0)).call { str =>
+        val result = CrossHostApiCaller(
+          Vector("a", "b", "c"),
+          2,
+          Some(0),
+          retryBackoffStrategy = zeroWaitRetryBackoffStrategy
+        ).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -79,7 +89,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong B"))
         Mockito.when(restClient.sendGet[String]("c")).thenReturn("success")
 
-        val result = CrossHostApiCaller(Vector("a", "b", "c"), -2, Some(0)).call { str =>
+        val result = CrossHostApiCaller(
+          Vector("a", "b", "c"),
+          -2,
+          Some(0),
+          retryBackoffStrategy = zeroWaitRetryBackoffStrategy
+        ).call { str =>
           restClient.sendGet[String](str)
         }
 
@@ -98,7 +113,11 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenReturn("success")
 
         val result = CrossHostApiCaller(
-          Vector("a", "b", "c"), 2, Some(0), Set(classOf[OptionallyRetryableException.NotFoundException])
+          Vector("a", "b", "c"),
+          2,
+          Some(0),
+          Set(classOf[OptionallyRetryableException.NotFoundException]),
+          retryBackoffStrategy = zeroWaitRetryBackoffStrategy
         ).call { str =>
           restClient.sendGet[String](str)
         }
@@ -118,7 +137,11 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenReturn("success")
 
         val result = CrossHostApiCaller(
-          Vector("a", "b", "c"), 2, Some(0), Set(classOf[OptionallyRetryableException.ForbiddenException])
+          Vector("a", "b", "c"),
+          2,
+          Some(0),
+          Set(classOf[OptionallyRetryableException.ForbiddenException]),
+          retryBackoffStrategy = zeroWaitRetryBackoffStrategy
         ).call { str =>
           restClient.sendGet[String](str)
         }
@@ -140,7 +163,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong C"))
 
         val exception = intercept[RetryableException.DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
+          CrossHostApiCaller(
+            Vector("a", "b", "c"),
+            0,
+            Some(0),
+            retryBackoffStrategy = zeroWaitRetryBackoffStrategy
+          ).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -160,7 +188,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
           .thenThrow(RetryableException.DaoException("Something went wrong C"))
 
         val exception = intercept[RetryableException.DaoException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 1, Some(0)).call { str =>
+          CrossHostApiCaller(
+            Vector("a", "b", "c"),
+            1,
+            Some(0),
+            retryBackoffStrategy = zeroWaitRetryBackoffStrategy
+          ).call { str =>
             restClient.sendGet[String](str)
           }
         }
@@ -180,7 +213,12 @@ class CrossHostApiCallerSuite extends BaseTestSuite {
         )
 
         val exception = intercept[NotRetryableException.AuthenticationException] {
-          CrossHostApiCaller(Vector("a", "b", "c"), 0, Some(0)).call { str =>
+          CrossHostApiCaller(
+            Vector("a", "b", "c"),
+            0,
+            Some(0),
+            retryBackoffStrategy = zeroWaitRetryBackoffStrategy
+          ).call { str =>
             restClient.sendGet[String](str)
           }
         }
