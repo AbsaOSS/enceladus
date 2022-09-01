@@ -65,7 +65,7 @@ object CrossHostApiCaller {
   }
 
   private def quadraticRandomizedRetryBackoffStrategy(retryNumber: Int): Unit = {
-    val inSeconds: Double = retryNumber * retryNumber + Random.nextDouble()
+    val inSeconds: Double = retryNumber * retryNumber + retryNumber * Random.nextDouble()
     val inMillis = inSeconds * 1000
     Thread.sleep(inMillis.toLong)
   }
