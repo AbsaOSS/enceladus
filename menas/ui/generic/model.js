@@ -25,21 +25,7 @@ var model = new sap.ui.model.json.JSONModel({
   newMappingTable: {},
   newSchema: {},
   menasVersion: "",
-  appInfo: {
-    oozie: {}
-  },
-  newScheduleDefault: {
-    scheduleTiming: {},
-    runtimeParams: {
-      stdNumExecutors: 2,
-      stdExecutorMemory: 2,
-      confNumExecutors: 2,
-      confExecutorMemory: 2,
-      driverCores: 1,
-      driverMemory: 2
-    },
-    rawFormat: {}
-  },
+  appInfo: {},
   supportedDataFormats: [{
     key: "xml",
     name: "XML"

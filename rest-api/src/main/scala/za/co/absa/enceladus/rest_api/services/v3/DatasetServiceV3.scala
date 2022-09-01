@@ -19,8 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset, UsedIn, Validation}
-import za.co.absa.enceladus.rest_api.exceptions.ValidationException
-import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.rest_api.services.DatasetService._
 import za.co.absa.enceladus.rest_api.services.DatasetService
 
@@ -29,11 +28,10 @@ import scala.concurrent.Future
 // this DatasetService is a V3 difference wrapper - once V2 is removed, implementations can/should be merged
 @Service
 class DatasetServiceV3 @Autowired()(datasetMongoRepository: DatasetMongoRepository,
-                                    oozieRepository: OozieRepository,
                                     propertyDefinitionService: PropertyDefinitionServiceV3,
                                     mappingTableService: MappingTableServiceV3,
                                     val schemaService: SchemaServiceV3)
-  extends DatasetService(datasetMongoRepository, oozieRepository, propertyDefinitionService)
+  extends DatasetService(datasetMongoRepository, propertyDefinitionService)
     with HavingSchemaService with VersionedModelServiceV3[Dataset] {
 
   import scala.concurrent.ExecutionContext.Implicits.global
