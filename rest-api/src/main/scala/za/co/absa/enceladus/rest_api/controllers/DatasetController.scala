@@ -30,7 +30,7 @@ import za.co.absa.enceladus.rest_api.services.DatasetService
 import za.co.absa.enceladus.utils.validation.ValidationLevel.ValidationLevel
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.properties.PropertyDefinition
-import za.co.absa.enceladus.model.versionedModel.VersionedSummary
+import za.co.absa.enceladus.model.versionedModel.VersionedSummaryV2
 import za.co.absa.enceladus.model.{Dataset, Validation}
 import za.co.absa.enceladus.utils.validation.ValidationLevel.Constants.DefaultValidationLevelName
 
@@ -49,9 +49,9 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   @GetMapping(Array("/latest"))
   @ResponseStatus(HttpStatus.OK)
   def getLatestVersions(@RequestParam(value = "missing_property", required = false)
-                        missingProperty: Optional[String]): CompletableFuture[Seq[VersionedSummary]] = {
+                        missingProperty: Optional[String]): CompletableFuture[Seq[VersionedSummaryV2]] = {
     datasetService.getLatestVersions(missingProperty.toScalaOption)
-      .map(datasets => datasets.map(dataset => VersionedSummary(dataset.name, dataset.version)))
+      .map(datasets => datasets.map(dataset => VersionedSummaryV2(dataset.name, dataset.version)))
   }
 
   @PostMapping(Array("/{datasetName}/rule/create"))
@@ -64,10 +64,10 @@ class DatasetController @Autowired()(datasetService: DatasetService)
       latestVersion <- datasetService.getLatestVersionValue(datasetName)
       res <- latestVersion match {
         case Some(version) => datasetService.addConformanceRule(user.getUsername, datasetName, version, rule).map {
-          case Some(ds) => ds
+          case Some((ds, validation)) => ds // v2 disregarding validation
           case _        => throw notFound()
         }
-        case _ => throw notFound()
+        case _ => Future.failed(notFound())
       }
     } yield res
   }
@@ -104,7 +104,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
         } else {
           datasetService.filterProperties(dsProperties, DatasetController.paramsToPropertyDefinitionFilter(scalaFilterMap))
         }
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 
@@ -113,7 +113,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
                         @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
-    datasetService.replaceProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
+    datasetService.updateProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {
       case None => throw notFound()
       case Some(dataset) =>
         val location: URI = new URI(s"/api/dataset/${dataset.name}/${dataset.version}")
@@ -126,7 +126,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def getPropertiesValidation(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
       case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = false)
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 
@@ -135,7 +135,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
   def getPropertiesValidationForRun(@PathVariable datasetName: String, @PathVariable datasetVersion: Int): CompletableFuture[Validation] = {
     datasetService.getVersion(datasetName, datasetVersion).flatMap {
       case Some(entity) => datasetService.validateProperties(entity.propertiesAsMap, forRun = true)
-      case None => throw notFound()
+      case None => Future.failed(notFound())
     }
   }
 

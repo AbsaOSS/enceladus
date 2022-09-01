@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.rest_api.exceptions
+package za.co.absa.enceladus.rest_api.models.rest
 
-case class EndpointDisabled(message:String = "", cause: Throwable = None.orNull) extends Exception(message, cause)
-
+case class DisabledPayload(disabled: Boolean)

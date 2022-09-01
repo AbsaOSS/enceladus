@@ -27,6 +27,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, ErrorColNormalization}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
@@ -199,11 +200,9 @@ trait StandardizationExecution extends CommonJobExecution {
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
-    val minPartitionSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxPartitionSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-      repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
+      val repartitioner = new Repartitioner(configReader, log)
+      repartitioner.repartition(standardizedDF)
     } else {
       standardizedDF
     }

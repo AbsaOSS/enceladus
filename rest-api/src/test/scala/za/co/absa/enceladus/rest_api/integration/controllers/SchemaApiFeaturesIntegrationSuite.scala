@@ -18,7 +18,6 @@ package za.co.absa.enceladus.rest_api.integration.controllers
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.{Files, Path}
-
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
@@ -41,6 +40,7 @@ import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
 import za.co.absa.enceladus.model.menas.MenasReference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
+import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
 import za.co.absa.enceladus.restapi.TestResourcePath
 
 import scala.collection.immutable.HashMap
@@ -48,7 +48,7 @@ import scala.collection.immutable.HashMap
 @RunWith(classOf[SpringRunner])
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles(Array("withEmbeddedMongo"))
-class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAfterAll {
+class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
   private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
@@ -224,7 +224,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDelete[String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -239,7 +239,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDelete[String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -256,7 +256,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDelete[String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -273,7 +273,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDelete[String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -284,7 +284,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
       }
       "no Schema with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema")
+          val response = sendDelete[String](s"$apiUrl/disable/schema")
 
           assertOk(response)
 
@@ -304,16 +304,18 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/disable/schema")
 
           assertBadRequest(response)
 
           val actual = response.getBody
-          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
+          val expected = EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
+          )
           assert(actual == expected)
         }
       }
-      "some version of the Schema is used by a enabled MappingTable" should {
+      "some version of the Schema is used by an enabled MappingTable" should {
         "return a list of the entities the Schema is used in" in {
           val mappingTable = MappingTableFactory.getDummyMappingTable(name = "mapping", schemaName = "schema", schemaVersion = 1, disabled = false)
           mappingTableFixture.add(mappingTable)
@@ -321,12 +323,14 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/disable/schema")
 
           assertBadRequest(response)
 
           val actual = response.getBody
-          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
+          val expected = EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
+            UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
+          )
           assert(actual == expected)
         }
       }
@@ -341,7 +345,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "otherSchema", version = 1)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -356,7 +360,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -373,7 +377,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -390,7 +394,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/2")
 
           assertOk(response)
 
@@ -407,7 +411,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -424,7 +428,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/2")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/2")
 
           assertOk(response)
 
@@ -435,7 +439,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
       }
       "no Schema with the given name exists" should {
         "disable nothing" in {
-          val response = sendDelete[Schema, String](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[String](s"$apiUrl/disable/schema/1")
 
           assertOk(response)
 
@@ -456,12 +460,14 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/disable/schema/1")
 
           assertBadRequest(response)
 
           val actual = response.getBody
-          val expected = UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
+          val expected = EntityInUseException("""Cannot disable entity "schema" v1, because it is used in the following entities""",
+            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
+          )
           assert(actual == expected)
         }
       }
@@ -474,12 +480,14 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
           val schema2 = SchemaFactory.getDummySchema(name = "schema", version = 2)
           schemaFixture.add(schema1, schema2)
 
-          val response = sendDelete[Schema, UsedIn](s"$apiUrl/disable/schema/1")
+          val response = sendDelete[EntityInUseException](s"$apiUrl/disable/schema/1")
 
           assertBadRequest(response)
 
           val actual = response.getBody
-          val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
+          val expected = EntityInUseException("""Cannot disable entity "schema" v1, because it is used in the following entities""",
+            UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
+          )
           assert(actual == expected)
         }
       }
