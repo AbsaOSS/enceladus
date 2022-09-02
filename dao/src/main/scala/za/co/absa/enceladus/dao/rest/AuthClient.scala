@@ -21,7 +21,9 @@ import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.auth._
-import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.{ForbiddenException, NotFoundException, UnauthorizedException}
 
 object AuthClient {
 
@@ -29,7 +31,8 @@ object AuthClient {
     credentials match {
       case menasCredentials: MenasPlainCredentials    => createLdapAuthClient(apiCaller, menasCredentials)
       case menasCredentials: MenasKerberosCredentials => createSpnegoAuthClient(apiCaller, menasCredentials)
-      case InvalidMenasCredentials                    => throw UnauthorizedException("No Menas credentials provided")
+      case InvalidMenasCredentials                    =>
+        throw AuthenticationException("No Menas credentials provided")
     }
   }
 
@@ -51,18 +54,31 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @throws[UnauthorizedException]
+  @throws[AuthenticationException]
+  @throws[OptionallyRetryableException]
   def authenticate(): HttpHeaders = {
     apiCaller.call { baseUrl =>
       val response = requestAuthentication(url(baseUrl))
       val statusCode = response.getStatusCode
 
+      val errMessage = s"Authentication failure ($statusCode): $username"
+
       statusCode match {
         case HttpStatus.OK =>
           log.info(s"Authentication successful: $username")
           getAuthHeaders(response)
-        case _             =>
-          throw UnauthorizedException(s"Authentication failure ($statusCode): $username")
+
+        case HttpStatus.UNAUTHORIZED =>
+          throw UnauthorizedException(errMessage)
+
+        case HttpStatus.FORBIDDEN =>
+          throw ForbiddenException(errMessage)
+
+        case HttpStatus.NOT_FOUND =>
+          throw NotFoundException(errMessage)
+
+        case _ =>
+          throw AuthenticationException(errMessage)
       }
     }
   }

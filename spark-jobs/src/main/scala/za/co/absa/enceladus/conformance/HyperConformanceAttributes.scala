@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.mapIntToOptionallyRetryableException
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
 object HyperConformanceAttributes {
@@ -22,6 +23,7 @@ object HyperConformanceAttributes {
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
   val menasUriKey = "enceladus.rest.uri"
   val menasUriRetryCountKey = "enceladus.rest.retryCount"
+  val restApiOptionallyRetryableExceptions = "enceladus.rest.optionallyRetryableExceptions"
   val menasAvailabilitySetupKey = "enceladus.rest.availability.setup"
   val menasCredentialsFileKey = "menas.credentials.file"
   val menasAuthKeytabKey = "menas.auth.keytab"
@@ -47,6 +49,13 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
     menasUriRetryCountKey ->
       PropertyMetadata("Menas API URL retry count",
         Some("How many times a call to Menas API URL should be retried after failure before proceeding to the next URL. E.g. 2"),
+        required = false),
+    restApiOptionallyRetryableExceptions ->
+      PropertyMetadata("Rest API optionally retryable HTTP exceptions",
+        Some("""List of HTTP status codes that are allowed to be retryable. """ +
+          s"""Currently we support these: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")} """ +
+          """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
+        ),
         required = false),
     menasAvailabilitySetupKey ->
       PropertyMetadata("The setup type of Menas URLs",

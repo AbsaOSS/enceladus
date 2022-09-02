@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.DaoException
+import za.co.absa.enceladus.dao.RetryableException
 
 class MenasConnectionStringParserSuite extends BaseTestSuite {
 
@@ -168,7 +168,7 @@ class MenasConnectionStringParserSuite extends BaseTestSuite {
       "the connection string does not fit an http(s)://... pattern" in {
         val connectionString = "qwe://localhost/menas/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[RetryableException.DaoException] {
           MenasConnectionStringParser.parse(connectionString)
         }
 
@@ -177,7 +177,7 @@ class MenasConnectionStringParserSuite extends BaseTestSuite {
       "the connection string includes any url that does not fit an http(s)://... pattern" in {
         val connectionString = "http://localhost:8080/menas/api;qwe://localhost/menas/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[RetryableException.DaoException] {
           MenasConnectionStringParser.parse(connectionString)
         }
 
@@ -186,7 +186,7 @@ class MenasConnectionStringParserSuite extends BaseTestSuite {
       "the connection string includes whitespace characters in the hosts" in {
         val connectionString = "http://localhost:8080, localhost:9000/menas/api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[RetryableException.DaoException] {
           MenasConnectionStringParser.parse(connectionString)
         }
 
@@ -195,7 +195,7 @@ class MenasConnectionStringParserSuite extends BaseTestSuite {
       "the connection string includes whitespace characters in the path" in {
         val connectionString = "http://localhost:8080,localhost:9000/menas /api"
 
-        val exception = intercept[DaoException] {
+        val exception = intercept[RetryableException.DaoException] {
           MenasConnectionStringParser.parse(connectionString)
         }
 

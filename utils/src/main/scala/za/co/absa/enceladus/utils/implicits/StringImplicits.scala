@@ -203,5 +203,38 @@ object StringImplicits {
     def coalesce(alternatives: String*): String = {
       alternatives.foldLeft(string)(_.nonEmpyOrElse(_))
     }
+
+    /**
+      * Splits the string around the provided delimiter, unless it's inside quotes
+      * from https://stackoverflow.com/questions/1757065/java-splitting-a-comma-separated-string-but-ignoring-commas-in-quotes
+      *
+      * @param delimiter the delimiting character
+      * @param limit     the result threshold
+      * @return the sequence of strings computed by splitting this string around the provided delimiter
+      */
+    def splitWithQuotes(delimiter: Char = ',', limit: Int = 0): Seq[String] = {
+      if (string == "" && limit == 0) {
+        // the regex doesn't work as desired on empty string
+        Seq.empty
+      } else {
+        // make the separation
+        val separationRegex = "\\" + delimiter + "(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)"
+        string.split(separationRegex, limit)
+      }
+    }
+
+    def trimStartEndChar(start: Char, end: Char): String = {
+      val lastIndex = string.length - 1
+      lastIndex match {
+        case -1 => ""
+        case 0 => string
+        case x if string(0) == start && string(x) == end => string.substring(1, x)
+        case _ => string
+      }
+    }
+
+    def trimStartEndChar(startAndEnd: Char): String = {
+      trimStartEndChar(startAndEnd, startAndEnd)
+    }
   }
 }
