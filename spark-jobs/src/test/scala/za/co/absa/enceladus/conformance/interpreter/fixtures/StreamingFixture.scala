@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
+import collection.JavaConverters._
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
@@ -62,6 +63,8 @@ trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with M
     when(configStub.containsKey(restApiUriRetryCountKey)).thenReturn(true)
     when(configStub.getInt(restApiUriRetryCountKey)).thenReturn(0)
     when(configStub.containsKey(restApiAvailabilitySetupKey)).thenReturn(false)
+    when(configStub.containsKey(restApiOptionallyRetryableExceptions)).thenReturn(true)
+    when(configStub.getList(classOf[Int], restApiOptionallyRetryableExceptions)).thenReturn(List[Int]().asJava)
 
     when(enceladusDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
       StructField("numerics.SmartObject.all_random", StringType)

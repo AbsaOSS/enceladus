@@ -39,7 +39,12 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
 
     val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
     val restApiSetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
-    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiSetupValue)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      restApiUrlsRetryCount,
+      restApiSetupValue,
+      restApiOptionallyRetryableExceptions)
 
     val preparationResult = prepareJob()
     val schema = prepareStandardization(args, restApiCredentials, preparationResult)

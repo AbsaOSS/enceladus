@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
-import za.co.absa.enceladus.dao.DaoException
+import za.co.absa.enceladus.dao.RetryableException.DaoException
 
 object RestApiConnectionStringParser {
 

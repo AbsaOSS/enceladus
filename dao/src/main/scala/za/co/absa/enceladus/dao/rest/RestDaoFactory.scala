@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.dao.rest
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.OptRetryableExceptions
 import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup.{Fallback, AvailabilitySetup, RoundRobin}
 
@@ -34,13 +35,18 @@ object RestDaoFactory {
   def getInstance(authCredentials: RestApiCredentials,
                   apiBaseUrls: List[String],
                   urlsRetryCount: Option[Int] = None,
-                  restApiAvailabilitySetup: AvailabilitySetup = DefaultAvailabilitySetup): EnceladusRestDAO = {
+                  restApiAvailabilitySetup: AvailabilitySetup = DefaultAvailabilitySetup,
+                  optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty
+                 ): EnceladusRestDAO = {
     val startsWith = if (restApiAvailabilitySetup == Fallback) {
       Option(0)
     } else {
       None
      }
-    val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount), startsWith)
+    val apiCaller = CrossHostApiCaller(apiBaseUrls,
+                                       urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount),
+                                       startsWith,
+                                       optionallyRetryableExceptions)
     val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
     new EnceladusRestDAO(apiCaller, restClient)

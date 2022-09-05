@@ -36,10 +36,10 @@ class LdapAuthClientSuite extends AuthClientSuite {
       .thenReturn(new ResponseEntity[String](responseHeaders, HttpStatus.OK))
   }
 
-  override def setUpUnsuccessfulAuthRequest(): OngoingStubbing[ResponseEntity[String]] = {
+  override def setUpUnsuccessfulAuthRequest(httpStatus: HttpStatus): OngoingStubbing[ResponseEntity[String]] = {
     Mockito
       .when(restTemplate.postForEntity(s"$baseUrl/api/login", requestParts, classOf[String]))
-      .thenReturn(new ResponseEntity[String](HttpStatus.FORBIDDEN))
+      .thenReturn(new ResponseEntity[String](httpStatus))
   }
 
 }
