@@ -15,13 +15,14 @@
 
 package za.co.absa.enceladus.standardization.samples
 
+import za.co.absa.standardization.config.DefaultErrorCodesConfig
+
 import java.sql.Timestamp
 import java.sql.Date
 import java.math.BigDecimal
-import za.co.absa.enceladus.utils.error.ErrorMessage
-import java.time.LocalDate
+//import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.standardization.ErrorMessage
 import java.util.TimeZone
-import java.util.Calendar
 
 case class EmployeeNumber(numberType : String, numbers: Seq[String])
 case class EmployeeNumberStd(numberType : String, numbers: Seq[Int])
@@ -62,6 +63,7 @@ case class DateTimestampData(
 
 object TestSamples {
   TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+  implicit val errorCodes: DefaultErrorCodesConfig.type = DefaultErrorCodesConfig
 
   val john0 = Employee(name = "John0",surname = None, hoursWorked = List("8", "7", "8", "9", "12", null), employeeNumbers = List(EmployeeNumber("SAP", List("456", "123")), EmployeeNumber("WD", List("00005"))), startDate = "2015-08-01")
   val john1 = Employee(name = "John1", surname = Some("Doe1"), hoursWorked = List("99", "99", "76", "12", "12", "24"), startDate = "Two Thousand Something")

@@ -58,7 +58,7 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>spark-data-standardization_2.11</artifactId>
-            <version>0.1.1</version>
+            <version>${spark.data.standardization}</version>
         </dependency>
 
         <!-- Data formats support -->

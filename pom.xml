@@ -183,6 +183,7 @@
         <scalatest.version>3.2.2</scalatest.version>
         <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
+        <spark.data.standardization>0.1.1</spark.data.standardization>
         <spark.hats.version>0.2.2</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
         <spark.version>2.4.4</spark.version>
