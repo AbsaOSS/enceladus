@@ -24,8 +24,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
 
-@Configuration
-class HDFSConfig @Autowired() (spark: SparkSession) {
+object HDFSConfig {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
   @Value("${menas.hadoop.auth.method:}")
@@ -42,22 +41,25 @@ class HDFSConfig @Autowired() (spark: SparkSession) {
   val krb5username: String = ""
   @Value("${menas.hadoop.auth.krb5.keytab:}")
   val krb5keytab: String = ""
+  @Value("${menas.hadoop.conf.dir:}") // TODO change to rest-api
+  val hadoopConfDir: String = ""
 
-  private val hadoopConfDir = sys.env.getOrElse("HADOOP_CONF_DIR",
-    throw new IllegalStateException("Missing HADOOP_CONF_DIR environment variable."))
-
-  @Bean
-  def hadoopConf(): HadoopConfiguration = {
+  def hadoopConf()(implicit spark: SparkSession): HadoopConfiguration = {
     logger.info(s"Using hadoop configuration from $hadoopConfDir")
-    val conf = spark.sparkContext.hadoopConfiguration
-    conf.addResource(new Path(hadoopConfDir, "core-site.xml"))
-    conf.addResource(new Path(hadoopConfDir, "hdfs-site.xml"))
-    conf.addResource(new Path(hadoopConfDir, "yarn-site.xml"))
-    conf
+    if (hadoopConfDir.nonEmpty) {
+      val conf: HadoopConfiguration = spark.sparkContext.hadoopConfiguration
+      conf.addResource(new Path(hadoopConfDir, "core-site.xml"))
+      conf.addResource(new Path(hadoopConfDir, "hdfs-site.xml"))
+      conf.addResource(new Path(hadoopConfDir, "yarn-site.xml"))
+      conf
+    } else {
+      new HadoopConfiguration()
+    }
   }
 
-  @Bean
-  def hadoopFS(): FileSystem = FileSystem.get(authenticateHadoopConfig(hadoopConf(), authMethod))
+  def hadoopFS()(implicit spark: SparkSession): FileSystem = {
+    FileSystem.get(authenticateHadoopConfig(hadoopConf(), authMethod))
+  }
 
   def authenticateHadoopConfig(conf: HadoopConfiguration, authMethod: String): HadoopConfiguration = {
     logger.info(s"Requested hadoop authentication: '$authMethod'")

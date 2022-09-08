@@ -17,21 +17,22 @@ package za.co.absa.enceladus.rest_api.services
 
 
 import java.util.concurrent.TimeUnit
-
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.mockito.Mockito
 import za.co.absa.enceladus.model.menas.HDFSFolder
+import za.co.absa.enceladus.rest_api.EnceladusFileSystem
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class HDFSServiceSuite extends BaseServiceTest {
+class FileSystemServiceSuite extends BaseServiceTest {
 
   //mocks
   private val fs = mock[FileSystem]
 
   //service
-  private val hdfsService = new HDFSService(fs)
+  private val enceladusFS = EnceladusFileSystem(fs)
+  private val hdfsService = new FileSystemService(enceladusFS)
 
   //common test setup
   private val dirPathStr = "/tmp/dir"

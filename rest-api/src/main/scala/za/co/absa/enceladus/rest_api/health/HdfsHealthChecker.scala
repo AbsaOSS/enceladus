@@ -15,22 +15,22 @@
 
 package za.co.absa.enceladus.rest_api.health
 
-import org.apache.hadoop.fs.FileSystem
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.actuate.health.{Health, HealthIndicator}
 import org.springframework.stereotype.Component
+import za.co.absa.enceladus.rest_api.EnceladusFileSystem
 
 import scala.util.{Failure, Success, Try}
 
 @Component("HDFSConnection")
-class HdfsHealthChecker @Autowired()(hdfs: FileSystem) extends HealthIndicator {
+class HdfsHealthChecker @Autowired()(fileSystem: EnceladusFileSystem) extends HealthIndicator {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
   override protected def health(): Health = {
     Try {
-      hdfs.getStatus()
+      fileSystem.getStatus
     } match {
       case Success(_) =>
         Health.up().build()
