@@ -20,7 +20,6 @@ import za.co.absa.standardization.config.DefaultErrorCodesConfig
 import java.sql.Timestamp
 import java.sql.Date
 import java.math.BigDecimal
-//import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.standardization.ErrorMessage
 import java.util.TimeZone
 
