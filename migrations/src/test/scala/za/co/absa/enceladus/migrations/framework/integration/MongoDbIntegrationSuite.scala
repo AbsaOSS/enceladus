@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.migrations.framework.integration
 
+import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt32, BsonString, BsonValue}
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.migrations.framework.integration.fixture.MongoDbFixture
@@ -22,6 +23,35 @@ import za.co.absa.enceladus.migrations.framework.migration.{ASC, DESC, IndexFiel
 
 class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
   import za.co.absa.enceladus.migrations.framework.dao.ScalaMongoImplicits._
+
+  private val entriesToCheckSingleKey: Map[String, BsonValue] = Map(
+    "v" -> BsonInt32(2),
+    "name" -> BsonString("item_1"),
+    "key" -> BsonDocument("""{"item":1}"""))
+
+  private val entriesToCheckSingleKeyUnique: Map[String, BsonValue] = Map(
+    "v" -> BsonInt32(2),
+    "unique" -> BsonBoolean(true),
+    "name" -> BsonString("item_1"),
+    "key" -> BsonDocument("""{"item":1}"""))
+
+  private val entriesToCheckMultiKey: Map[String, BsonValue] = Map(
+    "v" -> BsonInt32(2),
+    "name" -> BsonString("name_1_type_-1"),
+    "key" -> BsonDocument("""{"name":1, "type":-1}"""))
+
+  private val entriesToCheckMultiKeyUnique: Map[String, BsonValue] = Map(
+    "v" -> BsonInt32(2),
+    "unique" -> BsonBoolean(true),
+    "name" -> BsonString("name_1_type_1"),
+    "key" -> BsonDocument("""{"name":1, "type":1}"""))
+
+  private def containsEntries(document: Document, entriesToCheck:  Map[String, BsonValue]): Boolean = {
+    entriesToCheck.forall{ case (key, value) =>
+      val docValue = document.get(key)
+      docValue.contains(value)
+    }
+  }
 
   test("Test add/drop collections") {
     assert(!db.doesCollectionExists("foo"))
@@ -89,15 +119,7 @@ class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
     val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx1.size == 2)
-    assert(idx1.contains(Document(
-      """{
-        |  "v": 2,
-        |  "key": {
-        |    "item": 1
-        |  },
-        |  "name": "item_1",
-        |  "ns": "migrations_integration.bar6"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckSingleKey)))
 
     db.dropIndex("bar6", IndexField("item", ASC) :: Nil)
     val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
@@ -115,16 +137,7 @@ class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
     val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx1.size == 2)
-    assert(idx1.contains(Document(
-      """{
-        |  "v": 2,
-        |  "unique": true,
-        |  "key": {
-        |    "item": 1
-        |  },
-        |  "name": "item_1",
-        |  "ns": "migrations_integration.bar6"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckSingleKeyUnique)))
 
     db.dropIndex("bar6", IndexField("item", ASC) :: Nil)
     val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
@@ -142,28 +155,12 @@ class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
     val idx1 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx1.size == 2)
-    assert(idx1.contains(Document(
-      """{
-        |  "v": 2,
-        |  "key": {
-        |    "item": 1
-        |  },
-        |  "name": "item_1",
-        |  "ns": "migrations_integration.bar6"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckSingleKey)))
 
     db.dropIndex("bar6", IndexField("item", DESC) :: Nil)
     val idx2 = dbRaw.getCollection("bar6").listIndexes().execute()
     assert(idx2.size == 2)
-    assert(idx2.contains(Document(
-      """{
-        |  "v": 2,
-        |  "key": {
-        |    "item": 1
-        |  },
-        |  "name": "item_1",
-        |  "ns": "migrations_integration.bar6"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckSingleKey)))
 
     db.dropCollection("bar6")
   }
@@ -177,31 +174,13 @@ class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
     val idx1 = dbRaw.getCollection("bar7").listIndexes().execute()
     assert(idx1.size == 2)
-    assert(idx1.contains(Document(
-      """{
-        |  "v": 2,
-        |  "key": {
-        |    "name": 1,
-        |    "type": -1
-        |  },
-        |  "name": "name_1_type_-1",
-        |  "ns": "migrations_integration.bar7"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckMultiKey)))
 
     db.cloneCollection("bar7", "bar8")
 
     val idx2 = dbRaw.getCollection("bar8").listIndexes().execute()
     assert(idx2.size == 2)
-    assert(idx2.contains(Document(
-      """{
-        |  "v": 2,
-        |  "key": {
-        |    "name": 1,
-        |    "type": -1
-        |  },
-        |  "name": "name_1_type_-1",
-        |  "ns": "migrations_integration.bar8"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckMultiKey)))
 
     db.dropCollection("bar7")
     db.dropCollection("bar8")
@@ -216,33 +195,13 @@ class MongoDbIntegrationSuite extends AnyFunSuite with MongoDbFixture {
 
     val idx1 = dbRaw.getCollection("bar7").listIndexes().execute()
     assert(idx1.size == 2)
-    assert(idx1.contains(Document(
-      """{
-        |  "v": 2,
-        |  "unique": true,
-        |  "key": {
-        |    "name": 1,
-        |    "type": 1
-        |  },
-        |  "name": "name_1_type_1",
-        |  "ns": "migrations_integration.bar7"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckMultiKeyUnique)))
 
     db.cloneCollection("bar7", "bar8")
 
     val idx2 = dbRaw.getCollection("bar8").listIndexes().execute()
     assert(idx2.size == 2)
-    assert(idx2.contains(Document(
-      """{
-        |  "v": 2,
-        |  "unique": true,
-        |  "key": {
-        |    "name": 1,
-        |    "type": 1
-        |  },
-        |  "name": "name_1_type_1",
-        |  "ns": "migrations_integration.bar8"
-        |}""".stripMargin)))
+    assert(idx1.exists(containsEntries(_, entriesToCheckMultiKeyUnique)))
 
     db.dropCollection("bar7")
     db.dropCollection("bar8")
