@@ -61,7 +61,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
               any[Int],
               any[Option[Int]],
               any[Set[OptionallyRetryableException.OptRetryableExceptions]],
-              any[Int => Unit]
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
@@ -80,7 +80,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
               any[Int],
               any[Option[Int]],
               any[Set[OptionallyRetryableException.OptRetryableExceptions]],
-              any[Int => Unit]
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
@@ -101,7 +101,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
               any[Int],
               any[Option[Int]],
               any[Set[OptionallyRetryableException.OptRetryableExceptions]],
-              any[Int => Unit]
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)

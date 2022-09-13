@@ -37,7 +37,7 @@ object CrossHostApiCaller {
       urlsRetryCount: Int,
       startWith: Option[Int],
       optionallyRetryableExceptions: Set[OptRetryableExceptions],
-      retryBackoffStrategy: Int => Unit
+      retryBackoffStrategy: Int => Int
   ): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
       logger.warn(
@@ -59,15 +59,15 @@ object CrossHostApiCaller {
       urlsRetryCount: Int = DefaultUrlsRetryCount,
       startWith: Option[Int] = None,
       optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty,
-      retryBackoffStrategy: Int => Unit = quadraticRandomizedRetryBackoffStrategy
+      retryBackoffStrategy: Int => Int = quadraticRandomizedRetryBackoffStrategy
    ): CrossHostApiCaller = {
     createInstance(apiBaseUrls, urlsRetryCount, startWith, optionallyRetryableExceptions, retryBackoffStrategy)
   }
 
-  private def quadraticRandomizedRetryBackoffStrategy(retryNumber: Int): Unit = {
+  private[rest] def quadraticRandomizedRetryBackoffStrategy(retryNumber: Int): Int = {
     val inSeconds: Double = retryNumber * retryNumber + retryNumber * Random.nextDouble()
     val inMillis = inSeconds * 1000
-    Thread.sleep(inMillis.toLong)
+    inMillis.toInt
   }
 }
 
@@ -76,7 +76,7 @@ protected class CrossHostApiCaller private(
     maxTryCount: Int,
     private var currentHostIndex: Int,
     optionallyRetryableExceptions: Set[OptRetryableExceptions],
-    retryBackoffStrategy: Int => Unit
+    retryBackoffStrategy: Int => Int
 )
   extends ApiCaller {
 
@@ -114,13 +114,15 @@ protected class CrossHostApiCaller private(
       result match {
         case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
-          retryBackoffStrategy(attemptNumber)
+          val waitForMilliseconds = retryBackoffStrategy(attemptNumber)
+          Thread.sleep(waitForMilliseconds)
           attempt(url, attemptNumber + 1, urlsTried)
 
         case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && urlsTried < baseUrlsCount =>
           val nextUrl = nextBaseUrl()
           logFailure(e, url, attemptNumber, Option(nextUrl))
-          retryBackoffStrategy(1) // to have small delay between trying different URLs
+          val waitForMilliseconds = retryBackoffStrategy(1) // to have small delay between trying different URLs
+          Thread.sleep(waitForMilliseconds)
           attempt(nextUrl, 1, urlsTried + 1)
 
         case _ => result
