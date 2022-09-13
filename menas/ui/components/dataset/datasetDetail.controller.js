@@ -15,13 +15,12 @@
 sap.ui.define([
   "sap/ui/core/mvc/Controller",
   "sap/ui/core/Fragment",
-  "components/types/CronEntryType",
   "components/validator/Validator",
   "sap/m/MessageToast",
   "./../external/it/designfuture/chartjs/library-preload",
   "components/tables/TableUtils",
   "components/AuditTrail"
-], function (Controller, Fragment, CronEntryType, Validator, MessageToast, Openui5Chartjs, TableUtils, AuditTrail) {
+], function (Controller, Fragment, Validator, MessageToast, Openui5Chartjs, TableUtils, AuditTrail) {
   "use strict";
 
   return Controller.extend("components.dataset.datasetDetail", {
