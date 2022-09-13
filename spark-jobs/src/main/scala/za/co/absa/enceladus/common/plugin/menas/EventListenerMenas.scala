@@ -22,7 +22,8 @@ import za.co.absa.atum.model._
 import za.co.absa.atum.plugins.EventListener
 import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils
 import za.co.absa.enceladus.common.plugin.PluginLoader
-import za.co.absa.enceladus.dao.{DaoException, MenasDAO}
+import za.co.absa.enceladus.dao.RetryableException._
+import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.{Run, SplineReference}
 import za.co.absa.enceladus.plugins.api.control.ControlMetricsPlugin
 
@@ -100,7 +101,9 @@ class EventListenerMenas(config: Config,
         dao.updateControlMeasure(uniqueId, controlMeasure)
         notifyPlugins()
       } catch {
-        case NonFatal(e) => throw DaoException(s"Unable to update control measurements for a Run object ($uniqueId) in the database", e)
+        case NonFatal(e) => throw DaoException(
+          s"Unable to update control measurements for a Run object ($uniqueId) in the database", e
+        )
       }
     }
   }
@@ -117,7 +120,9 @@ class EventListenerMenas(config: Config,
         dao.updateRunStatus(uniqueId, statusToSave)
         notifyPlugins()
       } catch {
-        case NonFatal(e) => throw DaoException(s"Unable to update status of a run object ($uniqueId) in the database", e)
+        case NonFatal(e) => throw DaoException(
+          s"Unable to update status of a run object ($uniqueId) in the database", e
+        )
       }
     }
     _runStatus = newStatus
@@ -134,7 +139,9 @@ class EventListenerMenas(config: Config,
       try {
         dao.updateSplineReference(uniqueId, splineReference)
       } catch {
-        case NonFatal(e) => throw DaoException(s"Unable to update spline reference for the Run object ($uniqueId) in the database", e)
+        case NonFatal(e) => throw DaoException(
+          s"Unable to update spline reference for the Run object ($uniqueId) in the database", e
+        )
       }
     }
   }

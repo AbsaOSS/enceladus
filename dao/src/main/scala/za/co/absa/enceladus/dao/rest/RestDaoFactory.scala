@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.dao.rest
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.OptRetryableExceptions
 import za.co.absa.enceladus.dao.auth.MenasCredentials
-import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup.{Fallback, AvailabilitySetup, RoundRobin}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup.{AvailabilitySetup, Fallback, RoundRobin}
 
 object RestDaoFactory {
 
@@ -31,16 +32,22 @@ object RestDaoFactory {
 
   private val restTemplate = RestTemplateSingleton.instance
 
-  def getInstance(authCredentials: MenasCredentials,
-                  apiBaseUrls: List[String],
-                  urlsRetryCount: Option[Int] = None,
-                  menasSetup: AvailabilitySetup = DefaultAvailabilitySetup): MenasRestDAO = {
+  def getInstance(
+    authCredentials: MenasCredentials,
+    apiBaseUrls: List[String],
+    urlsRetryCount: Option[Int] = None,
+    menasSetup: AvailabilitySetup = DefaultAvailabilitySetup,
+    optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty
+  ): MenasRestDAO = {
     val startsWith = if (menasSetup == Fallback) {
       Option(0)
     } else {
       None
      }
-    val apiCaller = CrossHostApiCaller(apiBaseUrls, urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount), startsWith)
+    val apiCaller = CrossHostApiCaller(apiBaseUrls,
+                                       urlsRetryCount.getOrElse(CrossHostApiCaller.DefaultUrlsRetryCount),
+                                       startsWith,
+                                       optionallyRetryableExceptions)
     val authClient = AuthClient(authCredentials, apiCaller)
     val restClient = new RestClient(authClient, restTemplate)
     new MenasRestDAO(apiCaller, restClient)

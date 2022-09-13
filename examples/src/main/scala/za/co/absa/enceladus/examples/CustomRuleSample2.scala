@@ -44,7 +44,8 @@ object CustomRuleSample2 extends CustomRuleSampleFs {
     val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
     val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
     implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+    // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls)
 
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
