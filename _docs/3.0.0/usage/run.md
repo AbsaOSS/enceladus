@@ -38,7 +38,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<enceladus_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -48,7 +48,7 @@ For description of requirements and deployment see the [README.md][project-readm
 ```
 
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see bellow.
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--rest-api-auth-keytab` with `--rest-api-credentials-file`
 
 ## Running Conformance
 
@@ -65,7 +65,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -85,7 +85,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<enceladus_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -94,7 +94,7 @@ For description of requirements and deployment see the [README.md][project-readm
 --row-tag <tag>
 ```
 
-* In case Menas is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--rest-api-auth-keytab` with `--rest-api-credentials-file`
 
 ## Helper scripts
 
@@ -123,7 +123,7 @@ The basic command to run **Standardization** becomes:
 ```
 <path to scripts>/run_standardization.sh \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -137,7 +137,7 @@ The basic command to run **Conformance** becomes:
 ```
 <path to scripts>/run_conformance.sh \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -149,7 +149,7 @@ The basic command to run **Standardization And Conformance** becomes:
 ```
 <path to scripts>/run_standardization_conformance.sh \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -186,15 +186,15 @@ For more information on these options see the official documentation on [running
 
 The list of all options for running both **Standardization** and **Conformance**:
 
-|            Option                     |                           Description                                                                                                                                                       |
-|---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| --menas-auth-keytab **filename**      | A keytab file used for Kerberized authentication to Menas. Cannot be used together with `--menas-credentials-file`.                                                                         |
-| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to Menas. Cannot be used together with `--menas-auth-keytab`.                                                     |
-| --dataset-name **name**               | A dataset name to be standardized or conformed.                                                                                                                                             |
-| --dataset-version **version**         | A version of a dataset to be standardized or conformed.                                                                                                                                     |
-| --report-date **YYYY-mm-dd**          | A date specifying a day for which a raw data is landed.                                                                                                                                     |
-| --report-version **version**          | A version of the data for a particular day.                                                                                                                                                 |
-| --std-hdfs-path **path**              | A path pattern where to put standardized data. The following tokens are expending in the pattern: `{0}` - dataset name, `{1}` - dataset version, `{2}`- report date, `{3}`- report version. |
+| Option                                   | Description                                                                                                                                                                                 |
+|------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| --rest-api-auth-keytab **filename**      | A keytab file used for Kerberized authentication to REST API. Cannot be used together with `--rest-api-credentials-file`.                                                                   |
+| --rest-api-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to REST API. Cannot be used together with `--rest-api-auth-keytab`.                                               |
+| --dataset-name **name**                  | A dataset name to be standardized or conformed.                                                                                                                                             |
+| --dataset-version **version**            | A version of a dataset to be standardized or conformed.                                                                                                                                     |
+| --report-date **YYYY-mm-dd**             | A date specifying a day for which a raw data is landed.                                                                                                                                     |
+| --report-version **version**             | A version of the data for a particular day.                                                                                                                                                 |
+| --std-hdfs-path **path**                 | A path pattern where to put standardized data. The following tokens are expending in the pattern: `{0}` - dataset name, `{1}` - dataset version, `{2}`- report date, `{3}`- report version. |
 
 The list of additional options available for running **Standardization**:
 

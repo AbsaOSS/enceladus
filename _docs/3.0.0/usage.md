@@ -22,7 +22,7 @@ categories:
 
 ## Intro
 
-This part of the documentations will show you how to use Enceladus, Menas as its UI and how to run its spark-jobs. This part expects you to have Menas already deployed and running and `spark-jobs.jar` ready at hand. If not, please look at previous parts of [build process][build] and [deployment][deploy]
+This part of the documentations will show you how to use Enceladus, Menas as its UI and how to run its spark-jobs. This part expects you to have Menas and REST API already deployed and running and `spark-jobs.jar` ready at hand. If not, please look at previous parts of [build process][build] and [deployment][deploy]
 
 ## Quick Start
 
@@ -37,11 +37,11 @@ This part of the documentations will show you how to use Enceladus, Menas as its
 
 ## Menas
 
-- [Configuration]({{ docs_path }}/usage/menas-config)
 - [Conformance Rules]({{ docs_path }}/usage/menas-conformance-rules)
 
 ## REST API
 - [REST API Info]({{ docs_path }}/usage/rest-api)
+- [Configuration]({{ docs_path }}/usage/rest-api-config)
 
 ## General
 

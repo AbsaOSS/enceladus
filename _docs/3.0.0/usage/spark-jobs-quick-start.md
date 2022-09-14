@@ -30,7 +30,7 @@ This quick start guide presumes that you have gone through :
 --driver-memory 2G \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 spark-jobs_<build_version>.jar \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -60,7 +60,7 @@ where:
 --driver-memory 2G \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 spark-jobs_<build_version>.jar \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -79,7 +79,7 @@ spark-jobs_<build_version>.jar \
 --driver-memory 2G \
 --class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
 spark-jobs_<build_version>.jar \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -108,7 +108,7 @@ The basic command to run Standardization becomes:
 
 ```shell
 <path to scripts>/run_standardization.sh \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -122,7 +122,7 @@ The basic command to run Conformance becomes:
 ```shell
 <path to scripts>/run_conformance.sh \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -133,7 +133,7 @@ The basic command to run Standardization and Conformance together becomes:
 
 ```shell
 <path to scripts>/run_standardization_conformance.sh \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <report_date> \
@@ -148,7 +148,7 @@ The basic command to run Standardization becomes:
 
 ```cmd
 <path to scripts>/run_standardization.cmd ^
---menas-auth-keytab <path_to_keytab_file> ^
+--rest-api-auth-keytab <path_to_keytab_file> ^
 --dataset-name <dataset_name> ^
 --dataset-version <dataset_version> ^
 --report-date <report_date> ^
@@ -162,7 +162,7 @@ The basic command to run Conformance becomes:
 ```cmd
 <path to scripts>/run_conformance.cmd ^
 --deploy-mode <client/cluster> ^
---menas-auth-keytab <path_to_keytab_file> ^
+--rest-api-auth-keytab <path_to_keytab_file> ^
 --dataset-name <dataset_name> ^
 --dataset-version <dataset_version> ^
 --report-date <report_date> ^
@@ -173,7 +173,7 @@ The basic command to run Standardization and Conformance together becomes:
 
 ```cmd
 <path to scripts>/run_standardization_conformance.cmd ^
---menas-auth-keytab <path_to_keytab_file> ^
+--rest-api-auth-keytab <path_to_keytab_file> ^
 --dataset-name <dataset_name> ^
 --dataset-version <dataset_version> ^
 --report-date <report_date> ^
