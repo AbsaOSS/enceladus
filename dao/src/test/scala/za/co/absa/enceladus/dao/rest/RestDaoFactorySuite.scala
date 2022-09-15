@@ -57,7 +57,11 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
             CrossHostApiCaller.apply(
-              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptions]]
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
@@ -72,7 +76,11 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
             CrossHostApiCaller.apply(
-              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptions]]
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = MenasPlainCredentials("user", "changeme")
@@ -89,7 +97,11 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
         withObjectMocked[CrossHostApiCaller.type] {
           Mockito.when(
             CrossHostApiCaller.apply(
-              any[Seq[String]], any[Int], any[Option[Int]], any[Set[OptionallyRetryableException.OptRetryableExceptions]]
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
             )
           ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, menasApiBaseUrls)
