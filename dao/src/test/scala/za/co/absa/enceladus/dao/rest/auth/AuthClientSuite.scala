@@ -20,10 +20,11 @@ import org.scalatest.matchers.should.Matchers
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.BeforeAndAfter
-import org.springframework.http.{HttpHeaders, ResponseEntity}
+import org.springframework.http.{HttpStatus, HttpHeaders, ResponseEntity}
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
-import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.ForbiddenException
 import za.co.absa.enceladus.dao.rest.{ApiCaller, ApiCallerStub, AuthClient}
 
 abstract class AuthClientSuite() extends AnyWordSpec
@@ -40,7 +41,7 @@ abstract class AuthClientSuite() extends AnyWordSpec
 
   def setUpSuccessfulAuthRequest(responseHeaders: LinkedMultiValueMap[String, String]): OngoingStubbing[ResponseEntity[String]]
 
-  def setUpUnsuccessfulAuthRequest(): OngoingStubbing[ResponseEntity[String]]
+  def setUpUnsuccessfulAuthRequest(httpStatus: HttpStatus): OngoingStubbing[ResponseEntity[String]]
 
   s"Calling authenticate()" should {
     "return authentication headers on 200 OK" in {
@@ -61,13 +62,23 @@ abstract class AuthClientSuite() extends AnyWordSpec
 
       response should be(expected)
     }
-    "throw an error on anything other than 200 OK" in {
-      setUpUnsuccessfulAuthRequest()
+    "throw an error on 403" in {
+      setUpUnsuccessfulAuthRequest(HttpStatus.FORBIDDEN)
 
-      val exception = intercept[UnauthorizedException] {
+      val expectedErrMsg = s"Authentication failure (${HttpStatus.FORBIDDEN.value()}): user"
+      val exception = intercept[ForbiddenException] {
         authClient.authenticate()
       }
-      exception shouldBe UnauthorizedException("Authentication failure (403): user")
+      exception shouldBe ForbiddenException(expectedErrMsg)
+    }
+    "throw an error on anything other than 200 OK" in {
+      setUpUnsuccessfulAuthRequest(HttpStatus.REQUEST_TIMEOUT)
+
+      val expectedErrMsg = s"Authentication failure (${HttpStatus.REQUEST_TIMEOUT.value()}): user"
+      val exception = intercept[AuthenticationException] {
+        authClient.authenticate()
+      }
+      exception shouldBe AuthenticationException(expectedErrMsg)
     }
   }
 

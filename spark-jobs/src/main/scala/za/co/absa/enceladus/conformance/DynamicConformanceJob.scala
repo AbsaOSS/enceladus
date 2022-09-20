@@ -35,8 +35,12 @@ object DynamicConformanceJob extends ConformanceExecution {
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
     val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
     val restApiAvailabilitySetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
-    implicit val dao: EnceladusDAO = RestDaoFactory
-      .getInstance(restApiCredentials, restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetupValue)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      restApiUrlsRetryCount,
+      restApiAvailabilitySetupValue,
+      restApiOptionallyRetryableExceptions)
     implicit val configReader: ConfigReader = new ConfigReader()
 
     val preparationResult = prepareJob()

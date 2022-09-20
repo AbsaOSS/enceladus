@@ -17,7 +17,6 @@ package za.co.absa.enceladus.conformance
 
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import org.apache.commons.configuration2.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.SPARK_VERSION
@@ -25,12 +24,14 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import scala.collection.JavaConverters._
 import za.co.absa.enceladus.common.Constants._
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
 import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.dao.auth.{RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
@@ -42,7 +43,8 @@ import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, Stream
 
 class HyperConformance (restApiBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
-                        restApiAvailabilitySetup: Option[String] = None)
+                        restApiAvailabilitySetup: Option[String] = None,
+                        optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty)
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -56,8 +58,12 @@ class HyperConformance (restApiBaseUrls: List[String],
 
     val restApiAvailabilitySetupValue = restApiAvailabilitySetup
       .map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
-    implicit val dao: EnceladusDAO = RestDaoFactory
-      .getInstance(restApiCredentials, restApiBaseUrls, urlsRetryCount, restApiAvailabilitySetupValue)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      urlsRetryCount,
+      restApiAvailabilitySetupValue,
+      optionallyRetryableExceptions)
     dao.authenticate()
 
     logPreConformanceInfo(rawDf)
@@ -170,7 +176,18 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     } else {
       None
     }
-    new HyperConformance(restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetup)
+    val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
+      if (conf.containsKey(restApiOptionallyRetryableExceptions)) {
+        conf.getList(classOf[Int], restApiOptionallyRetryableExceptions)
+          .asScala
+          .toSet
+          .map(getOptionallyRetryableException)
+      } else {
+        Set.empty
+      }
+    new HyperConformance(
+      restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetup, optionallyRetryableExceptions
+    )
   }
 
   private def getReportVersion(conf: Configuration): Int = {

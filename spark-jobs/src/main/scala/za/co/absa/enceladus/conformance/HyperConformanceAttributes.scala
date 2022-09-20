@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.mapIntToOptionallyRetryableException
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
 object HyperConformanceAttributes {
@@ -23,6 +24,7 @@ object HyperConformanceAttributes {
   val restApiUriKey = "enceladus.rest.uri"
   val restApiUriRetryCountKey = "enceladus.rest.retryCount"
   val restApiAvailabilitySetupKey = "enceladus.rest.availability.setup"
+  val restApiOptionallyRetryableExceptions = "enceladus.rest.optionallyRetryableExceptions"
   val restApiCredentialsFileKey = "enceladus.rest.credentials.file"
   val restApiAuthKeytabKey = "enceladus.rest.auth.keytab"
   val menasBaseUris = "enceladus.menas.uri"
@@ -53,6 +55,14 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("The setup type of REST API URLs",
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
           "Round-robin - start from random, fallback - start from first"),
+        required = false),
+    restApiOptionallyRetryableExceptions ->
+      PropertyMetadata("Rest API optionally retryable HTTP exceptions",
+        Some(
+          """List of HTTP status codes that are allowed to be retryable. """ +
+            s"""Currently we support these: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")} """ +
+            """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
+        ),
         required = false),
     menasBaseUris ->
       PropertyMetadata("Menas (Enceladus UI) URL(s)", Some("E.g. http://localhost:8080/menas"), required = true),

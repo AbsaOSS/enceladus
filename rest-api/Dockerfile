@@ -15,7 +15,7 @@
 # $> docker build -t rest-api .
 # Run image using:
 # $> docker run \
-#       -e ENCELADUS_REST_MONGO_CONNECTION_STRING=mongodb://localhost:27017 \
+#       -e ENCELADUS_REST_MONGO_CONNECTION_STRING=mongodb://host.docker.internal:27017 \
 #       -e ENCELADUS_REST_MONGO_CONNECTION_DATABASE=menas \
 #       -p 8080:8080 \
 #       rest-api
@@ -40,12 +40,12 @@ ADD ./src/main/resources/docker/start_rest_api.sh start_rest_api.sh
 RUN chmod +x start_rest_api.sh && \
     rm -rf webapps/*
 
-ADD ./target/rest-api-3.0.0-SNAPSHOT.war webapps/ROOT.war
+ADD ./target/${WAR_FILE} webapps/ROOT.war
 ADD src/main/resources/docker/server.xml /tmp/server.xml
 
 ENV ENCELADUS_REST_ENVIRONMENT=Dev
 
-ENV ENCELADUS_REST_MONGO_CONNECTION_STRING="mongodb://localhost:27017"
+ENV ENCELADUS_REST_MONGO_CONNECTION_STRING="mongodb://host.docker.internal:27017"
 ENV ENCELADUS_REST_MONGO_CONNECTION_DATABASE=menas
 
 ENV ENCELADUS_REST_HADOOP_AUTH_METHOD=default

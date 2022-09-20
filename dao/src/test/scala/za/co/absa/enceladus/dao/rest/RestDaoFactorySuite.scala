@@ -19,7 +19,7 @@ import org.mockito.MockitoSugar.withObjectMocked
 import org.mockito.{ArgumentMatchersSugar, Mockito}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.{NotRetryableException, OptionallyRetryableException}
 import za.co.absa.enceladus.dao.auth.{InvalidRestApiCredentials, RestApiKerberosCredentials, RestApiPlainCredentials}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 
@@ -44,7 +44,7 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
     }
     "throw an error" when {
       "given invalid credentials" in {
-        val exception = intercept[UnauthorizedException] {
+        val exception = intercept[NotRetryableException.AuthenticationException] {
           RestDaoFactory.getInstance(InvalidRestApiCredentials, restApiBaseUrls)
         }
         exception.getMessage should be("No REST API credentials provided")
@@ -55,7 +55,15 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       val plainCredentials = RestApiPlainCredentials("user", "changeme")
       "when it's round-robin" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          Mockito.when(
+            CrossHostApiCaller.apply(
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
+            )
+          ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, restApiBaseUrls)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
@@ -66,25 +74,43 @@ class RestDaoFactorySuite extends AnyWordSpec with Matchers with ArgumentMatcher
       }
       "when it's fallback" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          Mockito.when(
+            CrossHostApiCaller.apply(
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
+            )
+          ).thenReturn(fooCrossHostApiCaller)
           val plainCredentials = RestApiPlainCredentials("user", "changeme")
           val restDao = RestDaoFactory.getInstance(plainCredentials, restApiBaseUrls, None, AvailabilitySetup.Fallback)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             restApiBaseUrls,
             CrossHostApiCaller.DefaultUrlsRetryCount,
-            Option(0))
+            Option(0)
+          )
         }
       }
       "when the setup type is not specified" in {
         withObjectMocked[CrossHostApiCaller.type] {
-          Mockito.when(CrossHostApiCaller.apply(any[Seq[String]], any[Int], any[Option[Int]])).thenReturn(fooCrossHostApiCaller)
+          Mockito.when(
+            CrossHostApiCaller.apply(
+              any[Seq[String]],
+              any[Int],
+              any[Option[Int]],
+              any[Set[OptionallyRetryableException.OptRetryableExceptions]],
+              any[Int => Int]
+            )
+          ).thenReturn(fooCrossHostApiCaller)
           val restDao = RestDaoFactory.getInstance(plainCredentials, restApiBaseUrls)
           getAuthClient(restDao.restClient).getClass should be(classOf[LdapAuthClient])
           Mockito.verify(CrossHostApiCaller, Mockito.times(1)).apply(
             restApiBaseUrls,
             CrossHostApiCaller.DefaultUrlsRetryCount,
-            None)
+            None
+          )
         }
       }
     }

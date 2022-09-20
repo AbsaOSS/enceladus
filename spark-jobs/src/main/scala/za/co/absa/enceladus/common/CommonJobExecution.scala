@@ -31,6 +31,7 @@ import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
 import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
@@ -41,6 +42,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
 
@@ -58,6 +60,12 @@ trait CommonJobExecution extends ProjectMetadata {
   protected val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
   protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
+  protected val restApiOptionallyRetryableExceptions: Set[OptRetryableExceptions] =
+    configReader
+      .getIntListOption("enceladus.rest.optionallyRetryableExceptions")
+      .getOrElse(Set.empty)
+      .toSet
+      .map(getOptionallyRetryableException)
   protected var secureConfig: Map[String, String] = Map.empty
 
   private val menasBaseUris: List[String] = UrisConnectionStringParser

@@ -144,8 +144,10 @@ object CustomRuleSample4 extends CustomRuleSampleFs {
     val conf = ConfigFactory.load()
     val restApiBaseUrls = UrisConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
     val restApiCredentials = RestApiKerberosCredentials("user@EXAMPLE.COM", "src/main/resources/user.keytab.example")
-    implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls) // you may have to hard-code your own implementation here
+    // here we may need to specify some parameters (for certain rules)
+    implicit val progArgs: ConformanceConfig = ConformanceConfig()
+    // you may have to hard-code your own implementation here
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls)
 
     val dfReader: DataFrameReader = {
       val dfReader0 = spark.read
