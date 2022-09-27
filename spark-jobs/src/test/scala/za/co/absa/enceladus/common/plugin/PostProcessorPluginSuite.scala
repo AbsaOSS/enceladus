@@ -90,7 +90,7 @@ class PostProcessorPluginSuite extends AnyFunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.NoSuchClass")
         .asJava)
 
-    intercept[IllegalArgumentException] {
+    intercept[Exception] {
       new PluginLoader[PostProcessor].loadPlugins(conf, "dummy")
     }
   }
