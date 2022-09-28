@@ -15,9 +15,6 @@
 
 package za.co.absa.enceladus.utils.implicits
 
-import java.security.InvalidParameterException
-import scala.annotation.tailrec
-
 object StringImplicits {
   implicit class StringEnhancements(string: String) {
 
