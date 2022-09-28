@@ -31,7 +31,7 @@ trait ParseViaDecimalFormat[N] {
   protected val numberConversion: Number => N
 
   protected def parseUsingPattern(stringToParse: String):Try[N] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits.OptionEnhancements
+    import za.co.absa.commons.lang.extensions.OptionExtension._
 
     def checkPosAtEnd(pos: ParsePosition): Try[Unit] = {
       if (pos.getIndex < stringToParse.length) {

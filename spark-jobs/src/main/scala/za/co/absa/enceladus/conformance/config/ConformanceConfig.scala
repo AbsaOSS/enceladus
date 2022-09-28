@@ -68,7 +68,7 @@ case class ConformanceConfig(datasetName: String = "",
 
 object ConformanceConfig {
   def tryFromArguments(args: Array[String]): Try[ConformanceConfig] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    import za.co.absa.commons.lang.extensions.OptionExtension._
     OParser.parse(conformanceJobParser, args, ConformanceConfig()).toTry(ConfigError("Command line parameters error"))
   }
 
