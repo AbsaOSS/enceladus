@@ -134,9 +134,9 @@ class RestExceptionHandler {
 
   @ExceptionHandler(Array(classOf[OozieClientException]))
   def handleOozieClientException(ex: OozieClientException): ResponseEntity[RestError] = {
-    import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+    import za.co.absa.commons.lang.extensions.StringExtension.StringOps
     val err = if (ex.getMessage.toLowerCase.contains("unauthorized proxyuser")) {
-      val message = oozieImpersonationExceptionMessage.nonEmpyOrElse(
+      val message = oozieImpersonationExceptionMessage.nonEmptyOrElse(
         s"Please add the system user into $oozieProxyGroup group to use this feature."
       )
       RestError(message)

@@ -52,7 +52,7 @@ abstract sealed class DateTimePattern(pattern: String, isDefault: Boolean = fals
 }
 
 object DateTimePattern {
-  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+  import za.co.absa.commons.lang.extensions.StringExtension.StringOps
 
   val EpochKeyword = "epoch"
   val EpochMilliKeyword = "epochmilli"

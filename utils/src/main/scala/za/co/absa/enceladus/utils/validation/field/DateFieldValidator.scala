@@ -22,7 +22,7 @@ import za.co.absa.enceladus.utils.types.parsers.DateTimeParser
 import za.co.absa.enceladus.utils.validation._
 
 object DateFieldValidator extends DateTimeFieldValidator {
-  import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+  import za.co.absa.commons.lang.extensions.StringExtension.StringOps
 
   override protected def patternAnalysisIssues(pattern: DateTimePattern,
                                                defaultValue: Option[String],

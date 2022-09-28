@@ -78,7 +78,7 @@ abstract class NumericParser[N: Ordering](val pattern: NumericPattern,
   }
 
   protected def normalizeBasicSymbols(string: String): String = {
-    import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+    import za.co.absa.commons.lang.extensions.StringExtension.StringOps
     val replacements = NumericParser.defaultDecimalSymbols.basicSymbolsDifference(pattern.decimalSymbols)
     if (replacements.nonEmpty) {
       string.replaceChars(replacements)
@@ -88,7 +88,7 @@ abstract class NumericParser[N: Ordering](val pattern: NumericPattern,
   }
 
   protected def denormalizeBasicSymbols(string: String): String = {
-    import za.co.absa.enceladus.utils.implicits.StringImplicits.StringEnhancements
+    import za.co.absa.commons.lang.extensions.StringExtension.StringOps
     val replacements = pattern.decimalSymbols.basicSymbolsDifference(NumericParser.defaultDecimalSymbols)
     if (replacements.nonEmpty) {
       string.replaceChars(replacements)
