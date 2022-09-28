@@ -19,26 +19,8 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Paths}
 
-import org.apache.log4j.LogManager
-
-/**
- * A set of functions to help with the date partitioning and version control
- */
 
 object LocalFsUtils {
-
-  private val log = LogManager.getLogger("enceladus.utils.fs.LocalFsUtils")
-
-  /**
-    * Creates a temporary directory in the local filesystem.
-    *
-    * @param prefix A prefix to use for the temporary directory.
-    * @return A path to a temporary directory.
-    */
-  def getLocalTemporaryDirectory(prefix: String): String = {
-    val tmpPath = Files.createTempDirectory(prefix)
-    tmpPath.toAbsolutePath.toString
-  }
 
 
   /**
