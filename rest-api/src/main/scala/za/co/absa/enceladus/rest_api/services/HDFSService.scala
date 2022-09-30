@@ -19,6 +19,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.model.menas.HDFSFolder
+import za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt
 
 import scala.concurrent.Future
 
@@ -33,7 +34,7 @@ class HDFSService @Autowired() (fs: FileSystem) {
   }
 
   def getFolder(path: Path): Future[HDFSFolder] = Future {
-    if (!fs.isDirectory(path)) {
+    if (!fs.isDirectoryWithDefault(path, default = false)) {
       HDFSFolder(path.toUri.getPath, path.getName, None)
     } else {
       val status = fs.listStatus(path)
@@ -52,7 +53,7 @@ class HDFSService @Autowired() (fs: FileSystem) {
   }
 
   private def markIfDirectory(path: Path): Option[Seq[HDFSFolder]] = {
-    if (fs.isDirectory(path)) {
+    if (fs.isDirectoryWithDefault(path, default = false)) {
       Some(directoryMarker)
     } else {
       None

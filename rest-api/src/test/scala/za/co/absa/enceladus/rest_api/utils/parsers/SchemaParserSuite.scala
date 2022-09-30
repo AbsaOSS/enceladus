@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.rest_api.utils.parsers
 
+import java.nio.charset.Charset
+
 import org.apache.avro.SchemaParseException
 import org.apache.commons.io.IOUtils
 import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
@@ -35,7 +37,7 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
   val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
   Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenReturn(someStructType)
 
-  private def readTestResourceAsString(path: String) = IOUtils.toString(getClass.getResourceAsStream(path))
+  private def readTestResourceAsString(path: String) = IOUtils.toString(getClass.getResourceAsStream(path), Charset.defaultCharset())
 
   private def readTestResourceAsDataType(path: String) = DataType.fromJson(readTestResourceAsString(path)).asInstanceOf[StructType]
 
@@ -81,7 +83,7 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
         }
 
         inside(caughtException) { case SchemaParsingException(SchemaType.Avro, msg, _, _, _, cause) =>
-          msg should include("expected a valid value")
+          msg should include("expecting (JSON String, Number, Array, Object")
           cause shouldBe a[SchemaParseException]
         }
       }

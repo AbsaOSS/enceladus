@@ -23,6 +23,23 @@ import scala.annotation.tailrec
 
 object SchemaUtils {
 
+
+  //TODO move the function to Spark Commons and use it from there https://github.com/AbsaOSS/spark-commons/issues/61
+  /**
+    *
+    * @param columnName The dot-separated column path to the field
+    * @return The column name with the parent path removed
+    */
+  def stripPathFromFieldName(columnName: String): String = {
+    val index = columnName.lastIndexOf('.')
+    if (index > 0) {
+      columnName.substring(index + 1, columnName.length)
+    } else {
+      columnName
+    }
+  }
+
+
   /**
     * Returns all renames in the provided schema.
     * @param schema                       schema to examine

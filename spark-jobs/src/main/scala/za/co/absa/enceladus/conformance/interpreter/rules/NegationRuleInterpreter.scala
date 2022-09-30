@@ -39,7 +39,7 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
 
     val field = df.schema.getField(rule.inputColumn).get
 
-    val negationErrUdfCall = callUDF(UDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
+    val negationErrUdfCall = call_udf(UDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
 
     field.dataType match {
