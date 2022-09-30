@@ -13,24 +13,16 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.implicits
+package za.co.absa.enceladus.utils.testUtils
 
-import scala.util.{Failure, Success, Try}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 
-object OptionImplicits {
-  implicit class OptionEnhancements[T](option: Option[T]) {
-    def toTry(failure: Exception): Try[T] = {
-      option.fold[Try[T]](Failure(failure))(Success(_))
-    }
+object DataFrameTestUtils {
 
-    /**
-      * Get's the `option` value or throws the provided exception
-      *
-      * @param exception the exception to throw in case the `option` is None
-      * @return
-      */
-    def getOrThrow(exception: => Throwable): T = {
-      option.getOrElse(throw exception)
+  implicit class RowSeqToDf(val data: Seq[Row]) extends AnyVal {
+    def toDfWithSchema(schema: StructType)(implicit spark: SparkSession): DataFrame = {
+      spark.createDataFrame(spark.sparkContext.parallelize(data), schema)
     }
   }
 }

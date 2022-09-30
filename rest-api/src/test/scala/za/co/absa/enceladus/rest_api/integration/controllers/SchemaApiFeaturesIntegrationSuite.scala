@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.rest_api.integration.controllers
 
 import java.io.File
+import java.nio.charset.Charset
 import java.nio.file.{Files, Path}
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
@@ -866,7 +867,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
 
   import com.github.tomakehurst.wiremock.client.WireMock._
 
-  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path))
+  private def readTestResourceAsString(path: String): String = IOUtils.toString(getClass.getResourceAsStream(path), Charset.defaultCharset)
 
   /**
    * will prepare the a response from file with correct `ContentType`

@@ -33,7 +33,8 @@ sealed abstract case class FeatureSwitches(
                                             controlFrameworkEnabled: Boolean = false,
                                             broadcastStrategyMode: ThreeStateSwitch = Auto,
                                             broadcastMaxSizeMb: Int = 0,
-                                            allowOriginalColumnsMutability: Boolean = false
+                                            allowOriginalColumnsMutability: Boolean = false,
+                                            errColNullability: Boolean = true // default value conforms to enceladus.errCol.nullable in reference.conf
                                           ) {
   private def copy(
                     experimentalMappingRuleEnabled: Boolean = this.experimentalMappingRuleEnabled,
@@ -41,14 +42,16 @@ sealed abstract case class FeatureSwitches(
                     controlFrameworkEnabled: Boolean = this.controlFrameworkEnabled,
                     broadcastStrategyMode: ThreeStateSwitch = this.broadcastStrategyMode,
                     broadcastMaxSizeMb: Int = this.broadcastMaxSizeMb,
-                    allowOriginalColumnsMutability: Boolean = this.allowOriginalColumnsMutability
+                    allowOriginalColumnsMutability: Boolean = this.allowOriginalColumnsMutability,
+                    errColNullability: Boolean = this.errColNullability
                   ): FeatureSwitches = {
     new FeatureSwitches(experimentalMappingRuleEnabled,
       catalystWorkaroundEnabled,
       controlFrameworkEnabled,
       broadcastStrategyMode,
       broadcastMaxSizeMb,
-      allowOriginalColumnsMutability) {}
+      allowOriginalColumnsMutability,
+      errColNullability) {}
   }
 
   def setExperimentalMappingRuleEnabled(value: Boolean): FeatureSwitches = {
@@ -73,6 +76,10 @@ sealed abstract case class FeatureSwitches(
 
   def setOriginalColumnsMutability(value: Boolean): FeatureSwitches = {
     copy(allowOriginalColumnsMutability = value)
+  }
+
+  def setErrColNullability(value: Boolean): FeatureSwitches = {
+    copy(errColNullability = value)
   }
 
 }

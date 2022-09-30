@@ -45,7 +45,7 @@ object DateFieldValidator extends DateTimeFieldValidator {
 
     val patternIssues: Seq[ValidationIssue] = if (!pattern.isEpoch) {
       val placeholders = Set('y', 'M', 'd', 'H', 'm', 's', 'D', 'S', 'i', 'n', 'a', 'k', 'K', 'h')
-      val patternChars: Map[Char, Int] = pattern.pattern.countUnquoted(placeholders, Set('''))
+      val patternChars: Map[Char, Int] = pattern.pattern.countUnquoted(placeholders, Set('\''))
       patternChars.foldLeft(List.empty[ValidationIssue]) {(acc, item) => (item._1, item._2 > 0) match {
         case ('y', false) => ValidationWarning("No year placeholder 'yyyy' found.")::acc
         case ('M', false) => ValidationWarning("No month placeholder 'MM' found.")::acc

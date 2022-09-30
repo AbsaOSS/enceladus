@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
+import java.nio.charset.Charset
+
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.types.{StructField, StructType}
@@ -88,7 +90,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with TZNormalizedSparkTes
     val value = "../examples/data/e2e_tests/data/hdfs/std/mappingConformanceRuleData/2020/03/23/v1/_INFO"
     val infoFileContents: String = fromFile(value, "UTF-8").mkString
 
-    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents)
+    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents, Charset.defaultCharset())
   }
 
   private def prepareDataFrame(): Unit = {
@@ -128,7 +130,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with TZNormalizedSparkTes
     try {
       FileUtils.deleteDirectory(new File(path))
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to delete a temporary directory $path")
+      case NonFatal(_) => log.warn(s"Unable to delete a temporary directory $path")
     }
   }
 

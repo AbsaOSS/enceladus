@@ -430,7 +430,9 @@ object DatasetService {
     def updateFields(fields: Future[Set[String]]): RuleValidationsAndFields = copy(fields = fields)
     def appendValidations(v: Seq[Future[Validation]]): RuleValidationsAndFields = copy(validations = validations ++ v)
 
-    def mergeValidations(): Future[Validation] = Future.fold(validations)(Validation())((v1, v2) => v1.merge(v2))
+    def mergeValidations(): Future[Validation] = {
+      Future.foldLeft(validations.toList)(Validation())((v1, v2) => v1.merge(v2))
+    }
   }
 
   /**

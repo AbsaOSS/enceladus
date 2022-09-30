@@ -21,7 +21,7 @@ import za.co.absa.enceladus.utils.general.Section
 import za.co.absa.spark.commons.implicits.ColumnImplicits.ColumnEnhancements
 
 object EnceladusColumnImplicits {
-  implicit class EnceladusColumnEnhancements(column: Column) {
+  implicit class EnceladusColumnEnhancements(val column: Column) extends AnyVal {
 
     /**
       * Spark strings are base on 1 unlike scala. The function shifts the substring indexation to be in accordance with
