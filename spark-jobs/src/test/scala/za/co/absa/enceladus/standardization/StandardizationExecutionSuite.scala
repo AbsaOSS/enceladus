@@ -24,6 +24,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.mockito.{ArgumentMatchers, Mockito}
 import org.scalatest.Assertion
+import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
@@ -45,9 +46,11 @@ import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
 
+import scala.concurrent.duration.DurationInt
 import scala.util.control.NonFatal
 
-class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase with MockitoSugar {
+class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase
+  with MockitoSugar with Eventually{
 
   private implicit val defaults: Defaults = GlobalDefaults
 
@@ -67,11 +70,13 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
       // Atum framework initialization is part of the 'prepareStandardization'
       spark.disableControlMeasuresTracking()
 
-      val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+      eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
+        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
-      // key with prefix from test's application.conf
-      infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+        // key with prefix from test's application.conf
+        infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
+      }
     }
   }
 
