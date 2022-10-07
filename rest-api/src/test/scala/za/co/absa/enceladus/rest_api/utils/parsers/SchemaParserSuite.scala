@@ -90,7 +90,8 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
     }
 
     val copybookParser = schemaParserFactory.getParser(Copybook)
-    "parse cobol copybook schema to StructType" when {
+    // TODO
+    "parse cobol copybook schema to StructType" ignore {
       "correct cob file content is given" in {
         val expectedCopybookType = readTestResourceAsDataType(TestResourcePath.Copybook.okJsonEquivalent)
 

@@ -22,22 +22,21 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.standardization.{RecordIdGeneration, Standardization}
-import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
-import za.co.absa.standardization.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
 
 class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
+  private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
     .split(" ")
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
-  private val config = BasicStandardizationConfig
-    .fromDefault()
-    .copy(metadataColumns = metadataConfig)
+  private implicit val defaults: Defaults = GlobalDefaults
 
   private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
 
@@ -54,13 +53,20 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val reader = cvsReader.schema(inputSchema)
     val sourceDF = reader.load("src/test/resources/data/standardization_csv_suite_data.csv")
 
-    val expected = FileReader.readFileAsString("src/test/resources/data/standardization_csv_suite_expected_no_null_value.txt")
-      .replace("\r\n", "\n")
+    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
-    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
+    val expectedData = Seq(
+      Row("a", "Arya", "Stark", Seq()),
+      Row("b", "Jon", "Snow", Seq()),
+      Row("c,Use,Comma", null, "", Seq(
+        Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "last_name", Seq("null"), Seq())
+      )),
+      Row("d", null, "Hodor", Seq()),
+      Row("e", "Pete", "Pete", Seq())
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDF.schema) // checking just the data, not the schema here
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assertSmallDatasetEquality(actualDF, expectedDF, ignoreNullable = true)
   }
 
   test("Reading data from CSV with custom delimiter, null-values set.") {
@@ -72,12 +78,21 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val reader = cvsReader.schema(inputSchema)
     val sourceDF = reader.load("src/test/resources/data/standardization_csv_suite_data.csv")
 
-    val expected = FileReader.readFileAsString("src/test/resources/data/standardization_csv_suite_expected_with_null_value.txt")
-      .replace("\r\n", "\n")
+    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 
-    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
+    val expectedData = Seq(
+      Row("a", "Arya", "Stark", Seq()),
+      Row("b", "Jon", "Snow", Seq()),
+      Row("c,Use,Comma", null, "", Seq(
+        Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "last_name", Seq("null"), Seq())
+      )),
+      Row("d", null, "Hodor", Seq()),
+      Row("e", null, "", Seq(
+        Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "last_name", Seq("null"), Seq()),
+      ))
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDF.schema) // checking just the data, not the schema here
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(expected == actual)
+    assertSmallDatasetEquality(actualDF, expectedDF, ignoreNullable = true)
   }
 }

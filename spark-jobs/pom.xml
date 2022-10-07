@@ -104,6 +104,12 @@
 			<artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
 			<version>${spark.sql.kafka.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>com.github.mrpowers</groupId>
+            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
+            <version>${spark.fast.tests.version}</version>
+            <scope>test</scope>
+        </dependency>
 		<!-- Lineage tracking -->
 		<dependency>
 			<groupId>za.co.absa.spline.agent.spark</groupId>

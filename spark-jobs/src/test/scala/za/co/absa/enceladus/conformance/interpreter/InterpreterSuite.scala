@@ -19,6 +19,8 @@ import org.json4s._
 import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.Waiters.{interval, scaled, timeout}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
@@ -30,6 +32,8 @@ import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+
+import scala.concurrent.duration.DurationInt
 
 class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
@@ -83,6 +87,8 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
 
     spark.disableControlMeasuresTracking()
 
+
+    eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
     val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
@@ -100,6 +106,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
       assert(cp.controls(0).controlValue === "8")
       assert(cp.controls(1).controlValue === "6")
     })
+  }
   }
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
@@ -146,6 +153,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
 
     spark.disableControlMeasuresTracking()
 
+    eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
     val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
@@ -168,6 +176,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
       assert(cp.controls(1).controlValue === "7")
       assert(cp.controls(2).controlValue === "28")
     })
+    }
   }
 
   test("End to end dynamic conformance test") {

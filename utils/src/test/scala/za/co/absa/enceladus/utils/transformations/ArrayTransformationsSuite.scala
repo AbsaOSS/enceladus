@@ -48,14 +48,13 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
 
   private val df = spark.createDataFrame(inputDataOrig)
 
-  ignore("Testing Reversed Zip With Index") {
+  test("Testing Reversed Zip With Index") {
     val zipped = ArrayTransformations.zipWithOrder(df, "vals").as[ZippedOuterStruct].collect()
 
     assertResult(inputDataZipped.sortBy(_.id))(zipped.sortBy(_.id))
   }
 
-  //TODO
-  ignore("Testing nestedWithColumn") {
+  test("Testing nestedWithColumn") {
     val df = spark.createDataFrame(extraNested)
 
     val res = ArrayTransformations.nestedWithColumn(df)("z.id", $"z.id" * 2)
@@ -66,16 +65,16 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
     assertResult(expected)(actual)
   }
 
-  ignore("Testing array transform") {
+  test("Testing array transform") {
     val df = spark.createDataFrame(inputDataOrig)
 
-    val t = ArrayTransformations.arrayTransform(df, "vals")({
-      case d =>
+    val t = ArrayTransformations.arrayTransform(df, "vals"){
+      d =>
         val tmpCol = d.withColumn("tmp", $"vals.a" * 2)
         val dropped = ArrayTransformations.nestedDrop(tmpCol, "vals.a")
         val renamed = ArrayTransformations.nestedWithColumn(dropped)("vals.a", $"tmp")
         renamed.repartition(10)
-    })
+    }
 
     val exp = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(v => InnerStruct(v * 2))) })
     val res = t.as[OuterStruct].collect.sortBy(_.id)
@@ -83,18 +82,15 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
     assertResult(exp)(res)
   }
 
-  // TODO
-  ignore("Testing nested arrays") {
+  test("Testing nested arrays") {
     val df2 = spark.createDataFrame(extraNested)
-    val actual = ArrayTransformations.arrayTransform(df2, "z.vals") {
-      case (df) => df
-    }.as[Outer2].collect().sortBy(_.z.id)
+    val actual = ArrayTransformations.arrayTransform(df2, "z.vals")(df => df).as[Outer2].collect().sortBy(_.z.id)
     val expected = extraNested.sortBy(_.z.id)
 
     assertResult(expected)(actual)
   }
 
-  ignore("Testing nestedWithColumn 3 levels deep") {
+  test("Testing nestedWithColumn 3 levels deep") {
     val df = spark.createDataFrame(Seq(
       MyA(MyB(MyC(0))), MyA(MyB(MyC(1))), MyA(MyB(MyC(2))), MyA(MyB(MyC(3))), MyA(MyB(MyC(4)))))
 
@@ -106,7 +102,7 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
     assertResult(expected)(res)
   }
 
-  ignore("Testing flattenArrays") {
+  test("Testing flattenArrays") {
     val df = spark.createDataFrame(Seq(
       Nested2Levels(List(
         List(Some(1)), null, List(None), List(Some(2)),
