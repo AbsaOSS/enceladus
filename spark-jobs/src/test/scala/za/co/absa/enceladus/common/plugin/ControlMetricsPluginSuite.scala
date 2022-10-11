@@ -90,7 +90,7 @@ class ControlMetricsPluginSuite extends AnyFunSuite {
       Map[String, String]("dummy.1" -> "za.co.absa.NoSuchClass")
         .asJava)
 
-    intercept[Exception] {
+    intercept[IllegalArgumentException] {
       new PluginLoader[ControlMetricsPlugin].loadPlugins(conf, "dummy")
     }
   }

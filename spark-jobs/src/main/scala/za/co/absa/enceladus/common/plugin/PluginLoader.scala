@@ -35,6 +35,7 @@ class PluginLoader[+A <: Plugin] {
    * @return A list of loaded plugins.
    */
   @throws[IllegalStateException]
+  @throws[IllegalArgumentException]
   def loadPlugins(config: Config, configKeyPrefix: String): Seq[A] = {
     val plugins = new ListBuffer[A]
     var i = 1
@@ -53,11 +54,14 @@ class PluginLoader[+A <: Plugin] {
   }
 
   @throws[IllegalStateException]
+  @throws[IllegalArgumentException]
   private def buildPlugin(factoryName: String, config: Config): Option[A] = {
-    val factory = ReflectionUtils.objectForName[PluginFactory[A]](factoryName)
     try {
+      val factory = ReflectionUtils.objectForName[PluginFactory[A]](factoryName)
       Option(factory.apply(config))
     } catch {
+      case ex @ (_: ScalaReflectionException | _: ClassNotFoundException | _: ClassCastException) =>
+        throw new IllegalArgumentException(s"Provided factoryName ($factoryName) is incorrect.", ex)
       case NonFatal(ex) => throw new IllegalStateException(s"Unable to build a plugin using its factory: $factoryName", ex)
     }
   }
