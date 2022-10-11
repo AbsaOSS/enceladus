@@ -29,3 +29,5 @@ Download and install Postman from https://www.postman.com/downloads.
 
 ### Import into Postman
 Import variables first. Rest of files depends on your needs. 
+- For import use `Import` button visible next to 'My Workspace' in the left panel.
+- Warning: If left panel is minimized the button is not visible.
