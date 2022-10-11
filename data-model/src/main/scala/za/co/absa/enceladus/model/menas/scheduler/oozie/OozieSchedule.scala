@@ -18,6 +18,7 @@ package za.co.absa.enceladus.model.menas.scheduler.oozie
 import za.co.absa.enceladus.model.menas.scheduler._
 import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
 case class OozieSchedule(
    scheduleTiming: ScheduleTiming,
    runtimeParams: RuntimeConfig,
