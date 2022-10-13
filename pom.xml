@@ -172,7 +172,6 @@
         <momentjs.version>2.22.2</momentjs.version>
         <mongo.java.driver.version>3.6.4</mongo.java.driver.version>
         <mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
-        <oozie.version>4.3.0</oozie.version>
         <openui5.version>1.67.1</openui5.version>
         <parquet.version>1.10.0</parquet.version>
         <requests.version>0.1.6</requests.version>
