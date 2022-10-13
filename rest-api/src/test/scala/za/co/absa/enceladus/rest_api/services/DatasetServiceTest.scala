@@ -20,7 +20,7 @@ import org.mockito.Mockito
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.matchers.should.Matchers
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
-import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository}
+import za.co.absa.enceladus.rest_api.repositories.DatasetMongoRepository
 import za.co.absa.enceladus.rest_api.exceptions.LockedEntityException
 import za.co.absa.enceladus.model.{Dataset, Schema, SchemaField, Validation}
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -35,9 +35,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class DatasetServiceTest extends VersionedModelServiceTest[Dataset] with Matchers {
 
   override val modelRepository: DatasetMongoRepository = mock[DatasetMongoRepository]
-  val oozieRepository: OozieRepository = mock[OozieRepository]
   val datasetPropDefService: PropertyDefinitionService = mock[PropertyDefinitionService]
-  override val service = new DatasetService(modelRepository, oozieRepository, datasetPropDefService)
+  override val service = new DatasetService(modelRepository, datasetPropDefService)
 
   test("fail to create multiple Datasets with the same name concurrently with a ValidationException") {
     val dataset = DatasetFactory.getDummyDataset(name = "dataset", version = 1)

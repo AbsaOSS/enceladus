@@ -21,6 +21,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Try}
 
+
 object ConfigReader {
   type ConfigExceptionBadValue = ConfigException.BadValue
 
@@ -60,6 +61,18 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     config.getBoolean(path)
   }
 
+  def getIntList(path: String): List[Int] = {
+    Try(config
+      .getIntList(path)
+      .asScala
+      .map(_.toInt)
+      .toList
+    ).recoverWith {
+      // if it fails try to decode it as a simple string, but if that fails too, throw the original exception
+      case e: ConfigException.WrongType => Try(getListFromString(path){_.toInt}).recoverWith { case _ => Failure(e)}
+    }.get
+  }
+
   /**
     * Inspects the config for the presence of the `path` and returns an optional result.
     *
@@ -82,6 +95,10 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
     */
   def getBooleanOption(path: String): Option[Boolean] = {
     getIfExists(path)(getBoolean)
+  }
+
+  def getIntListOption(path: String): Option[List[Int]] = {
+    getIfExists(path)(getIntList)
   }
 
   /** Handy shorthand of frequent `config.withValue(key, ConfigValueFactory.fromAnyRef(value))` */
@@ -177,5 +194,14 @@ class ConfigReader(val config: Config = ConfigFactory.load()) {
       None
     }
   }
-  
+
+  private def getListFromString[T](path: String)(converFnc: String => T): List[T] = {
+    import za.co.absa.enceladus.utils.implicits.StringImplicits._
+
+    val delimiter = ','
+    val source = getString(path).trimStartEndChar('[', ']')
+    val listDirty = source.splitWithQuotes(delimiter)
+    listDirty.map(item => converFnc(item.trim.trimStartEndChar('"'))).toList
+  }
+
 }

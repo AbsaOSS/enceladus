@@ -37,7 +37,9 @@ object StandardizationJob extends StandardizationExecution {
 
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(
+      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, restApiOptionallyRetryableExceptions
+    )
 
     implicit val defaults: GlobalDefaults.type = GlobalDefaults
 

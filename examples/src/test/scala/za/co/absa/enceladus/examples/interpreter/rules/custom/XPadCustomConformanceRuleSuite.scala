@@ -183,10 +183,12 @@ class RpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkT
   import spark.implicits._
 
   private val conf = ConfigFactory.load()
-  private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("menas.rest.uri"))
+  private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
   private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls) // you may have to hard-code your own implementation here (if not working with menas)
+
+  // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

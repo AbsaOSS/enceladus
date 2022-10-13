@@ -31,10 +31,10 @@ class SpnegoAuthClientSuite extends AuthClientSuite {
       .thenReturn(new ResponseEntity[String](responseHeaders, HttpStatus.OK))
   }
 
-  override def setUpUnsuccessfulAuthRequest(): OngoingStubbing[ResponseEntity[String]] = {
+  override def setUpUnsuccessfulAuthRequest(httpStatus: HttpStatus): OngoingStubbing[ResponseEntity[String]] = {
     Mockito
       .when(restTemplate.getForEntity(s"$baseUrl/api/user/info", classOf[String]))
-      .thenReturn(new ResponseEntity[String](HttpStatus.FORBIDDEN))
+      .thenReturn(new ResponseEntity[String](httpStatus))
   }
 
 }
