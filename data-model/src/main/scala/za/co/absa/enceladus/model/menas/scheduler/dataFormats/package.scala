@@ -21,6 +21,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import za.co.absa.enceladus.model.menas.jackson._
 
+
+// This file is kept for data model compatibility reason and to avoid the need of data migration.
 package object dataFormats {
 
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "name")

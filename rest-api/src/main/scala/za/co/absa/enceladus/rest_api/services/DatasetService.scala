@@ -17,10 +17,9 @@ package za.co.absa.enceladus.rest_api.services
 
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, OozieRepository, PropertyDefinitionMongoRepository}
+import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
 import za.co.absa.enceladus.rest_api.services.DatasetService.RuleValidationsAndFields
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieScheduleInstance
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
@@ -37,7 +36,6 @@ import scala.util.{Failure, Success}
 
 @Service
 class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
-                                  oozieRepository: OozieRepository,
                                   propertyDefinitionService: PropertyDefinitionService)
   extends VersionedModelService[Dataset] {
 
@@ -46,9 +44,8 @@ class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
   import scala.concurrent.ExecutionContext.Implicits.global
 
   override def update(username: String, dataset: Dataset): Future[Option[(Dataset, Validation)]] = {
-    super.updateFuture(username, dataset.name, dataset.version) { latest =>
-      updateSchedule(dataset, latest).map({ withSchedule =>
-        withSchedule
+    super.update(username, dataset.name, dataset.version) { latest =>
+      latest
           .setSchemaName(dataset.schemaName)
           .setSchemaVersion(dataset.schemaVersion)
           .setHDFSPath(dataset.hdfsPath)
@@ -56,41 +53,6 @@ class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
           .setConformance(dataset.conformance)
           .setProperties(removeBlankPropertiesOpt(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]
-      })
-    }
-  }
-
-  private def updateSchedule(newDataset: Dataset, latest: Dataset): Future[Dataset] = {
-    if (newDataset.schedule == latest.schedule) {
-      Future(latest)
-    } else if (newDataset.schedule.isEmpty) {
-      Future(latest.setSchedule(None))
-    } else {
-      val newInstance = for {
-        wfPath <- oozieRepository.createWorkflow(newDataset)
-        coordPath <- oozieRepository.createCoordinator(newDataset, wfPath)
-        coordId <- latest.schedule match {
-          case Some(sched) => sched.activeInstance match {
-            case Some(instance) =>
-              // Note: use the old schedule's runtime params for the kill - we need to impersonate the right user (it
-              // might have been updated)
-              oozieRepository.killCoordinator(instance.coordinatorId, sched.runtimeParams).flatMap({ _ =>
-                oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-              }).recoverWith({
-                case _ =>
-                  logger.warn("First attempt to kill previous coordinator failed, submitting a new one.")
-                  oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-              })
-            case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-          }
-          case None => oozieRepository.runCoordinator(coordPath, newDataset.schedule.get.runtimeParams)
-        }
-      } yield OozieScheduleInstance(wfPath, coordPath, coordId)
-
-      newInstance.map({ i =>
-        val schedule = newDataset.schedule.get.copy(activeInstance = Some(i))
-        latest.setSchedule(Some(schedule))
-      })
     }
   }
 
