@@ -72,36 +72,4 @@ object SchemaUtils {
     getRenamesRecursively("", "", schema, Map.empty, predecessorChanged = false)
   }
 
-  /**
-    * Determine the name of a field
-    * Will override to "sourcecolumn" in the Metadata if it exists
-    *
-    * @param field  field to work with
-    * @return       Metadata "sourcecolumn" if it exists or field.name
-    */
-  def getFieldNameOverriddenByMetadata(field: StructField): String = {
-    if (field.metadata.contains(MetadataKeys.SourceColumn)) {
-      field.metadata.getString(MetadataKeys.SourceColumn)
-    } else {
-      field.name
-    }
-  }
-
-  /**
-    * Converts a fully qualified field name (including its path, e.g. containing fields) to a unique field name without
-    * dot notation
-    * @param path  the fully qualified field name
-    * @return      unique top level field name
-    */
-  def unpath(path: String): String = {
-    path.replace("_", "__")
-        .replace('.', '_')
-  }
-
-  implicit class FieldWithSource(val structField: StructField) {
-    def sourceName: String = {
-      SchemaUtils.getFieldNameOverriddenByMetadata(structField.structField)
-    }
-  }
-
 }

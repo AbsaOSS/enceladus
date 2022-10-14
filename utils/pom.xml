@@ -68,6 +68,11 @@
             <version>${absa.spark.commons.version}</version>
         </dependency>
         <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-data-standardization_2.11</artifactId>
+            <version>${spark.data.standardization}</version>
+        </dependency>
+        <dependency>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest-flatspec_${scala.compat.version}</artifactId>
             <version>${scalatest.version}</version>

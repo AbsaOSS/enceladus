@@ -13,17 +13,8 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.utils.types
+package za.co.absa.enceladus.common
 
-import scala.language.implicitConversions
+import za.co.absa.standardization.types.CommonTypeDefaults
 
-/**
-  * Class to carry enhanced information about formatting pattern in conversion from/to string
-  * @param pattern  actual pattern to format the type conversion
-  * @param isDefault  marks if the pattern is actually an assigned value or taken for global defaults
-  */
-abstract class TypePattern(val pattern: String, val isDefault: Boolean = false) extends Serializable
-
-object TypePattern {
-  implicit def patternToString(pattern: TypePattern): String = pattern.pattern
-}
+object GlobalDefaults extends CommonTypeDefaults
