@@ -17,6 +17,7 @@ package za.co.absa.enceladus.utils.error
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
+import za.co.absa.standardization.config.DefaultErrorCodesConfig
 
 /**
  * Case class to represent an error message
@@ -34,30 +35,6 @@ case class Mapping(mappingTableColumn: String, mappedDatasetColumn: String)
 object ErrorMessage {
   val errorColumnName = "errCol"
 
-  def stdCastErr(errCol: String, rawValue: String): ErrorMessage = ErrorMessage(
-    errType = "stdCastError",
-    errCode = ErrorCodes.StdCastError,
-    errMsg = "Standardization Error - Type cast",
-    errCol = errCol,
-    rawValues = Seq(rawValue))
-  def stdNullErr(errCol: String): ErrorMessage = ErrorMessage(
-    errType = "stdNullError",
-    errCode = ErrorCodes.StdNullError,
-    errMsg = "Standardization Error - Null detected in non-nullable attribute",
-    errCol = errCol,
-    rawValues = Seq("null"))
-  def stdTypeError(errCol: String, sourceType: String, targetType: String): ErrorMessage = ErrorMessage(
-    errType = "stdTypeError",
-    errCode = ErrorCodes.StdTypeError,
-    errMsg = s"Standardization Error - Type '$sourceType' cannot be cast to '$targetType'",
-    errCol = errCol,
-    rawValues = Seq.empty)
-  def stdSchemaError(errRow: String): ErrorMessage = ErrorMessage(
-    errType = "stdSchemaError",
-    errCode = ErrorCodes.StdSchemaError,
-    errMsg = s"The input data does not adhere to requested schema",
-    errCol = null, // scalastyle:ignore null
-    rawValues = Seq(errRow))
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
     errCode = ErrorCodes.ConfMapError,
@@ -92,17 +69,18 @@ object ErrorMessage {
     * This object purpose it to group the error codes together to decrease a chance of them being in conflict
     */
   object ErrorCodes {
-    final val StdCastError    = "E00000"
     final val ConfMapError    = "E00001"
-    final val StdNullError    = "E00002"
     final val ConfCastErr     = "E00003"
     final val ConfNegErr      = "E00004"
     final val ConfLitErr      = "E00005"
-    final val StdTypeError    = "E00006"
-    final val StdSchemaError  = "E00007"
 
-    val standardizationErrorCodes = Seq(StdCastError, StdNullError, StdTypeError, StdSchemaError)
-    val conformanceErrorCodes = Seq(ConfMapError, ConfCastErr, ConfNegErr, ConfLitErr)
+    final val StdCastError    = DefaultErrorCodesConfig.castError
+    final val StdNullError    = DefaultErrorCodesConfig.nullError
+    final val StdTypeError    = DefaultErrorCodesConfig.typeError
+    final val StdSchemaError  = DefaultErrorCodesConfig.schemaError
+
+    val standardizationErrorCodes: Seq[String] = Seq(StdCastError, StdNullError, StdTypeError, StdSchemaError)
+    val conformanceErrorCodes: Seq[String] = Seq(ConfMapError, ConfCastErr, ConfNegErr, ConfLitErr)
   }
 }
 

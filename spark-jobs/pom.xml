@@ -55,6 +55,12 @@
             <version>${atum.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-data-standardization_2.11</artifactId>
+            <version>${spark.data.standardization}</version>
+        </dependency>
+
         <!-- Data formats support -->
         <dependency>
             <groupId>com.databricks</groupId>
@@ -89,6 +95,11 @@
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
             <version>${absa.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>${absa.spark.commons.version}</version>
         </dependency>
 
         <!-- Libraries -->

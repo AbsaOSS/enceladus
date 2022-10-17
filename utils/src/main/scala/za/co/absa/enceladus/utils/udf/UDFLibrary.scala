@@ -28,14 +28,6 @@ import scala.util.{Failure, Success, Try}
 
 class UDFLibrary()(implicit val spark: SparkSession) {
 
-  spark.udf.register(stdCastErr, { (errCol: String, rawValue: String) =>
-    ErrorMessage.stdCastErr(errCol, rawValue)
-  })
-
-  spark.udf.register(stdNullErr, { errCol: String => ErrorMessage.stdNullErr(errCol) })
-
-  spark.udf.register(stdSchemaErr, { errRow: String => ErrorMessage.stdSchemaError(errRow) })
-
   spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
     ErrorMessage.confMappingErr(errCol, rawValues, mappings)
   })
