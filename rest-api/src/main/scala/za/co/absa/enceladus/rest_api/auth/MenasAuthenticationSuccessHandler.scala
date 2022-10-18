@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.auth
 
-import java.util.UUID
-
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.joda.time.{DateTime, DateTimeZone, Hours}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
@@ -42,8 +40,6 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
                                        response: HttpServletResponse,
                                        authentication: Authentication): Unit = {
     val user = authentication.getPrincipal.asInstanceOf[UserDetails]
-    val csrfToken = UUID.randomUUID().toString
-    response.addHeader(CsrfTokenKey, csrfToken)
 
     val expiry = Hours.hours(jwtLifespanHours).toStandardSeconds
     val jwtExpirationTime = DateTime.now(DateTimeZone.forID(timezone)).plus(expiry).toDate
@@ -61,7 +57,6 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
       .jwtBuilder()
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
-      .claim(CsrfTokenKey, csrfToken)
       .claim(RolesKey, filteredGroups)
       .compact()
 
