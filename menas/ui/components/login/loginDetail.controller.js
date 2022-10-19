@@ -139,7 +139,6 @@ sap.ui.define([
         this.byId("password").setValue("");
         let jwt = xhr.getResponseHeader("JWT");
         localStorage.setItem("jwtToken", jwt);
-        setCookie("JWT", jwt, 1);
         Functions.ajax("/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           model.setProperty("/menasVersion", oInfo.menasVersion);
