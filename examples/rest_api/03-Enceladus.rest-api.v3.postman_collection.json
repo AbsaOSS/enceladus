@@ -1,0 +1,3965 @@
+{
+	"info": {
+		"_postman_id": "485171ce-9da3-42f4-9583-3b763500dc50",
+		"name": "Enceladus rest-api v3",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23143950"
+	},
+	"item": [
+		{
+			"name": "_login",
+			"item": [
+				{
+					"name": "Login as user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set(\"jwt_token\", pm.response.headers.get(\"JWT\"));\r",
+									"pm.collectionVariables.set(\"csrf_token\", pm.response.headers.get(\"X-CSRF-TOKEN\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/login?username={{enceladus_user}}&password={{enceladus_password}}",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"login"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{enceladus_user}}"
+								},
+								{
+									"key": "password",
+									"value": "{{enceladus_password}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login as admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set(\"jwt_token\", pm.response.headers.get(\"JWT\"));\r",
+									"pm.collectionVariables.set(\"csrf_token\", pm.response.headers.get(\"X-CSRF-TOKEN\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/login?username={{enceladus_admin_user}}&password={{enceladus_admin_password}}",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"login"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "{{enceladus_admin_user}}"
+								},
+								{
+									"key": "password",
+									"value": "{{enceladus_admin_password}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "configuration-controller",
+			"item": [
+				{
+					"name": "getEnvironment",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/configuration/environment",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"configuration",
+								"environment"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "dataset-controller",
+			"item": [
+				{
+					"name": "getList",
+					"item": [
+						{
+							"name": "getList",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "getList with params",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets?limit=999&offset=0&searchQuery=",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets"
+									],
+									"query": [
+										{
+											"key": "limit",
+											"value": "999"
+										},
+										{
+											"key": "offset",
+											"value": "0"
+										},
+										{
+											"key": "searchQuery",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create",
+					"item": [
+						{
+							"name": "create",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"description\":\"{{newDatasetDescription}}\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":1,\r\n  \"conformance\":[],\r\n  \"properties\":{}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionSummaryForEntity",
+					"item": [
+						{
+							"name": "getVersionSummaryForEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "enable",
+					"item": [
+						{
+							"name": "enable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "disable",
+					"item": [
+						{
+							"name": "disable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionDetail",
+					"item": [
+						{
+							"name": "getVersionDetail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "edit",
+					"item": [
+						{
+							"name": "edit",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"version\":10,\r\n  \"description\":\"{{newDatasetDescription}} PUT.\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":\"2\",\r\n  \"schedule\":null,\r\n  \"conformance\":[],\r\n  \"properties\": {}\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{newDatasetName}}/10",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{newDatasetName}}",
+										"10"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exportSingleEntity",
+					"item": [
+						{
+							"name": "exportSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/export",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getAllPropertiesForVersion",
+					"item": [
+						{
+							"name": "getAllPropertiesForVersion",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/properties",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"properties"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "updateProperties",
+					"item": [
+						{
+							"name": "updateProperties",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"datasetPropertyByAPI1\": \"val1\",\r\n    \"datasetPropertyByAPI2\": \"optionA\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/properties",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"properties"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getConformanceRules",
+					"item": [
+						{
+							"name": "getConformanceRules",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/rules",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"rules"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "addConformanceRule",
+					"item": [
+						{
+							"name": "addConformanceRule",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"_t\": \"CastingConformanceRule\",\r\n  \"order\": 1,\r\n  \"inputColumn\": \"test\",\r\n  \"outputColumn\": \"literal_string\",\r\n  \"outputDataType\": \"String\",\r\n  \"controlCheckpoint\": true,\r\n  \"value\": \"animal\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{newDatasetName}}/1/rules",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{newDatasetName}}",
+										"1",
+										"rules"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getConformanceRuleByOrder",
+					"item": [
+						{
+							"name": "getConformanceRuleByOrder",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/rules/2",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"rules",
+										"2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validation",
+					"item": [
+						{
+							"name": "validation",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/1/validation",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"1",
+										"validation"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getAuditTrail",
+					"item": [
+						{
+							"name": "getAuditTrail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/audit-trail",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"audit-trail"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "importSingleEntity",
+					"item": [
+						{
+							"name": "importSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"metadata\":{\r\n    \"exportVersion\":1\r\n  },\r\n  \"item\":{\r\n    \"name\":\"{{importedDatasetByAPIName}}\",\r\n    \"description\":\"{{importedDatasetByAPIDescription}}\",\r\n    \"hdfsPath\":\"/std\",\r\n    \"hdfsPublishPath\":\"/publish\",\r\n    \"schemaName\":\"schemaByAPI\",\r\n    \"schemaVersion\":1,\r\n    \"conformance\":[{\r\n      \"_t\":\"LiteralConformanceRule\",\r\n      \"order\":0,\r\n      \"outputColumn\":\"TestCol\",\r\n      \"controlCheckpoint\":true,\r\n      \"value\":\"XXX\"\r\n    }],\r\n   \"properties\":{}\r\n   }\r\n }\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{importedDatasetByAPIName}}/import",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{importedDatasetByAPIName}}",
+										"import"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/datasets/{{existingDatasetName}}/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"datasets",
+										"{{existingDatasetName}}",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "mapping-table-controller",
+			"item": [
+				{
+					"name": "getList",
+					"item": [
+						{
+							"name": "getList",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create",
+					"item": [
+						{
+							"name": "create",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\":\"{{newMappingTableName}}\",\r\n  \"description\":\"{{newMappingTableDescription}}\",\r\n  \"hdfsPath\":\"/\",\r\n  \"schemaName\":\"{{existingSchemaName}}\",\r\n  \"schemaVersion\":1,\r\n  \"filter\":{\r\n      \"_t\":\"IsNullFilter\",\r\n      \"columnName\":\"A1\",\r\n      \"filter_valueState\":\"None\",\r\n      \"filter_valueStateText\":\"\",\r\n      \"columnName_valueState\":\"None\",\r\n      \"columnName_valueStateText\":\"\"\r\n  }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionSummaryForEntity",
+					"item": [
+						{
+							"name": "getVersionSummaryForEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "enable",
+					"item": [
+						{
+							"name": "enable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "disable",
+					"item": [
+						{
+							"name": "disable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionDetail",
+					"item": [
+						{
+							"name": "getVersionDetail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "edit",
+					"item": [
+						{
+							"name": "edit",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\":\"{{newMappingTableName}}\",\r\n  \"version\":8,\r\n  \"description\":\"Dataset created by API.2\",\r\n  \"hdfsPath\":\"/\",\r\n  \"schemaName\":\"locationSchema\",\r\n  \"schemaVersion\":1,\r\n  \"filter\":{\r\n      \"_t\":\"IsNullFilter\",\r\n      \"columnName\":\"A1\",\r\n      \"filter_valueState\":\"None\",\r\n      \"filter_valueStateText\":\"\",\r\n      \"columnName_valueState\":\"None\",\r\n      \"columnName_valueStateText\":\"\"\r\n  }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}/8",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}",
+										"8"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getDefaults",
+					"item": [
+						{
+							"name": "getDefaults",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}/10/defaults",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}",
+										"10",
+										"defaults"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "addDefault",
+					"item": [
+						{
+							"name": "addDefault",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"columnName\": \"col1\",\r\n  \"value\": \"val1\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}/10/defaults",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}",
+										"10",
+										"defaults"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "updateDefaults",
+					"item": [
+						{
+							"name": "updateDefaults",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "[\r\n  {\r\n    \"columnName\": \"col1\",\r\n    \"value\": \"val2\"\r\n  }\r\n]\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{newMappingTableName}}/12/defaults",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{newMappingTableName}}",
+										"12",
+										"defaults"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exportSingleEntity",
+					"item": [
+						{
+							"name": "exportSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}/1/export",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}",
+										"1",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}/1/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}",
+										"1",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validation",
+					"item": [
+						{
+							"name": "validation",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}/1/validation",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}",
+										"1",
+										"validation"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getAuditTrail",
+					"item": [
+						{
+							"name": "getAuditTrail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}/audit-trail",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}",
+										"audit-trail"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "importSingleEntity",
+					"item": [
+						{
+							"name": "importSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"metadata\": {\r\n    \"exportVersion\": 1\r\n  },\r\n  \"item\": {\r\n    \"name\": \"{{importedMappingTableByAPIName}}\",\r\n    \"description\": \"{{importedMappingTableByAPIDesc}}\",\r\n    \"hdfsPath\": \"/std/map/location\",\r\n    \"schemaName\": \"schemaByAPI\",\r\n    \"schemaVersion\": 1,\r\n    \"defaultMappingValue\": []\r\n  }\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{importedMappingTableByAPIName}}/import",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{importedMappingTableByAPIName}}",
+										"import"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/mapping-tables/{{existingMappingTableName}}/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"mapping-tables",
+										"{{existingMappingTableName}}",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "monitoring-controller",
+			"item": [
+				{
+					"name": "getMonitoringDataPoints",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "JWT",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/monitoring/data/datasets/{{newDatasetName}}/2022-10-01/2022-10-14",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"monitoring",
+								"data",
+								"datasets",
+								"{{newDatasetName}}",
+								"2022-10-01",
+								"2022-10-14"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "property-definition-controller",
+			"item": [
+				{
+					"name": "getList",
+					"item": [
+						{
+							"name": "getList",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create",
+					"item": [
+						{
+							"name": "create",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName2}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create - putInfoFile - Prop1 - Mandatory",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create - putInfoFile - Prop2 - Recommended",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName2}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": true,\r\n    \"essentiality\": {\r\n      \"_t\": \"Recommended\"\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create - no putInfoFile - Prop3 - Optional",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName3}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc3}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Optional\"\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionSummaryForEntity",
+					"item": [
+						{
+							"name": "getVersionSummaryForEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "enable",
+					"item": [
+						{
+							"name": "enable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "disable",
+					"item": [
+						{
+							"name": "disable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionDetail",
+					"item": [
+						{
+							"name": "getVersionDetail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "edit",
+					"item": [
+						{
+							"name": "edit",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}} PUT\",\r\n    \"version\": \"1\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName1}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName1}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exportSingleEntity",
+					"item": [
+						{
+							"name": "exportSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}/1/export",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}",
+										"1",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn with version",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName1}}/1/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName1}}",
+										"1",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validation",
+					"item": [
+						{
+							"name": "validation",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName1}}/1/validation",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName1}}",
+										"1",
+										"validation"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getAuditTrail",
+					"item": [
+						{
+							"name": "getAuditTrail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName1}}/audit-trail",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName1}}",
+										"audit-trail"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "importSingleEntity",
+					"item": [
+						{
+							"name": "importSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"metadata\": {\r\n        \"exportVersion\": 1\r\n    },\r\n    \"item\": {\r\n        \"name\": \"{{newDatasetPropertyName2}}\",\r\n        \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n        \"propertyType\": {\r\n            \"_t\": \"EnumPropertyType\",\r\n            \"allowedValues\": [\r\n                \"optionA\",\r\n                \"optionB\",\r\n                \"optionC\"\r\n            ],\r\n            \"suggestedValue\": null\r\n        },\r\n        \"putIntoInfoFile\": false,\r\n        \"essentiality\": {\r\n            \"_t\": \"Mandatory\",\r\n            \"allowRun\": false\r\n        }\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName2}}/import",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName2}}",
+										"import"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/property-definitions/datasets/{{newDatasetPropertyName1}}/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"property-definitions",
+										"datasets",
+										"{{newDatasetPropertyName1}}",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "run-controller",
+			"item": [
+				{
+					"name": "list",
+					"item": [
+						{
+							"name": "list",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getSummariesByDatasetName",
+					"item": [
+						{
+							"name": "getSummariesByDatasetName",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{existingDatasetName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{existingDatasetName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getSummariesByDatasetNameAndVersion",
+					"item": [
+						{
+							"name": "getSummariesByDatasetNameAndVersion",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{existingDatasetName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{existingDatasetName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create",
+					"item": [
+						{
+							"name": "create",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"uniqueId\": \"274ccaac-19c2-4b3b-af11-8eb0df33a6yyy\",\r\n    \"runId\": 3,\r\n    \"dataset\": \"{{existingDatasetName}}\",\r\n    \"datasetVersion\": 1,\r\n    \"splineRef\": {\r\n        \"sparkApplicationId\": \"local-1664801804724\",\r\n        \"outputPath\": \"hdfs://localhost:9000/publish/{{existingDatasetName}}/enceladus_info_date=2020-03-23/enceladus_info_version=1\"\r\n    },\r\n    \"startDateTime\": \"03-10-2022 12:56:49 +0000\",\r\n    \"runStatus\": {\r\n        \"status\": \"running\"\r\n    },\r\n    \"controlMeasure\": {\r\n        \"metadata\": {\r\n            \"sourceApplication\": \"Another PC\",\r\n            \"country\": \"EN\",\r\n            \"historyType\": \"Snapshot\",\r\n            \"dataFilename\": \"data.csv\",\r\n            \"sourceType\": \"Golden\",\r\n            \"version\": 1,\r\n            \"informationDate\": \"23-3-2020\",\r\n            \"additionalInfo\": {\r\n                \"conform_size_ratio\": \"131.37 %\",\r\n                \"std_yarn_deploy_mode\": \"client\",\r\n                \"conform_username\": \"user\",\r\n                \"conform_input_data_size\": \"4671\",\r\n                \"raw_format\": \"csv\",\r\n                \"conform_output_data_size\": \"8853\",\r\n                \"std_application_id\": \"local-1663770713457\",\r\n                \"source_record_count\": \"3\",\r\n                \"std_spark_master\": \"local[*]\",\r\n                \"conform_output_dir_size\": \"12231\",\r\n                \"conform_records_failed\": \"1\",\r\n                \"std_executors_num\": \"0\",\r\n                \"conform_errors_count\": \"3\",\r\n                \"std_username\": \"user\",\r\n                \"std_output_data_size\": \"4671\",\r\n                \"std_records_succeeded\": \"3\",\r\n                \"std_records_failed\": \"1\",\r\n                \"conform_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n                \"conform_spark_master\": \"local[*]\",\r\n                \"std_errors_count\": \"3\",\r\n                \"default_time_zone_for_dates\": \"UTC\",\r\n                \"std_output_dir_size\": \"6520\",\r\n                \"std_input_dir_size\": \"1118\",\r\n                \"conform_executors_num\": \"0\",\r\n                \"std_output_dir\": \"/bigdata/std/conformanceRulesData/{{existingDatasetName}}/1/2020-03-23/v1\",\r\n                \"default_time_zone_for_timestamps\": \"UTC\",\r\n                \"conform_input_dir\": \"/bigdata/std/conformanceRulesData/{{existingDatasetName}}/1/2020-03-23/v1\",\r\n                \"enceladus_info_version\": \"1\",\r\n                \"std_input_dir\": \"/std/conformanceRulesData/2020/03/23/v1\",\r\n                \"std_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n                \"conform_records_succeeded\": \"3\",\r\n                \"conform_data_size_ratio\": \"131.37 %\",\r\n                \"conform_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name {{existingDatasetName}} --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n                \"std_input_data_size\": \"172\",\r\n                \"std_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name {{existingDatasetName}} --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n                \"conform_record_count\": \"4\",\r\n                \"conform_input_dir_size\": \"6739\",\r\n                \"std_size_ratio\": \"417.80 %\",\r\n                \"conform_yarn_deploy_mode\": \"client\",\r\n                \"std_record_count\": \"4\",\r\n                \"conform_output_dir\": \"/publish/{{existingDatasetName}}/enceladus_info_date=2020-03-23/enceladus_info_version=1\",\r\n                \"conform_application_id\": \"local-1663770713457\",\r\n                \"raw_record_count\": \"3\",\r\n                \"enceladus_info_date\": \"2020-03-23\",\r\n                \"std_data_size_ratio\": \"417.80 %\"\r\n            }\r\n        },\r\n        \"runUniqueId\": \"274ccaac-19c2-4b3b-af11-8eb0df33a6dc\",\r\n        \"checkpoints\": [\r\n            {\r\n                \"name\": \"Source\",\r\n                \"processStartTime\": \"23-3-2020 08:00:00\",\r\n                \"processEndTime\": \"23-3-2020 08:05:01\",\r\n                \"workflowName\": \"Source\",\r\n                \"order\": 1,\r\n                \"controls\": [\r\n                    {\r\n                        \"controlName\": \"recordCount\",\r\n                        \"controlType\": \"count\",\r\n                        \"controlCol\": \"id\",\r\n                        \"controlValue\": \"3\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{existingDatasetName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{existingDatasetName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getRun",
+					"item": [
+						{
+							"name": "getRun",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "updateRunStatus",
+					"item": [
+						{
+							"name": "updateRunStatus",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"status\": \"running\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getRunCheckpoints",
+					"item": [
+						{
+							"name": "getRunCheckpoints",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1/checkpoints",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1",
+										"checkpoints"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "addCheckpoint",
+					"item": [
+						{
+							"name": "addCheckpoint",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newCheckpointName}}\",\r\n  \"processStartTime\": \"23-3-2020 08:00:00\",\r\n  \"processEndTime\": \"23-3-2020 08:05:01\",\r\n  \"workflowName\": \"Source\",\r\n  \"order\": 1,\r\n  \"controls\": [\r\n    {\r\n        \"controlName\": \"recordCount\",\r\n        \"controlType\": \"count\",\r\n        \"controlCol\": \"id\",\r\n        \"controlValue\": \"3\"\r\n    }\r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1/checkpoints",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1",
+										"checkpoints"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getRunCheckpointByName",
+					"item": [
+						{
+							"name": "getRunCheckpointByName",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1/checkpoints/{{newCheckpointName}}",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1",
+										"checkpoints",
+										"{{newCheckpointName}}"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getRunMetadata",
+					"item": [
+						{
+							"name": "getRunMetadata",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/runs/{{runDatasetName}}/1/1/metadata",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"runs",
+										"{{runDatasetName}}",
+										"1",
+										"1",
+										"metadata"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "schema-controller",
+			"item": [
+				{
+					"name": "getList",
+					"item": [
+						{
+							"name": "getList",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "create",
+					"item": [
+						{
+							"name": "create",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newSchemaName}}\",\r\n  \"description\": \"{{newSchemaDescription}}\",\r\n  \"fields\": [\r\n    {\r\n      \"name\": \"testField\",\r\n      \"type\": \"string\",\r\n      \"path\": \"\",\r\n      \"elementType\": null,\r\n      \"containsNull\": null,\r\n      \"nullable\": false,\r\n      \"metadata\": {},\r\n      \"children\": [],\r\n      \"absolutePath\": \"testField\"\r\n    }      \r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "create - uploaded schema",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{uploadedSchemaName}}\",\r\n  \"description\": \"{{uploadedSchemaDescription}}\",\r\n  \"fields\": [\r\n    {\r\n      \"name\": \"testField\",\r\n      \"type\": \"string\",\r\n      \"path\": \"\",\r\n      \"elementType\": null,\r\n      \"containsNull\": null,\r\n      \"nullable\": false,\r\n      \"metadata\": {},\r\n      \"children\": [],\r\n      \"absolutePath\": \"testField\"\r\n    }      \r\n  ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionSummaryForEntity",
+					"item": [
+						{
+							"name": "getVersionSummaryForEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "enable",
+					"item": [
+						{
+							"name": "enable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{newSchemaName}}1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{newSchemaName}}1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "disable",
+					"item": [
+						{
+							"name": "disable",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{newSchemaName}}1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{newSchemaName}}1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getVersionDetail",
+					"item": [
+						{
+							"name": "getVersionDetail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "edit",
+					"item": [
+						{
+							"name": "edit",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"name\": \"{{newSchemaName}}\", \r\n  \"version\": 2, \r\n  \"description\": \"{{newSchemaDescription}} x\",\r\n  \"fields\": [\r\n    {\r\n      \"name\": \"testFieldX\",\r\n      \"type\": \"string\",\r\n      \"path\": \"\",\r\n      \"elementType\": null,\r\n      \"containsNull\": null,\r\n      \"nullable\": false,\r\n      \"metadata\": {},\r\n      \"children\": [],\r\n      \"absolutePath\": \"testFieldX\"\r\n    }      \r\n  ]  \r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{newSchemaName}}/2",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{newSchemaName}}",
+										"2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exportSingleEntity",
+					"item": [
+						{
+							"name": "exportSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1/export",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1",
+										"export"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "handleFileUpload",
+					"item": [
+						{
+							"name": "handleFileUpload",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "file",
+											"type": "file",
+											"src": "test.json"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{uploadedSchemaName}}/1/from-file?format=struct",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{uploadedSchemaName}}",
+										"1",
+										"from-file"
+									],
+									"query": [
+										{
+											"key": "format",
+											"value": "struct"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "handleSubject",
+					"item": [
+						{
+							"name": "handleSubject",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{newSchemaName}}/1/from-registry?name={{newSchemaName}}&subject={{uploadSubjectValue}}&version=1&format=avro",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{newSchemaName}}",
+										"1",
+										"from-registry"
+									],
+									"query": [
+										{
+											"key": "name",
+											"value": "{{newSchemaName}}"
+										},
+										{
+											"key": "subject",
+											"value": "{{uploadSubjectValue}}"
+										},
+										{
+											"key": "version",
+											"value": "1"
+										},
+										{
+											"key": "format",
+											"value": "avro"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "handleRemoteFile",
+					"item": [
+						{
+							"name": "handleRemoteFile",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{newSchemaName}}/1/from-remote-uri?format=struct&name={{newSchemaName}}&version=1&remoteUrl=https://localhost:8081/subjects/subjectValue-value/versions/latest/schema",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{newSchemaName}}",
+										"1",
+										"from-remote-uri"
+									],
+									"query": [
+										{
+											"key": "format",
+											"value": "struct"
+										},
+										{
+											"key": "name",
+											"value": "{{newSchemaName}}"
+										},
+										{
+											"key": "version",
+											"value": "1"
+										},
+										{
+											"key": "remoteUrl",
+											"value": "https://localhost:8081/subjects/subjectValue-value/versions/latest/schema"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getJson",
+					"item": [
+						{
+							"name": "getJson",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1/json",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1",
+										"json"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "exportOriginalSchemaFile",
+					"item": [
+						{
+							"name": "exportOriginalSchemaFile",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{uploadedSchemaName}}/2/original",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{uploadedSchemaName}}",
+										"2",
+										"original"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validation",
+					"item": [
+						{
+							"name": "validation",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/1/validation",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"1",
+										"validation"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "getAuditTrail",
+					"item": [
+						{
+							"name": "getAuditTrail",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/audit-trail",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"audit-trail"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "importSingleEntity",
+					"item": [
+						{
+							"name": "importSingleEntity",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "X-CSRF-TOKEN",
+										"value": "{{csrf_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"metadata\": {\r\n    \"exportVersion\": 1\r\n  },\r\n  \"item\": {\r\n    \"name\": \"{{importedSchemaByAPIName}}\",\r\n    \"description\": \"{{importedSchemaByAPIDesc}}\",\r\n    \"fields\": [\r\n      {\r\n        \"name\": \"location\",\r\n        \"type\": \"string\",\r\n        \"path\": \"\",\r\n        \"elementType\": null,\r\n        \"containsNull\": null,\r\n        \"nullable\": false,\r\n        \"metadata\": {},\r\n        \"children\": [],\r\n        \"absolutePath\": \"location\"\r\n      },\r\n      {\r\n        \"name\": \"show\",\r\n        \"type\": \"string\",\r\n        \"path\": \"\",\r\n        \"elementType\": null,\r\n        \"containsNull\": null,\r\n        \"nullable\": false,\r\n        \"metadata\": {},\r\n        \"children\": [],\r\n        \"absolutePath\": \"show\"\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{importedSchemaByAPIName}}/import",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{importedSchemaByAPIName}}",
+										"import"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "usedIn",
+					"item": [
+						{
+							"name": "usedIn",
+							"request": {
+								"auth": {
+									"type": "apikey",
+									"apikey": [
+										{
+											"key": "value",
+											"value": "{{jwt_token}}",
+											"type": "string"
+										},
+										{
+											"key": "key",
+											"value": "JWT",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{enceladus_rest_api}}/api-v3/schemas/{{existingSchemaName}}/used-in",
+									"host": [
+										"{{enceladus_rest_api}}"
+									],
+									"path": [
+										"api-v3",
+										"schemas",
+										"{{existingSchemaName}}",
+										"used-in"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "spark-controller",
+			"item": [
+				{
+					"name": "sparkVersion",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "JWT",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/spark/version",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"spark",
+								"version"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "user-info-controller",
+			"item": [
+				{
+					"name": "getVersion",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/user/version",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"version"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "userInfo",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "JWT",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{enceladus_rest_api}}/api/user/info",
+							"host": [
+								"{{enceladus_rest_api}}"
+							],
+							"path": [
+								"api",
+								"user",
+								"info"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt_token",
+			"value": ""
+		},
+		{
+			"key": "csrf_token",
+			"value": ""
+		}
+	]
+}

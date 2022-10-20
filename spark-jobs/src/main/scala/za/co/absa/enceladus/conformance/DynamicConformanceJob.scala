@@ -35,7 +35,9 @@ object DynamicConformanceJob extends ConformanceExecution {
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
     val menasCredentials = cmd.menasCredentialsFactory.getInstance()
     val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue)
+    implicit val dao: MenasDAO = RestDaoFactory.getInstance(
+      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, restApiOptionallyRetryableExceptions
+    )
     implicit val configReader: ConfigReader = new ConfigReader()
 
     val preparationResult = prepareJob()

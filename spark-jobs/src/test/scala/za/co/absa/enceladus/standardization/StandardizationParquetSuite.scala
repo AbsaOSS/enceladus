@@ -21,18 +21,16 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.common.RecordIdGeneration.IdType
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
 import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.udf.UDFLibrary
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.stages.TypeParserException
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar  {
   type FixtureParam = String
@@ -43,13 +41,15 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-  private implicit val defaults: Defaults = GlobalDefaults
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
   private val datasetVersion = 1
   private val tsPattern = "yyyy-MM-dd HH:mm:ss zz"
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
 
   private val data = Seq (
@@ -102,7 +102,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -134,7 +134,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field", DecimalType(20,4), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -165,10 +165,10 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field",
         DecimalType(20,2),
         nullable = false,
-        new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
+        new MetadataBuilder().putString("default", "3.14").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -197,7 +197,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
         new MetadataBuilder().putString(MetadataKeys.SourceColumn, "letters").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -224,11 +224,11 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString(MetadataKeys.DefaultValue, "-1")
+        .putString("default", "-1")
         .build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -256,7 +256,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", ArrayType(StringType), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -277,7 +277,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into array")
   }
@@ -293,13 +293,13 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString(MetadataKeys.DefaultValue, "-1")
+        .putString("default", "-1")
         .build())
     )
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into struct")
   }
@@ -318,7 +318,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true))
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }
@@ -345,8 +345,14 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
+    val metadataConfigStableHashID = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.StableHashId, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfigStableHashID)
     // stableHashId will always yield the same ids
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)
@@ -374,7 +380,14 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val metadataConfigTrueUuid = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfigTrueUuid)
+
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     // same except for the record id
     val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
@@ -412,7 +425,13 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("enceladus_record_id", StringType, nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val metadataConfig = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfig)
+    val destDF = Standardization.standardize(sourceDfWithExistingIds, schema, config)
 
     // The TrueUuids strategy does not override the existing values
     val actual = destDF.dataAsString(truncate = false)
@@ -443,10 +462,10 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = false),
-      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
+      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString("timezone", "CET").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)

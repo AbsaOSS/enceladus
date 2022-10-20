@@ -13,8 +13,19 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.standardization.interpreter.dataTypes
+package za.co.absa.enceladus.model.menas.scheduler.oozie
 
-import org.apache.spark.sql.Column
+import za.co.absa.enceladus.model.menas.scheduler._
+import za.co.absa.enceladus.model.menas.scheduler.dataFormats._
 
-case class ParseOutput(stdCol: Column, errors: Column)
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
+case class OozieSchedule(
+   scheduleTiming: ScheduleTiming,
+   runtimeParams: RuntimeConfig,
+   datasetVersion: Int,
+   mappingTablePattern: Option[String],
+   rawFormat: DataFormat,
+   activeInstance: Option[OozieScheduleInstance] = None,
+   //by default we're going to run yesterday's data
+   reportDateOffset: Int = -1
+)
