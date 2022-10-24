@@ -19,13 +19,13 @@ import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.mockito.Mockito.{mock, when => mockWhen}
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.fs.LocalFsUtils
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
@@ -156,7 +156,7 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
   import SimpleTestCaseFactory._
   import spark.implicits._
 
-  private val tempDir = LocalFsUtils.getLocalTemporaryDirectory("test_case_factory")
+  private val tempDir = TempDirectory("test_case_factory").path
 
   /**
     * This method returns all objects necessary to run a dynamic conformance job.
@@ -202,13 +202,6 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     createEmptyMappingTable()
     createSimpleMappingTable()
     createSimpleMultiOutputMappingTable()
-  }
-
-  /**
-    * This method should be invoked after all tests in a test suite so that mapping tables are deleted.
-    */
-  def deleteMappingTables(): Unit = {
-    fsUtils.deleteDirectoryRecursively(tempDir)
   }
 
   private def createEmptyMappingTable(): Unit =
