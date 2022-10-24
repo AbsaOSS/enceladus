@@ -146,7 +146,7 @@
         <scoverage.maven.plugin.version>1.3.0</scoverage.maven.plugin.version>
         <!--dependency versions-->
         <abris.version>3.1.1</abris.version>
-        <absa.commons.version>1.0.0</absa.commons.version>
+        <absa.commons.version>1.1.0</absa.commons.version>
         <absa.spark.commons.version>0.3.1</absa.spark.commons.version>
         <atum.version>3.8.2</atum.version>
         <bower.chart.js.version>2.7.3</bower.chart.js.version>
@@ -172,7 +172,6 @@
         <momentjs.version>2.22.2</momentjs.version>
         <mongo.java.driver.version>3.6.4</mongo.java.driver.version>
         <mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
-        <oozie.version>4.3.0</oozie.version>
         <openui5.version>1.67.1</openui5.version>
         <parquet.version>1.10.0</parquet.version>
         <requests.version>0.1.6</requests.version>
@@ -183,6 +182,7 @@
         <scalatest.version>3.2.2</scalatest.version>
         <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
+        <spark.data.standardization>0.1.1</spark.data.standardization>
         <spark.hats.version>0.2.2</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
         <spark.version>2.4.4</spark.version>

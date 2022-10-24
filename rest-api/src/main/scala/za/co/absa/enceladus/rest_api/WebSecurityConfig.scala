@@ -60,7 +60,7 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers("/admin/health", "/api/oozie/isEnabled",
+          .antMatchers("/admin/health",
             "/api/user/version", "/api/configuration/**",
             "/swagger-ui.html", "/webjars/**", "/v2/api-docs", "/swagger-resources",
             "/swagger-resources/configuration/ui", "/swagger-resources/configuration/security")

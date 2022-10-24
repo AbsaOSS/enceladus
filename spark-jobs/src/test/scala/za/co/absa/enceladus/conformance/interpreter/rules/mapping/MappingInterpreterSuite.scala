@@ -32,12 +32,6 @@ trait MappingInterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase
     nestedTestCaseFactory.createMappingTables()
   }
 
-  override def afterAll(): Unit = {
-    simpleTestCaseFactory.deleteMappingTables()
-    nestedTestCaseFactory.deleteMappingTables()
-    super.afterAll()
-  }
-
   protected def cleanupContainsNullProperty(inputSchemaTree: String): String = {
     // This cleanup is needed since when a struct is processed via nestedStructMap() or nestedStructAndErrorMap(),
     // the new version of the struct always has the flag containsNull = false.

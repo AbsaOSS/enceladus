@@ -167,7 +167,6 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/node_modules/**</exclude>
-                                <exclude>ui/3rdParty/cRonstrue/cronstrue.min.js</exclude>
                                 <exclude>ui/dist/**</exclude>
                             </excludes>
                         </configuration>

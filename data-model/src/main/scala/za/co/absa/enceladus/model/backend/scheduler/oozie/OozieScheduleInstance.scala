@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.model.backend.scheduler.oozie
 
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
 case class OozieScheduleInstance(workflowPath: String,
     coordinatorPath: String,
     coordinatorId: String)

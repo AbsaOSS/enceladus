@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.model.backend.scheduler
 
+
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
 case class ScheduleTiming(minute: Seq[String], hour: Seq[String], dayOfMonth: Seq[String], month: Seq[String], dayOfWeek: Seq[String]) {
   def getCronSchedule: String = {
     val minuteSep = minute.mkString(",")
