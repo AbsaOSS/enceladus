@@ -106,7 +106,7 @@ case class StandardizationConformanceConfig(datasetName: String = "",
 object StandardizationConformanceConfig {
 
   def tryFromArguments(args: Array[String]): Try[StandardizationConformanceConfig] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    import za.co.absa.commons.lang.extensions.OptionExtension._
     OParser.parse(stdConfJobParser, args, StandardizationConformanceConfig())
       .toTry(ConfigError("Command line parameters error"))
   }

@@ -35,11 +35,11 @@ import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.general.Algorithms
 import za.co.absa.enceladus.utils.udf.UDFLibrary
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.commons.lang.extensions.SeqExtension._
 
 case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
@@ -403,10 +403,10 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     * @return The list of lists of conformance rule groups
     */
   private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
-    Algorithms.stableGroupByOption[ConformanceRule, String](rules, {
+    rules.groupConsecutiveByOption[String] {
       case m: MappingConformanceRule => schema.getDeepestArrayPath(m.outputColumn)
       case _                         => None
-    }).map(_.toList).toList
+    }.map(_.toList).toList
   }
 
 }
