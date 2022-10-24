@@ -55,7 +55,7 @@ package object implicits {
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
     classOf[RunDatasetNameGroupedSummary], classOf[RunDatasetVersionGroupedSummary],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[VersionedSummaryV2], classOf[MenasAttachment], classOf[MenasReference],
+    classOf[UserInfo], classOf[VersionedSummary], classOf[VersionedSummaryV2], classOf[Attachment], classOf[Reference],
     classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality],
     classOf[LandingPageInformation], classOf[TodaysRunsStatistics],
     classOf[DataFrameFilter]
