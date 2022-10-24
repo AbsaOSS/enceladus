@@ -56,11 +56,14 @@ menas.auth.inmemory.password=changeme
 menas.auth.inmemory.admin.user=menas_admin
 menas.auth.inmemory.admin.password=admin123
 
+rest_api.fs.config.type=none
+
 # Define how menas authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
 #  "simple" -> will use authentication by a user name
 #  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
 menas.hadoop.auth.method=default
+menas.hadoop.conf.dir=/path/to/hadoop/conf/dir
 menas.hadoop.auth.user=hdfs
 menas.hadoop.auth.krb5.debug=true
 menas.hadoop.auth.krb5.realm=EXAMPLE.COM

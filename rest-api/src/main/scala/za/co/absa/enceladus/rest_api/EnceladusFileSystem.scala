@@ -17,19 +17,29 @@ package za.co.absa.enceladus.rest_api
 
 import org.apache.hadoop.fs.{FileStatus, FileSystem, FsStatus, Path}
 
-case class EnceladusFileSystem(fileSystem: Option[FileSystem]) {
-  private val exception = new Exception("No FileSystem initialized")
-
-  def getStatus: FsStatus = fileSystem.getOrElse(throw exception).getStatus
-
-  def listStatus(path: Path): Array[FileStatus] = fileSystem.getOrElse(throw exception).listStatus(path)
-
-  def isDirectory(path: Path): Boolean = fileSystem.getOrElse(throw exception).isDirectory(path)
-
-  def exists(path: Path): Boolean = fileSystem.getOrElse(throw exception).exists(path)
+sealed trait EnceladusFileSystem {
+  def getStatus: FsStatus
+  def listStatus(path: Path): Array[FileStatus]
+  def isDirectory(path: Path): Boolean
+  def exists(path: Path): Boolean
 }
-
 object EnceladusFileSystem {
-  def apply(fs: FileSystem): EnceladusFileSystem = EnceladusFileSystem(Some(fs))
-  def apply(): EnceladusFileSystem = EnceladusFileSystem(None)
+  def apply(fs: FileSystem): EnceladusFileSystem = HdfsFileSystem(fs)
+  def apply() : EnceladusFileSystem = empty
+  val empty: EnceladusFileSystem = NoFileSystem
+
+  private case class HdfsFileSystem(fileSystem: FileSystem) extends EnceladusFileSystem {
+    def getStatus: FsStatus = fileSystem.getStatus
+    def listStatus(path: Path): Array[FileStatus] = fileSystem.listStatus(path)
+    def isDirectory(path: Path): Boolean = fileSystem.isDirectory(path)
+    def exists(path: Path): Boolean = fileSystem.exists(path)
+  }
+  private case object NoFileSystem extends EnceladusFileSystem {
+    val exception = new Exception("No FileSystem initialized")
+    def getStatus: FsStatus = throw exception
+    def listStatus(path: Path): Array[FileStatus] = throw exception
+    def isDirectory(path: Path): Boolean = throw exception
+    def exists(path: Path): Boolean = throw exception
+  }
+
 }
