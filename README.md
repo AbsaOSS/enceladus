@@ -341,6 +341,24 @@ The list of additional options available for running Conformance:
 
 All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
 
+## How to measure code coverage
+```shell
+./mvn clean verify -Pcode-coverage
+```
+Code coverage reports will be generated on paths:
+```aidl
+{local-path}\enceladus\dao\target\jacoco
+{local-path}\enceladus\data-model\target\jacoco
+{local-path}\enceladus\examples\target\jacoco
+{local-path}\enceladus\migrations\target\jacoco
+{local-path}\enceladus\migrations-cli\target\jacoco
+{local-path}\enceladus\plugins-api\target\jacoco
+{local-path}\enceladus\plugins-builtin\target\jacoco
+{local-path}\enceladus\rest-api\target\jacoco
+{local-path}\enceladus\spark-jobs\target\jacoco
+{local-path}\enceladus\utils\target\jacoco
+```
+
 ## Plugins
 
 Standardization and Conformance support plugins that allow executing additional actions at certain times of the computation.
