@@ -17,7 +17,6 @@ package za.co.absa.enceladus.standardization
 
 import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
@@ -27,7 +26,7 @@ import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, ErrorColNormalization, Repartitioner}
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.auth.MenasCredentials
 import za.co.absa.enceladus.model.Dataset
@@ -152,11 +151,12 @@ trait StandardizationExecution extends CommonJobExecution {
                               (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
     //scalastyle:on parameter.number
     val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
+    val errColNullability = ErrorColNormalization.getErrorColNullabilityFromConfig(configReader.config)
 
     try {
       handleControlInfoValidation()
       StandardizationInterpreter.standardize(inputData, schema, cmd.rawFormat,
-        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
+        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy, errColNullability)
     } catch {
       case e@ValidationException(msg, errors) =>
         val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"

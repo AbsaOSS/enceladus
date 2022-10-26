@@ -29,7 +29,6 @@ import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnStri
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
-import za.co.absa.enceladus.common.version.SparkVersionGuard
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
@@ -43,6 +42,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.SparkVersionGuard
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}

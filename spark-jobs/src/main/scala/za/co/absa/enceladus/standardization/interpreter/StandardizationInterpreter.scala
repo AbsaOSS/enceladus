@@ -19,7 +19,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.slf4j.{Logger, LoggerFactory}
-import za.co.absa.enceladus.common.{Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.{Constants, ErrorColNormalization, RecordIdGeneration}
 import za.co.absa.enceladus.common.RecordIdGeneration._
 import za.co.absa.enceladus.standardization.interpreter.dataTypes._
 import za.co.absa.enceladus.standardization.interpreter.stages.{SchemaChecker, TypeParser}
@@ -47,27 +47,34 @@ object StandardizationInterpreter {
    * @param recordIdGenerationStrategy Decides if true uuid, pseudo (always the same) is used for the
    *                                   [[Constants.EnceladusRecordId]] or if the column is not added at all [[IdType.NoId]] (default).
    */
-  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String, failOnInputNotPerSchema: Boolean = false,
-                  recordIdGenerationStrategy: IdType = IdType.NoId)
+  def standardize(df: Dataset[Row], expSchema: StructType, inputType: String,
+                  failOnInputNotPerSchema: Boolean = false,
+                  recordIdGenerationStrategy: IdType = IdType.NoId,
+                  errorColNullability: Boolean = false)
                  (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): Dataset[Row] = {
 
     logger.info(s"Step 1: Schema validation")
     validateSchemaAgainstSelfInconsistencies(expSchema)
 
     logger.info(s"Step 2: Standardization")
+    spark.sql("set spark.sql.legacy.timeParserPolicy=LEGACY")
     val std = standardizeDataset(df, expSchema, failOnInputNotPerSchema)
 
     logger.info(s"Step 3: Clean the final error column")
     val cleanedStd = cleanTheFinalErrorColumn(std)
 
-    val idedStd = if (cleanedStd.schema.fieldExists(Constants.EnceladusRecordId)) {
+    val resultDf = cleanedStd
+      .transform { inputDf =>
+        if (inputDf.schema.fieldExists(Constants.EnceladusRecordId)) {
       cleanedStd // no new id regeneration
     } else {
       RecordIdGeneration.addRecordIdColumnByStrategy(cleanedStd, Constants.EnceladusRecordId, recordIdGenerationStrategy)
     }
+      }
+    .transform(ErrorColNormalization.normalizeErrColNullability(_, errorColNullability))
 
     logger.info(s"Standardization process finished, returning to the application...")
-    idedStd
+    resultDf
   }
 
   private def validateSchemaAgainstSelfInconsistencies(expSchema: StructType)

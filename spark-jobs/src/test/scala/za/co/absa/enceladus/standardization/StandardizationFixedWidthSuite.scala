@@ -44,8 +44,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_schema.json")
   ).asInstanceOf[StructType]
 
-  //TODO
-  ignore("Reading data from FixedWidth input") {
+  test("Reading data from FixedWidth input") {
     val cmd = StandardizationConfig.getFromArguments(argsBase)
 
     val fixedWidthReader = new StandardizationPropertiesProvider().getFormatSpecificReader(cmd, dataSet)
@@ -57,6 +56,9 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
 
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_fixed_width_suite_expected_non_trimmed.txt")
       .replace("\r\n", "\n")
+
+    import org.apache.spark.sql.functions.{col, concat, concat_ws, lit}
+    sourceDF.withColumn("X", concat(lit("<"), col("id"), lit(">"))).show(false)
 
     val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
 

@@ -39,7 +39,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
 
   test("Test non-existent mapping table directory handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, false, nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(true, false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
       DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
@@ -50,7 +50,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
 
   test("Test non-existent mapping table directory handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(false, false, nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(false, false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
       DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
@@ -61,7 +61,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
 
   test("Test empty mapping table error handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, false, emptyTableMappingRule)
+      testCaseFactory.getTestCase(true, false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
       DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
@@ -72,7 +72,7 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
 
   test("Test empty mapping table error handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(false, false, emptyTableMappingRule)
+      testCaseFactory.getTestCase(false, false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
       DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()

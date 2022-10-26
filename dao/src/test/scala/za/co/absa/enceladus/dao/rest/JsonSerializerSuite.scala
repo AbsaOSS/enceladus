@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.dao.rest
 
 import java.time.ZonedDateTime
-
 import org.scalactic.{AbstractStringUniformity, Uniformity}
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
@@ -25,16 +24,22 @@ import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
 
+import java.time.format.DateTimeFormatter
+
 class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
-  val whiteSpaceNormalised: Uniformity[String] =
+  private val whiteSpaceNormalised: Uniformity[String] =
     new AbstractStringUniformity {
       def normalized(s: String): String = s.replaceAll("\\s+", "").trim
 
       override def toString: String = "whiteSpaceNormalised"
     }
 
-  //TODO
-  "JsonSerializer" ignore {
+  private def parseTZDateTime(s: String): ZonedDateTime = {
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS zzz")
+    ZonedDateTime.parse(s, formatter)
+  }
+
+  "JsonSerializer" should {
     "handle Datasets" when {
       val datasetJson =
         """
@@ -46,9 +51,9 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "hdfsPublishPath": "/dummy/publish/path",
           |  "schemaName": "dummySchema",
           |  "schemaVersion": 1,
-          |  "dateCreated": "2017-12-04T16:19:17Z UTC",
+          |  "dateCreated": "2017-12-04T16:19:17Z",
           |  "userCreated": "dummyUser",
-          |  "lastUpdated": "2017-12-04T16:19:17Z UTC",
+          |  "lastUpdated": "2017-12-04T16:19:17Z",
           |  "userUpdated": "dummyUser",
           |  "disabled": false,
           |  "dateDisabled": null,
@@ -68,7 +73,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |      "version": 1
           |    },
           |    "updatedBy": "dummyUser",
-          |    "updated": "2017-12-04T16:19:17Z UTC",
+          |    "updated": "2017-12-04T16:19:17Z",
           |    "changes": [
           |      {
           |        "field": "",
@@ -80,7 +85,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  }
           |}
           |""".stripMargin
-      val dataset = DatasetFactory.getDummyDataset()
+      val dataset = DatasetFactory.getDummyDataset(properties = Some(Map.empty))
 
       "serializing" in {
         val result = JsonSerializer.toJson(dataset)
@@ -93,7 +98,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
     }
 
     "handle Datasets with conformance rules" when {
-      val datasetJson =
+      val datasetJson = {
       """{
         |  "name": "Test",
         |  "version": 5,
@@ -104,7 +109,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |  "schemaVersion": 3,
         |  "dateCreated": "2019-07-22T08:05:57.47Z",
         |  "userCreated": "system",
-        |  "lastUpdated": "2020-04-02T15:53:02.947Z UTC",
+        |  "lastUpdated": "2020-04-02T15:53:02.947Z",
         |  "userUpdated": "system",
         |  "disabled": false,
         |  "dateDisabled": null,
@@ -198,7 +203,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    "version": 4
         |  },
         |  "schedule": null,
-        |  "properties": {},
+        |  "properties": null,
         |  "propertiesValidation": null,
         |  "createdMessage": {
         |    "menasRef": {
@@ -207,7 +212,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |      "version": 5
         |    },
         |    "updatedBy": "system",
-        |    "updated": "2020-04-02T15:53:02.947Z UTC",
+        |    "updated": "2020-04-02T15:53:02.947Z",
         |    "changes": [
         |      {
         |        "field": "",
@@ -218,6 +223,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    ]
         |  }
         |}""".stripMargin
+      }
 
       val dataset: Dataset = DatasetFactory.getDummyDataset(
         name = "Test",
@@ -227,9 +233,11 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         hdfsPublishPath = "/bigdata/test2",
         schemaName = "Cobol1",
         schemaVersion = 3,
-        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        dateCreated = parseTZDateTime("2019-07-22 08:05:57.47 UTC"),
+        //dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
         userCreated = "system",
-        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        lastUpdated = parseTZDateTime("2020-04-02 15:53:02.947 UTC"),
+        //lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
         userUpdated = "system",
 
         conformance = List(
@@ -273,7 +281,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             value = "AAA"
           )
         ),
-        parent = Some(MenasReference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
+        parent = Some(MenasReference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
+        properties = None
       )
 
       "serializing" in {
@@ -282,7 +291,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
       "deserializing" in {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
-        result should matchTo(dataset)
+        val expectedDeserializedDataset = dataset.copy(properties = Option(Map.empty)) // Jackson deserializes a null to the class' default value
+        result should matchTo(expectedDeserializedDataset)
       }
     }
 
@@ -567,7 +577,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
-    "handle Runs" when {
+    "handle Runs" should {
       val uniqueId = "2f7ac049-7c78-4da0-9347-6096bf341618"
       val runJson =
         s"""
@@ -582,10 +592,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
            |  },
            |  "startDateTime": "04-12-2017 16:19:17 +0200",
            |  "runStatus": {
-           |    "status": {
-           |      "enumClass": "za.co.absa.atum.model.RunState",
-           |      "value": "allSucceeded"
-           |    },
+           |    "status": "allSucceeded",
            |    "error": null
            |  },
            |  "controlMeasure": {

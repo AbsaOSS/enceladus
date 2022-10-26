@@ -33,7 +33,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRule)
+      simpleTestCaseFactory.getTestCase(true, true, true, simpleMappingRule)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -51,7 +51,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputs)
+      simpleTestCaseFactory.getTestCase(true, true, false, simpleMappingRuleMultipleOutputs)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
@@ -69,7 +69,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/simpleDefValResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleWithDefaultValue)
+      simpleTestCaseFactory.getTestCase(true, true, true, simpleMappingRuleWithDefaultValue)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum")
@@ -87,7 +87,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/simpleDefValMultiOutResults.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      simpleTestCaseFactory.getTestCase(true, true, simpleMappingRuleMultipleOutputsWithDefaults)
+      simpleTestCaseFactory.getTestCase(true, true, false, simpleMappingRuleMultipleOutputsWithDefaults)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"int_num", $"long_num", $"str_val", $"errCol", $"conformedIntNum" ,$"conformedNum", $"conformedBool")
@@ -105,7 +105,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, true, true, nestedMappingRule1)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum1")
@@ -123,7 +123,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested1ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule1Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, nestedMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1",
@@ -142,7 +142,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested2Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, true, true, nestedMappingRule2)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol", $"conformedNum2")
@@ -160,7 +160,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/nested3Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule3)
+      nestedTestCaseFactory.getTestCase(true, true, true, nestedMappingRule3)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"conformedNum3", $"errCol")
@@ -178,7 +178,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/nested3ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, nestedMappingRule3Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, nestedMappingRule3Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2",
@@ -197,7 +197,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array1Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule1)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
@@ -215,7 +215,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array1ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule1Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule1Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array2", $"errCol", $"array1")
@@ -233,7 +233,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array2Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule2)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -251,7 +251,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array2ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule2Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -269,7 +269,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array3Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule3)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule3)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -287,7 +287,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array3ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule3Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule3Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -305,7 +305,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array4Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule4)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule4)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -323,7 +323,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array4ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule4Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule4Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -341,7 +341,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array5Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule5)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule5)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -359,7 +359,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/multiple_output/array5ResultsMulti.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule5Multi)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule5Multi)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -377,7 +377,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array6Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule6)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule6)
 
     val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
       .select($"id", $"key1", $"key2", $"struct1", $"struct2", $"array1", $"array2", $"errCol")
@@ -395,7 +395,7 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     val expectedResults = getResourceString("/interpreter/mappingCases/array7Results.json")
 
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, arrayMappingRule2)
+      nestedTestCaseFactory.getTestCase(true, true, true, arrayMappingRule2)
 
     val inputDf2 = inputDf.withColumn("errCol", array(typedLit(ErrorMessage("Initial", "000", "ErrMsg", "id", Seq(), Seq()))))
 
@@ -410,13 +410,16 @@ class MappingRuleBroadcastSuite extends MappingInterpreterSuite {
     assertResults(actualResults, expectedResults)
   }
 
-  //TODO
-  ignore("Test broadcasting rule failure if key fields are in different arrays") {
+  test("Test broadcasting rule failure if key fields are in different arrays") {
+    val expectedResults = getResourceString("/interpreter/mappingCases/arrayWrongJoinResults.json")
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      nestedTestCaseFactory.getTestCase(true, true, wrongMappingRule1)
+      nestedTestCaseFactory.getTestCase(true, true, true, wrongMappingRule1)
 
-    intercept[Exception] {
-      DynamicInterpreter().interpret(dataset, inputDf)
-    }
+    val dfOut = DynamicInterpreter().interpret(dataset, inputDf)
+      .select($"id", $"errCol")
+      .cacheIfNotCachedYet()
+
+    val actualResults = JsonUtils.prettySparkJSON( dfOut.orderBy("id").toJSON.collect())
+    assertResults(actualResults, expectedResults)
   }
 }
