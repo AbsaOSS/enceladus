@@ -346,7 +346,6 @@ All the additional options valid for both Standardization and Conformance can al
 ./mvn clean verify -Pcode-coverage
 ```
 Code coverage reports will be generated on paths:
-```aidl
 {local-path}\enceladus\dao\target\jacoco
 {local-path}\enceladus\data-model\target\jacoco
 {local-path}\enceladus\examples\target\jacoco
