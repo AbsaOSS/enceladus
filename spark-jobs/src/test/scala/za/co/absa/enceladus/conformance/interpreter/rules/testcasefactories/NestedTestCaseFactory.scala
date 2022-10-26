@@ -298,10 +298,12 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     * @param experimentalMappingRule       If true, the experimental mapping rule will be used.
     * @param enableMappingRuleBroadcasting Specify if the broadcasting strategy will be used for the mapping rule.
     * @param conformanceRules              Zero or more conformance rules to be applied as the part of conformance.
+    * @param errColNullability             errCol nullability
     * @return A dataframe, a dataset, a Menas DAO, a Cmd Config and feature switches prepared to run conformance interpreter
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
+                  errColNullability: Boolean,
                   conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfig, FeatureSwitches) = {
 
     val inputDf = spark.read
@@ -321,6 +323,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(if (enableMappingRuleBroadcasting) Always else Never)
+      .setErrColNullability(errColNullability)
 
     (inputDf, dataset, dao, cmdConfig, featureSwitches)
   }
