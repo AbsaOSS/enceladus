@@ -19,13 +19,12 @@ import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.context.annotation.{Bean, Configuration}
-import za.co.absa.enceladus.rest_api.EnceladusFsConfig.{HdfsOption, NoneOption}
 
 @Configuration
 class EnceladusFsConfig @Autowired()(spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${rest_api.fs.config.type:}")
+  @Value("${rest_api.fs.config.type}")
   val fsType: String = ""
 
   @Bean
@@ -36,8 +35,7 @@ class EnceladusFsConfig @Autowired()(spark: SparkSession) {
         logger.info(s"Using FS config for HDFS.")
         EnceladusFileSystem(HDFSConfig.hadoopFS()(spark))
 
-//      case none if none == NoneOption || none.isEmpty =>
-      case EnceladusFsType.Empty | EnceladusFsType.NoFs =>
+      case EnceladusFsType.NoFs =>
         logger.info(s"Not using any FS config.")
         EnceladusFileSystem.empty
 
@@ -49,6 +47,5 @@ class EnceladusFsConfig @Autowired()(spark: SparkSession) {
 
 object EnceladusFsType extends Enumeration {
   val NoFs = Value("none")
-  val Empty = Value("")
   val Hdfs = Value("hdfs")
 }

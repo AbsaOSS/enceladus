@@ -56,6 +56,9 @@ menas.auth.inmemory.password=changeme
 menas.auth.inmemory.admin.user=menas_admin
 menas.auth.inmemory.admin.password=admin123
 
+# Implementation of Hadoop FS to use to be able to see paths to datasets.
+# Whole of Enceladus works even if none set. It is just a convenience feature.
+# Currently supported hdfs or none.
 rest_api.fs.config.type=none
 
 # Define how menas authenticates to Hadoop. Supported options are:
