@@ -90,10 +90,10 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
     private def getMenasAuthentication(): RestApiAuthentication = {
       authMechanism.toLowerCase match {
         case "inmemory" =>
-          logger.info("Using InMemory Menas authentication")
+          logger.info("Using InMemory REST API authentication")
           beanFactory.getBean(classOf[InMemoryRestApiAuthentication])
         case "kerberos" =>
-          logger.info("Using Kerberos Menas Authentication")
+          logger.info("Using Kerberos REST API Authentication")
           beanFactory.getBean(classOf[RestApiKerberosAuthentication])
         case _          =>
           throw new IllegalArgumentException("Invalid authentication mechanism - use one of: inmemory, kerberos")
