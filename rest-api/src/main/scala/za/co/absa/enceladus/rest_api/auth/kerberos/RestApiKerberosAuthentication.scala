@@ -35,23 +35,23 @@ import org.springframework.stereotype.Component
 import za.co.absa.enceladus.rest_api.auth.RestApiAuthentication
 import za.co.absa.enceladus.rest_api.auth.kerberos.RestApiKerberosAuthentication._
 
-@Component("kerberosMenasAuthentication")
+@Component("kerberosRestApiAuthentication")
 class RestApiKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.ad.domain:}")
-                                               adDomain: String,
+                                                 adDomain: String,
                                                  @Value("${enceladus.rest.auth.ad.server:}")
-                                               adServer: String,
+                                                 adServer: String,
                                                  @Value("${enceladus.rest.auth.servicename.principal:}")
-                                               servicePrincipal: String,
+                                                 servicePrincipal: String,
                                                  @Value("${enceladus.rest.auth.servicename.keytab.location:}")
-                                               keytabLocation: String,
+                                                 keytabLocation: String,
                                                  @Value("${enceladus.rest.auth.ldap.search.base:}")
-                                               ldapSearchBase: String,
+                                                 ldapSearchBase: String,
                                                  @Value("${enceladus.rest.auth.ldap.search.filter:}")
-                                               ldapSearchFilter: String,
+                                                 ldapSearchFilter: String,
                                                  @Value("${enceladus.rest.auth.kerberos.debug:false}")
-                                               kerberosDebug: Boolean,
+                                                 kerberosDebug: Boolean,
                                                  @Value("${enceladus.rest.auth.kerberos.krb5conf:}")
-                                               krb5conf: String)
+                                                 krb5conf: String)
   extends RestApiAuthentication with InitializingBean {
 
   private lazy val requiredParameters = Seq((adDomain, "enceladus.rest.auth.ad.domain"),
@@ -73,7 +73,9 @@ class RestApiKerberosAuthentication @Autowired()(@Value("${enceladus.rest.auth.a
 
   private def validateParam(param: String, paramName: String): Unit = {
     if (param.isEmpty) {
-      throw new IllegalArgumentException(s"$paramName has to be configured in order to use kerberos Menas authentication")
+      throw new IllegalArgumentException(
+        s"$paramName has to be configured in order to use kerberos REST API authentication"
+      )
     }
   }
 
