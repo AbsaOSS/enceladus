@@ -345,18 +345,9 @@ All the additional options valid for both Standardization and Conformance can al
 ```shell
 ./mvn clean verify -Pcode-coverage
 ```
-Code coverage reports will be generated on paths:
+If module contains measurable data the code coverage report will be generated on path:
 ```
-{local-path}\enceladus\dao\target\jacoco
-{local-path}\enceladus\data-model\target\jacoco
-{local-path}\enceladus\examples\target\jacoco
-{local-path}\enceladus\migrations\target\jacoco
-{local-path}\enceladus\migrations-cli\target\jacoco
-{local-path}\enceladus\plugins-api\target\jacoco
-{local-path}\enceladus\plugins-builtin\target\jacoco
-{local-path}\enceladus\rest-api\target\jacoco
-{local-path}\enceladus\spark-jobs\target\jacoco
-{local-path}\enceladus\utils\target\jacoco
+{local-path}\enceladus\{module}\target\jacoco
 ```
 
 ## Plugins
