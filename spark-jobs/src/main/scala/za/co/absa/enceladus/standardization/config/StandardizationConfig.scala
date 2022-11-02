@@ -91,7 +91,7 @@ case class StandardizationConfig(rawFormat: String = "xml",
 object StandardizationConfig {
 
   def tryFromArguments(args: Array[String]): Try[StandardizationConfig] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    import za.co.absa.commons.lang.extensions.OptionExtension._
     OParser.parse(standardizationJobParser, args, StandardizationConfig()).toTry(ConfigError("Command line parameters error"))
   }
 

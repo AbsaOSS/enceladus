@@ -162,7 +162,7 @@ object SchemaRegistryService {
   private val defaultStoreType = "JKS"
   private val defaultSslContextProtocol = "TLS"
 
-  import za.co.absa.enceladus.utils.implicits.StringImplicits._
+  import za.co.absa.commons.lang.extensions.StringExtension.StringConcatenationOps
 
   def getLatestSchemaUrl(baseUrl: String, subjectName: String): String =
     baseUrl / "subjects" / subjectName / "versions/latest/schema"
