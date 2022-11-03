@@ -101,8 +101,6 @@
             <timezone>Europe/Warsaw</timezone>
             <url>https://github.com/jakipatryk</url>
         </developer>
-
-        jakipatryk
     </developers>
     <distributionManagement>
         <snapshotRepository>
