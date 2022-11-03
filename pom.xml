@@ -118,7 +118,6 @@
     <modules>
         <module>dao</module>
         <module>data-model</module>
-        <module>examples</module>
         <module>menas</module>
         <module>migrations</module>
         <module>migrations-cli</module>
