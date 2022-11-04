@@ -22,9 +22,9 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasKerberosCredentials
-import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.auth.RestApiKerberosCredentials
+import za.co.absa.enceladus.dao.rest.{RestApiConnectionStringParser, RestDaoFactory}
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
@@ -38,7 +38,7 @@ class LpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkT
   import spark.implicits._
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = mock[MenasDAO] // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = mock[EnceladusDAO] // you may have to hard-code your own implementation here
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
@@ -183,12 +183,12 @@ class RpadCustomConformanceRuleSuite extends AnyFunSuite with TZNormalizedSparkT
   import spark.implicits._
 
   private val conf = ConfigFactory.load()
-  private val menasBaseUrls = MenasConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
-  private val meansCredentials = MenasKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
-  implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-
-  // you may have to hard-code your own implementation here (if not working with menas)
-  implicit val dao: MenasDAO = RestDaoFactory.getInstance(meansCredentials, menasBaseUrls)
+  private val restApiBaseUrls = RestApiConnectionStringParser.parse(conf.getString("enceladus.rest.uri"))
+  private val restApiCredentials = RestApiKerberosCredentials("user@EXAMPLE.COM", "src/test/resources/user.keytab.example")
+  // here we may need to specify some parameters (for certain rules)
+  implicit val progArgs: ConformanceConfig = ConformanceConfig()
+  // you may have to hard-code your own implementation here
+  implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(restApiCredentials, restApiBaseUrls)
 
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true

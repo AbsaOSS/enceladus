@@ -25,7 +25,7 @@ import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
@@ -51,7 +51,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
     //configure conf value
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(
       experimentalMappingRule = Option(useExperimentalMappingRule),reportDate = "2017-11-01")
     val enableCF = true
@@ -106,7 +106,7 @@ class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with B
     // Enable Conformance Framework
     spark.enableControlMeasuresTracking(Option("src/test/testData/_tradeData/2017/11/01/_INFO"), Option("src/test/testData/_tradeOutput/_INFO"))
 
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(
       experimentalMappingRule = Option(useExperimentalMappingRule),
       reportDate = "2017-11-01")

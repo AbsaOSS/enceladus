@@ -27,7 +27,7 @@ import za.co.absa.enceladus.model.{ExportableObject, UsedIn}
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummaryV2}
 import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
-import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.backend.audit._
 
 
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])

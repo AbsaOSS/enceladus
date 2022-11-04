@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model.test.factories
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
 trait EntityFactory[T <: VersionedModel] {
@@ -28,8 +28,8 @@ trait EntityFactory[T <: VersionedModel] {
 
   def collectionBaseName: String
 
-  def toParent(entity: T): MenasReference = {
-    MenasReference(Some(collectionBaseName), entity.name, entity.version)
+  def toParent(entity: T): Reference = {
+    Reference(Some(collectionBaseName), entity.name, entity.version)
   }
 
 }

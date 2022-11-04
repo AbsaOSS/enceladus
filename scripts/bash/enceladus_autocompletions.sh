@@ -32,10 +32,10 @@ _generic_job()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
   spark_opts="--num-executors --executor-memory --deploy-mode --master --driver-cores \
-              --driver-memory --class --conf --menas-auth-keytab --dataset-name --dataset-version --report-date \
+              --driver-memory --class --conf --rest-api-auth-keytab --dataset-name --dataset-version --report-date \
               --report-version ${specific_conf_opts} --performance-file --folder-prefix --help"
 
-  if [[ "$prev" = "--menas-auth-keytab" ]] || [[ "$prev" = "--performance-file" ]] ; then
+  if [[ "$prev" = "--rest-api-auth-keytab" ]] || [[ "$prev" = "--performance-file" ]] ; then
     _filedir
     return 0
   elif [[ "$prev" = "--deploy-mode" ]]; then

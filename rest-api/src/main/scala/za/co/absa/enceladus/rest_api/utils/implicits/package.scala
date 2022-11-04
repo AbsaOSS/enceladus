@@ -26,7 +26,7 @@ import za.co.absa.enceladus.rest_api.models.{RunDatasetNameGroupedSummary, RunDa
 import za.co.absa.enceladus.model._
 import za.co.absa.enceladus.model.api.versionedModelDetail._
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.rest_api.models._
 import za.co.absa.enceladus.model.dataFrameFilter._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
@@ -55,7 +55,7 @@ package object implicits {
     classOf[Dataset], classOf[DefaultValue], classOf[MappingTable],
     classOf[Run], classOf[Schema], classOf[SchemaField], classOf[SplineReference], classOf[RunSummary],
     classOf[RunDatasetNameGroupedSummary], classOf[RunDatasetVersionGroupedSummary],
-    classOf[UserInfo], classOf[VersionedSummary], classOf[VersionedSummaryV2], classOf[MenasAttachment], classOf[MenasReference],
+    classOf[UserInfo], classOf[VersionedSummary], classOf[VersionedSummaryV2], classOf[Attachment], classOf[Reference],
     classOf[PropertyDefinition], classOf[PropertyType], classOf[Essentiality],
     classOf[LandingPageInformation], classOf[TodaysRunsStatistics],
     classOf[DataFrameFilter]

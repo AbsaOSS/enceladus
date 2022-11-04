@@ -18,7 +18,7 @@ package za.co.absa.enceladus.model.versionedModel
 import java.time.ZonedDateTime
 
 import za.co.absa.enceladus.model.Exportable
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 
 trait VersionedModel extends Exportable {
   val name: String
@@ -39,7 +39,7 @@ trait VersionedModel extends Exportable {
   val dateLocked: Option[ZonedDateTime]
   val userLocked: Option[String]
 
-  val parent: Option[MenasReference]
+  val parent: Option[Reference]
 
   def setVersion(value: Int): VersionedModel
   def setDisabled(disabled: Boolean) : VersionedModel
@@ -51,7 +51,7 @@ trait VersionedModel extends Exportable {
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
   def setLocked(locked: Option[Boolean]): VersionedModel
-  def setParent(newParent: Option[MenasReference]): VersionedModel
+  def setParent(newParent: Option[Reference]): VersionedModel
   def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel
   def setUserLocked(userLocked: Option[String]): VersionedModel
 

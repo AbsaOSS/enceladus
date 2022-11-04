@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization.csv
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -32,9 +32,9 @@ case class Person(id: String, first_name: String, last_name: String)
 
 class WhiteSpaceStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
-    "--menas-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
+    "--rest-api-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
     .split(" ")
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
   private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
   private val config = BasicStandardizationConfig
     .fromDefault()

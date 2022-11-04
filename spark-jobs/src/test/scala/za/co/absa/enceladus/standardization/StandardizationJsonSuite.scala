@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -33,7 +33,7 @@ class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBas
 
   test("Reading data from JSON input, also such that don't adhere to desired schema") {
 
-    implicit val dao: MenasDAO = mock[MenasDAO]
+    implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
     val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
     val config = BasicStandardizationConfig
@@ -41,7 +41,7 @@ class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBas
       .copy(metadataColumns = metadataConfig)
 
     val args = ("--dataset-name Foo --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format json").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)

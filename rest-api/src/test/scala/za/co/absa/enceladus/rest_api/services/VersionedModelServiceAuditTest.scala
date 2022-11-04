@@ -16,32 +16,32 @@
 package za.co.absa.enceladus.rest_api.services
 
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository}
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.repositories.SchemaMongoRepository
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.model.menas._
-import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.backend._
+import za.co.absa.enceladus.model.backend.audit._
 import org.mockito.Mockito
 import scala.concurrent.{Future, Await}
 
 class VersionedModelServiceAuditTest extends BaseServiceTest {
   val datasetMongoRepository = mock[DatasetMongoRepository]
   val mappingTableMongoRepository = mock[MappingTableMongoRepository]
-  val sparkMenasConvertor = mock[SparkMenasSchemaConvertor]
+  val sparkEnceladusConvertor = mock[SparkEnceladusSchemaConvertor]
   val modelRepository = mock[SchemaMongoRepository]
-  val service = new SchemaService(modelRepository, mappingTableMongoRepository, datasetMongoRepository, sparkMenasConvertor)
+  val service = new SchemaService(modelRepository, mappingTableMongoRepository, datasetMongoRepository, sparkEnceladusConvertor)
 
   val testSchemas = Seq(Schema(name = "TestSchema", version = 0, description = None, fields = List(), parent = None),
     Schema(name = "TestSchema", version = 1, description = Some("Test desc"), fields = List(),
-      parent = Some(MenasReference(collection = None, name = "TestSchema", version = 0))),
+      parent = Some(Reference(collection = None, name = "TestSchema", version = 0))),
     Schema(name = "TestSchema", version = 2, description = Some("Test desc"), fields = List(SchemaField(name = "a",
       `type` = "Integer", path = "", nullable = true, metadata = Map(), children = Seq())),
-      parent = Some(MenasReference(collection = None, name = "TestSchema", version = 1))),
+      parent = Some(Reference(collection = None, name = "TestSchema", version = 1))),
     Schema(name = "TestSchema1", version = 0, description = Some("Test desc 2"), fields = List(),
-      parent = Some(MenasReference(collection = None, name = "TestSchema", version = 1))),
+      parent = Some(Reference(collection = None, name = "TestSchema", version = 1))),
     Schema(name = "TestSchema1", version = 1, description = Some("Test desc 2"), fields = List(SchemaField(name = "b",
       `type` = "String", path = "", nullable = true, metadata = Map(), children = Seq())),
-      parent = Some(MenasReference(collection = None, name = "TestSchema1", version = 0))))
+      parent = Some(Reference(collection = None, name = "TestSchema1", version = 0))))
 
   Mockito.when(modelRepository.getAllVersions("TestSchema1", true)).thenReturn(Future.successful(testSchemas.filter(_.name == "TestSchema1")))
   Mockito.when(modelRepository.getAllVersions("TestSchema", true)).thenReturn(Future.successful(testSchemas.filter(_.name == "TestSchema")))
@@ -62,13 +62,13 @@ class VersionedModelServiceAuditTest extends BaseServiceTest {
 
   test("Test getAuditTrail TestSchema1") {
     val actual = Await.result(service.getAuditTrail("TestSchema1"), longTimeout)
-    val expected = AuditTrail(Stream(AuditTrailEntry(MenasReference(None, "TestSchema1", 1), null, testSchemas(4).lastUpdated,
+    val expected = AuditTrail(Stream(AuditTrailEntry(Reference(None, "TestSchema1", 1), null, testSchemas(4).lastUpdated,
         List(AuditTrailChange("fields", None, Some("SchemaField(b,String,,None,None,true,Map(),List())"), "Schema field added."))),
-      AuditTrailEntry(MenasReference(None, "TestSchema1", 0), null, testSchemas(3).lastUpdated,
+      AuditTrailEntry(Reference(None, "TestSchema1", 0), null, testSchemas(3).lastUpdated,
         List(AuditTrailChange("description", Some("Test desc"), Some("Test desc 2"), "Description updated."))),
-      AuditTrailEntry(MenasReference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
+      AuditTrailEntry(Reference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
         List(AuditTrailChange("description", Some("None"), Some("Test desc"), "Description updated."))),
-      AuditTrailEntry(MenasReference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
+      AuditTrailEntry(Reference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
         List(AuditTrailChange("", None, None, "Schema TestSchema created.")))))
 
     assertResult(expected)(actual)
@@ -77,11 +77,11 @@ class VersionedModelServiceAuditTest extends BaseServiceTest {
   test("Test getAuditTrail TestSchema") {
     val actual = Await.result(service.getAuditTrail("TestSchema"), longTimeout)
 
-    val expected = AuditTrail(Stream(AuditTrailEntry(MenasReference(None, "TestSchema", 2), null, testSchemas(2).lastUpdated,
+    val expected = AuditTrail(Stream(AuditTrailEntry(Reference(None, "TestSchema", 2), null, testSchemas(2).lastUpdated,
       List(AuditTrailChange("fields", None, Some("SchemaField(a,Integer,,None,None,true,Map(),List())"), "Schema field added."))),
-      AuditTrailEntry(MenasReference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
+      AuditTrailEntry(Reference(None, "TestSchema", 1), null, testSchemas(1).lastUpdated,
         List(AuditTrailChange("description", Some("None"), Some("Test desc"), "Description updated."))),
-      AuditTrailEntry(MenasReference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
+      AuditTrailEntry(Reference(None, "TestSchema", 0), null, testSchemas(0).lastUpdated,
         List(AuditTrailChange("", None, None, "Schema TestSchema created.")))))
 
     assertResult(expected)(actual)
