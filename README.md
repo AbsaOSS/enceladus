@@ -84,14 +84,14 @@ Ensure the properties there fit your environment.
 
 #### Build commands:
 
-- Without tests: `mvn clean package -DskipTests `
+- Without tests: `mvn clean package -Dskip.unit.tests`
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
 
 #### Test coverage:
-- Test coverage: `mvn scoverage:report`
+- Test coverage: `mvn clean verify -Pcode-coverage`
 
-The coverage reports are written in each module's `target` directory and aggregated in the root `target` directory.
+The coverage reports are written in each module's `target` directory.
 
 ## How to run
 #### REST API requirements:

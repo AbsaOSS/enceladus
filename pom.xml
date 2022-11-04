@@ -129,19 +129,21 @@
         <module>utils</module>
     </modules>
     <properties>
+        <default.scalatest.argLine>-Xmx4000m -Dfile.encoding=UTF-8</default.scalatest.argLine>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scalatest.argLine>${default.scalatest.argLine}</scalatest.argLine>
         <!--plugin versions-->
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
         <jacoco.version>0.8.8</jacoco.version>
         <maven.antrun.plugin.version>1.8</maven.antrun.plugin.version>
+        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.rat.plugin.version>0.12</maven.rat.plugin.version>
         <maven.shade.plugin.version>3.2.1</maven.shade.plugin.version>
         <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
-        <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <maven.war.plugin.version>2.2</maven.war.plugin.version>
         <scala.maven.plugin.version>4.7.2</scala.maven.plugin.version>
         <!--dependency versions-->
@@ -178,7 +180,7 @@
         <scala.compat.version>2.11</scala.compat.version>
         <scala.java8.compat.version>0.9.0</scala.java8.compat.version>
         <scala.version>2.11.12</scala.version>
-        <scalatest.maven.version>2.2.0</scalatest.maven.version>
+        <scalatest.maven.version>2.1.0</scalatest.maven.version>
         <scalatest.version>3.2.14</scalatest.version>
         <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>2.4</spark.compat.version>
@@ -206,6 +208,7 @@
         <!-- Name of property file that will be used by the Docker image. -->
         <dockerfile.property.file>docker</dockerfile.property.file>
         <skip.integration.tests>true</skip.integration.tests>
+        <skip.unit.tests>false</skip.unit.tests>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
         <log.level.testcode>ERROR</log.level.testcode>
@@ -387,29 +390,14 @@
                         </execution>
                     </executions>
                 </plugin>
-                <plugin>
-                    <groupId>org.scalatest</groupId>
-                    <artifactId>scalatest-maven-plugin</artifactId>
-                    <version>${scalatest.maven.version}</version>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
-            <!-- disable surefire -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
-            <!-- enable scalatest -->
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
+                <version>${scalatest.maven.version}</version>
                 <configuration>
-                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
                     <junitxml>.</junitxml>
                     <filereports>WDF TestSuite.txt</filereports>
                     <!--
@@ -417,7 +405,7 @@
                         end to end test could run. This can be removed later when dynamic conformance
                         becomes more efficient
                     -->
-                    <argLine>-Xmx4000m -Dfile.encoding=UTF-8 ${argLine}</argLine>
+                    <argLine>${scalatest.argLine}</argLine>
                 </configuration>
                 <executions>
                     <execution>
@@ -427,6 +415,7 @@
                         </goals>
                         <configuration>
                             <suffixes>(?&lt;!IntegrationSuite)</suffixes>
+                            <skipTests>${skip.unit.tests}</skipTests>
                         </configuration>
                     </execution>
                     <execution>
@@ -609,8 +598,9 @@
         <profile>
             <id>code-coverage</id>
             <properties>
-                <!-- true - parent project fails with scalatest-maven-plugin:2.2.0 only. Cannot identify reason. -->
-                <maven.test.failure.ignore>true</maven.test.failure.ignore>
+                <scalatest.argLine>${default.scalatest.argLine} ${argLine}</scalatest.argLine>
+                <skip.integration.tests>false</skip.integration.tests>
+                <skip.unit.tests>false</skip.unit.tests>
             </properties>
             <build>
                 <plugins>
@@ -640,27 +630,6 @@
                                 <configuration>
                                     <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
                                 </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.scalatest</groupId>
-                        <artifactId>scalatest-maven-plugin</artifactId>
-                        <version>${scalatest.maven.version}</version>
-                        <configuration>
-                            <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                            <junitxml>.</junitxml>
-                            <filereports>WDF TestSuite.txt</filereports>
-                            <environmentVariables>
-                                <TEST_ENV_VAR_EnvFixtureSpec>some_initial_value</TEST_ENV_VAR_EnvFixtureSpec>
-                            </environmentVariables>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>
