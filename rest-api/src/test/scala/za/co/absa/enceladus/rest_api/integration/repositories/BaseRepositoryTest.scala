@@ -30,7 +30,7 @@ import scala.concurrent.{Await, Future}
 
 abstract class BaseRepositoryTest extends AnyWordSpec with TestContextManagement with BeforeAndAfter {
 
-  val awaitDuration: Duration = Duration(2000, TimeUnit.MILLISECONDS)
+  val awaitDuration: Duration = Duration(8000, TimeUnit.MILLISECONDS)
 
   def fixtures: List[FixtureService[_]]
 

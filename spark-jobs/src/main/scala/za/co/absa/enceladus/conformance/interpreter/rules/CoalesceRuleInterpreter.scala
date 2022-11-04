@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{CoalesceConformanceRule, ConformanceRule}
 import za.co.absa.spark.hats.Extensions._
 import CoalesceRuleInterpreter._
@@ -35,7 +35,7 @@ case class CoalesceRuleInterpreter(rule: CoalesceConformanceRule) extends RuleIn
   def conform(df: Dataset[Row])
              (implicit spark: SparkSession,
               explosionState: ExplosionState,
-              dao: MenasDAO,
+              dao: EnceladusDAO,
               progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateSameParent(progArgs.datasetName, ruleName, rule.inputColumns :+ rule.outputColumn: _*)

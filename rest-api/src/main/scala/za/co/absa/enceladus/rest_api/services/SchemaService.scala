@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, MappingTableMongoRepository, SchemaMongoRepository}
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 import scala.concurrent.Future
 
@@ -28,7 +28,7 @@ import scala.concurrent.Future
 class SchemaService @Autowired() (val mongoRepository: SchemaMongoRepository,
     mappingTableMongoRepository: MappingTableMongoRepository,
     datasetMongoRepository: DatasetMongoRepository,
-    sparkMenasConvertor: SparkMenasSchemaConvertor) extends VersionedModelService[Schema] {
+    sparkEnceladusConvertor: SparkEnceladusSchemaConvertor) extends VersionedModelService[Schema] {
 
   protected val schemaMongoRepository: SchemaMongoRepository = mongoRepository // alias
 
@@ -43,7 +43,7 @@ class SchemaService @Autowired() (val mongoRepository: SchemaMongoRepository,
 
   def schemaUpload(username: String, schemaName: String, schemaVersion: Int, fields: StructType): Future[(Schema, Validation)] = {
     super.update(username, schemaName, schemaVersion)({ oldSchema =>
-      oldSchema.copy(fields = sparkMenasConvertor.convertSparkToMenasFields(fields.fields).toList)
+      oldSchema.copy(fields = sparkEnceladusConvertor.convertSparkToEnceladusFields(fields.fields).toList)
     }).map(_.getOrElse(throw new IllegalArgumentException("Failed to derive new schema from file!")))
   }
 

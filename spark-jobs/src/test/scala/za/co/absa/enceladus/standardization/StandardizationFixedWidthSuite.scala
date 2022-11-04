@@ -18,7 +18,7 @@ package za.co.absa.enceladus.standardization
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.fs.FileReader
@@ -30,7 +30,7 @@ import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStand
 
 class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar{
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
-    "--menas-auth-keytab src/test/resources/user.keytab.example " +
+    "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format fixed-width").split(" ")
 
   private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
@@ -38,7 +38,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     .fromDefault()
     .copy(metadataColumns = metadataConfig)
 
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
 

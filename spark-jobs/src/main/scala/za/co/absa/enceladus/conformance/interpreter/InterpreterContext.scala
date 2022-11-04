@@ -19,7 +19,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.storage.StorageLevel
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 
@@ -58,6 +58,6 @@ case class InterpreterContext(
                                featureSwitches: FeatureSwitches,
                                jobShortName: String,
                                spark: SparkSession,
-                               dao: MenasDAO,
+                               dao: EnceladusDAO,
                                progArgs: InterpreterContextArgs
                              )

@@ -19,7 +19,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
@@ -35,7 +35,7 @@ case class MappingRuleInterpreterBroadcast(rule: MappingConformanceRule, conform
   override def conform(df: DataFrame)
                       (implicit spark: SparkSession,
                        explosionState: ExplosionState,
-                       dao: MenasDAO,
+                       dao: EnceladusDAO,
                        progArgs: InterpreterContextArgs): DataFrame = {
     log.info(s"Processing mapping rule to conform ${outputColumnNames()} (broadcast strategy)...")
     val (mapTable, defaultValues) = conformPreparation(df, enableCrossJoin = false)

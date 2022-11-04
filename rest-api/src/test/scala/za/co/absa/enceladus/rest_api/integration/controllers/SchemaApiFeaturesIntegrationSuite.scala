@@ -35,8 +35,8 @@ import za.co.absa.enceladus.rest_api.models.rest.errors.{SchemaFormatError, Sche
 import za.co.absa.enceladus.rest_api.models.SchemaApiFeatures
 import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Schema, UsedIn, Validation}
 import za.co.absa.enceladus.rest_api.exceptions.EntityInUseException
@@ -48,7 +48,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAll {
 
-  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
+  private val port = 8877 // same  port as in test/resources/application.conf in the `enceladus.rest.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -74,7 +74,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
   private val attachmentFixture: AttachmentFixtureService = null
 
   @Autowired
-  private val convertor: SparkMenasSchemaConvertor = null
+  private val convertor: SparkEnceladusSchemaConvertor = null
 
   private val apiUrl = "/schema"
   private val schemaRefCollection = RefCollection.SCHEMA.name().toLowerCase()
@@ -308,7 +308,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
 
           val actual = response.getBody
           val expected = EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
+            UsedIn(Some(Seq(Reference(None, "dataset", 1))), Some(Seq()))
           )
           assert(actual == expected)
         }
@@ -327,7 +327,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
 
           val actual = response.getBody
           val expected = EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
-            UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
+            UsedIn(Some(Seq()), Some(Seq(Reference(None, "mapping", 1))))
           )
           assert(actual == expected)
         }
@@ -464,7 +464,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
 
           val actual = response.getBody
           val expected = EntityInUseException("""Cannot disable entity "schema" v1, because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
+            UsedIn(Some(Seq(Reference(None, "dataset1", 1))), Some(Seq()))
           )
           assert(actual == expected)
         }
@@ -484,7 +484,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
 
           val actual = response.getBody
           val expected = EntityInUseException("""Cannot disable entity "schema" v1, because it is used in the following entities""",
-            UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
+            UsedIn(Some(Seq()), Some(Seq(Reference(None, "mapping1", 1))))
           )
           assert(actual == expected)
         }
@@ -1069,7 +1069,7 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTestV2 with BeforeAnd
           assert(response.getStatusCode == HttpStatus.OK)
           val responseBody = response.getBody
 
-          // test-config contains populated menas.schemaRegistry.baseUrl
+          // test-config contains populated enceladus.rest.schemaRegistry.baseUrl
           assert(responseBody == SchemaApiFeatures(registry = true))
         }
       }

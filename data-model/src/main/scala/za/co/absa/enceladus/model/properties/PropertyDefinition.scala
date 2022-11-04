@@ -18,8 +18,8 @@ package za.co.absa.enceladus.model.properties
 import java.time.ZonedDateTime
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ObjectNode
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
+import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
@@ -46,7 +46,7 @@ case class PropertyDefinition(name: String,
 
                               dateDisabled: Option[ZonedDateTime] = None,
                               userDisabled: Option[String] = None,
-                              parent: Option[MenasReference] = None
+                              parent: Option[Reference] = None
                              ) extends VersionedModel with Auditable[PropertyDefinition] {
 
   @JsonIgnore
@@ -69,19 +69,19 @@ case class PropertyDefinition(name: String,
   override def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel = this.copy(dateLocked = dateLocked)
   override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
   override def setUserDisabled(user: Option[String]): PropertyDefinition = this.copy(userDisabled = user)
-  override def setParent(newParent: Option[MenasReference]): PropertyDefinition = this.copy(parent = newParent)
+  override def setParent(newParent: Option[Reference]): PropertyDefinition = this.copy(parent = newParent)
 
   def setEssentiality(newEssentiality: Essentiality): PropertyDefinition = this.copy(essentiality = newEssentiality)
   def setPropertyType(newPropertyType: PropertyType): PropertyDefinition = this.copy(propertyType = newPropertyType)
   def setPutIntoInfoFile(newPutIntoInfoFile: Boolean): PropertyDefinition = this.copy(putIntoInfoFile = newPutIntoInfoFile)
 
   // Auditable induced methods:
-  override val createdMessage: AuditTrailEntry = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage: AuditTrailEntry = AuditTrailEntry(ref = Reference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
       AuditTrailChange(field = "", oldValue = None, newValue = None, s"PropertyDefinition $name created.")))
 
   override def getAuditMessages(newRecord: PropertyDefinition): AuditTrailEntry = {
-    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+    AuditTrailEntry(ref = Reference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,

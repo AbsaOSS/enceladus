@@ -18,8 +18,8 @@ import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.rest_api.repositories.VersionedMongoRepository
 import za.co.absa.enceladus.model.Validation
 
-import scala.concurrent.{Await}
-import za.co.absa.enceladus.model.menas.audit.Auditable
+import scala.concurrent.Await
+import za.co.absa.enceladus.model.backend.audit.Auditable
 
 abstract class VersionedModelServiceTest[C <: VersionedModel with Product with Auditable[C]] extends BaseServiceTest {
 

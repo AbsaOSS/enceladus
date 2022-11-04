@@ -81,8 +81,8 @@ SET CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=
 SET CONF_SPARK_MEMORY_FRACTION=
 
 :: Security command line defaults
-SET MENAS_CREDENTIALS_FILE=
-SET MENAS_AUTH_KEYTAB=
+SET REST_API_CREDENTIALS_FILE=
+SET REST_API_AUTH_KEYTAB=
 SET CLIENT_MODE_RUN_KINIT=%DEFAULT_CLIENT_MODE_RUN_KINIT%
 
 :: Parse command line arguments
@@ -357,14 +357,14 @@ IF "%1"=="--debug-set-raw-path" (
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--menas-credentials-file" (
-    SET MENAS_CREDENTIALS_FILE=%2
+IF "%1"=="--rest-api-credentials-file" (
+    SET REST_API_CREDENTIALS_FILE=%2
     SHIFT
     SHIFT
     GOTO CmdParse
 )
-IF "%1"=="--menas-auth-keytab" (
-    SET MENAS_AUTH_KEYTAB=%2
+IF "%1"=="--rest-api-auth-keytab" (
+    SET REST_API_AUTH_KEYTAB=%2
     SHIFT
     SHIFT
     GOTO CmdParse
@@ -481,7 +481,7 @@ SET VALID="1"
 CALL :validate --dataset-name,%DATASET_NAME%
 CALL :validate --dataset-version,%DATASET_VERSION%
 CALL :validate --report-date,%REPORT_DATE%
-CALL :validate_either --menas-credentials-file,%MENAS_CREDENTIALS_FILE%,--menas-auth-keytab,%MENAS_AUTH_KEYTAB%
+CALL :validate_either --rest-api-credentials-file,%REST_API_CREDENTIALS_FILE%,--rest-api-auth-keytab,%REST_API_AUTH_KEYTAB%
 
 :: For now this check is disabled in Windows version of the script
 :: IF NOT "%MASTER%"=="yarn" (
@@ -592,8 +592,8 @@ SET CMD_LINE=%CMD_LINE% --conf spark.executor.extraJavaOptions=%ADDITIONAL_JVM_E
 SET CMD_LINE=%CMD_LINE% --class %CLASS% %JAR%
 
 :: Adding command line parameters that go AFTER the jar file
-IF DEFINED MENAS_AUTH_KEYTAB SET CMD_LINE=%CMD_LINE% --menas-auth-keytab %MENAS_AUTH_KEYTAB%
-IF DEFINED MENAS_CREDENTIALS_FILE SET CMD_LINE=%CMD_LINE% --menas-credentials-file %MENAS_CREDENTIALS_FILE%
+IF DEFINED REST_API_AUTH_KEYTAB SET CMD_LINE=%CMD_LINE% --rest-api-auth-keytab %REST_API_AUTH_KEYTAB%
+IF DEFINED REST_API_CREDENTIALS_FILE SET CMD_LINE=%CMD_LINE% --rest-api-credentials-file %REST_API_CREDENTIALS_FILE%
 IF DEFINED DATASET_NAME SET CMD_LINE=%CMD_LINE% --dataset-name %DATASET_NAME%
 IF DEFINED DATASET_VERSION SET CMD_LINE=%CMD_LINE% --dataset-version %DATASET_VERSION%
 IF DEFINED REPORT_DATE SET CMD_LINE=%CMD_LINE% --report-date %REPORT_DATE%
@@ -641,15 +641,15 @@ GOTO :eof
 CALL :temp_log_file TMP_PATH_NAME
 
 :: Initializing Kerberos ticket
-IF DEFINED MENAS_AUTH_KEYTAB (
+IF DEFINED REST_API_AUTH_KEYTAB (
     :: Get principle stored in the keyfile`
-    FOR /F "tokens=1-3" %%A IN ('ktab -l -k %MENAS_AUTH_KEYTAB%') DO IF "%%A"=="0" SET PR=%%B
+    FOR /F "tokens=1-3" %%A IN ('ktab -l -k %REST_API_AUTH_KEYTAB%') DO IF "%%A"=="0" SET PR=%%B
     IF DEFINED PR (IF "%CLIENT_MODE_RUN_KINIT%"=="true" (
-        kinit -k -t "%MENAS_AUTH_KEYTAB%" "%PR%"
+        kinit -k -t "%REST_API_AUTH_KEYTAB%" "%PR%"
         klist -e 2>&1 | tee -a %TMP_PATH_NAME%
     ) ELSE (
         CALL :echoerr "WARNING!"
-        CALL :echoerr "Unable to determine principle from the keytab file %MENAS_AUTH_KEYTAB%."
+        CALL :echoerr "Unable to determine principle from the keytab file %REST_API_AUTH_KEYTAB%."
         CALL :echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
         CALL :sleep 10
     ))

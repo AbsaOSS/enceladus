@@ -22,7 +22,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
@@ -41,7 +41,7 @@ case class MyCustomRule(
 case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO,
                                 progArgs: InterpreterContextArgs): Dataset[Row] = {
     import spark.implicits._
     // we have to do this if this rule is to support arrays
@@ -62,7 +62,7 @@ class CustomRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with Ha
   // we may WANT to enable control framework & spline here
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false

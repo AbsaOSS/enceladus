@@ -33,56 +33,56 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
 # Generate your own secret, must be be at least 256-bit
-menas.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
-menas.auth.jwt.lifespan.hours=8
+enceladus.rest.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
+enceladus.rest.auth.jwt.lifespan.hours=8
 
-# How will users authenticate to menas. Available options: inmemory, kerberos
-menas.auth.mechanism=inmemory
+# How will users authenticate to REST API. Available options: inmemory, kerberos
+enceladus.rest.auth.mechanism=inmemory
 # Must be defined and non empty
-menas.auth.admin.role=ROLE_ADMIN
-#menas.auth.roles.regex=^[A-z]+_ADMIN$
+enceladus.rest.auth.admin.role=ROLE_ADMIN
+#enceladus.rest.auth.roles.regex=^[A-z]+_ADMIN$
 
-#menas.auth.kerberos.debug=false
-#menas.auth.kerberos.krb5conf=/etc/krb5.conf
-#menas.auth.ad.domain=ad.domain.com
-#menas.auth.ad.server=ldaps://ad.domain.com ldaps://ad.domain2.com ldaps://ad.domain3.com
-#menas.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
-#menas.auth.servicename.principal=/path/to/sysuser.keytab
-#menas.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
-#menas.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
+#enceladus.rest.auth.kerberos.debug=false
+#enceladus.rest.auth.kerberos.krb5conf=/etc/krb5.conf
+#enceladus.rest.auth.ad.domain=ad.domain.com
+#enceladus.rest.auth.ad.server=ldaps://ad.domain.com ldaps://ad.domain2.com ldaps://ad.domain3.com
+#enceladus.rest.auth.servicename.principal=HTTP/host@AD.DOMAIN.COM
+#enceladus.rest.auth.servicename.principal=/path/to/sysuser.keytab
+#enceladus.rest.auth.ldap.search.base=DC=AD,DC=DOMAIN,DC=com
+#enceladus.rest.auth.ldap.search.filter=(&(objectClass=top)(sAMAccountName={0}))
 
-menas.auth.inmemory.user=user
-menas.auth.inmemory.password=changeme
-menas.auth.inmemory.admin.user=menas_admin
-menas.auth.inmemory.admin.password=admin123
+enceladus.rest.auth.inmemory.user=user
+enceladus.rest.auth.inmemory.password=changeme
+enceladus.rest.auth.inmemory.admin.user=menas_admin
+enceladus.rest.auth.inmemory.admin.password=admin123
 
 # Implementation of Hadoop FS to use to be able to see paths to datasets.
 # Whole of Enceladus works even if none set. It is just a convenience feature.
 # Currently supported hdfs or none.
 rest_api.fs.config.type=none
 
-# Define how menas authenticates to Hadoop. Supported options are:
+# Define how REST API authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
 #  "simple" -> will use authentication by a user name
-#  "krb5" -> menas will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
-menas.hadoop.auth.method=default
-menas.hadoop.conf.dir=/path/to/hadoop/conf/dir
-menas.hadoop.auth.user=hdfs
-menas.hadoop.auth.krb5.debug=true
-menas.hadoop.auth.krb5.realm=EXAMPLE.COM
-menas.hadoop.auth.krb5.kdc=localhost
-menas.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
-menas.hadoop.auth.krb5.keytab=hdfs.keytab
+#  "krb5" -> will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
+enceladus.rest.hadoop.auth.method=default
+enceladus.rest.hadoop.conf.dir=/path/to/hadoop/conf/dir
+enceladus.rest.hadoop.auth.user=hdfs
+enceladus.rest.hadoop.auth.krb5.debug=true
+enceladus.rest.hadoop.auth.krb5.realm=EXAMPLE.COM
+enceladus.rest.hadoop.auth.krb5.kdc=localhost
+enceladus.rest.hadoop.auth.krb5.username=hdfs@EXAMPLE.COM
+enceladus.rest.hadoop.auth.krb5.keytab=hdfs.keytab
 
-menas.mongo.connection.string=mongodb://localhost:27017
-menas.mongo.connection.database=menas
+enceladus.rest.mongo.connection.string=mongodb://localhost:27017
+enceladus.rest.mongo.connection.database=menas
 
 # Timeout (in seconds) for MongoDB migration queries
 migrations.mongo.query.timeout.seconds=300
 
-menas.environment=Dev
+enceladus.rest.environment=Dev
 
-menas.spark.master=local[1]
+enceladus.rest.spark.master=local[1]
 
 #system-wide time zone
 timezone=UTC
@@ -104,15 +104,15 @@ management.health.jms.enabled=false
 
 #---------- Monitoring
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI
-menas.monitoring.fetch.limit=500
+enceladus.rest.monitoring.fetch.limit=500
 
 #----------- Schema Registry
 # URL of schema registry [optional]:
 # when unset, the ability to load schema by subject name from the schema repository will not be present
-#menas.schemaRegistry.baseUrl=https://localhost:8081
+#enceladus.rest.schemaRegistry.baseUrl=https://localhost:8081
 
 # When schema registry is used and unsecured, there will be log warnings unless switched to false: (default=true)
-#menas.schemaRegistry.warnUnsecured=true
+#enceladus.rest.schemaRegistry.warnUnsecured=true
 
 # When using secure schema registry, following paths and passwords must be specified
 #javax.net.ssl.trustStore=/path/to/truststore.jks

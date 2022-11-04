@@ -19,8 +19,8 @@ package za.co.absa.enceladus.rest_api.services
 import java.util.concurrent.TimeUnit
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
 import org.mockito.Mockito
-import za.co.absa.enceladus.model.menas.HDFSFolder
 import za.co.absa.enceladus.rest_api.EnceladusFileSystem
+import za.co.absa.enceladus.model.backend.HDFSFolder
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

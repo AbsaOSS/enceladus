@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance
 
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.dao.rest.RestDaoFactory. AvailabilitySetup
 import za.co.absa.enceladus.utils.config.ConfigReader
@@ -33,11 +33,14 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     initialValidation()
     implicit val spark: SparkSession = obtainSparkSession(jobName) // initialize spark
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(
-      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, restApiOptionallyRetryableExceptions
-    )
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
+    val restApiAvailabilitySetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      restApiUrlsRetryCount,
+      restApiAvailabilitySetupValue,
+      restApiOptionallyRetryableExceptions)
     implicit val configReader: ConfigReader = new ConfigReader()
 
     val preparationResult = prepareJob()
@@ -46,7 +49,7 @@ object DynamicConformanceJob extends ConformanceExecution {
 
     try {
       val result = conform(inputData, preparationResult)
-      processConformanceResult(args, result, preparationResult, menasCredentials)
+      processConformanceResult(args, result, preparationResult, restApiCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {

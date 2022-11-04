@@ -19,7 +19,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{DropConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
@@ -34,7 +34,7 @@ class LiteralJoinMappingRuleTest extends AnyFunSuite with TZNormalizedSparkTestB
     val mappingDf = spark.read.option("header", "true").csv("src/test/resources/interpreter/literalJoin/mapping")
 
     implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2018-03-23")
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
 

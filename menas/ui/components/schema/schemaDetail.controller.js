@@ -69,7 +69,7 @@ sap.ui.define([
 
     auditVersionPress: function (oEv) {
       let oSrc = oEv.getSource();
-      let oRef = oSrc.data("menasRef");
+      let oRef = oSrc.data("ref");
       this._router.navTo("schemas", {
         id: oRef.name,
         version: oRef.version

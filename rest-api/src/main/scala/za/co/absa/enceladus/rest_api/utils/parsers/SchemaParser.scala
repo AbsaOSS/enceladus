@@ -24,7 +24,7 @@ import za.co.absa.cobrix.cobol.reader.policies.SchemaRetentionPolicy
 import za.co.absa.cobrix.spark.cobol.schema.CobolSchema
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 import scala.util.control.NonFatal
 
@@ -38,15 +38,15 @@ object SchemaParser {
     def getParser(schemaType: SchemaType.Value): SchemaParser
   }
 
-  def getFactory(sparkMenasConvertor: SparkMenasSchemaConvertor): SchemaParserFactory = new SchemaParserFactory {
+  def getFactory(sparkEnceladusConvertor: SparkEnceladusSchemaConvertor): SchemaParserFactory = new SchemaParserFactory {
     override def getParser(schemaType: SchemaType.Value): SchemaParser = schemaType match {
-      case SchemaType.Struct => new StructSchemaParser(sparkMenasConvertor)
+      case SchemaType.Struct => new StructSchemaParser(sparkEnceladusConvertor)
       case SchemaType.Copybook => CopybookSchemaParser
       case SchemaType.Avro => AvroSchemaParser
     }
   }
 
-  private class StructSchemaParser(sparkMenasConvertor: SparkMenasSchemaConvertor) extends SchemaParser {
+  private class StructSchemaParser(sparkEnceladusConvertor: SparkEnceladusSchemaConvertor) extends SchemaParser {
 
     /**
      * Parses an StructType JSON file contents and converts it to Spark [[StructType]].
@@ -56,7 +56,7 @@ object SchemaParser {
      */
     def parse(structTypeJson: String): StructType = {
       try {
-        sparkMenasConvertor.convertAnyToStructType(structTypeJson)
+        sparkEnceladusConvertor.convertAnyToStructType(structTypeJson)
       } catch {
         case e: IllegalStateException =>
           throw SchemaParsingException(SchemaType.Struct, e.getMessage, cause = e)

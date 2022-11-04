@@ -27,21 +27,21 @@ import org.springframework.context.annotation.{Bean, Configuration}
 object HDFSConfig {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${menas.hadoop.auth.method:}")
+  @Value("${enceladus.rest.hadoop.auth.method:}")
   val authMethod: String = ""
-  @Value("${menas.hadoop.auth.user:}")
+  @Value("${enceladus.rest.hadoop.auth.user:}")
   val authUser: String = ""
-  @Value("${menas.hadoop.auth.krb5.debug:}")
+  @Value("${enceladus.rest.hadoop.auth.krb5.debug:}")
   val krb5debug: String = ""
-  @Value("${menas.hadoop.auth.krb5.realm:}")
+  @Value("${enceladus.rest.hadoop.auth.krb5.realm:}")
   val krb5realm: String = ""
-  @Value("${menas.hadoop.auth.krb5.kdc:}")
+  @Value("${enceladus.rest.hadoop.auth.krb5.kdc:}")
   val krb5kdc: String = ""
-  @Value("${menas.hadoop.auth.krb5.username:}")
+  @Value("${enceladus.rest.hadoop.auth.krb5.username:}")
   val krb5username: String = ""
-  @Value("${menas.hadoop.auth.krb5.keytab:}")
+  @Value("${enceladus.rest.hadoop.auth.krb5.keytab:}")
   val krb5keytab: String = ""
-  @Value("${menas.hadoop.conf.dir:}") // TODO change to rest-api
+  @Value("${enceladus.rest.hadoop.conf.dir:}")
   val hadoopConfDir: String = ""
 
   def hadoopConf()(implicit spark: SparkSession): HadoopConfiguration = {
