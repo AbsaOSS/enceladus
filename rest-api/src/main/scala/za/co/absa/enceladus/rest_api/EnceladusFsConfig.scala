@@ -24,7 +24,7 @@ import org.springframework.context.annotation.{Bean, Configuration}
 class EnceladusFsConfig @Autowired()(spark: SparkSession) {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
-  @Value("${rest_api.fs.config.type}")
+  @Value("${enceladus.rest.fs.config.type}")
   val fsType: String = ""
 
   @Bean

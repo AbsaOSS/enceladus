@@ -59,7 +59,7 @@ enceladus.rest.auth.inmemory.admin.password=admin123
 # Implementation of Hadoop FS to use to be able to see paths to datasets.
 # Whole of Enceladus works even if none set. It is just a convenience feature.
 # Currently supported hdfs or none.
-rest_api.fs.config.type=none
+enceladus.rest.fs.config.type=none
 
 # Define how REST API authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
