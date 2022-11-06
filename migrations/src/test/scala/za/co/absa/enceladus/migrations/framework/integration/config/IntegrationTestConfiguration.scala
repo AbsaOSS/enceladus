@@ -29,7 +29,7 @@ import java.util.Properties
   */
 object IntegrationTestConfiguration {
   private val properties = new Properties()
-  private val connectionStringKey = "menas.mongo.connection.string"
+  private val connectionStringKey = "enceladus.rest.mongo.connection.string"
   private val databaseKey = "migrations.mongo.connection.database"
 
   loadConfig()

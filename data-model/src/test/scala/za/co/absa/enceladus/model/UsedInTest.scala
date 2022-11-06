@@ -17,11 +17,11 @@ package za.co.absa.enceladus.model
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 
 class UsedInTest extends AnyFlatSpec with Matchers {
 
-  private val exampleRef = MenasReference(Some("collection1"), "entity1", 1)
+  private val exampleRef = Reference(Some("collection1"), "entity1", 1)
 
   "UsedIn" should "correctly evaluate .nonEmpty" in {
     UsedIn(Some(Seq(exampleRef)), Some(Seq(exampleRef))).nonEmpty shouldBe true

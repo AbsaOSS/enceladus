@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import za.co.absa.enceladus.model.{UsedIn, Validation}
-import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.backend.audit._
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.services.VersionedModelService

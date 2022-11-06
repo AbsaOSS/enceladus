@@ -23,7 +23,7 @@ import za.co.absa.enceladus.model.{ModelVersion, Schema, UsedIn, Validation}
 import za.co.absa.enceladus.model.versionedModel.{VersionedModel, VersionedSummary}
 import za.co.absa.enceladus.rest_api.exceptions._
 import za.co.absa.enceladus.rest_api.repositories.VersionedMongoRepository
-import za.co.absa.enceladus.model.menas.audit._
+import za.co.absa.enceladus.model.backend.audit._
 
 import scala.concurrent.Future
 import com.mongodb.MongoWriteException

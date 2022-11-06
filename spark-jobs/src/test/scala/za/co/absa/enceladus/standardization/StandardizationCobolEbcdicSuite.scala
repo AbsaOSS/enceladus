@@ -20,7 +20,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -30,7 +30,7 @@ class StandardizationCobolEbcdicSuite extends FixtureAnyFunSuite with TZNormaliz
 
   type FixtureParam = String
 
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 
@@ -62,7 +62,7 @@ class StandardizationCobolEbcdicSuite extends FixtureAnyFunSuite with TZNormaliz
 
   private val argumentsBase =
     ("--dataset-name FixedLength --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format cobol").split(' ')
 
   def withFixture(test: OneArgTest): Outcome = {

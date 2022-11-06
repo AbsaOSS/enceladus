@@ -21,7 +21,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -40,7 +40,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
   import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val standardizationReader = new StandardizationPropertiesProvider()
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
@@ -82,7 +82,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("All columns standardized") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -111,7 +111,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Missing nullable fields are considered null") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -142,7 +142,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Missing non-nullable fields are filled with default values and error appears in error column") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -176,7 +176,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert int to array, and array to long") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -205,7 +205,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert int to struct, and struct to long") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -236,7 +236,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert array to struct, and struct to array") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -264,7 +264,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert int to array, and array to long, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -284,7 +284,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert int to struct, and struct to long, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -306,7 +306,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Cannot convert array to struct, and struct to array, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -325,7 +325,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("PseudoUuids are used") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -360,7 +360,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("True uuids are used") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -401,7 +401,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Existing enceladus_record_id is kept") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -441,7 +441,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
 
   test("Timestamp with timezone in metadata are shifted") {tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
 

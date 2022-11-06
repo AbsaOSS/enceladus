@@ -24,7 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import org.springframework.web.multipart.MultipartFile
 import za.co.absa.enceladus.model.{Schema, Validation}
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.rest_api.controllers.SchemaController
 import za.co.absa.enceladus.rest_api.exceptions.ValidationException
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
@@ -32,7 +32,7 @@ import za.co.absa.enceladus.rest_api.repositories.RefCollection
 import za.co.absa.enceladus.rest_api.services.v3.SchemaServiceV3
 import za.co.absa.enceladus.rest_api.services.{AttachmentService, SchemaRegistryService}
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 import za.co.absa.enceladus.rest_api.utils.parsers.SchemaParser
 
 import java.util.concurrent.CompletableFuture
@@ -46,7 +46,7 @@ import scala.util.{Failure, Success, Try}
 class SchemaControllerV3 @Autowired()(
                                        schemaService: SchemaServiceV3,
                                        attachmentService: AttachmentService,
-                                       sparkMenasConvertor: SparkMenasSchemaConvertor,
+                                       sparkEnceladusConvertor: SparkEnceladusSchemaConvertor,
                                        schemaRegistryService: SchemaRegistryService
                                      )
   extends VersionedModelControllerV3(schemaService) {
@@ -65,7 +65,7 @@ class SchemaControllerV3 @Autowired()(
         if (schema.fields.isEmpty) throw ValidationException(
           Validation.empty.withError("schema-fields", s"Schema $name v$version exists, but has no fields!")
         )
-        val sparkStruct = StructType(sparkMenasConvertor.convertMenasToSparkFields(schema.fields))
+        val sparkStruct = StructType(sparkEnceladusConvertor.convertEnceladusToSparkFields(schema.fields))
         if (pretty) sparkStruct.prettyJson else sparkStruct.json
       case None =>
         throw notFound()
@@ -97,7 +97,7 @@ class SchemaControllerV3 @Autowired()(
     val fileContent = new String(file.getBytes)
 
     val schemaType = SchemaType.fromSchemaName(format)
-    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(fileContent)
+    val sparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(fileContent)
 
     // for avro schema type, always force the same mime-type to be persisted
     val mime = if (schemaType == SchemaType.Avro) {
@@ -106,15 +106,15 @@ class SchemaControllerV3 @Autowired()(
       file.getContentType
     }
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1, // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = file.getOriginalFilename,
       fileContent = file.getBytes,
       fileMIMEType = mime)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-file
     }
@@ -131,17 +131,17 @@ class SchemaControllerV3 @Autowired()(
 
     val schemaType = SchemaType.fromSchemaName(format)
     val schemaResponse = schemaRegistryService.loadSchemaByUrl(remoteUrl)
-    val sparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
+    val sparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(schemaResponse.fileContent)
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = schemaResponse.url.getFile,
       fileContent = schemaResponse.fileContent.getBytes,
       fileMIMEType = schemaResponse.mimeType)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, sparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-remote-uri
     }
@@ -164,29 +164,29 @@ class SchemaControllerV3 @Autowired()(
       case Failure(_) => schemaRegistryService.loadSchemaBySubjectName(s"$subject-value") // fallback to -value
     }
 
-    val valueSparkStruct = SchemaParser.getFactory(sparkMenasConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
+    val valueSparkStruct = SchemaParser.getFactory(sparkEnceladusConvertor).getParser(schemaType).parse(valueSchemaResponse.fileContent)
 
-    val menasFile = MenasAttachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
+    val attachment = Attachment(refCollection = RefCollection.SCHEMA.name().toLowerCase,
       refName = name,
       refVersion = version + 1,  // version is the current one, refVersion is the to-be-created one
-      attachmentType = MenasAttachment.ORIGINAL_SCHEMA_ATTACHMENT,
+      attachmentType = Attachment.ORIGINAL_SCHEMA_ATTACHMENT,
       filename = valueSchemaResponse.url.getFile, // only the value file gets saved as an attachment
       fileContent = valueSchemaResponse.fileContent.getBytes,
       fileMIMEType = valueSchemaResponse.mimeType)
 
-    uploadSchemaToMenas(principal.getUsername, menasFile, valueSparkStruct, schemaType).map { case (updatedSchema, validation) =>
+    uploadSchema(principal.getUsername, attachment, valueSparkStruct, schemaType).map { case (updatedSchema, validation) =>
       createdWithNameVersionLocationBuilder(name, updatedSchema.version, request,
         stripLastSegments = 3).body(validation)  // stripping: /{name}/{version}/from-registry
     }
   }
 
-  private def uploadSchemaToMenas(username: String, menasAttachment: MenasAttachment, sparkStruct: StructType,
+  private def uploadSchema(username: String, attachment: Attachment, sparkStruct: StructType,
                                   schemaType: SchemaType.Value): Future[(Schema, Validation)] = {
     try {
       for {
         // the parsing of sparkStruct can fail, therefore we try to save it first before saving the attachment
-        (updated, validation) <- schemaService.schemaUpload(username, menasAttachment.refName, menasAttachment.refVersion - 1, sparkStruct)
-        _ <- attachmentService.uploadAttachment(menasAttachment)
+        (updated, validation) <- schemaService.schemaUpload(username, attachment.refName, attachment.refVersion - 1, sparkStruct)
+        _ <- attachmentService.uploadAttachment(attachment)
       } yield (updated, validation)
     } catch {
       case e: SchemaParsingException => throw e.copy(schemaType = schemaType) // adding schema type
