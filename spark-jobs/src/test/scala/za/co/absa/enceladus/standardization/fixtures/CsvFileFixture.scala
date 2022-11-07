@@ -20,14 +20,14 @@ import java.nio.charset.{Charset, StandardCharsets}
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 trait CsvFileFixture extends MockitoSugar with TempFileFixture with TZNormalizedSparkTestBase {
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
   private val standardizationReader = new StandardizationPropertiesProvider()
 
   type FixtureParam = String
@@ -49,7 +49,7 @@ trait CsvFileFixture extends MockitoSugar with TempFileFixture with TZNormalized
   protected val dataSet: Dataset = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
   protected val argumentsBase: FixtureParam =
     "--dataset-name SpecialChars --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-    "--menas-auth-keytab src/test/resources/user.keytab.example " +
+    "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
     "--raw-format csv --header false "
 
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */

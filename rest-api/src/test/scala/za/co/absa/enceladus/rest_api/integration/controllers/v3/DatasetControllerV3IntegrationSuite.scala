@@ -458,11 +458,11 @@ class DatasetControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeA
           val body = response.getBody
           assert(body ==
             """{"entries":[{
-              |"menasRef":{"collection":null,"name":"datasetA","version":2},
+              |"ref":{"collection":null,"name":"datasetA","version":2},
               |"updatedBy":"dummyUser","updated":"2017-12-04T16:19:17Z",
               |"changes":[{"field":"conformance","oldValue":null,"newValue":"LiteralConformanceRule(0,outputCol1,false,litValue1)","message":"Conformance rule added."}]
               |},{
-              |"menasRef":{"collection":null,"name":"datasetA","version":1},
+              |"ref":{"collection":null,"name":"datasetA","version":1},
               |"updatedBy":"dummyUser","updated":"2017-12-04T16:19:17Z",
               |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"Dataset datasetA created."}]
               |}]}""".stripMargin.replaceAll("[\\r\\n]", ""))

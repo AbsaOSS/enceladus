@@ -23,7 +23,7 @@ import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 @Configuration
 class SparkConfig {
 
-  @Value("${menas.spark.master}")
+  @Value("${enceladus.rest.spark.master}")
   val master: String = ""
 
   @Bean
@@ -32,7 +32,7 @@ class SparkConfig {
       .master(master)
       .config("spark.ui.enabled", "false")
       .config("spark.driver.bindAddress","127.0.0.1")
-      .appName("Menas Spark controller")
+      .appName("Enceladus REST API Spark controller")
       .getOrCreate()
     TimeZoneNormalizer.normalizeAll(sparkSession)
     sparkSession

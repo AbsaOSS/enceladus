@@ -16,17 +16,17 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 
-case class UsedIn(datasets: Option[Seq[MenasReference]] = None,
-                  mappingTables: Option[Seq[MenasReference]] = None) {
+case class UsedIn(datasets: Option[Seq[Reference]] = None,
+                  mappingTables: Option[Seq[Reference]] = None) {
 
   /**
    * Should any of the original UsedIn equal to Some(Seq.empty), it will be None after normalization
    */
   @JsonIgnore
   lazy val normalized: UsedIn = {
-    def normalizeOne(field: Option[Seq[MenasReference]]) = field match {
+    def normalizeOne(field: Option[Seq[Reference]]) = field match {
       case None => None
       case Some(x) if x.isEmpty => None
       case otherNonEmpty => otherNonEmpty

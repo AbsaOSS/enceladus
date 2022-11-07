@@ -15,7 +15,7 @@
 
 package za.co.absa.enceladus.model.test.factories
 
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.Attachment
 
 object AttachmentFactory {
 
@@ -25,8 +25,8 @@ object AttachmentFactory {
                          attachmentType: String = "original_schema",
                          filename: String = "dummySchema.json",
                          fileContent: Array[Byte] = Array(),
-                         fileMIMEType: String = "application/json"): MenasAttachment = {
-    MenasAttachment(
+                         fileMIMEType: String = "application/json"): Attachment = {
+    Attachment(
       refCollection,
       refName,
       refVersion,

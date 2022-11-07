@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.services
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-import za.co.absa.enceladus.model.menas.HDFSFolder
+import za.co.absa.enceladus.model.backend.HDFSFolder
 
 import scala.concurrent.Future
 

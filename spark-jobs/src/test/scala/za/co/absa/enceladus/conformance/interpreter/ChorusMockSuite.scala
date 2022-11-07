@@ -19,7 +19,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
@@ -44,7 +44,7 @@ class ChorusMockSuite extends AnyFunSuite with TZNormalizedSparkTestBase with Lo
     val mappingDf = spark.createDataFrame(mapping)
 
     implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2018-03-23") // here we may need to specify some parameters (for certain rules)
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
 

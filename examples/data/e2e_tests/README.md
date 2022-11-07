@@ -18,43 +18,43 @@ but it also nicely shows examples of data and combinations possible.
 
 There are 3 folders
 
-- `data` - data for hdfs and jsons ready to be imported into Menas
-- `setup_scripts` - should help you with importing data into Menas and copying onto HDFS
+- `data` - data for hdfs and jsons ready to be imported into Enceladus
+- `setup_scripts` - should help you with importing data into Enceladus and copying onto HDFS
 - `test_jsons` - jsons ready to be executed using [Hermes](https://github.com/AbsaOSS/hermes). 
 For executing these tests, it should be changed `recordId.generation.strategy` to `stableHashId`. 
 
 ## Setup Scripts
 
-### Import into Menas
+### Import into Enceladus
 
 **Tools used**: cURL
 
-This script will populate Menas with datasets, schemas and mapping tables.
+This script will populate Enceladus with datasets, schemas and mapping tables.
 To run scripts with user prompts, run:
 
 ```shell
 ./setup_scripts/import_all.sh
 ```
 
-Ths will start the script and ask you for a username, password and Menas URL.
+Ths will start the script and ask you for a username, password and Enceladus REST API URL.
 
 To run without the prompts use:
 ```shell
-./setup_scripts/import_all.sh with <username> <password> <menas url>
+./setup_scripts/import_all.sh with <username> <password> <rest_api url>
 ```
 or 
 ```shell
 ./setup_scripts/import_all.sh with defaults
 ```
 
-The parameters are user name, password and Menas URL.
+The parameters are user name, password and REST API URL.
 Defaults are username: `user` and password: `changeme`. 
 
 ### Copy to HDFS
 
 **Tools used**: hdfs dfs
 
-This script will upload data to your HDFS, so you would be able to run the datasets in Menas. 
+This script will upload data to your HDFS, so you would be able to run the datasets in Enceladus. 
 To run this script with user prompts, run:
 
 ```shell
