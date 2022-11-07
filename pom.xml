@@ -133,6 +133,8 @@
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scalatest.argLine>${default.scalatest.argLine}</scalatest.argLine>
+        <skip.integration.tests>true</skip.integration.tests>
+        <skip.unit.tests>false</skip.unit.tests>
         <!--plugin versions-->
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
@@ -207,8 +209,6 @@
         <dockerfile.tag>${project.version}</dockerfile.tag>
         <!-- Name of property file that will be used by the Docker image. -->
         <dockerfile.property.file>docker</dockerfile.property.file>
-        <skip.integration.tests>true</skip.integration.tests>
-        <skip.unit.tests>false</skip.unit.tests>
         <!-- logging-->
         <log.level.base>WARN</log.level.base>
         <log.level.testcode>ERROR</log.level.testcode>
