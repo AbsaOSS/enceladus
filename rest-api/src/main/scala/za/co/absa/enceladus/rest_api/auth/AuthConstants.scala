@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component
 
 @Component("authConstants")
 class AuthConstants @Autowired()() {
-  @Value("${menas.auth.admin.role}")
+  @Value("${enceladus.rest.auth.admin.role}")
   private val AdminRole: String = ""
 
   def hasAdminRole(auth: Authentication): Boolean = {

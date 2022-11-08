@@ -23,7 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.propertyType.{EnumPropertyType, StringPropertyType}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, PropertyDefinitionFactory}
@@ -477,7 +477,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
         // propDefB is moot.
         // datasetB is not reported, because it is disabled
         response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
+          datasets = Some(Seq(Reference(None, "datasetA", 1), Reference(None, "datasetC", 1))),
           mappingTables = None
         )
       }
@@ -501,7 +501,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
         // same outcome as $apiUrl/{name}/used-in above -- because propDefs are not tied by version to datasets
         response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1), MenasReference(None, "datasetC", 1))),
+          datasets = Some(Seq(Reference(None, "datasetA", 1), Reference(None, "datasetC", 1))),
           mappingTables = None
         )
       }
@@ -601,7 +601,7 @@ class PropertyDefinitionControllerV3IntegrationSuite extends BaseRestApiTestV3 w
 
           assertBadRequest(response)
           response.getBody shouldBe EntityInUseException("""Cannot disable entity "keyA", because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+            UsedIn(Some(Seq(Reference(None, "dataset1", 1), Reference(None, "dataset2", 7))), None)
           )
         }
       }

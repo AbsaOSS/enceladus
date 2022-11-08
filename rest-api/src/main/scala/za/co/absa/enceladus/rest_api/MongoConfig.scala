@@ -23,9 +23,9 @@ import org.springframework.context.annotation.{Bean, Configuration}
 class MongoConfig {
   import za.co.absa.enceladus.rest_api.utils.implicits._
 
-  @Value("${menas.mongo.connection.string}")
+  @Value("${enceladus.rest.mongo.connection.string}")
   val connectionString: String = ""
-  @Value("${menas.mongo.connection.database}")
+  @Value("${enceladus.rest.mongo.connection.database}")
   val database: String = ""
 
   def mongoClient: MongoClient = MongoClient(connectionString)

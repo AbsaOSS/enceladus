@@ -34,7 +34,7 @@ abstract class AuthClientSuite() extends AnyWordSpec
 
   protected val username: String = "user"
   protected val restTemplate: RestTemplate = mock[RestTemplate]
-  protected val baseUrl: String = "http://localhost:8080/menas"
+  protected val baseUrl: String = "http://localhost:8080/rest_api"
   protected val apiCaller: ApiCaller = new ApiCallerStub(baseUrl)
 
   val authClient: AuthClient

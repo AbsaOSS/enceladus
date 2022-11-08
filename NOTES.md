@@ -29,7 +29,7 @@
   * `JAVA_HOME`
 
 * use slashes in paths except when specifying the jar file for Standardization/Conformance
-* Menas _REST_ uri is with `/api` suffix after the _war_ file - e.g. `http://localhost:8080/enceladus_menas_war/api`
+* Enceladus _REST_ uri is with `/api` suffix after the _war_ file - e.g. `http://localhost:8080/rest_api/api`
   
 ## Common errors
 

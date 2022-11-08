@@ -20,9 +20,9 @@ import java.time.ZonedDateTime
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 
 case class Dataset(name: String,
                    version: Int = 1,
@@ -48,7 +48,7 @@ case class Dataset(name: String,
                    dateLocked: Option[ZonedDateTime] = None,
                    userLocked: Option[String] = None,
                    conformance: List[ConformanceRule],
-                   parent: Option[MenasReference] = None,
+                   parent: Option[Reference] = None,
                    schedule: Option[OozieSchedule] = None,
                    properties: Option[Map[String, String]] = Some(Map.empty),
                    propertiesValidation: Option[Validation] = None
@@ -74,7 +74,7 @@ case class Dataset(name: String,
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
-  override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
+  override def setParent(newParent: Option[Reference]): Dataset = this.copy(parent = newParent)
 
   def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
 
@@ -91,7 +91,7 @@ case class Dataset(name: String,
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, replaceInMapKeys(MappingConformanceRule.DotReplacementSymbol, '.'))
 
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
-    menasRef = MenasReference(collection = None, name = name, version = version),
+    ref = Reference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
       AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
   )
@@ -113,7 +113,7 @@ case class Dataset(name: String,
   }
 
   override def getAuditMessages(newRecord: Dataset): AuditTrailEntry = {
-    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+    AuditTrailEntry(ref = Reference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,

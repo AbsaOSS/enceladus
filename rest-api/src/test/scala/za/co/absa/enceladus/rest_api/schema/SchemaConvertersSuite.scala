@@ -20,7 +20,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 class SchemaConvertersSuite extends AnyFunSuite {
 
@@ -28,7 +28,7 @@ class SchemaConvertersSuite extends AnyFunSuite {
     .registerModule(DefaultScalaModule)
     .registerModule(new JavaTimeModule())
     .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-  val sparkConverter = new SparkMenasSchemaConvertor(objectMapper)
+  val sparkConverter = new SparkEnceladusSchemaConvertor(objectMapper)
 
   test("Test StructType to StructType schema conversion") {
     val inputJson =
@@ -282,7 +282,7 @@ class SchemaConvertersSuite extends AnyFunSuite {
     assert(actualSchema.prettyJson == expectedSchema.prettyJson)
   }
 
-  test("Test pre-release Menas JSON format to StructType schema conversion") {
+  test("Test pre-release Enceladus JSON format to StructType schema conversion") {
     val inputJson =
       """
         |{

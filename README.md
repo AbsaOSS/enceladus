@@ -84,14 +84,14 @@ Ensure the properties there fit your environment.
 
 #### Build commands:
 
-- Without tests: `mvn clean package -DskipTests `
+- Without tests: `mvn clean package -Dskip.unit.tests`
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
 
 #### Test coverage:
-- Test coverage: `mvn scoverage:report`
+- Test coverage: `mvn clean verify -Pcode-coverage`
 
-The coverage reports are written in each module's `target` directory and aggregated in the root `target` directory.
+The coverage reports are written in each module's `target` directory.
 
 ## How to run
 #### REST API requirements:
@@ -121,9 +121,9 @@ There are several ways of deploying Menas:
 - [**Spark 2.4.4 (Scala 2.11)** installation](https://spark.apache.org/downloads.html)
 - [**Hadoop 2.7** installation](https://hadoop.apache.org/releases.html)
 - **REST API** running instance
-- **Menas Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
+- **REST API Credentials File** in your home directory or on HDFS (a configuration file for authenticating the Spark jobs with Menas) 
    - **Use with in-memory authentication**
-e.g. `~/menas-credential.properties`:
+e.g. `~/rest-api-credential.properties`:
 ```
 username=user
 password=changeme
@@ -145,7 +145,7 @@ password=changeme
 --conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -154,7 +154,7 @@ password=changeme
 --row-tag <tag>
 ```
 * Here `row-tag` is a specific option for `raw-format` of type `XML`. For more options for different types please see our WIKI.
-* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--rest-api-auth-keytab` with `--rest-api-credentials-file`
 
 #### Running Conformance
 ```
@@ -170,7 +170,7 @@ password=changeme
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -189,7 +189,7 @@ password=changeme
 --conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
 <spark-jobs_<build_version>.jar> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -198,7 +198,7 @@ password=changeme
 --row-tag <tag>
 ```
 
-* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--menas-auth-keytab` with `--menas-credentials-file`
+* In case REST API is configured for in-memory authentication (e.g. in dev environments), replace `--rest-api-auth-keytab` with `--rest-api-credentials-file`
 
 #### Helper scripts for running Standardization, Conformance or both together
 
@@ -221,7 +221,7 @@ The basic command to run Standardization becomes:
 <path to scripts>/run_standardization.sh \
 --num-executors <num> \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -235,7 +235,7 @@ The basic command to run Conformance becomes:
 <path to scripts>/run_conformance.sh \
 --num-executors <num> \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -247,7 +247,7 @@ The basic command to run Standardization and Conformance combined becomes:
 <path to scripts>/run_standardization_conformance.sh \
 --num-executors <num> \
 --deploy-mode <client/cluster> \
---menas-auth-keytab <path_to_keytab_file> \
+--rest-api-auth-keytab <path_to_keytab_file> \
 --dataset-name <dataset_name> \
 --dataset-version <dataset_version> \
 --report-date <date> \
@@ -262,7 +262,7 @@ Similarly for Windows:
 <path to scripts>/run_standardization.cmd ^
 --num-executors <num> ^
 --deploy-mode <client/cluster> ^
---menas-auth-keytab <path_to_keytab_file> ^
+--rest-api-auth-keytab <path_to_keytab_file> ^
 --dataset-name <dataset_name> ^
 --dataset-version <dataset_version> ^
 --report-date <date> ^
@@ -295,8 +295,8 @@ The list of all options for running Standardization, Conformance and the combine
 
 |            Option                     |                           Description                                                                                                                                                       |
 |---------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| --menas-auth-keytab **filename**      | A keytab file used for Kerberized authentication to REST API. Cannot be used together with `--menas-credentials-file`.                                                                         |
-| --menas-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to REST API. Cannot be used together with `--menas-auth-keytab`.                                                     |
+| --rest-api-auth-keytab **filename**      | A keytab file used for Kerberized authentication to REST API. Cannot be used together with `--rest-api-credentials-file`.                                                                         |
+| --rest-api-credentials-file **filename** | A credentials file containing a login and a password used to authenticate to REST API. Cannot be used together with `--rest-api-auth-keytab`.                                                     |
 | --dataset-name **name**               | A dataset name to be standardized or conformed.                                                                                                                                             |
 | --dataset-version **version**         | A version of a dataset to be standardized or conformed.                                                                                                                                     |
 | --report-date **YYYY-mm-dd**          | A date specifying a day for which a raw data is landed.                                                                                                                                     |
@@ -340,6 +340,15 @@ The list of additional options available for running Conformance:
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
 All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
+
+## How to measure code coverage
+```shell
+./mvn clean verify -Pcode-coverage
+```
+If module contains measurable data the code coverage report will be generated on path:
+```
+{local-path}\enceladus\{module}\target\jacoco
+```
 
 ## Plugins
 

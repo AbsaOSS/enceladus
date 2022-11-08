@@ -27,13 +27,13 @@ import za.co.absa.enceladus.rest_api.auth.jwt.JwtFactory
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
-                                                     @Value("${menas.auth.jwt.lifespan.hours}")
+                                                     @Value("${enceladus.rest.auth.jwt.lifespan.hours}")
                                                      jwtLifespanHours: Int,
                                                      @Value("${timezone}")
                                                      timezone: String)
   extends SimpleUrlAuthenticationSuccessHandler {
 
-  @Value("${menas.auth.roles.regex:}")
+  @Value("${enceladus.rest.auth.roles.regex:}")
   private val rolesRegex: String = ""
 
   override def onAuthenticationSuccess(request: HttpServletRequest,

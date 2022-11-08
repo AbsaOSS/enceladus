@@ -17,7 +17,7 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, SparkSessionConfConformanceRule}
 import za.co.absa.spark.hats.Extensions._
 
@@ -28,7 +28,7 @@ case class SparkSessionConfRuleInterpreter(rule: SparkSessionConfConformanceRule
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO,
               progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateOutputField(ruleName, progArgs.datasetName, df.schema, rule.outputColumn)

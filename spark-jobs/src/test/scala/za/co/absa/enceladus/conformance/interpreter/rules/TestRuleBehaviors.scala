@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.slf4j.event.Level._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
@@ -32,7 +32,7 @@ trait TestRuleBehaviors  extends AnyFunSuite with TZNormalizedSparkTestBase with
                                          inputDataset: Dataset,
                                          expectedJSON: String,
                                          featureSwitchesOverride: Option[FeatureSwitches] = None) {
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true

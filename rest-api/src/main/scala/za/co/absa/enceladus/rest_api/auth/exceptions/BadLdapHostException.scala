@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api.auth.exceptions
 import org.springframework.security.core.AuthenticationException
 
 /**
-  * This exception is thrown when Menas failed to communicate to an LDAP server.
+  * This exception is thrown when Enceladus REST API failed to communicate to an LDAP server.
   *
   * It needs to extend [[AuthenticationException]] so it could be processed by an authentication failure handler
   * to return the proper status code in the HTTP response.

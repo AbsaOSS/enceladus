@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.stereotype.Component
 
 @Component
-class JwtFactory @Autowired()(@Value("${menas.auth.jwt.secret}")
+class JwtFactory @Autowired()(@Value("${enceladus.rest.auth.jwt.secret}")
                              secret: String) {
 
   private lazy val signingKey = Keys.hmacShaKeyFor(secret.getBytes)
