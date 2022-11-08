@@ -14,7 +14,6 @@
  */
 
 var Functions = new function () {
-  this.csrfHeader = "X-CSRF-TOKEN";
   this.jwtHeader = "JWT"
 
   this.ajax = function (sPath, sMethod, oData, fnSuccess, fnError, oControl) {
@@ -30,10 +29,7 @@ var Functions = new function () {
 
     return $.ajax(window.apiUrl + sPath, {
       beforeSend: (oJqXHR, oSettings) => {
-          let csrfToken = localStorage.getItem("csrfToken");
           let jwtToken = localStorage.getItem("jwtToken");
-          console.log("CSRF: " + this.csrfHeader + " -> " + csrfToken);
-          oJqXHR.setRequestHeader(this.csrfHeader, csrfToken);
           oJqXHR.setRequestHeader(this.jwtHeader, jwtToken);
       },
       complete: function () {
