@@ -18,7 +18,7 @@ package za.co.absa.enceladus.rest_api
 import org.springframework.context.annotation.Configuration
 import org.springframework.format.FormatterRegistry
 import org.springframework.web.servlet.config.annotation.{CorsRegistry, ViewControllerRegistry, WebMvcConfigurer}
-import za.co.absa.enceladus.rest_api.auth.AuthConstants.{CsrfTokenKey, JwtKey}
+import za.co.absa.enceladus.rest_api.auth.AuthConstants.JwtKey
 import za.co.absa.enceladus.rest_api.utils.converters.StringToValidationKindConverter
 
 @Configuration
@@ -29,7 +29,7 @@ class MvcConfig extends WebMvcConfigurer {
 
   override def addCorsMappings(registry: CorsRegistry): Unit = {
     registry.addMapping("/**")
-      .exposedHeaders(JwtKey, CsrfTokenKey)
+      .exposedHeaders(JwtKey)
       .allowedMethods("PUT", "GET", "DELETE", "OPTIONS", "PATCH", "POST")
       .allowedHeaders("*")
       .allowedOrigins("*")

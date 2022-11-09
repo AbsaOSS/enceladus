@@ -84,14 +84,14 @@ Ensure the properties there fit your environment.
 
 #### Build commands:
 
-- Without tests: `mvn clean package -DskipTests `
+- Without tests: `mvn clean package -Dskip.unit.tests`
 - With unit tests: `mvn clean package`
 - With integration tests: `mvn clean package -Pintegration`
 
 #### Test coverage:
-- Test coverage: `mvn scoverage:report`
+- Test coverage: `mvn clean verify -Pcode-coverage`
 
-The coverage reports are written in each module's `target` directory and aggregated in the root `target` directory.
+The coverage reports are written in each module's `target` directory.
 
 ## How to run
 #### REST API requirements:
@@ -340,6 +340,15 @@ The list of additional options available for running Conformance:
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
 All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
+
+## How to measure code coverage
+```shell
+./mvn clean verify -Pcode-coverage
+```
+If module contains measurable data the code coverage report will be generated on path:
+```
+{local-path}\enceladus\{module}\target\jacoco
+```
 
 ## Plugins
 
