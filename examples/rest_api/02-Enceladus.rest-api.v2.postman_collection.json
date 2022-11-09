@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "f4faaec1-6785-40e7-bbf2-936856f4c85b",
+		"_postman_id": "b94e15ad-a95d-425d-9f12-f2ef5bc1b6d9",
 		"name": "Enceladus rest-api v2",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "23143950"
@@ -17,7 +17,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set(\"jwt_token\", pm.response.headers.get(\"JWT\"));\r",
-									"pm.collectionVariables.set(\"csrf_token\", pm.response.headers.get(\"X-CSRF-TOKEN\"));"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -60,7 +60,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set(\"jwt_token\", pm.response.headers.get(\"JWT\"));\r",
-									"pm.collectionVariables.set(\"csrf_token\", pm.response.headers.get(\"X-CSRF-TOKEN\"));"
+									""
 								],
 								"type": "text/javascript"
 							}
@@ -416,11 +416,11 @@
 										},
 										{
 											"key": "datasetPropertyByAPI2",
-											"value": null
+											"value": ""
 										},
 										{
 											"key": "datasetPropertyByAPI3",
-											"value": null
+											"value": ""
 										}
 									]
 								}
@@ -451,13 +451,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"present\": true,\r\n  \"props1\": \"value 1\"\r\n}",
@@ -506,13 +500,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"_t\": \"CastingConformanceRule\",\r\n  \"order\": 1,\r\n  \"inputColumn\": \"test\",\r\n  \"outputColumn\": \"literal_string\",\r\n  \"outputDataType\": \"String\",\r\n  \"controlCheckpoint\": true,\r\n  \"value\": \"animal\"\r\n}",
@@ -602,13 +590,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"description\":\"{{newDatasetDescription}}\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":1,\r\n  \"conformance\":[],\r\n  \"properties\":{}\r\n}",
@@ -820,13 +802,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/dataset/disable/{{newDatasetName}}",
 									"host": [
@@ -861,13 +837,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/dataset/disable/{{newDatasetName}}/1",
 									"host": [
@@ -908,13 +878,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"version\":7,\r\n  \"description\":\"{{newDatasetDescription}} POST.\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":\"2\",\r\n  \"schedule\":null,\r\n  \"conformance\":[],\r\n  \"properties\": {}\r\n}",
@@ -957,13 +921,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"version\":8,\r\n  \"description\":\"{{newDatasetDescription}} POST.\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":\"2\",\r\n  \"schedule\":null,\r\n  \"conformance\":[],\r\n  \"properties\": {\r\n        \"datasetPropertyByAPI1\": \"test\",\r\n        \"datasetPropertyByAPI2\": \"test2\",\r\n        \"datasetPropertyByAPI3\": \"test3\"\r\n  }\r\n}",
@@ -1006,13 +964,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newDatasetName}}\",\r\n  \"version\":4,\r\n  \"description\":\"{{newDatasetDescription}} PUT\",\r\n  \"hdfsPath\":\"/std\",\r\n  \"hdfsPublishPath\":\"/publish\",\r\n  \"schemaName\":\"schemaByAPI\",\r\n  \"schemaVersion\":\"2\",\r\n  \"schedule\":null,\r\n  \"conformance\":[],\r\n  \"properties\":{}\r\n}",
@@ -1141,13 +1093,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"metadata\":{\r\n    \"exportVersion\":1\r\n  },\r\n  \"item\":{\r\n    \"name\":\"{{importedDatasetByAPIName}}\",\r\n    \"description\":\"{{importedDatasetByAPIDescription}}\",\r\n    \"hdfsPath\":\"/std\",\r\n    \"hdfsPublishPath\":\"/publish\",\r\n    \"schemaName\":\"schemaByAPI\",\r\n    \"schemaVersion\":1,\r\n    \"conformance\":[{\r\n      \"_t\":\"LiteralConformanceRule\",\r\n      \"order\":0,\r\n      \"outputColumn\":\"TestCol\",\r\n      \"controlCheckpoint\":true,\r\n      \"value\":\"XXX\"\r\n    }],\r\n   \"properties\":{}\r\n   }\r\n }\r\n",
@@ -1354,13 +1300,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/dataset/lock/{{newDatasetName}}",
 									"host": [
@@ -1439,13 +1379,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/dataset/unlock/{{newDatasetName}}",
 									"host": [
@@ -1531,13 +1465,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"id\": {\r\n    \"name\": \"{{newMappingTableName}}\",\r\n    \"version\": 3\r\n  },\r\n  \"value\": {\r\n    \"columnName\": \"col1\",\r\n    \"value\": \"val1\"\r\n  }\r\n}",
@@ -1625,13 +1553,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newMappingTableName}}\",\r\n  \"description\":\"{{newMappingTableDescription}}\",\r\n  \"hdfsPath\":\"/\",\r\n  \"schemaName\":\"{{existingSchemaName}}\",\r\n  \"schemaVersion\":1,\r\n  \"filter\":{\r\n      \"_t\":\"IsNullFilter\",\r\n      \"columnName\":\"A1\",\r\n      \"filter_valueState\":\"None\",\r\n      \"filter_valueStateText\":\"\",\r\n      \"columnName_valueState\":\"None\",\r\n      \"columnName_valueStateText\":\"\"\r\n  }\r\n}",
@@ -1843,13 +1765,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/mappingTable/disable/{{newMappingTableName}}",
 									"host": [
@@ -1884,13 +1800,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/mappingTable/disable/{{newMappingTableName}}/1",
 									"host": [
@@ -1931,13 +1841,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newMappingTableName}}\",\r\n  \"version\":6,\r\n  \"description\":\"Dataset created by API.3\",\r\n  \"hdfsPath\":\"/\",\r\n  \"schemaName\":\"locationSchema\",\r\n  \"schemaVersion\":1,\r\n  \"filter\":{\r\n      \"_t\":\"IsNullFilter\",\r\n      \"columnName\":\"A1\",\r\n      \"filter_valueState\":\"None\",\r\n      \"filter_valueStateText\":\"\",\r\n      \"columnName_valueState\":\"None\",\r\n      \"columnName_valueStateText\":\"\"\r\n  }\r\n}",
@@ -1980,13 +1884,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\":\"{{newMappingTableName}}\",\r\n  \"version\":7,\r\n  \"description\":\"Dataset created by API.2\",\r\n  \"hdfsPath\":\"/\",\r\n  \"schemaName\":\"locationSchema\",\r\n  \"schemaVersion\":1,\r\n  \"filter\":{\r\n      \"_t\":\"IsNullFilter\",\r\n      \"columnName\":\"A1\",\r\n      \"filter_valueState\":\"None\",\r\n      \"filter_valueStateText\":\"\",\r\n      \"columnName_valueState\":\"None\",\r\n      \"columnName_valueStateText\":\"\"\r\n  }\r\n}",
@@ -2115,13 +2013,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"metadata\": {\r\n    \"exportVersion\": 1\r\n  },\r\n  \"item\": {\r\n    \"name\": \"{{importedMappingTableByAPIName}}\",\r\n    \"description\": \"{{importedMappingTableByAPIDesc}}\",\r\n    \"hdfsPath\": \"/std/map/location\",\r\n    \"schemaName\": \"schemaByAPI\",\r\n    \"schemaVersion\": 1,\r\n    \"defaultMappingValue\": []\r\n  }\r\n}\r\n",
@@ -2283,13 +2175,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/mappingTable/lock/{{newMappingTableName}}",
 									"host": [
@@ -2368,13 +2254,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/mappingTable/unlock/{{newMappingTableName}}",
 									"host": [
@@ -2414,13 +2294,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"id\": {\r\n    \"name\": \"{{newMappingTableName}}\",\r\n    \"version\": 4\r\n  },\r\n  \"value\": [{\r\n    \"columnName\": \"col1\",\r\n    \"value\": \"val2\"\r\n  }]\r\n}",
@@ -2557,13 +2431,7 @@
 									]
 								},
 								"method": "GET",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/properties/datasets",
 									"host": [
@@ -2602,13 +2470,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
@@ -2773,13 +2635,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName2}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
@@ -2823,13 +2679,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": true,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
@@ -2873,13 +2723,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName2}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": true,\r\n    \"essentiality\": {\r\n      \"_t\": \"Recommended\"\r\n    }\r\n  }",
@@ -2923,13 +2767,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName3}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc3}}\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Optional\"\r\n    }\r\n  }",
@@ -3146,13 +2984,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/properties/datasets/disable/{{newDatasetPropertyName1}}",
 									"host": [
@@ -3164,48 +2996,6 @@
 										"datasets",
 										"disable",
 										"{{newDatasetPropertyName1}}"
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "disable Copy",
-							"request": {
-								"auth": {
-									"type": "apikey",
-									"apikey": [
-										{
-											"key": "value",
-											"value": "{{jwt_token}}",
-											"type": "string"
-										},
-										{
-											"key": "key",
-											"value": "JWT",
-											"type": "string"
-										}
-									]
-								},
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "{{enceladus_rest_api}}/api/properties/datasets/disable/datasetPropertyByAPI11",
-									"host": [
-										"{{enceladus_rest_api}}"
-									],
-									"path": [
-										"api",
-										"properties",
-										"datasets",
-										"disable",
-										"datasetPropertyByAPI11"
 									]
 								}
 							},
@@ -3230,13 +3020,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/properties/datasets/disable/{{newDatasetPropertyName1}}/2",
 									"host": [
@@ -3278,13 +3062,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}}\",\r\n    \"version\": \"2\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
@@ -3328,13 +3106,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"name\": \"{{newDatasetPropertyName1}}\",\r\n    \"description\": \"{{newDatasetPropertyDesc1}}\",\r\n    \"version\": \"3\",\r\n    \"propertyType\": {\r\n      \"_t\": \"StringPropertyType\",\r\n      \"allowedValues\": []\r\n    },\r\n    \"putIntoInfoFile\": false,\r\n    \"essentiality\": {\r\n      \"_t\": \"Mandatory\"\r\n    }\r\n  }",
@@ -3466,13 +3238,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"metadata\": {\r\n        \"exportVersion\": 1\r\n    },\r\n    \"item\": {\r\n        \"name\": \"{{newDatasetPropertyName2}}\",\r\n        \"description\": \"{{newDatasetPropertyDesc2}}\",\r\n        \"propertyType\": {\r\n            \"_t\": \"EnumPropertyType\",\r\n            \"allowedValues\": [\r\n                \"optionA\",\r\n                \"optionB\",\r\n                \"optionC\"\r\n            ],\r\n            \"suggestedValue\": null\r\n        },\r\n        \"putIntoInfoFile\": false,\r\n        \"essentiality\": {\r\n            \"_t\": \"Mandatory\",\r\n            \"allowRun\": false\r\n        }\r\n    }\r\n}",
@@ -3638,13 +3404,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/properties/datasets/lock/{{newDatasetPropertyName1}}",
 									"host": [
@@ -3725,13 +3485,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/properties/datasets/unlock/{{newDatasetPropertyName1}}",
 									"host": [
@@ -3857,13 +3611,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n    \"uniqueId\": \"274ccaac-19c2-4b3b-af11-8eb0df33a6xxx\",\r\n    \"runId\": 2,\r\n    \"dataset\": \"concatenationConformanceRule\",\r\n    \"datasetVersion\": 1,\r\n    \"splineRef\": {\r\n        \"sparkApplicationId\": \"local-1664801804724\",\r\n        \"outputPath\": \"hdfs://localhost:9000/publish/concatenationConformanceRule/enceladus_info_date=2020-03-23/enceladus_info_version=1\"\r\n    },\r\n    \"startDateTime\": \"03-10-2022 12:56:49 +0000\",\r\n    \"runStatus\": {\r\n        \"status\": \"running\"\r\n    },\r\n    \"controlMeasure\": {\r\n        \"metadata\": {\r\n            \"sourceApplication\": \"Another PC\",\r\n            \"country\": \"EN\",\r\n            \"historyType\": \"Snapshot\",\r\n            \"dataFilename\": \"data.csv\",\r\n            \"sourceType\": \"Golden\",\r\n            \"version\": 1,\r\n            \"informationDate\": \"23-3-2020\",\r\n            \"additionalInfo\": {\r\n                \"conform_size_ratio\": \"131.37 %\",\r\n                \"std_yarn_deploy_mode\": \"client\",\r\n                \"conform_username\": \"user\",\r\n                \"conform_input_data_size\": \"4671\",\r\n                \"raw_format\": \"csv\",\r\n                \"conform_output_data_size\": \"8853\",\r\n                \"std_application_id\": \"local-1663770713457\",\r\n                \"source_record_count\": \"3\",\r\n                \"std_spark_master\": \"local[*]\",\r\n                \"conform_output_dir_size\": \"12231\",\r\n                \"conform_records_failed\": \"1\",\r\n                \"std_executors_num\": \"0\",\r\n                \"conform_errors_count\": \"3\",\r\n                \"std_username\": \"user\",\r\n                \"std_output_data_size\": \"4671\",\r\n                \"std_records_succeeded\": \"3\",\r\n                \"std_records_failed\": \"1\",\r\n                \"conform_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n                \"conform_spark_master\": \"local[*]\",\r\n                \"std_errors_count\": \"3\",\r\n                \"default_time_zone_for_dates\": \"UTC\",\r\n                \"std_output_dir_size\": \"6520\",\r\n                \"std_input_dir_size\": \"1118\",\r\n                \"conform_executors_num\": \"0\",\r\n                \"std_output_dir\": \"/bigdata/std/conformanceRulesData/concatenationConformanceRule/1/2020-03-23/v1\",\r\n                \"default_time_zone_for_timestamps\": \"UTC\",\r\n                \"conform_input_dir\": \"/bigdata/std/conformanceRulesData/concatenationConformanceRule/1/2020-03-23/v1\",\r\n                \"enceladus_info_version\": \"1\",\r\n                \"std_input_dir\": \"/std/conformanceRulesData/2020/03/23/v1\",\r\n                \"std_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n                \"conform_records_succeeded\": \"3\",\r\n                \"conform_data_size_ratio\": \"131.37 %\",\r\n                \"conform_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name concatenationConformanceRule --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n                \"std_input_data_size\": \"172\",\r\n                \"std_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name concatenationConformanceRule --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n                \"conform_record_count\": \"4\",\r\n                \"conform_input_dir_size\": \"6739\",\r\n                \"std_size_ratio\": \"417.80 %\",\r\n                \"conform_yarn_deploy_mode\": \"client\",\r\n                \"std_record_count\": \"4\",\r\n                \"conform_output_dir\": \"/publish/concatenationConformanceRule/enceladus_info_date=2020-03-23/enceladus_info_version=1\",\r\n                \"conform_application_id\": \"local-1663770713457\",\r\n                \"raw_record_count\": \"3\",\r\n                \"enceladus_info_date\": \"2020-03-23\",\r\n                \"std_data_size_ratio\": \"417.80 %\"\r\n            }\r\n        },\r\n        \"runUniqueId\": \"274ccaac-19c2-4b3b-af11-8eb0df33a6dc\",\r\n        \"checkpoints\": [\r\n            {\r\n                \"name\": \"Source\",\r\n                \"processStartTime\": \"23-3-2020 08:00:00\",\r\n                \"processEndTime\": \"23-3-2020 08:05:01\",\r\n                \"workflowName\": \"Source\",\r\n                \"order\": 1,\r\n                \"controls\": [\r\n                    {\r\n                        \"controlName\": \"recordCount\",\r\n                        \"controlType\": \"count\",\r\n                        \"controlCol\": \"id\",\r\n                        \"controlValue\": \"3\"\r\n                    }\r\n                ]\r\n            }\r\n        ]\r\n    }\r\n}",
@@ -4073,13 +3821,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\": \"Source\",\r\n  \"processStartTime\": \"23-3-2020 08:00:00\",\r\n  \"processEndTime\": \"23-3-2020 08:05:01\",\r\n  \"workflowName\": \"Source\",\r\n  \"order\": 1,\r\n  \"controls\": [\r\n    {\r\n        \"controlName\": \"recordCount\",\r\n        \"controlType\": \"count\",\r\n        \"controlCol\": \"id\",\r\n        \"controlValue\": \"3\"\r\n    }\r\n  ]\r\n}",
@@ -4360,13 +4102,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"metadata\": {\r\n    \"sourceApplication\": \"Another PC\",\r\n    \"country\": \"EN\",\r\n    \"historyType\": \"Snapshot\",\r\n    \"dataFilename\": \"data.csv\",\r\n    \"sourceType\": \"Golden\",\r\n    \"version\": 1,\r\n    \"informationDate\": \"23-3-2020\",\r\n    \"additionalInfo\": {\r\n      \"conform_size_ratio\": \"131.37 %\",\r\n      \"std_yarn_deploy_mode\": \"client\",\r\n      \"conform_username\": \"user\",\r\n      \"conform_input_data_size\": \"4671\",\r\n      \"raw_format\": \"csv\",\r\n      \"conform_output_data_size\": \"8853\",\r\n      \"std_application_id\": \"local-1663770713457\",\r\n      \"source_record_count\": \"3\",\r\n      \"std_spark_master\": \"local[*]\",\r\n      \"conform_output_dir_size\": \"12231\",\r\n      \"conform_records_failed\": \"1\",\r\n      \"std_executors_num\": \"0\",\r\n      \"conform_errors_count\": \"3\",\r\n      \"std_username\": \"user\",\r\n      \"std_output_data_size\": \"4671\",\r\n      \"std_records_succeeded\": \"3\",\r\n      \"std_records_failed\": \"1\",\r\n      \"conform_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n      \"conform_spark_master\": \"local[*]\",\r\n      \"std_errors_count\": \"3\",\r\n      \"default_time_zone_for_dates\": \"UTC\",\r\n      \"std_output_dir_size\": \"6520\",\r\n      \"std_input_dir_size\": \"1118\",\r\n      \"conform_executors_num\": \"0\",\r\n      \"std_output_dir\": \"/bigdata/std/conformanceRulesData/concatenationConformanceRule/1/2020-03-23/v1\",\r\n      \"default_time_zone_for_timestamps\": \"UTC\",\r\n      \"conform_input_dir\": \"/bigdata/std/conformanceRulesData/concatenationConformanceRule/1/2020-03-23/v1\",\r\n      \"enceladus_info_version\": \"1\",\r\n      \"std_input_dir\": \"/std/conformanceRulesData/2020/03/23/v1\",\r\n      \"std_enceladus_version\": \"3.0.0-SNAPSHOT\",\r\n      \"conform_records_succeeded\": \"3\",\r\n      \"conform_data_size_ratio\": \"131.37 %\",\r\n      \"conform_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name concatenationConformanceRule --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n      \"std_input_data_size\": \"172\",\r\n      \"std_cmd_line_args\": \"--menas-credentials-file /menas-credential.properties --dataset-name concatenationConformanceRule --dataset-version 1 --report-date 2020-03-23 --report-version 1 --raw-format csv\",\r\n      \"conform_record_count\": \"4\",\r\n      \"conform_input_dir_size\": \"6739\",\r\n      \"std_size_ratio\": \"417.80 %\",\r\n      \"conform_yarn_deploy_mode\": \"client\",\r\n      \"std_record_count\": \"4\",\r\n      \"conform_output_dir\": \"/publish/concatenationConformanceRule/enceladus_info_date=2020-03-23/enceladus_info_version=1\",\r\n      \"conform_application_id\": \"local-1663770713457\",\r\n      \"raw_record_count\": \"3\",\r\n      \"enceladus_info_date\": \"2020-03-23\",\r\n      \"std_data_size_ratio\": \"417.80 %\"\r\n    }\r\n  },\r\n  \"runUniqueId\": \"{{existingRunUniqueId}}\",\r\n  \"checkpoints\": [{\r\n    \"name\": \"Source\",\r\n    \"processStartTime\": \"23-3-2020 08:00:00\",\r\n    \"processEndTime\": \"23-3-2020 08:05:01\",\r\n    \"workflowName\": \"Source\",\r\n    \"order\": 1,\r\n    \"controls\": [\r\n      {\r\n        \"controlName\": \"recordCount\",\r\n        \"controlType\": \"count\",\r\n        \"controlCol\": \"id\",\r\n        \"controlValue\": \"3\"\r\n      }\r\n    ]\r\n  }]\r\n}",
@@ -4415,13 +4151,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"status\": \"running\"\r\n}\r\n",
@@ -4470,13 +4200,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"sparkApplicationId\": \"local-1663770713457\",\r\n  \"outputPath\": \"hdfs://localhost:9000/publish/concatenationConformanceRule/enceladus_info_date=2020-03-23/enceladus_info_version=1\"\r\n}",
@@ -4570,13 +4294,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\": \"{{newSchemaName}}\",\r\n  \"description\": \"{{newSchemaDescription}}\"\r\n}",
@@ -4619,13 +4337,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\": \"{{uploadedSchemaName}}\",\r\n  \"description\": \"{{uploadedSchemaDescription}}\"\r\n}",
@@ -4837,13 +4549,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/disable/{{newSchemaName}}",
 									"host": [
@@ -4878,13 +4584,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/disable/{{newSchemaName}}/1",
 									"host": [
@@ -4920,13 +4620,7 @@
 									]
 								},
 								"method": "DELETE",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/disable/{{newSchemaName}}/1",
 									"host": [
@@ -4967,13 +4661,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\": \"{{newSchemaName}}\", \r\n  \"version\": 1, \r\n  \"description\": \"{{newSchemaDescription}}\"\r\n}",
@@ -5016,13 +4704,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"name\": \"{{newSchemaName}}\", \r\n  \"version\": 1, \r\n  \"description\": \"{{newSchemaDescription}} x\"\r\n}",
@@ -5231,13 +4913,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "raw",
 									"raw": "{\r\n  \"metadata\": {\r\n    \"exportVersion\": 1\r\n  },\r\n  \"item\": {\r\n    \"name\": \"{{importedSchemaByAPIName}}\",\r\n    \"description\": \"{{importedSchemaByAPIDesc}}\",\r\n    \"fields\": [\r\n      {\r\n        \"name\": \"location\",\r\n        \"type\": \"string\",\r\n        \"path\": \"\",\r\n        \"elementType\": null,\r\n        \"containsNull\": null,\r\n        \"nullable\": false,\r\n        \"metadata\": {},\r\n        \"children\": [],\r\n        \"absolutePath\": \"location\"\r\n      },\r\n      {\r\n        \"name\": \"show\",\r\n        \"type\": \"string\",\r\n        \"path\": \"\",\r\n        \"elementType\": null,\r\n        \"containsNull\": null,\r\n        \"nullable\": false,\r\n        \"metadata\": {},\r\n        \"children\": [],\r\n        \"absolutePath\": \"show\"\r\n      }\r\n    ]\r\n  }\r\n}\r\n",
@@ -5440,13 +5116,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/lock/{{existingSchemaName}}",
 									"host": [
@@ -5486,13 +5156,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/registry?name={{newSchemaName}}&subject={{uploadSubjectValue}}&version=1",
 									"host": [
@@ -5545,13 +5209,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/remote?remoteUrl={{remoteFileUrl}}&name={{schemaFileToUpload}}&version=1",
 									"host": [
@@ -5643,13 +5301,7 @@
 									]
 								},
 								"method": "PUT",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"url": {
 									"raw": "{{enceladus_rest_api}}/api/schema/unlock/{{existingSchemaName}}",
 									"host": [
@@ -5689,13 +5341,7 @@
 									]
 								},
 								"method": "POST",
-								"header": [
-									{
-										"key": "X-CSRF-TOKEN",
-										"value": "{{csrf_token}}",
-										"type": "text"
-									}
-								],
+								"header": [],
 								"body": {
 									"mode": "formdata",
 									"formdata": [

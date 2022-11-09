@@ -137,11 +137,8 @@ sap.ui.define([
 
       let fnSuccess = (result, status, xhr) => {
         this.byId("password").setValue("");
-        let csrfToken = xhr.getResponseHeader("X-CSRF-TOKEN");
         let jwt = xhr.getResponseHeader("JWT");
-        localStorage.setItem("csrfToken", csrfToken);
         localStorage.setItem("jwtToken", jwt);
-        setCookie("JWT", jwt, 1);
         Functions.ajax("/user/info", "GET", {}, (oInfo) => {
           model.setProperty("/userInfo", oInfo);
           model.setProperty("/menasVersion", oInfo.menasVersion);
