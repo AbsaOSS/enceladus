@@ -45,10 +45,11 @@ fi
 import_function () {
     for var in `ls -d ${PWD}/${1}/*`; do
         canonicalPath=$(realpath "${var}")
+        fileContent=`cat ${canonicalPath}`
         curl -v \
             -H "@${HEADERS_FILE}" \
             -H 'Content-Type:application/json' \
-            --data "@${canonicalPath}" \
+            --data "${fileContent}" \
             "${URL}/api/${2}/importItem"
     done
 }
