@@ -56,11 +56,17 @@ enceladus.rest.auth.inmemory.password=changeme
 enceladus.rest.auth.inmemory.admin.user=menas_admin
 enceladus.rest.auth.inmemory.admin.password=admin123
 
+# Implementation of Hadoop FS to use to be able to see paths to datasets.
+# Whole of Enceladus works even if none set. It is just a convenience feature.
+# Currently supported hdfs or none.
+enceladus.rest.fs.config.type=none
+
 # Define how REST API authenticates to Hadoop. Supported options are:
 #  "default" -> will use the default authentication or kerberos ticket from the system
 #  "simple" -> will use authentication by a user name
 #  "krb5" -> will use specified kerberos configurations to authenticate via kerberos using specified username & keytab
 enceladus.rest.hadoop.auth.method=default
+enceladus.rest.hadoop.conf.dir=/path/to/hadoop/conf/dir
 enceladus.rest.hadoop.auth.user=hdfs
 enceladus.rest.hadoop.auth.krb5.debug=true
 enceladus.rest.hadoop.auth.krb5.realm=EXAMPLE.COM
