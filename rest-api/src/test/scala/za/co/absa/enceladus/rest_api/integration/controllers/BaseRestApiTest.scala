@@ -81,10 +81,8 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 
     val jwtToken = response.getHeaders.get("jwt").get(0)
-    val csrfToken = response.getHeaders.get("X-CSRF-TOKEN").get(0)
     val headers = new HttpHeaders()
     headers.add("jwt", jwtToken)
-    headers.add("X-CSRF-TOKEN", csrfToken)
     headers
   }
 

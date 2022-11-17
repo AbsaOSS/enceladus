@@ -20,7 +20,6 @@ class RestClient {
   static get(url, shouldUseCache = false) {
     let request = {
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       },
       url: window.apiUrl + url,
@@ -34,7 +33,6 @@ class RestClient {
     let requestUrl = isWeb ? url : (window.apiUrl + url);
     let request = {
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       },
       url: requestUrl,
@@ -50,7 +48,6 @@ class RestClient {
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       },
     });
@@ -64,7 +61,6 @@ class RestClient {
       data: JSON.stringify(data),
       contentType: "application/json",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       }
     });
@@ -76,7 +72,6 @@ class RestClient {
       url: window.apiUrl + url,
       type: "DELETE",
       headers: {
-        "X-CSRF-TOKEN": localStorage.getItem("csrfToken"),
         "JWT": localStorage.getItem("jwtToken")
       }
     });

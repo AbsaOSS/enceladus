@@ -32,6 +32,5 @@ class AuthConstants @Autowired()() {
 object AuthConstants {
 
   val JwtKey: String = "JWT"
-  val CsrfTokenKey: String = "X-CSRF-TOKEN"
   val RolesKey: String = "Roles"
 }

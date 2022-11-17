@@ -54,13 +54,7 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
         case Failure(exception) =>
           logger.warn(s"JWT authentication failed $exception")
           None
-        case Success(jwtClaims) =>
-          if (isCsrfSafe(request, jwtClaims)) {
-            Option(parseJwtClaims(jwtClaims))
-          } else {
-            logger.warn("JWT authentication failed: Incorrect CSRF token")
-            None
-          }
+        case Success(jwtClaims) => Option(parseJwtClaims(jwtClaims))
       }
     }
   }
@@ -78,17 +72,6 @@ class JwtAuthenticationFilter @Autowired()(jwtFactory: JwtFactory) extends OnceP
     .fold(Seq.empty[String])(_.asScala.toSeq)
 
     groups.map(k => new SimpleGrantedAuthority(k)).asJava
-  }
-
-  private def isCsrfSafe(request: HttpServletRequest, jwtClaims: Claims): Boolean = {
-    request.getMethod.toUpperCase match {
-      case "GET" => true
-      case _     =>
-        val csrfToken = Option(request.getHeader(CsrfTokenKey))
-        val jwtCsrfToken = jwtClaims.get(CsrfTokenKey, classOf[String])
-        csrfToken.contains(jwtCsrfToken)
-    }
-
   }
 
   private def getJwt(request: HttpServletRequest): Option[String] = {
