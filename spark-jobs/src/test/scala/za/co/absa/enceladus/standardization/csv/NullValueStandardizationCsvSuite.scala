@@ -22,21 +22,22 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
+import za.co.absa.standardization.stages.PlainSchemaGenerator
 
 class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
-  private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--rest-api-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
     .split(" ")
   private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
-  private implicit val defaults: Defaults = GlobalDefaults
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
   private val dataSet = Dataset("Foo", 1, None, "", "", "SpecialChars", 1, conformance = Nil)
 
@@ -56,7 +57,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_csv_suite_expected_no_null_value.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(expected == actual)
@@ -74,7 +75,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val expected = FileReader.readFileAsString("src/test/resources/data/standardization_csv_suite_expected_with_null_value.txt")
       .replace("\r\n", "\n")
 
-    val destDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(expected == actual)

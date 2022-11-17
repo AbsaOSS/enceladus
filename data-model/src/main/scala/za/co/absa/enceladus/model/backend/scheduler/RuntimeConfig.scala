@@ -17,6 +17,7 @@ package za.co.absa.enceladus.model.backend.scheduler
 
 import RuntimeConfig._
 
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
 case class RuntimeConfig(
     stdNumExecutors: Int = DefaultStdNumExecutors,
     stdExecutorMemory: Int = DefaultStdExecutorMemory,

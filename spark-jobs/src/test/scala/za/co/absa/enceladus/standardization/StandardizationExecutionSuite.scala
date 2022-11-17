@@ -18,7 +18,6 @@ package za.co.absa.enceladus.standardization
 import java.io.File
 import java.nio.file.Files
 import org.apache.commons.io.FileUtils
-import org.apache.hadoop.fs.Path
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
@@ -30,7 +29,6 @@ import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
-import za.co.absa.atum.utils.InfoFile
 import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils.JsonType
 import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
 import za.co.absa.enceladus.common.config.PathConfig
@@ -43,13 +41,13 @@ import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.standardization.types.CommonTypeDefaults
 
 import scala.util.control.NonFatal
 
 class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase with MockitoSugar {
 
-  private implicit val defaults: Defaults = GlobalDefaults
+  implicit val defaults: CommonTypeDefaults = new CommonTypeDefaults()
 
   private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)

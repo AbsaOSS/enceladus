@@ -16,10 +16,6 @@
 package za.co.absa.enceladus.utils.udf
 
 object UDFNames {
-  final val stdCastErr = "stdCastErr"
-  final val stdNullErr = "stdNullErr"
-  final val stdSchemaErr = "stdSchemaErr"
-
   final val confMappingErr = "confMappingErr"
   final val confCastErr = "confCastErr"
   final val confNegErr = "confNegErr"

@@ -79,8 +79,8 @@ CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
 CONF_SPARK_MEMORY_FRACTION=""
 
 # Security command line defaults
-MENAS_CREDENTIALS_FILE=""
-MENAS_AUTH_KEYTAB=""
+REST_API_CREDENTIALS_FILE=""
+REST_API_AUTH_KEYTAB=""
 CLIENT_MODE_RUN_KINIT="$DEFAULT_CLIENT_MODE_RUN_KINIT"
 
 # Parse command line (based on https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash)
@@ -263,11 +263,11 @@ case $key in
     shift 2 # past argument and value
     ;;
   --rest-api-credentials-file)
-    MENAS_CREDENTIALS_FILE="$2"
+    REST_API_CREDENTIALS_FILE="$2"
     shift 2 # past argument and value
     ;;
   --rest-api-auth-keytab)
-    MENAS_AUTH_KEYTAB="$2"
+    REST_API_AUTH_KEYTAB="$2"
     shift 2 # past argument and value
     ;;
   --experimental-mapping-rule)
@@ -373,7 +373,7 @@ if [ "$HELP_CALL" == "0" ]; then
     validate "--dataset-version" "$DATASET_VERSION"
     validate "--report-date" "$REPORT_DATE"
 
-    validate_either "--rest-api-credentials-file" "$MENAS_CREDENTIALS_FILE" "--rest-api-auth-keytab" "$MENAS_AUTH_KEYTAB"
+    validate_either "--rest-api-credentials-file" "$REST_API_CREDENTIALS_FILE" "--rest-api-auth-keytab" "$REST_API_AUTH_KEYTAB"
 
     if [[ "$MASTER" != "yarn" ]]; then
       echo "Master '$MASTER' is not allowed. The only allowed master is 'yarn'."
@@ -413,9 +413,9 @@ get_temp_log_file() {
 }
 
 add_keytab_to_files() {
-    MENAS_AUTH_KEYTAB_NAME=`echo "${MENAS_AUTH_KEYTAB}" | grep -o '[^/]*$'`
-    FILES="${FILES},${MENAS_AUTH_KEYTAB}#${MENAS_AUTH_KEYTAB_NAME}"
-    MENAS_AUTH_KEYTAB="${MENAS_AUTH_KEYTAB_NAME}"
+    REST_API_AUTH_KEYTAB_NAME=`echo "${REST_API_AUTH_KEYTAB}" | grep -o '[^/]*$'`
+    FILES="${FILES},${REST_API_AUTH_KEYTAB}#${REST_API_AUTH_KEYTAB_NAME}"
+    REST_API_AUTH_KEYTAB="${REST_API_AUTH_KEYTAB_NAME}"
 }
 
 CMD_LINE="$SPARK_SUBMIT"
@@ -486,10 +486,10 @@ if [ "$HELP_CALL" == "1" ]; then
   exit "$?"
 fi
 
-if [[ "${MENAS_AUTH_KEYTAB}" =~ "^(s|S)3://.*" ]]; then
+if [[ "${REST_API_AUTH_KEYTAB}" =~ "^(s|S)3://.*" ]]; then
   echo "Using Keytab from S3"
   add_keytab_to_files
-elif [[ -f "${MENAS_AUTH_KEYTAB}" ]]; then
+elif [[ -f "${REST_API_AUTH_KEYTAB}" ]]; then
   echo "Using Keytab from local FS"
   add_keytab_to_files
 else
@@ -523,8 +523,8 @@ CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_
 CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
-add_to_cmd_line "--rest-api-auth-keytab" "${MENAS_AUTH_KEYTAB}"
-add_to_cmd_line "--rest-api-credentials-file" "${MENAS_CREDENTIALS_FILE}"
+add_to_cmd_line "--rest-api-auth-keytab" "${REST_API_AUTH_KEYTAB}"
+add_to_cmd_line "--rest-api-credentials-file" "${REST_API_CREDENTIALS_FILE}"
 add_to_cmd_line "--dataset-name" "${DATASET_NAME}"
 add_to_cmd_line "--dataset-version" "${DATASET_VERSION}"
 add_to_cmd_line "--report-date" "${REPORT_DATE}"
@@ -560,18 +560,18 @@ if [[ -z "$DRY_RUN" ]]; then
   if [[ "$DEPLOY_MODE" == "client" ]]; then
     TMP_PATH_NAME=$(get_temp_log_file)
     # Initializing Kerberos ticket
-    if [[ -n "$MENAS_AUTH_KEYTAB" ]] && [[ "$CLIENT_MODE_RUN_KINIT" == "true" ]]; then
+    if [[ -n "$REST_API_AUTH_KEYTAB" ]] && [[ "$CLIENT_MODE_RUN_KINIT" == "true" ]]; then
       # Get principle stored in the keyfile
-      PR=$(printf "read_kt %s\nlist" "$MENAS_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
+      PR=$(printf "read_kt %s\nlist" "$REST_API_AUTH_KEYTAB" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
       # Alternative way, might be less reliable
-      # PR=$(printf "read_kt $MENAS_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
+      # PR=$(printf "read_kt $REST_API_AUTH_KEYTAB\nlist" | ktutil | sed -n '5p' | awk '{print $3}' | cut -d '@' -f1)
       if [[ -n "$PR" ]]; then
         # Initialize a ticket
-        kinit -k -t "$MENAS_AUTH_KEYTAB" "$PR"
+        kinit -k -t "$REST_API_AUTH_KEYTAB" "$PR"
         klist -e 2>&1 | tee -a "$TMP_PATH_NAME"
       else
         echoerr "WARNING!"
-        echoerr "Unable to determine principle from the keytab file $MENAS_AUTH_KEYTAB."
+        echoerr "Unable to determine principle from the keytab file $REST_API_AUTH_KEYTAB."
         echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
         sleep 10
       fi

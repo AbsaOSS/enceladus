@@ -18,11 +18,11 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import za.co.absa.enceladus.common.GlobalDefaults
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, NegationConformanceRule}
-import za.co.absa.enceladus.utils.types.GlobalDefaults
 import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements

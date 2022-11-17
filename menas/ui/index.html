@@ -32,9 +32,6 @@
     <script src="node_modules/moment/min/moment.min.js"></script>
     <script src="node_modules/lodash/lodash.js"></script>
 
-    <!-- Included under MIT License used within Apache License, Version 2.0 -->
-    <script src="3rdParty/cRonstrue/cronstrue.min.js"></script>
-
     <script>
         function _menasLoadElem(sElemType, sSrc, aAttrs, fnOnLoad) {
             const el = document.createElement(sElemType);
@@ -85,7 +82,6 @@
                 _menasLoadElem("script", "service/MonitoringService.js", []);
                 _menasLoadElem("script", "service/PropertiesService.js", []);
                 _menasLoadElem("script", "service/RuleService.js", []);
-                _menasLoadElem("script", "service/OozieService.js", []);
                 _menasLoadElem("script", "service/RunService.js", []);
                 _menasLoadElem("script", "service/EntityDialog.js", []);
                 _menasLoadElem("script", "service/DialogFactory.js", []);

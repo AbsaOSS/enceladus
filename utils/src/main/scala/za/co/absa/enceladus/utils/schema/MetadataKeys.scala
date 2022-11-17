@@ -18,28 +18,4 @@ package za.co.absa.enceladus.utils.schema
 object MetadataKeys {
   // all
   val SourceColumn = "sourcecolumn"
-  val DefaultValue = "default"
-  // date & timestamp
-  val DefaultTimeZone = "timezone"
-  // date & timestamp & all numeric
-  val Pattern = "pattern"
-  // all numeric
-  val DecimalSeparator = "decimal_separator"
-  val GroupingSeparator = "grouping_separator"
-  val MinusSign = "minus_sign"
-  // float and double
-  val AllowInfinity = "allow_infinity"
-  // integral types
-  val Radix = "radix"
-  // binary
-  val Encoding = "encoding"
-  //decimal
-  val StrictParsing = "strict_parsing"
-}
-
-object MetadataValues {
-  object Encoding {
-    val Base64 = "base64"
-    val None = "none"
-  }
 }

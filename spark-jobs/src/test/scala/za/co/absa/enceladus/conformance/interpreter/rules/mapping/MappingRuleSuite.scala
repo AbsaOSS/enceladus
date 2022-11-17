@@ -32,11 +32,6 @@ class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with L
     testCaseFactory.createMappingTables()
   }
 
-  override def afterAll(): Unit = {
-    testCaseFactory.deleteMappingTables()
-    super.afterAll()
-  }
-
   test("Test non-existent mapping table directory handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
       testCaseFactory.getTestCase(true, false, nonExistentTableMappingRule)

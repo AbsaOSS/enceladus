@@ -18,13 +18,14 @@ package za.co.absa.enceladus.model.backend.scheduler.oozie
 import za.co.absa.enceladus.model.backend.scheduler._
 import za.co.absa.enceladus.model.backend.scheduler.dataFormats._
 
+// This class is kept for data model compatibility reason and to avoid the need of data migration.
 case class OozieSchedule(
-   scheduleTiming: ScheduleTiming,
-   runtimeParams: RuntimeConfig,
-   datasetVersion: Int,
-   mappingTablePattern: Option[String],
-   rawFormat: DataFormat,
-   activeInstance: Option[OozieScheduleInstance] = None,
-   //by default we're going to run yesterday's data
-   reportDateOffset: Int = -1
-)
+                          scheduleTiming: ScheduleTiming,
+                          runtimeParams: RuntimeConfig,
+                          datasetVersion: Int,
+                          mappingTablePattern: Option[String],
+                          rawFormat: DataFormat,
+                          activeInstance: Option[OozieScheduleInstance] = None,
+                          //by default we're going to run yesterday's data
+                          reportDateOffset: Int = -1
+                        )
