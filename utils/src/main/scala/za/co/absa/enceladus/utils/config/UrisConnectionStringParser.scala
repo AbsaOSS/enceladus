@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.dao.rest
+package za.co.absa.enceladus.utils.config
 
-import za.co.absa.enceladus.dao.RetryableException.DaoException
-
-object RestApiConnectionStringParser {
+object UrisConnectionStringParser {
 
   private val hostsRegex = """^\s*http(?:s)?://([^\s]+?)(?:/[^\s]*)?\s*$""".r
 
@@ -40,7 +38,7 @@ object RestApiConnectionStringParser {
           multiHostUrl.replace(hosts, host)
         }
       case _ =>
-        throw DaoException("Malformed REST API connection string")
+        throw new IllegalArgumentException("Malformed connection string")
     }
   }
 

@@ -34,8 +34,9 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.dao.auth.{RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
-import za.co.absa.enceladus.dao.rest.{RestApiConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
+import za.co.absa.enceladus.utils.config.UrisConnectionStringParser
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
@@ -164,7 +165,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
     implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
-    val restApiBaseUrls: List[String] = RestApiConnectionStringParser.parse(conf.getString(restApiUriKey))
+    val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(conf.getString(restApiUriKey))
     val restApiUrlsRetryCount: Option[Int] = if (conf.containsKey(restApiUriRetryCountKey)) {
       Option(conf.getInt(restApiUriRetryCountKey))
     } else {
