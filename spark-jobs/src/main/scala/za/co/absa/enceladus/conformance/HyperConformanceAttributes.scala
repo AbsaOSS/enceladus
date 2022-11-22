@@ -27,6 +27,7 @@ object HyperConformanceAttributes {
   val restApiOptionallyRetryableExceptions = "enceladus.rest.optionallyRetryableExceptions"
   val restApiCredentialsFileKey = "enceladus.rest.credentials.file"
   val restApiAuthKeytabKey = "enceladus.rest.auth.keytab"
+  val menasBaseUris = "enceladus.menas.uri"
   val datasetNameKey = "dataset.name"
   val datasetVersionKey = "dataset.version"
   val reportDateKey = "report.date"
@@ -63,6 +64,8 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
             """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
         ),
         required = false),
+    menasBaseUris ->
+      PropertyMetadata("Menas (Enceladus UI) URL(s)", Some("E.g. http://localhost:8080/menas"), required = true),
     datasetNameKey ->
       PropertyMetadata("Dataset name", None, required = true),
     datasetVersionKey ->
