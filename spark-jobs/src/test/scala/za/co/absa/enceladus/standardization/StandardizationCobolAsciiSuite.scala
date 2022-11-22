@@ -27,6 +27,7 @@ import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 
 class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
@@ -141,6 +142,9 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalize
   }
 
   test("Test ASCII COBOL file that has EOL as record separators") { tmpFileName =>
+    val textContent: String = "1Tes  0123456789\n2 est2 SomeText\n3None Data¡3    \n4 on      Data 4"
+    Files.write(Paths.get(tmpFileName), textContent.getBytes(asciiCharset))
+
     val args = "--cobol-is-text true".split(" ")
 
     val expected =
