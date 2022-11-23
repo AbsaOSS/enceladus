@@ -39,9 +39,10 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
           a.fields.zip(fields).forall {
             case (aField, bField) =>
               val areDataTypesEqual = (aField.dataType, bField.dataType) match {
-                case (
-                  ArrayType(aStructType @ StructType(_), aContainsNull),
-                  ArrayType(bStructType @ StructType(_), bContainsNull)
+                case
+                  (
+                    ArrayType(aStructType @ StructType(_), aContainsNull),
+                    ArrayType(bStructType @ StructType(_), bContainsNull)
                   ) =>
                   aContainsNull === bContainsNull && areEqual(aStructType, bStructType)
                 case (aFieldDataType, bFieldDataType) => aFieldDataType === bFieldDataType
