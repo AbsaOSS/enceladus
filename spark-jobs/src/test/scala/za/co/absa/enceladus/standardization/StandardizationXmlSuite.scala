@@ -15,26 +15,28 @@
 
 package za.co.absa.enceladus.standardization
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.functions.col
-import org.apache.spark.sql.types
+import org.apache.spark.sql.{Row, types}
 import org.apache.spark.sql.types._
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.stages.PlainSchemaGenerator
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 
 class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer {
-  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-  private implicit val defaults: Defaults = GlobalDefaults
 
   private val standardizationReader = new StandardizationPropertiesProvider()
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
   test("Reading data from XML input") {
 
@@ -66,7 +68,7 @@ class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase
     val corruptedRecords = sourceDF.filter(col("_corrupt_record").isNotNull)
     assert(corruptedRecords.isEmpty, s"Unexpected corrupted records found: ${corruptedRecords.collectAsList()}")
 
-    val stdDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+    val stdDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val expectedData = Seq(
       Row(1L, "2018-08-10", Seq(Row(Row(1000))), Seq()),

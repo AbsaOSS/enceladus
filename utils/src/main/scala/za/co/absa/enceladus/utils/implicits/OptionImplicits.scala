@@ -13,15 +13,24 @@
  * limitations under the License.
  */
 
-package za.co.absa.enceladus.examples
+package za.co.absa.enceladus.utils.implicits
 
-import org.apache.hadoop.fs.FileSystem
-import org.apache.spark.sql.SparkSession
-import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import scala.util.{Failure, Success, Try}
 
-trait CustomRuleSampleFs {
-  def spark: SparkSession
+object OptionImplicits {
+  implicit class OptionEnhancements[T](option: Option[T]) {
+    def toTry(failure: Exception): Try[T] = {
+      option.fold[Try[T]](Failure(failure))(Success(_))
+    }
 
-  implicit val fs: FileSystem = FileSystem.get(spark.sparkContext.hadoopConfiguration)
-  implicit val fsUtils: HadoopFsUtils = HadoopFsUtils.getOrCreate(fs)
+    /**
+      * Get's the `option` value or throws the provided exception
+      *
+      * @param exception the exception to throw in case the `option` is None
+      * @return
+      */
+    def getOrThrow(exception: => Throwable): T = {
+      option.getOrElse(throw exception)
+    }
+  }
 }

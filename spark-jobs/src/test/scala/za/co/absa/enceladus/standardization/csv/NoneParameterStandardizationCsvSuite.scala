@@ -36,6 +36,7 @@ class NoneParameterStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFi
     val tmpFile = createTempCsvFile(content)
     test(tmpFile.getAbsolutePath)
   }
+
   //this will be result in case none quote is provided regardless of escape
   private val expectedNoneQuoteResult =
     """+----------+--------+---------+----+----+----------------------------------+
@@ -44,12 +45,11 @@ class NoneParameterStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFi
       ||1         |2       |3        |4   |5   |null                              |
       ||Text10"Add|Text\"11|"Text"12"|null|200 |null                              |
       ||Text12    |Text15  |Text\"17 |1000|2000|null                              |
-      ||null      |null    |null     |null|null|Text13¡"Text¡15"¡Text17¡1000¡2000 |
-      ||null      |null    |null     |null|null|Text13¡Text15¡"Text\¡17"¡1000¡2000|
+      ||Text13    |"Text   |15"      |null|1000|Text13¡"Text¡15"¡Text17¡1000¡2000 |
+      ||Text13    |Text15  |"Text\   |null|1000|Text13¡Text15¡"Text\¡17"¡1000¡2000|
       |+----------+--------+---------+----+----+----------------------------------+
       |
       |""".stripMargin.replace("\r\n", "\n")
-
   test("Test none for quote") { tmpFileName =>
     val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote none").split(" ")
