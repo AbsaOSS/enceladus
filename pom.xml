@@ -127,6 +127,10 @@ language governing permissions and
 	<modules>
 		<module>dao</module>
 		<module>data-model</module>
+<<<<<<< HEAD
+=======
+		<module>examples</module>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<module>menas</module>
 		<module>migrations</module>
 		<module>migrations-cli</module>
@@ -157,8 +161,13 @@ language governing permissions and
 		<!--dependency versions-->
 		<apache.commons.configuration2.version>2.4</apache.commons.configuration2.version>
 		<abris.version>6.2.0</abris.version>
+<<<<<<< HEAD
 		<absa.commons.version>1.1.0</absa.commons.version>
 		<absa.spark.commons.version>0.4.0</absa.spark.commons.version>
+=======
+		<absa.commons.version>1.0.0</absa.commons.version>
+		<absa.spark.commons.version>0.3.1</absa.spark.commons.version>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<atum.version>3.8.3</atum.version>
 		<bower.chart.js.version>2.7.3</bower.chart.js.version>
 		<bson.codec.jsr310.version>3.5.4</bson.codec.jsr310.version>
@@ -167,7 +176,11 @@ language governing permissions and
 		<gson.version>2.8.2</gson.version>
 		<guava.version>30.1-jre</guava.version>
 		<fixed.width.version>0.2.0</fixed.width.version>
+<<<<<<< HEAD
 		<hadoop.version>3.3.4</hadoop.version>
+=======
+        <hadoop.version>3.3.4</hadoop.version>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<htrace.version>3.1.0-incubating</htrace.version>
 		<httpclient.version>4.4.1</httpclient.version>
 		<jackson.spark.datatype.version>2.12.6</jackson.spark.datatype.version>
@@ -184,12 +197,17 @@ language governing permissions and
 		<momentjs.version>2.22.2</momentjs.version>
 		<mongo.java.driver.version>3.6.4</mongo.java.driver.version>
 		<mongo.scala.driver.version>2.7.0</mongo.scala.driver.version>
+<<<<<<< HEAD
+=======
+		<oozie.version>4.3.0</oozie.version>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<openui5.version>1.67.1</openui5.version>
 		<parquet.version>1.12.2</parquet.version>
 		<requests.version>0.1.6</requests.version>
 		<scala.compat.version>2.12</scala.compat.version>
 		<scala.java8.compat.version>0.9.0</scala.java8.compat.version>
 		<scala.version>2.12.12</scala.version>
+<<<<<<< HEAD
 		<scalatest.maven.version>2.0.2</scalatest.maven.version>
 		<!-- TODO -->
 		<scalatest.version>3.2.2</scalatest.version>
@@ -200,6 +218,17 @@ language governing permissions and
 		<spark.hats.version>0.2.2</spark.hats.version>
 		<spark.hofs.version>0.4.0</spark.hofs.version>
 		<spark.version>3.2.2</spark.version>
+=======
+		<scalatest.maven.version>2.0.2</scalatest.maven.version> <!-- TODO -->
+		<scalatest.version>3.2.2</scalatest.version>
+		<scopt.version>4.0.0</scopt.version>
+		<slf4j.version>1.7.16</slf4j.version>
+		<spark.compat.version>3.2</spark.compat.version>
+		<spark.fast.tests.version>1.0.0</spark.fast.tests.version>
+		<spark.hats.version>0.2.2</spark.hats.version>
+		<spark.hofs.version>0.4.0</spark.hofs.version>
+        <spark.version>3.2.2</spark.version>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<spark.xml.version>0.5.0</spark.xml.version>
 		<specs.version>3.8.6</specs.version>
 		<spline.agent.version>0.7.8</spline.agent.version>

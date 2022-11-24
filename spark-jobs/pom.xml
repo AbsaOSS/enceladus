@@ -16,7 +16,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific
 language governing permissions and
   ~ limitations under the License.
+<<<<<<< HEAD
 	-->
+=======
+  -->
+
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>spark-jobs</artifactId>
@@ -54,11 +59,14 @@ language governing permissions and
 			<artifactId>atum_${scala.compat.version}</artifactId>
 			<version>${atum.version}</version>
 		</dependency>
+<<<<<<< HEAD
 		<dependency>
 			<groupId>za.co.absa</groupId>
 			<artifactId>spark-data-standardization_${scala.compat.version}</artifactId>
 			<version>${spark.data.standardization.version}</version>
 		</dependency>
+=======
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<!-- Data formats support -->
 		<dependency>
 			<groupId>com.databricks</groupId>
@@ -92,11 +100,14 @@ language governing permissions and
 			<artifactId>commons_${scala.compat.version}</artifactId>
 			<version>${absa.commons.version}</version>
 		</dependency>
+<<<<<<< HEAD
 		<dependency>
 			<groupId>za.co.absa</groupId>
 			<artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
 			<version>${absa.spark.commons.version}</version>
 		</dependency>
+=======
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<!-- Libraries -->
 		<dependency>
 			<groupId>com.typesafe</groupId>
@@ -118,12 +129,21 @@ language governing permissions and
 			<artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
 			<version>${spark.sql.kafka.version}</version>
 		</dependency>
+<<<<<<< HEAD
 		<dependency>
 			<groupId>com.github.mrpowers</groupId>
 			<artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
 			<version>${spark.fast.tests.version}</version>
 			<scope>test</scope>
 		</dependency>
+=======
+        <dependency>
+            <groupId>com.github.mrpowers</groupId>
+            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
+            <version>${spark.fast.tests.version}</version>
+            <scope>test</scope>
+        </dependency>
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 		<!-- Lineage tracking -->
 		<dependency>
 			<groupId>za.co.absa.spline.agent.spark</groupId>

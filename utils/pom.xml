@@ -16,7 +16,12 @@ WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific
 language governing permissions and
   ~ limitations under the License.
+<<<<<<< HEAD
 	-->
+=======
+  -->
+
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>utils</artifactId>
@@ -68,11 +73,14 @@ language governing permissions and
 			<version>${absa.spark.commons.version}</version>
 		</dependency>
 		<dependency>
+<<<<<<< HEAD
 			<groupId>za.co.absa</groupId>
 			<artifactId>spark-data-standardization_${scala.compat.version}</artifactId>
 			<version>${spark.data.standardization.version}</version>
 		</dependency>
 		<dependency>
+=======
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest-flatspec_${scala.compat.version}</artifactId>
 			<version>${scalatest.version}</version>

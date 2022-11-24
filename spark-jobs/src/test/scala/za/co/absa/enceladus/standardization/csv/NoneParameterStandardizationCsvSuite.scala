@@ -50,6 +50,7 @@ class NoneParameterStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFi
       |+----------+--------+---------+----+----+----------------------------------+
       |
       |""".stripMargin.replace("\r\n", "\n")
+
   test("Test none for quote") { tmpFileName =>
     val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote none").split(" ")

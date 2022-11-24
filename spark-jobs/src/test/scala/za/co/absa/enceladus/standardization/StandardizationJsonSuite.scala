@@ -15,14 +15,20 @@
 
 package za.co.absa.enceladus.standardization
 
+<<<<<<< HEAD
+=======
+import java.sql.{Date, Timestamp}
+
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{DataType, StructType}
-import org.scalatest.funsuite.AnyFunSuite
 import org.mockito.scalatest.MockitoSugar
+import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
+<<<<<<< HEAD
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
@@ -31,6 +37,19 @@ import za.co.absa.standardization.stages.PlainSchemaGenerator
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 import java.sql.{Date, Timestamp}
+=======
+import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
+import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
+import za.co.absa.enceladus.utils.fs.FileReader
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.enceladus.utils.udf.UDFLibrary
+
+class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer{
+  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
+  private implicit val defaults: Defaults = GlobalDefaults
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
 class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer{
   private val standardizationReader = new StandardizationPropertiesProvider()
@@ -60,7 +79,11 @@ class StandardizationJsonSuite extends AnyFunSuite with TZNormalizedSparkTestBas
     val reader = csvReader.schema(inputSchema)
 
     val sourceDF = reader.load("src/test/resources/data/standardization_json_suite_data.json")
+<<<<<<< HEAD
     val actualDF = Standardization.standardize(sourceDF, baseSchema, config)
+=======
+    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
+>>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row("Having data", "Hello world", true, 1, Date.valueOf("2005-07-31"), Seq(Timestamp.valueOf("2005-07-31 08:22:31"), Timestamp.valueOf("2005-07-31 18:22:44")), Seq()),
