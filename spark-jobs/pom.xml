@@ -1,262 +1,238 @@
-	<!--
+<!--
   ~ Copyright 2018 ABSA Group Limited
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
-
-~ you may not use this file except in compliance with the License.
-  ~ You may obtain a copy of the License
-at
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
   ~     http://www.apache.org/licenses/LICENSE-2.0
   ~
-  ~ Unless required by applicable law or agreed
-to in writing, software
+  ~ Unless required by applicable law or agreed to in writing, software
   ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT
-WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific
-language governing permissions and
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
-<<<<<<< HEAD
-	-->
-=======
   -->
 
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<artifactId>spark-jobs</artifactId>
-	<packaging>jar</packaging>
-	<parent>
-		<groupId>za.co.absa.enceladus</groupId>
-		<artifactId>parent</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
-	</parent>
-	<properties>
-		<scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-		<hyperdrive.version>4.5.2</hyperdrive.version>
-		<spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
-	</properties>
-	<dependencies>
-		<!-- Dependent modules -->
-		<dependency>
-			<groupId>za.co.absa.enceladus</groupId>
-			<artifactId>plugins-builtin</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa.enceladus</groupId>
-			<artifactId>utils</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa.enceladus</groupId>
-			<artifactId>dao</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<!-- Atum -->
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>atum_${scala.compat.version}</artifactId>
-			<version>${atum.version}</version>
-		</dependency>
-<<<<<<< HEAD
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>spark-data-standardization_${scala.compat.version}</artifactId>
-			<version>${spark.data.standardization.version}</version>
-		</dependency>
-=======
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
-		<!-- Data formats support -->
-		<dependency>
-			<groupId>com.databricks</groupId>
-			<artifactId>spark-xml_${scala.compat.version}</artifactId>
-			<version>${spark.xml.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>fixed-width_${scala.compat.version}</artifactId>
-			<version>${fixed.width.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa.cobrix</groupId>
-			<artifactId>spark-cobol_${scala.compat.version}</artifactId>
-			<version>${cobrix.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>spark-partition-sizing_${scala.compat.version}</artifactId>
-			<version>0.1.0</version>
-		</dependency>
-		<!-- Hyperdrive -->
-		<dependency>
-			<groupId>za.co.absa.hyperdrive</groupId>
-			<artifactId>api_${scala.compat.version}</artifactId>
-			<version>${hyperdrive.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>za.co.absa.commons</groupId>
-			<artifactId>commons_${scala.compat.version}</artifactId>
-			<version>${absa.commons.version}</version>
-		</dependency>
-<<<<<<< HEAD
-		<dependency>
-			<groupId>za.co.absa</groupId>
-			<artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
-			<version>${absa.spark.commons.version}</version>
-		</dependency>
-=======
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
-		<!-- Libraries -->
-		<dependency>
-			<groupId>com.typesafe</groupId>
-			<artifactId>config</artifactId>
-			<version>${typesafe.config.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.github.scopt</groupId>
-			<artifactId>scopt_${scala.compat.version}</artifactId>
-			<version>${scopt.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>${mongo.java.driver.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.spark</groupId>
-			<artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
-			<version>${spark.sql.kafka.version}</version>
-		</dependency>
-<<<<<<< HEAD
-		<dependency>
-			<groupId>com.github.mrpowers</groupId>
-			<artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
-			<version>${spark.fast.tests.version}</version>
-			<scope>test</scope>
-		</dependency>
-=======
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>spark-jobs</artifactId>
+    <packaging>jar</packaging>
+    <parent>
+        <groupId>za.co.absa.enceladus</groupId>
+        <artifactId>parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+    <properties>
+        <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
+        <hyperdrive.version>4.5.2</hyperdrive.version>
+        <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
+    </properties>
+    <dependencies>
+        <!-- Dependent modules -->
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>plugins-builtin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.enceladus</groupId>
+            <artifactId>dao</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Atum -->
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>atum_${scala.compat.version}</artifactId>
+            <version>${atum.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-data-standardization_${scala.compat.version}</artifactId>
+            <version>${spark.data.standardization.version}</version>
+        </dependency>
+        <!-- Data formats support -->
+        <dependency>
+            <groupId>com.databricks</groupId>
+            <artifactId>spark-xml_${scala.compat.version}</artifactId>
+            <version>${spark.xml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>fixed-width_${scala.compat.version}</artifactId>
+            <version>${fixed.width.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.cobrix</groupId>
+            <artifactId>spark-cobol_${scala.compat.version}</artifactId>
+            <version>${cobrix.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-partition-sizing_${scala.compat.version}</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <!-- Hyperdrive -->
+        <dependency>
+            <groupId>za.co.absa.hyperdrive</groupId>
+            <artifactId>api_${scala.compat.version}</artifactId>
+            <version>${hyperdrive.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa.commons</groupId>
+            <artifactId>commons_${scala.compat.version}</artifactId>
+            <version>${absa.commons.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>${absa.spark.commons.version}</version>
+        </dependency>
+        <!-- Libraries -->
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>config</artifactId>
+            <version>${typesafe.config.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.scopt</groupId>
+            <artifactId>scopt_${scala.compat.version}</artifactId>
+            <version>${scopt.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>${mongo.java.driver.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
+            <version>${spark.sql.kafka.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.github.mrpowers</groupId>
             <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
             <version>${spark.fast.tests.version}</version>
             <scope>test</scope>
         </dependency>
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
-		<!-- Lineage tracking -->
-		<dependency>
-			<groupId>za.co.absa.spline.agent.spark</groupId>
-			<artifactId>agent-core_${scala.compat.version}</artifactId>
-			<version>${spline.agent.version}</version>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.scalastyle</groupId>
-				<artifactId>scalastyle-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>${maven.shade.plugin.version}</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<transformers>
-						<transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
-							<resource>application.conf</resource>
-						</transformer>
-						<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-					</transformers>
-					<filters>
-						<filter>
-							<artifact>*:*</artifact>
-							<excludes>
-								<exclude>META-INF/*.SF</exclude>
-								<exclude>META-INF/*.DSA</exclude>
-								<exclude>META-INF/*.RSA</exclude>
-							</excludes>
-						</filter>
-					</filters>
-					<artifactSet>
-						<includes>
-							<include>*:*</include>
-						</includes>
-						<excludes>
-							<!--
+        <!-- Lineage tracking -->
+        <dependency>
+            <groupId>za.co.absa.spline.agent.spark</groupId>
+            <artifactId>agent-core_${scala.compat.version}</artifactId>
+            <version>${spline.agent.version}</version>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.scalastyle</groupId>
+                <artifactId>scalastyle-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven.shade.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <transformers>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                            <resource>application.conf</resource>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    </transformers>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <artifactSet>
+                        <includes>
+                            <include>*:*</include>
+                        </includes>
+                        <excludes>
+                            <!--
   org.apache.spark:* should not be excluded. Otherwise, the spark-submit would have to be called with
 spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0
-							-->
-							<exclude>org.apache.hadoop:*</exclude>
-							<exclude>org.scala-lang:scala-actors</exclude>
-							<exclude>org.scala-lang:scala-compiler</exclude>
-							<exclude>org.scala-lang:scala-reflect</exclude>
-							<exclude>org.scala-lang:scala-library</exclude>
-							<exclude>net.jpountz.lz4:*</exclude>
-						</excludes>
-					</artifactSet>
-					<relocations>
-						<!--
+                            -->
+                            <exclude>org.apache.hadoop:*</exclude>
+                            <exclude>org.scala-lang:scala-actors</exclude>
+                            <exclude>org.scala-lang:scala-compiler</exclude>
+                            <exclude>org.scala-lang:scala-reflect</exclude>
+                            <exclude>org.scala-lang:scala-library</exclude>
+                            <exclude>net.jpountz.lz4:*</exclude>
+                        </excludes>
+                    </artifactSet>
+                    <relocations>
+                        <!--
  This was introduced in #86 Set up Standardization and Conformance Menas auth.
 
 If not shaded the following exception will be thrown:
                                Caused by: java.lang.ClassNotFoundException:
 za.co.absa.atum.model.RunState
-	                           at java.net.URLClassLoader.findClass(URLClassLoader.java:382)
+                               at java.net.URLClassLoader.findClass(URLClassLoader.java:382)
 
 ...
-	                           at com.fasterxml.jackson.module.scala.deser.EnumerationDeserializer.deserialize(EnumerationDeserializerModule.scala:40)
+                               at com.fasterxml.jackson.module.scala.deser.EnumerationDeserializer.deserialize(EnumerationDeserializerModule.scala:40)
 
 java.lang.NoClassDefFoundError: com/fasterxml/jackson/datatype/jsr310/JavaTimeModule
-						-->
-						<relocation>
-							<pattern>com.fasterxml.jackson</pattern>
-							<shadedPattern>za.co.absa.shaded.com.fasterxml.jackson</shadedPattern>
-						</relocation>
-					</relocations>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>${scala.maven.plugin.version}</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<args>
-						<arg>-Xfatal-warnings</arg>
-						<arg>-unchecked</arg>
-						<arg>-deprecation</arg>
-						<arg>-feature</arg>
-					</args>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-jar-plugin</artifactId>
-				<version>${maven.jar.plugin.version}</version>
-				<configuration>
-					<archive>
-						<manifest>
-							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+                        -->
+                        <relocation>
+                            <pattern>com.fasterxml.jackson</pattern>
+                            <shadedPattern>za.co.absa.shaded.com.fasterxml.jackson</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala.maven.plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <args>
+                        <arg>-Xfatal-warnings</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

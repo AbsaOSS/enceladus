@@ -26,21 +26,12 @@ import za.co.absa.enceladus.standardization.StandardizationPropertiesProvider
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-<<<<<<< HEAD
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 import za.co.absa.standardization.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 
 class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer {
-=======
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
-
-class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer {
-  private implicit val udfLibrary: UDFLibrary = new UDFLibrary()
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
   private val argsBase = ("--dataset-name Foo --dataset-version 1 --report-date 2020-06-22 --report-version 1 " +
     "--menas-auth-keytab src/test/resources/user.keytab.example --raw-format csv --delimiter :")
     .split(" ")
@@ -65,11 +56,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val reader = cvsReader.schema(inputSchema)
     val sourceDF = reader.load("src/test/resources/data/standardization_csv_suite_data.csv")
 
-<<<<<<< HEAD
     val actualDF = Standardization.standardize(sourceDF, baseSchema, config)
-=======
-    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row("a", "Arya", "Stark", Seq()),
@@ -94,11 +81,7 @@ class NullValueStandardizationCsvSuite  extends AnyFunSuite with TZNormalizedSpa
     val reader = cvsReader.schema(inputSchema)
     val sourceDF = reader.load("src/test/resources/data/standardization_csv_suite_data.csv")
 
-<<<<<<< HEAD
     val actualDF = Standardization.standardize(sourceDF, baseSchema, config)
-=======
-    val actualDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row("a", "Arya", "Stark", Seq()),

@@ -15,17 +15,9 @@
 
 package za.co.absa.enceladus.standardization
 
-<<<<<<< HEAD
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 
 import java.util.UUID
-=======
-import java.sql.Timestamp
-import java.time.Instant
-import java.util.UUID
-
-import com.github.mrpowers.spark.fast.tests.DatasetComparer
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
@@ -35,18 +27,9 @@ import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-<<<<<<< HEAD
 import za.co.absa.standardization.schema.MetadataKeys
 
 import java.sql.Timestamp
-=======
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
-import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import StandardizationParquetSuite._
-import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
@@ -54,14 +37,9 @@ import za.co.absa.standardization.stages.TypeParserException
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 
-<<<<<<< HEAD
 import java.time.Instant
 
 class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer{
-=======
-class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture
-  with MockitoSugar with DatasetComparer {
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
   type FixtureParam = String
 
 
@@ -79,6 +57,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
   private val config = BasicStandardizationConfig
     .fromDefault()
     .copy(metadataColumns = metadataConfig)
+
 
   private val data = Seq (
     (1, Array("A", "B"), FooClass(false), "1970-01-01 00:00:00 UTC"),
@@ -113,6 +92,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """+---+-------+-------+------+
+         ||id |letters|struct |errCol|
+         |+---+-------+-------+------+
+         ||1  |[A, B] |[false]|[]    |
+         ||2  |[C]    |[true] |[]    |
+         |+---+-------+-------+------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = false),
@@ -120,31 +109,32 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row(1L, Array("A", "B"), Row(false), Array()),
       Row(2L, Array("C"), Row(true), Array())
     )
     val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
-<<<<<<< HEAD
 
     assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
-=======
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
-    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
-  }
 
   test("Missing nullable fields are considered null") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
+
+    val expected =
+      """+---+------------+---------------+----------+------------+-------------+------+
+         ||id |string_field|timestamp_field|long_field|double_field|decimal_field|errCol|
+         |+---+------------+---------------+----------+------------+-------------+------+
+         ||1  |null        |null           |null      |null        |null         |[]    |
+         ||2  |null        |null           |null      |null        |null         |[]    |
+         |+---+------------+---------------+----------+------------+-------------+------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
@@ -156,11 +146,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field", DecimalType(20,4), nullable = true)
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row(1, null, null, null, null, null, Array()),
@@ -176,6 +162,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||id |string_field|timestamp_field    |long_field|double_field|decimal_field|errCol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+         |+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||1  |            |1970-01-01 00:00:00|0         |0           |3.14         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []]]|
+         ||2  |            |1970-01-01 00:00:00|0         |0           |3.14         |[[stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, string_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, timestamp_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, long_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, double_field, [null], []], [stdNullError, E00002, Standardization Error - Null detected in non-nullable attribute, decimal_field, [null], []]]|
+         |+---+------------+-------------------+----------+------------+-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", IntegerType, nullable = false),
@@ -189,11 +185,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
         new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val EpochTimestamp = Timestamp.from(Instant.EPOCH)
     val expectedErrors = Seq(
@@ -217,6 +209,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||id  |letters|lettersB|errCol                                                                                                                                                                                                                                                                                                                |
+         |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
+         ||null|null   |0       |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'array', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'long', letters, [], []]]|
+         |+----+-------+--------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", ArrayType(StringType), nullable = true),
@@ -225,11 +227,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
         new MetadataBuilder().putString(MetadataKeys.SourceColumn, "letters").build())
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedErrors = Seq(
       Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'array'", "id", Seq(), Seq()),
@@ -250,6 +248,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """|+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||id  |struct|structB|errCol                                                                                                                                                                                                                                                                                                                 |
+         |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
+         ||null|null  |-1     |[[stdTypeError, E00006, Standardization Error - Type 'integer' cannot be cast to 'struct', id, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'long', struct, [], []]]|
+         |+----+------+-------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", StructType(Seq(StructField("bar", BooleanType))), nullable = true),
@@ -260,11 +268,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
         .build())
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedErrors = Seq(
       Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'struct'", "id", Seq(), Seq()),
@@ -285,6 +289,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """|+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||id |letters|struct|errCol                                                                                                                                                                                                             |
+         |+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         ||1  |null   |null  |[[stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []]]|
+         ||2  |null   |null  |[[stdTypeError, E00006, Standardization Error - Type 'array' cannot be cast to 'struct', letters, [], []], [stdTypeError, E00006, Standardization Error - Type 'struct' cannot be cast to 'array', struct, [], []]]|
+         |+---+-------+------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+         |
+         |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = true),
@@ -292,11 +306,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", ArrayType(StringType), nullable = true)
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedErrors = Seq(
       Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'struct'", "letters", Seq(), Seq()),
@@ -377,6 +387,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """+---+-------+-------+------+-------------------+
+        ||id |letters|struct |errCol|enceladus_record_id|
+        |+---+-------+-------+------+-------------------+
+        ||1  |[A, B] |[false]|[]    |1950798873         |
+        ||2  |[C]    |[true] |[]    |-988631025         |
+        |+---+-------+-------+------+-------------------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = false),
@@ -391,11 +411,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       .fromDefault()
       .copy(metadataColumns = metadataConfigStableHashID)
     // stableHashId will always yield the same ids
-<<<<<<< HEAD
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row(1L, Array("A", "B"), Row(false), Array(), 1950798873),
@@ -418,7 +434,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val metadataConfigTrueUuid = BasicMetadataColumnsConfig
       .fromDefault()
       .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
@@ -426,9 +441,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       .fromDefault()
       .copy(metadataColumns = metadataConfigTrueUuid)
     val actualDf = Standardization.standardize(sourceDF, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row(1L, Array("A", "B"), Row(false), Array()),
@@ -450,6 +462,16 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
+    val expected =
+      """+---+-------+-------+-------------------+------+
+        ||id |letters|struct |enceladus_record_id|errCol|
+        |+---+-------+-------+-------------------+------+
+        ||1  |[A, B] |[false]|id1                |[]    |
+        ||2  |[C]    |[true] |id2                |[]    |
+        |+---+-------+-------+-------------------+------+
+        |
+        |""".stripMargin.replace("\r\n", "\n")
+
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     import org.apache.spark.sql.functions.{concat, lit}
     val sourceDfWithExistingIds = sourceDF.withColumn("enceladus_record_id", concat(lit("id"), 'id))
@@ -461,7 +483,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("enceladus_record_id", StringType, nullable = false)
     )
     val schema = StructType(seq)
-<<<<<<< HEAD
     val metadataConfig = BasicMetadataColumnsConfig
       .fromDefault()
       .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
@@ -470,9 +491,6 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       .copy(metadataColumns = metadataConfig)
 
     val actualDf =  Standardization.standardize(sourceDfWithExistingIds, schema, config)
-=======
-    val actualDf = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     // The TrueUuids strategy does not override the existing values
     val expectedData = Seq(
@@ -518,6 +536,4 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
   }
 }
 
-object StandardizationParquetSuite {
-  private case class FooClass(bar: Boolean)
-}
+private case class FooClass(bar: Boolean)

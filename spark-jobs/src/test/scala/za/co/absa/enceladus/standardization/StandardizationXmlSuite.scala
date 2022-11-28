@@ -24,7 +24,6 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.dao.MenasDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
-<<<<<<< HEAD
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
 import za.co.absa.standardization.stages.PlainSchemaGenerator
@@ -32,18 +31,6 @@ import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStand
 import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 
 class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer {
-=======
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
-import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
-import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-
-class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar with DatasetComparer {
-  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-  private implicit val defaults: Defaults = GlobalDefaults
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
@@ -81,11 +68,7 @@ class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase
     val corruptedRecords = sourceDF.filter(col("_corrupt_record").isNotNull)
     assert(corruptedRecords.isEmpty, s"Unexpected corrupted records found: ${corruptedRecords.collectAsList()}")
 
-<<<<<<< HEAD
     val stdDF = Standardization.standardize(sourceDF, baseSchema, config)
-=======
-    val stdDF = StandardizationInterpreter.standardize(sourceDF, baseSchema, cmd.rawFormat)
->>>>>>> 741ed156cb6fd89ef2ef8dd49c6ea3b993e69765
 
     val expectedData = Seq(
       Row(1L, "2018-08-10", Seq(Row(Row(1000))), Seq()),
