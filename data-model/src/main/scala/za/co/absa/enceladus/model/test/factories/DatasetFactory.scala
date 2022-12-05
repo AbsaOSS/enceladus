@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.versionedModel.{NamedVersion, VersionedSummary}
 
 import java.time.ZonedDateTime
@@ -44,7 +44,7 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       dateLocked: Option[ZonedDateTime] = None,
                       userLocked: Option[String] = None,
                       conformance: List[ConformanceRule] = List(),
-                      parent: Option[MenasReference] = None,
+                      parent: Option[Reference] = None,
                       properties: Option[Map[String, String]] = Some(Map())): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,

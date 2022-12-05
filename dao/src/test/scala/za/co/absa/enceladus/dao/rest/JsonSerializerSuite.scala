@@ -19,7 +19,7 @@ import java.time.ZonedDateTime
 import org.scalactic.{AbstractStringUniformity, Uniformity}
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
@@ -67,7 +67,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "properties": {},
           |  "propertiesValidation": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -206,7 +206,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |  "properties": null,
         |  "propertiesValidation": null,
         |  "createdMessage": {
-        |    "menasRef": {
+        |    "ref": {
         |      "collection": null,
         |      "name": "Test",
         |      "version": 5
@@ -234,10 +234,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         schemaName = "Cobol1",
         schemaVersion = 3,
         dateCreated = parseTZDateTime("2019-07-22 08:05:57.47 UTC"),
-        //dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
         userCreated = "system",
         lastUpdated = parseTZDateTime("2020-04-02 15:53:02.947 UTC"),
-        //lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
         userUpdated = "system",
 
         conformance = List(
@@ -281,7 +279,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             value = "AAA"
           )
         ),
-        parent = Some(MenasReference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
+        parent = Some(Reference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
         properties = None
       )
 
@@ -346,7 +344,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  },
           |  "schedule": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "avro_users",
           |      "version": 3
@@ -393,7 +391,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "parent": null,
           |  "filter": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -482,7 +480,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |    ]
           |  },
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -547,7 +545,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "fields": [],
           |  "parent": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -577,7 +575,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
-    "handle Runs" should {
+    "handle Runs" when {
       val uniqueId = "2f7ac049-7c78-4da0-9347-6096bf341618"
       val runJson =
         s"""

@@ -28,21 +28,20 @@ import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnString, InfoVersionColumn, ReportDateFormat}
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
-import za.co.absa.enceladus.common.plugin.menas.{MenasPlugin, MenasRunUrl}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
+import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
-import za.co.absa.enceladus.dao.rest.MenasConnectionStringParser
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
 import za.co.absa.enceladus.utils.general.ProjectMetadata
-import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig}
+import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs, SecureConfig, UrisConnectionStringParser}
 import za.co.absa.enceladus.utils.fs.{FileSystemUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
-import za.co.absa.spark.commons.SparkVersionGuard
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -58,18 +57,19 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
-
-  protected val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
-  protected val menasUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
+  protected val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
+  protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
+  protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected val restApiOptionallyRetryableExceptions: Set[OptRetryableExceptions] =
     configReader
       .getIntListOption("enceladus.rest.optionallyRetryableExceptions")
       .getOrElse(Set.empty)
       .toSet
       .map(getOptionallyRetryableException)
-
-  protected val menasSetup: String = configReader.getString("enceladus.rest.availability.setup")
   protected var secureConfig: Map[String, String] = Map.empty
+
+  private val menasBaseUris: List[String] = UrisConnectionStringParser
+    .parse(configReader.getString("enceladus.menas.uri"))
 
   protected def obtainSparkSession[T](jobName: String)(implicit cmd: JobConfigParser[T]): SparkSession = {
     val enceladusVersion = projectVersion
@@ -95,7 +95,7 @@ trait CommonJobExecution extends ProjectMetadata {
   }
 
   protected def prepareJob[T]()
-                             (implicit dao: MenasDAO,
+                             (implicit dao: EnceladusDAO,
                               cmd: JobConfigParser[T],
                               spark: SparkSession): PreparationResult = {
     configReader.logEffectiveConfigProps(Constants.ConfigKeysToRedact)
@@ -176,12 +176,12 @@ trait CommonJobExecution extends ProjectMetadata {
 
     log.info(s"rereading outputPath $outputPath to run postProcessing")
     val df = spark.read.parquet(outputPath)
-    val runId = MenasPlugin.runNumber
+    val runId = EnceladusAtumPlugin.runNumber
 
     // reporting the UI url(s) - if more than one, its comma-separated
     val runUrl: Option[String] = runId.map { runNumber =>
-      menasBaseUrls.map { menasBaseUrl =>
-        MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
+      menasBaseUris.map { baseUrl =>
+        EnceladusRunUrl.getMenasUiRunUrl(baseUrl, jobCmdConfig.datasetName, jobCmdConfig.datasetVersion, runNumber)
       }.mkString(",")
     }
 
@@ -202,15 +202,16 @@ trait CommonJobExecution extends ProjectMetadata {
   protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
-    MenasPlugin.runNumber.foreach { runNumber =>
-      menasBaseUrls.foreach { menasBaseUrl =>
-        val apiUrl = MenasRunUrl.getMenasApiRunUrl(menasBaseUrl, name, version, runNumber)
-        val uiUrl = MenasRunUrl.getMenasUiRunUrl(menasBaseUrl, name, version, runNumber)
-
-        log.info(s"Menas API Run URL: $apiUrl")
+    EnceladusAtumPlugin.runNumber.foreach(runNumber => {
+      restApiBaseUrls.foreach { baseUrl =>
+        val apiUrl = EnceladusRunUrl.getApiRunUrl(baseUrl, name, version, runNumber)
+        log.info(s"API Run URL: $apiUrl")
+      }
+      menasBaseUris.foreach { baseUrl =>
+        val uiUrl = EnceladusRunUrl.getMenasUiRunUrl(baseUrl, name, version, runNumber)
         log.info(s"Menas UI Run URL: $uiUrl")
       }
-    }
+    })
   }
 
   protected def getPathConfig[T](cmd: JobConfigParser[T], dataset: Dataset, reportVersion: Int)
