@@ -22,7 +22,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
@@ -171,12 +171,12 @@ class SimpleTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
                   errColNullability: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfig, FeatureSwitches) = {
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, EnceladusDAO, ConformanceConfig, FeatureSwitches) = {
     val inputDf = spark.read.schema(testCaseSchema).json(testCaseDataJson.toDS)
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
     val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
-    val dao = mock(classOf[MenasDAO])
+    val dao = mock(classOf[EnceladusDAO])
     mockWhen(dao.getDataset(testCaseName, 1, ValidationLevel.NoValidation)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(emptyMappingTableName, 1)) thenReturn fixPathsInMappingTable(emptyMT)
     mockWhen(dao.getMappingTable(nonExistentMappingTableName, 1)) thenReturn fixPathsInMappingTable(nonExistentMT)

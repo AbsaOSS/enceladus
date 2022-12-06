@@ -22,7 +22,7 @@ import org.mockito.Mockito.{mock, when => mockWhen}
 import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
@@ -299,12 +299,12 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     * @param enableMappingRuleBroadcasting Specify if the broadcasting strategy will be used for the mapping rule.
     * @param conformanceRules              Zero or more conformance rules to be applied as the part of conformance.
     * @param errColNullability             errCol nullability
-    * @return A dataframe, a dataset, a Menas DAO, a Cmd Config and feature switches prepared to run conformance interpreter
+    * @return A dataframe, a dataset, a Enceladus DAO, a Cmd Config and feature switches prepared to run conformance interpreter
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
                   errColNullability: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfig, FeatureSwitches) = {
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, EnceladusDAO, ConformanceConfig, FeatureSwitches) = {
 
     val inputDf = spark.read
       .schema(testCaseSchema)
@@ -313,7 +313,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
     val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
-    val dao = mock(classOf[MenasDAO])
+    val dao = mock(classOf[EnceladusDAO])
     mockWhen(dao.getDataset(testCaseName, 1, ValidationLevel.NoValidation)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(nestedMappingTableName, 1)) thenReturn fixPathsInMappingTable(nestedMT)
     mockWhen(dao.getSchema(nestedMappingTableName, 1)) thenReturn nestedMappingTableSchema
