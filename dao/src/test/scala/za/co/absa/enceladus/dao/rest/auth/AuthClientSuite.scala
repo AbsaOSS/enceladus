@@ -34,7 +34,7 @@ abstract class AuthClientSuite() extends AnyWordSpec
 
   protected val username: String = "user"
   protected val restTemplate: RestTemplate = mock[RestTemplate]
-  protected val baseUrl: String = "http://localhost:8080/menas"
+  protected val baseUrl: String = "http://localhost:8080/rest_api"
   protected val apiCaller: ApiCaller = new ApiCallerStub(baseUrl)
 
   val authClient: AuthClient
@@ -46,17 +46,14 @@ abstract class AuthClientSuite() extends AnyWordSpec
   s"Calling authenticate()" should {
     "return authentication headers on 200 OK" in {
       val jwt = "jwt"
-      val csrfToken = "csrf-token"
 
       val responseHeaders = new LinkedMultiValueMap[String, String]
       responseHeaders.add("jwt", jwt)
-      responseHeaders.add("x-csrf-token", csrfToken)
 
       setUpSuccessfulAuthRequest(responseHeaders)
 
       val expected = new HttpHeaders()
       expected.add("jwt", jwt)
-      expected.add("x-csrf-token", csrfToken)
 
       val response = authClient.authenticate()
 

@@ -21,7 +21,7 @@ import org.apache.spark.sql.{Row, types}
 import org.apache.spark.sql.types._
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.funsuite.AnyFunSuite
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
@@ -40,10 +40,10 @@ class StandardizationXmlSuite extends AnyFunSuite with TZNormalizedSparkTestBase
 
   test("Reading data from XML input") {
 
-    implicit val dao: MenasDAO = mock[MenasDAO]
+    implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
     val args = ("--dataset-name Foo --dataset-version 1 --report-date 2018-08-10 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format xml --row-tag instrument").split(" ")
 
     val dataSet = Dataset("SpecialChars", 1, None, "", "", "SpecialChars", 1, conformance = Nil)

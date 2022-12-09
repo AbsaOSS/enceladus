@@ -34,8 +34,8 @@ import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils.JsonType
 import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasPlainCredentials
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.auth.RestApiPlainCredentials
 import za.co.absa.enceladus.model.test.factories.RunFactory
 import za.co.absa.enceladus.model.{Dataset, Run, SplineReference}
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -61,8 +61,8 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
     )
     private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
 
-    def testRun(testDataset: DataFrame)(implicit dao: MenasDAO, cmd: StandardizationConfig): Assertion = {
-      prepareStandardization("some app args".split(' '), MenasPlainCredentials("user", "pass"), prepResult)
+    def testRun(testDataset: DataFrame)(implicit dao: EnceladusDAO, cmd: StandardizationConfig): Assertion = {
+      prepareStandardization("some app args".split(' '), RestApiPlainCredentials("user", "pass"), prepResult)
       testDataset.write.csv(stdPath)
 
       // Atum framework initialization is part of the 'prepareStandardization'
@@ -81,7 +81,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
 
   "StandardizationExecution" should "write dataset properties into info file" in {
-    implicit val dao: MenasDAO = mock[MenasDAO]
+    implicit val dao: EnceladusDAO = mock[EnceladusDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
     // fallbacking on local fs we can afford to prepare test files locally:

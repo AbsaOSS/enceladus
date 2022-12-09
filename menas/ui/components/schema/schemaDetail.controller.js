@@ -69,7 +69,7 @@ sap.ui.define([
 
     auditVersionPress: function (oEv) {
       let oSrc = oEv.getSource();
-      let oRef = oSrc.data("menasRef");
+      let oRef = oSrc.data("ref");
       this._router.navTo("schemas", {
         id: oRef.name,
         version: oRef.version
@@ -162,12 +162,7 @@ sap.ui.define([
       if (this.validateSchemaFileUplaod()) {
         const oFileUpload = this.byId("fileUploader");
         sap.ui.core.BusyIndicator.show();
-        // include CSRF token here - it may have changed between sessions
         oFileUpload.removeAllHeaderParameters();
-        oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
-          name: "X-CSRF-TOKEN",
-          value: localStorage.getItem("csrfToken")
-        }));
         oFileUpload.addHeaderParameter(new sap.ui.unified.FileUploaderParameter({
           name: "JWT",
           value: localStorage.getItem("jwtToken")
@@ -196,8 +191,7 @@ sap.ui.define([
           contentType: 'application/x-www-form-urlencoded',
           context: this, // becomes the result of "this" in handleRemoteLoad*Complete
           headers: {
-            "JWT": localStorage.getItem("jwtToken"),
-            'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+            "JWT": localStorage.getItem("jwtToken")
           },
           complete: this.handleRemoteLoadFromSubjectNameComplete
         });
@@ -228,9 +222,6 @@ sap.ui.define([
         data: $.param(data),
         contentType: 'application/x-www-form-urlencoded',
         context: this, // becomes the result of "this" in handleRemoteLoad*Complete
-        headers: {
-          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
-        },
         complete: this.handleRemoteLoadFromUrlComplete
       });
     },
@@ -399,8 +390,7 @@ sap.ui.define([
         url: window.apiUrl + "/schema/features",
         type: 'GET',
         headers: {
-          "JWT": localStorage.getItem("jwtToken"),
-          'X-CSRF-TOKEN': localStorage.getItem("csrfToken")
+          "JWT": localStorage.getItem("jwtToken")
         },
         context: this,
         complete: this.handleRegistryIntegrationResponse

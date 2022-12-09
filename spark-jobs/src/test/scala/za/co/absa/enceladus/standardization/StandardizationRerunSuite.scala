@@ -22,7 +22,7 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
@@ -36,7 +36,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
 
   import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val standardizationReader = new StandardizationPropertiesProvider()
   private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
@@ -67,7 +67,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String, schemaWithStringType: StructType): DataFrame = {
     val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)

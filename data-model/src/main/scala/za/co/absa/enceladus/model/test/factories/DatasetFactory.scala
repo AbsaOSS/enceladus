@@ -126,8 +126,8 @@ object DatasetFactory extends EntityFactory[Dataset] {
 
   def getDummyDatasetParent(collection: Option[String] = Some("dataset"),
                             name: String = "dataset",
-                            version: Int = 1): MenasReference = {
-    MenasReference(collection, name, version)
+                            version: Int = 1): Reference = {
+    Reference(collection, name, version)
   }
 
   def toSummary(dataset: Dataset): VersionedSummary = {

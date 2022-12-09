@@ -29,10 +29,10 @@ import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
 import za.co.absa.enceladus.rest_api.TestResourcePath
 import za.co.absa.enceladus.rest_api.models.rest.exceptions.SchemaParsingException
 import za.co.absa.enceladus.rest_api.utils.SchemaType
-import za.co.absa.enceladus.rest_api.utils.converters.SparkMenasSchemaConvertor
+import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with Inside {
-  val mockSchemaConvertor: SparkMenasSchemaConvertor = mock[SparkMenasSchemaConvertor]
+  val mockSchemaConvertor: SparkEnceladusSchemaConvertor = mock[SparkEnceladusSchemaConvertor]
 
   val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
   Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenReturn(someStructType)
@@ -48,13 +48,13 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
 
     val structParser = schemaParserFactory.getParser(Struct)
     "parse struct correctly" when {
-      "menasSchemaConverter suceeds" in {
+      "enceladusSchemaConverter suceeds" in {
         structParser.parse("some struct type def") shouldBe someStructType
       }
     }
 
     "throw SchemaParsingException at parse struct " when {
-      "menasSchemaConverter throws exception" in {
+      "enceladusSchemaConverter throws exception" in {
         val someException = new IllegalStateException("error description")
         Mockito.when(mockSchemaConvertor.convertAnyToStructType(any[String])).thenThrow(someException)
 

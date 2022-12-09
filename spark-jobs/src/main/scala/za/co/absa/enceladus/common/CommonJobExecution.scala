@@ -29,7 +29,7 @@ import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnStri
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
-import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.spark.commons.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.model.Dataset

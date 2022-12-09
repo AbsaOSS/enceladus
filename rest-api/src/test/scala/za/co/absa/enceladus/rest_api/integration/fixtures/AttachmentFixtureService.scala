@@ -19,8 +19,8 @@ import org.mongodb.scala.MongoDatabase
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import za.co.absa.enceladus.rest_api.repositories.AttachmentMongoRepository
-import za.co.absa.enceladus.model.menas.MenasAttachment
+import za.co.absa.enceladus.model.backend.Attachment
 
 @Component
 class AttachmentFixtureService @Autowired()(mongoDb: MongoDatabase)
-  extends FixtureService[MenasAttachment](mongoDb, AttachmentMongoRepository.collectionName)
+  extends FixtureService[Attachment](mongoDb, AttachmentMongoRepository.collectionName)

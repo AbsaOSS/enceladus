@@ -23,7 +23,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model._
-import za.co.absa.enceladus.model.menas._
+import za.co.absa.enceladus.model.backend._
 import za.co.absa.enceladus.rest_api.services.MappingTableService
 
 @RestController
@@ -37,7 +37,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   @PostMapping(path = Array("/updateDefaults"))
   @ResponseStatus(HttpStatus.OK)
   def updateDefaults(@AuthenticationPrincipal user: UserDetails,
-    @RequestBody upd: MenasObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
+    @RequestBody upd: GenericObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
     mappingTableService.updateDefaults(user.getUsername, upd.id.name,
       upd.id.version, upd.value.toList).map {
         case Some(entity) => entity._1 // v2 disregarding validation
@@ -48,7 +48,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   @PostMapping(path = Array("/addDefault"))
   @ResponseStatus(HttpStatus.OK)
   def addDefault(@AuthenticationPrincipal user: UserDetails,
-    @RequestBody newDefault: MenasObject[DefaultValue]): CompletableFuture[MappingTable] = {
+    @RequestBody newDefault: GenericObject[DefaultValue]): CompletableFuture[MappingTable] = {
     mappingTableService.addDefault(user.getUsername, newDefault.id.name,
       newDefault.id.version, newDefault.value).map {
         case Some(entity) => entity._1 // v2 disregarding validation

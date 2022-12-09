@@ -24,7 +24,7 @@ import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.interpreter.exceptions.InvalidDataTypeException
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 
@@ -48,7 +48,7 @@ trait RuleInterpreter {
     * @return A conformed DataFrame
     */
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO, progArgs: InterpreterContextArgs): Dataset[Row]
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO, progArgs: InterpreterContextArgs): Dataset[Row]
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 

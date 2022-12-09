@@ -28,7 +28,7 @@ import za.co.absa.commons.version.Version.VersionStringInterpolator
 
 import scala.collection.JavaConverters._
 import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.spark.commons.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}

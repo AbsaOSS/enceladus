@@ -334,7 +334,7 @@ class PropertyDefinitionApiIntegrationSuite extends BaseRestApiTestV2 with Befor
                  |"userDisabled":null,
                  |"parent":{"collection":"propertydef","name":"propertyDefinition1","version":22},
                  |"createdMessage":{
-                 |"menasRef":{"collection":null,"name":"propertyDefinition1","version":23},
+                 |"ref":{"collection":null,"name":"propertyDefinition1","version":23},
                  |"updatedBy":"dummyUser",
                  |"updated":"${pd23.createdMessage.updated}",
                  |"changes":[{"field":"","oldValue":null,"newValue":null,"message":"PropertyDefinition propertyDefinition1 created."}]

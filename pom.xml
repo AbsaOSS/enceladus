@@ -144,6 +144,7 @@
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
         <jacoco.version>0.8.8</jacoco.version>
         <maven.antrun.plugin.version>1.8</maven.antrun.plugin.version>
+        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>

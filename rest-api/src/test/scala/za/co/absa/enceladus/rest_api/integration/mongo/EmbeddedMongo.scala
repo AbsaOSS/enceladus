@@ -40,7 +40,7 @@ class EmbeddedMongo {
 
   def getMongoPort: Int = mongoPort
 
-  @Value("${menas.mongo.connection.database}")
+  @Value("${enceladus.rest.mongo.connection.database}")
   val database: String = ""
 
   @PostConstruct

@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.rest_api.auth
 
-import java.util.UUID
-
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.joda.time.{DateTime, DateTimeZone, Hours}
 import org.springframework.beans.factory.annotation.{Autowired, Value}
@@ -29,21 +27,19 @@ import za.co.absa.enceladus.rest_api.auth.jwt.JwtFactory
 
 @Component
 class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
-                                                     @Value("${menas.auth.jwt.lifespan.hours}")
+                                                     @Value("${enceladus.rest.auth.jwt.lifespan.hours}")
                                                      jwtLifespanHours: Int,
                                                      @Value("${timezone}")
                                                      timezone: String)
   extends SimpleUrlAuthenticationSuccessHandler {
 
-  @Value("${menas.auth.roles.regex:}")
+  @Value("${enceladus.rest.auth.roles.regex:}")
   private val rolesRegex: String = ""
 
   override def onAuthenticationSuccess(request: HttpServletRequest,
                                        response: HttpServletResponse,
                                        authentication: Authentication): Unit = {
     val user = authentication.getPrincipal.asInstanceOf[UserDetails]
-    val csrfToken = UUID.randomUUID().toString
-    response.addHeader(CsrfTokenKey, csrfToken)
 
     val expiry = Hours.hours(jwtLifespanHours).toStandardSeconds
     val jwtExpirationTime = DateTime.now(DateTimeZone.forID(timezone)).plus(expiry).toDate
@@ -61,7 +57,6 @@ class MenasAuthenticationSuccessHandler @Autowired()(jwtFactory: JwtFactory,
       .jwtBuilder()
       .setSubject(user.getUsername)
       .setExpiration(jwtExpirationTime)
-      .claim(CsrfTokenKey, csrfToken)
       .claim(RolesKey, filteredGroups)
       .compact()
 

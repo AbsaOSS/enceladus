@@ -44,13 +44,13 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
   @LocalServerPort
   private val port = 0
 
-  @Value("${menas.auth.inmemory.user}")
+  @Value("${enceladus.rest.auth.inmemory.user}")
   val user: String = ""
-  @Value("${menas.auth.inmemory.password}")
+  @Value("${enceladus.rest.auth.inmemory.password}")
   val passwd: String = ""
-  @Value("${menas.auth.inmemory.admin.user}")
+  @Value("${enceladus.rest.auth.inmemory.admin.user}")
   val adminUser: String = ""
-  @Value("${menas.auth.inmemory.admin.password}")
+  @Value("${enceladus.rest.auth.inmemory.admin.password}")
   val adminPasswd: String = ""
 
   // expecting apiPath to be /api for v2 and /api-v3 for v3
@@ -81,10 +81,8 @@ abstract class BaseRestApiTest(loginPath: String, apiPath: String) extends BaseR
     val response = restTemplate.postForEntity(loginUrl, HttpEntity.EMPTY, classOf[String])
 
     val jwtToken = response.getHeaders.get("jwt").get(0)
-    val csrfToken = response.getHeaders.get("X-CSRF-TOKEN").get(0)
     val headers = new HttpHeaders()
     headers.add("jwt", jwtToken)
-    headers.add("X-CSRF-TOKEN", csrfToken)
     headers
   }
 

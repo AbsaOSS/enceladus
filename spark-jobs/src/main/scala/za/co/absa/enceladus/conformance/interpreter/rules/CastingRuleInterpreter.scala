@@ -21,7 +21,7 @@ import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, ConformanceRule}
 import za.co.absa.enceladus.utils.udf.UDFNames
 import za.co.absa.spark.commons.implicits.DataTypeImplicits.DataTypeEnhancements
@@ -35,7 +35,7 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   def conform(df: Dataset[Row])
-             (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+             (implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO,
               progArgs: InterpreterContextArgs): Dataset[Row] = {
     // Validate the rule parameters
     RuleValidators.validateInputField(progArgs.datasetName, ruleName, df.schema, rule.inputColumn)

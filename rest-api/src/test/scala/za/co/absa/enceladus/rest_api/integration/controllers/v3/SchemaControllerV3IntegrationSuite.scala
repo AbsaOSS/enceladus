@@ -27,7 +27,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit4.SpringRunner
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.factories.{AttachmentFactory, DatasetFactory, MappingTableFactory, SchemaFactory}
 import za.co.absa.enceladus.model.versionedModel.NamedVersion
 import za.co.absa.enceladus.model.{Schema, SchemaField, UsedIn, Validation}
@@ -51,7 +51,7 @@ import scala.collection.immutable.HashMap
 @ActiveProfiles(Array("withEmbeddedMongo"))
 class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAndAfterAll with Matchers {
 
-  private val port = 8877 // same  port as in test/resources/application.conf in the `menas.schemaRegistry.baseUrl` key
+  private val port = 8877 // same  port as in test/resources/application.conf in the `enceladus.rest.schemaRegistry.baseUrl` key
   private val wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(port))
 
   override def beforeAll(): Unit = {
@@ -499,7 +499,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         val response = sendPostUploadFile[String](
           s"$apiUrl/schemaA/1/from-file", TestResourcePath.Json.ok, schemaParams)
         assertBadRequest(response)
-        response.getBody should include("not a recognized schema format. Menas currently supports: struct, copybook, avro.")
+        response.getBody should include("not a recognized schema format. Enceladus currently supports: struct, copybook, avro.")
       }
 
       "a copybook with a syntax error" should {
@@ -870,8 +870,8 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         // datasetB and mappingB are disabled -> not reported
         // mappingC is reported, even though it schema is tied to schema-v2, because disabling is done on the whole entity in API v3
         response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
-          mappingTables = Some(Seq(MenasReference(None, "mappingA", 1), MenasReference(None, "mappingC", 1)))
+          datasets = Some(Seq(Reference(None, "datasetA", 1))),
+          mappingTables = Some(Seq(Reference(None, "mappingA", 1), Reference(None, "mappingC", 1)))
         )
       }
     }
@@ -900,8 +900,8 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
         // datasetB and mappingB are disabled -> not reported
         // mappingC is tied to schema v2 -> not reported
         response.getBody shouldBe UsedIn(
-          datasets = Some(Seq(MenasReference(None, "datasetA", 1))),
-          mappingTables = Some(Seq(MenasReference(None, "mappingA", 1)))
+          datasets = Some(Seq(Reference(None, "datasetA", 1))),
+          mappingTables = Some(Seq(Reference(None, "mappingA", 1)))
         )
       }
     }
@@ -1083,7 +1083,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
 
           assertBadRequest(response)
           response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset1", 1), MenasReference(None, "dataset2", 7))), None)
+            UsedIn(Some(Seq(Reference(None, "dataset1", 1), Reference(None, "dataset2", 7))), None)
           )
         }
       }
@@ -1101,7 +1101,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertBadRequest(response)
 
           response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
-            UsedIn(None, Some(Seq(MenasReference(None, "mapping1", 1), MenasReference(None, "mapping2", 1))))
+            UsedIn(None, Some(Seq(Reference(None, "mapping1", 1), Reference(None, "mapping2", 1))))
           )
         }
       }
@@ -1121,7 +1121,7 @@ class SchemaControllerV3IntegrationSuite extends BaseRestApiTestV3 with BeforeAn
           assertBadRequest(response)
 
           response.getBody shouldBe EntityInUseException("""Cannot disable entity "schema", because it is used in the following entities""",
-            UsedIn(Some(Seq(MenasReference(None, "dataset2", 1))), Some(Seq(MenasReference(None, "mapping1", 1))))
+            UsedIn(Some(Seq(Reference(None, "dataset2", 1))), Some(Seq(Reference(None, "mapping1", 1))))
           )
         }
       }

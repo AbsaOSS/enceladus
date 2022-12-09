@@ -25,7 +25,7 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
@@ -39,7 +39,7 @@ trait NestedStructsFixture extends BeforeAndAfterAll with TZNormalizedSparkTestB
 
   protected var standardizedDf: DataFrame = _
 
-  implicit protected val dao: MenasDAO = mock(classOf[MenasDAO])
+  implicit protected val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
   implicit protected val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2017-11-01")
 
   protected val upperRule1 = UppercaseConformanceRule(order = 1, inputColumn = "strings.with_new_lines",

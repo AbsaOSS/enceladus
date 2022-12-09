@@ -17,7 +17,7 @@ package za.co.absa.enceladus.standardization
 
 import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.common.GlobalDefaults
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
@@ -35,16 +35,19 @@ object StandardizationJob extends StandardizationExecution {
     implicit val spark: SparkSession = obtainSparkSession(jobName)
     implicit val configReader: ConfigReader = new ConfigReader()
 
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
-    val menasSetupValue = AvailabilitySetup.withName(menasSetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(
-      menasCredentials, menasBaseUrls, menasUrlsRetryCount, menasSetupValue, restApiOptionallyRetryableExceptions
-    )
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
+    val restApiAvailabilitySetupValue = AvailabilitySetup.withName(restApiAvailabilitySetup)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      restApiUrlsRetryCount,
+      restApiAvailabilitySetupValue,
+      restApiOptionallyRetryableExceptions)
 
     implicit val defaults: GlobalDefaults.type = GlobalDefaults
 
     val preparationResult = prepareJob()
-    val schema =  prepareStandardization(args, menasCredentials, preparationResult)
+    val schema =  prepareStandardization(args, restApiCredentials, preparationResult)
     val inputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
     val metadataColumns = BasicMetadataColumnsConfig.fromDefault().copy(prefix = "enceladus")
     val standardizationConfigWithoutTZ = BasicStandardizationConfig.fromDefault().copy(metadataColumns = metadataColumns)
@@ -55,7 +58,7 @@ object StandardizationJob extends StandardizationExecution {
 
     try {
       val result = standardize(inputData, schema, standardizationConfig)
-      processStandardizationResult(args, result, preparationResult, schema, cmd, menasCredentials)
+      processStandardizationResult(args, result, preparationResult, schema, cmd, restApiCredentials)
       // post processing deliberately rereads the output to make sure that outputted data is stable #1538
       runPostProcessing(SourcePhase.Standardization, preparationResult, cmd)
     } finally {

@@ -24,10 +24,10 @@ import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
+import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasCredentials
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
@@ -50,9 +50,9 @@ trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
 
   protected def prepareStandardization[T](args: Array[String],
-                                          menasCredentials: MenasCredentials,
+                                          restApiCredentials: RestApiCredentials,
                                           preparationResult: PreparationResult)
-                                         (implicit dao: MenasDAO,
+                                         (implicit dao: EnceladusDAO,
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession,
                                           defaults: TypeDefaults): StructType = {
@@ -69,8 +69,8 @@ trait StandardizationExecution extends CommonJobExecution {
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
+    // Enable Enceladus plugin for Control Framework
+    EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
@@ -96,7 +96,7 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization.path,
-      menasCredentials.username, args.mkString(" "))
+      restApiCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
@@ -122,7 +122,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 rawInput: PathWithFs,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                dao: MenasDAO): DataFrame = {
+                                                dao: EnceladusDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
@@ -175,7 +175,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 preparationResult: PreparationResult,
                                                 schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
-                                                menasCredentials: MenasCredentials)
+                                                restApiCredentials: RestApiCredentials)
                                                (implicit spark: SparkSession, configReader: ConfigReader): DataFrame = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
@@ -216,7 +216,7 @@ trait StandardizationExecution extends CommonJobExecution {
       "std",
       preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization,
-      menasCredentials.username,
+      restApiCredentials.username,
       args.mkString(" ")
     )
 

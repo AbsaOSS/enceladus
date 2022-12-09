@@ -19,8 +19,8 @@ import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import com.fasterxml.jackson.databind.node.ArrayNode
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.backend.Reference
 
 case class MappingTable(name: String,
                         version: Int = 1,
@@ -46,7 +46,7 @@ case class MappingTable(name: String,
                         locked: Option[Boolean] = None,
                         dateLocked: Option[ZonedDateTime] = None,
                         userLocked: Option[String] = None,
-                        parent: Option[MenasReference] = None,
+                        parent: Option[Reference] = None,
                         filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
@@ -65,19 +65,19 @@ case class MappingTable(name: String,
   def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
   def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
-  override def setParent(newParent: Option[MenasReference]): MappingTable = this.copy(parent = newParent)
+  override def setParent(newParent: Option[Reference]): MappingTable = this.copy(parent = newParent)
   def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
   def getDefaultMappingValues: Map[String, String] = {
     defaultMappingValue.map(_.toTuple).toMap
   }
 
-  override val createdMessage = AuditTrailEntry(menasRef = MenasReference(collection = None, name = name, version = version),
+  override val createdMessage = AuditTrailEntry(ref = Reference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
     AuditTrailChange(field = "", oldValue = None, newValue = None, s"Mapping Table ${name} created.")))
 
   override def getAuditMessages(newRecord: MappingTable): AuditTrailEntry = {
-    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+    AuditTrailEntry(ref = Reference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,
