@@ -17,7 +17,8 @@ package za.co.absa.enceladus.rest_api
 
 import com.google.common.base.Predicate
 import com.google.common.base.Predicates.or
-import org.springframework.context.annotation.{Bean, Configuration, Primary, Profile}
+import org.springframework.context.annotation.{Bean, Configuration}
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import springfox.documentation.builders.PathSelectors.regex
 import springfox.documentation.builders.{ApiInfoBuilder, RequestHandlerSelectors}
 import springfox.documentation.spi.DocumentationType
@@ -40,6 +41,7 @@ class SpringFoxConfig extends ProjectMetadata {
 
     new Docket(DocumentationType.SWAGGER_2)
       .apiInfo(apiInfo(isDev))
+      .ignoredParameterTypes(classOf[AuthenticationPrincipal]) // excludes params as AccountNotLocket, etc. See #2132
       .select
       .apis(RequestHandlerSelectors.any)
       .paths(filteredPaths(isDev))
