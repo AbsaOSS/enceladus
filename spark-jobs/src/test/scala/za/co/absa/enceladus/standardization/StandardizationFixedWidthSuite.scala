@@ -62,7 +62,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assert(expected == actual)
   }
 
   test("Reading data from FixedWidth input trimmed") {
@@ -81,7 +81,7 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assert(expected == actual)
   }
 
   test("Reading data from FixedWidth input treating empty as null") {
@@ -100,6 +100,6 @@ class StandardizationFixedWidthSuite extends AnyFunSuite with TZNormalizedSparkT
     val destDF = Standardization.standardize(sourceDF, baseSchema, config)
 
     val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    assert(expected == actual)
   }
 }

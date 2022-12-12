@@ -15,8 +15,6 @@
 
 package za.co.absa.enceladus.conformance.config
 
-import org.apache.hadoop.conf.Configuration
-
 import java.time.ZonedDateTime
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.ConformanceExecution
@@ -29,6 +27,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
   private val year = "2018"
   private val month = "12"
   private val day = "31"
+  private val dateTokens = Array(year, month, day)
   private val hdfsRawPath = "/bigdatahdfs/datalake/raw/system/feed"
   private val hdfsPublishPath = "/bigdatahdfs/datalake/publish/system/feed"
   private val hdfsPublishPathOverride = "/bigdatahdfs/datalake/publish/system/feed/override"
@@ -59,7 +58,7 @@ class ConformanceParserSuite extends AnyFunSuite with TZNormalizedSparkTestBase 
 
   private object TestDynamicConformance extends ConformanceExecution
 
-  implicit val hadoopConf: Configuration = spark.sparkContext.hadoopConfiguration
+  implicit val hadoopConf = spark.sparkContext.hadoopConfiguration
 
   test("Test credentials file parsing "){
     val credentials = RestApiPlainCredentials.fromFile(restApiCredentialsFile)

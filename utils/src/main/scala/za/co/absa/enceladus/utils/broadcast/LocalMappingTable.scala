@@ -19,8 +19,8 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
+import za.co.absa.spark.commons.utils.SchemaUtils
 
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
@@ -69,7 +69,7 @@ object LocalMappingTable {
     })
 
     val structFields: Seq[StructField] = outputColumns.keys
-      .map(SchemaUtils.stripPathFromFieldName).toSeq
+      .map(SchemaUtils.stripParentPath).toSeq
       .zip(valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
     val rowSchema = StructType(structFields)
