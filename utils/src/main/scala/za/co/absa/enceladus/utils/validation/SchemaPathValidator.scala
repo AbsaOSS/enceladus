@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.utils.validation
 
 import org.apache.spark.sql.types._
+import za.co.absa.spark.commons.utils.SchemaUtils
 
 import scala.annotation.tailrec
 
@@ -32,7 +33,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPath(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, fieldPath.split('.'))
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray)
   }
 
   /**
@@ -44,7 +45,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPathOutput(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true, fullPathNew = true)
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray, parentOnly = true, fullPathNew = true)
   }
 
   /**
@@ -55,7 +56,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPathParent(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, fieldPath.split('.'), parentOnly = true)
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray, parentOnly = true)
   }
 
 
@@ -70,10 +71,10 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validatePathSameParent(fieldPath1: String, fieldPath2: String): Seq[ValidationIssue] = {
-    val path1 = fieldPath1.split('.')
-    val path2 = fieldPath2.split('.')
+    val path1 = SchemaUtils.splitPath(fieldPath1)
+    val path2 = SchemaUtils.splitPath(fieldPath2)
 
-    if (path1.length == path2.length && path1.dropRight(1).sameElements(path2.dropRight(1))) {
+    if (path1.length == path2.length && path1.dropRight(1) == path2.dropRight(1)) {
       Seq.empty[ValidationIssue]
     } else {
       Seq(ValidationError(s"Fields '$fieldPath1' and '$fieldPath2' have different parents."))
@@ -124,7 +125,7 @@ object SchemaPathValidator {
   }
 
   private def validateSchemaPathType(schema: StructType, fieldPath: String)(f: DataType => Seq[ValidationIssue]): Seq[ValidationIssue] = {
-    val path = fieldPath.split('.')
+    val path = SchemaUtils.splitPath(fieldPath).toArray
     if (path.isEmpty) {
       Seq(ValidationError(s"Column name is not specified"))
     } else {
