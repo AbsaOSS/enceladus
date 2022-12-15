@@ -33,7 +33,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPath(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray)
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath))
   }
 
   /**
@@ -45,7 +45,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPathOutput(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray, parentOnly = true, fullPathNew = true)
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath), parentOnly = true, fullPathNew = true)
   }
 
   /**
@@ -56,7 +56,7 @@ object SchemaPathValidator {
     * @return A list of ValidationErrors objects, each containing a column name and the list of errors and warnings
     */
   def validateSchemaPathParent(schema: StructType, fieldPath: String): Seq[ValidationIssue] = {
-    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath).toArray, parentOnly = true)
+    validateSchemaPathArray(schema, SchemaUtils.splitPath(fieldPath), parentOnly = true)
   }
 
 
@@ -125,7 +125,7 @@ object SchemaPathValidator {
   }
 
   private def validateSchemaPathType(schema: StructType, fieldPath: String)(f: DataType => Seq[ValidationIssue]): Seq[ValidationIssue] = {
-    val path = SchemaUtils.splitPath(fieldPath).toArray
+    val path = SchemaUtils.splitPath(fieldPath)
     if (path.isEmpty) {
       Seq(ValidationError(s"Column name is not specified"))
     } else {
@@ -139,14 +139,14 @@ object SchemaPathValidator {
 
   @tailrec
   private def validateSchemaPathArray(schema: StructType,
-                                      path: Array[String],
+                                      path: List[String],
                                       parentOnly: Boolean = false,
                                       fullPathNew: Boolean = false,
                                       parentPath: String = ""): Seq[ValidationIssue] = {
     if (path.isEmpty) {
       Nil
     } else {
-      val currentField = path(0)
+      val currentField = path.head
       val fullPath = s"$parentPath${path.mkString(".")}"
       if (parentOnly && path.length == 1) {
         if (fullPathNew) {
@@ -214,7 +214,7 @@ object SchemaPathValidator {
   }
 
   @tailrec
-  private def getSchemaField(schema: StructType, path: Array[String]): Option[StructField] = {
+  private def getSchemaField(schema: StructType, path: List[String]): Option[StructField] = {
     if (path.isEmpty) {
       None
     } else {
