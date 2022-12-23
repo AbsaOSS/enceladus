@@ -103,7 +103,7 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
   val testKafkaUrl = "http://example.com:9092"
   val testSecurityProtocol = "SASL_SSL"
   val testSaslMechanism = "GSSAPI"
-  val testSchemaRegUrl = "http://example.com:8081"
+  val testSchemaRegUrl = "mock://example.com:8081"
   val testSchemaRegAuthSource = "USER_INFO"
   val testSchemaRegAuthUserInfo = "svc-account:SVC-P4SSW0RD"
 
@@ -124,6 +124,19 @@ class KafkaErrorSenderPluginSuite extends AnyFlatSpec with TZNormalizedSparkTest
       schemaRegistryUrl = testSchemaRegUrl, clientId = testClientId,
       security = Some(KafkaSecurityParams(testSecurityProtocol, Some(testSaslMechanism))), topicName = testTopicName,
       schemaRegistrySecurityParams = Some(SchemaRegistrySecurityParams(testSchemaRegAuthSource, Some(testSchemaRegAuthUserInfo))))
+  }
+
+  it should "correctly register schemas" in {
+    val connectionParams = KafkaErrorSenderPlugin.kafkaConnectionParamsFromConfig(testConfig)
+
+    KafkaErrorSenderPlugin.registerSchemas(connectionParams) match {
+      case (_, _, schemaConfig) => // we do not care about `keySchemaId`, `valueSchemaId` assigned
+        schemaConfig shouldBe Map(
+          "schema.registry.url" -> "mock://example.com:8081",
+          "basic.auth.credentials.source" -> "USER_INFO",
+          "basic.auth.user.info" -> "svc-account:SVC-P4SSW0RD"
+        )
+    }
   }
 
   it should "skip sending 0 errors to kafka" in {

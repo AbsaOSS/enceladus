@@ -79,6 +79,7 @@ class HyperConformance (restApiBaseUrls: List[String],
 
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
                                      (implicit sparkSession: SparkSession, enceladusDAO: EnceladusDAO): DataFrame = {
+    sparkSession.conf.set("spark.sql.legacy.timeParserPolicy","LEGACY") // otherwise timestamp parsing migh cause issues
 
     val schema: StructType = enceladusDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
     val schemaFields = if (schema == null) List() else schema.fields.toList

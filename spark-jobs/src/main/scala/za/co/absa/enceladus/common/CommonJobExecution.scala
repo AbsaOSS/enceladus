@@ -82,6 +82,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .config("spark.executor.extraJavaOptions", SecureConfig.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
+      .config("spark.sql.legacy.timeParserPolicy","LEGACY") // otherwise timestamp parsing migh cause issues
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark

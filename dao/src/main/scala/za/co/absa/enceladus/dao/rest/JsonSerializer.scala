@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, Ser
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-import java.text.SimpleDateFormat
 import scala.reflect.ClassTag
 import scala.util.Try
 
