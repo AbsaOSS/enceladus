@@ -32,7 +32,11 @@ import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConver
 
 class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with Inside {
 
-  implicit val structTypeEqualityIgnoreMetadata: Equality[StructType] = new Equality[StructType] {
+  // `metadata` field is considered to be implementation detail of a specific, external parser;
+  // that's why it should be skipped in equality comparison.
+  // For example, metadata fields have been added in one of versions of Cobrix,
+  // causing tests failure (without `structTypeEqualityIgnoreMetadata`) after Cobrix version upgrade (#2139).
+  private implicit val structTypeEqualityIgnoreMetadata: Equality[StructType] = new Equality[StructType] {
     override def areEqual(a: StructType, b: Any): Boolean = b match {
       case StructType(fields) =>
         a.fields.length === fields.length &&
