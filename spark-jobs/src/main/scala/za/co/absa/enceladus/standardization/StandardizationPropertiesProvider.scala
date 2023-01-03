@@ -127,17 +127,14 @@ class StandardizationPropertiesProvider {
                                 (implicit dao: EnceladusDAO): HashMap[String, Option[RawFormatParameter]] = {
     if (cmd.rawFormat =="cobol") {
       val cobolOptions = cmd.cobolOptions.getOrElse(CobolOptions())
-      val isXcomOpt = if (cobolOptions.isXcom) Some(true) else None
-      val isTextOpt = if (cobolOptions.isText) Some(true) else None
       val isAscii = cobolOptions.encoding.exists(_.equalsIgnoreCase("ascii"))
-
       // isXcom = variable length file (V)
-      // isText = ASCII test file (D)
+      // isText = ASCII text file (D)
       // If neither not set = fixed length file (F)
       // More info: https://www.ibm.com/docs/en/zos-basic-skills?topic=set-data-record-formats
-      val recordFormat = (isXcomOpt, isTextOpt) match {
-        case (Some(true), _) => "V"
-        case (_, Some(true)) => "D"
+      val recordFormat = (cobolOptions.isXcom, cobolOptions.isText) match {
+        case (true, _) => "V"
+        case (_, true) => "D"
         case _ => "F"
       }
       // For ASCII files --charset is converted into Cobrix "ascii_charset" option
