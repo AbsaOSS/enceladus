@@ -37,9 +37,9 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
   @PostMapping(path = Array("/updateDefaults"))
   @ResponseStatus(HttpStatus.OK)
   def updateDefaults(@AuthenticationPrincipal user: UserDetails,
-    @RequestBody upd: GenericObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
-    mappingTableService.updateDefaults(user.getUsername, upd.id.name,
-      upd.id.version, upd.value.toList).map {
+    @RequestBody updatedDefaults: GenericObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
+    mappingTableService.updateDefaults(user.getUsername, updatedDefaults.id.name,
+      updatedDefaults.id.version, updatedDefaults.value.toList).map {
         case Some(entity) => entity._1 // v2 disregarding validation
         case None         => throw notFound()
       }

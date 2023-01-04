@@ -33,7 +33,7 @@ trait SparkJobRunnerMethods {
       if (jobClassSymbol.isModuleClass) {
         jobClass.getField("MODULE$").get(jobClass)
       } else {
-        jobClass.newInstance
+        jobClass.getDeclaredConstructor().newInstance() // jobClass.newInstance() raises deprecation warnings
       }
 
     jobInstance.asInstanceOf[MainClass].main(Array.empty)
