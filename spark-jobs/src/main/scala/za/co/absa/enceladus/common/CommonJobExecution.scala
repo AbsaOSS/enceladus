@@ -199,7 +199,10 @@ trait CommonJobExecution extends ProjectMetadata {
     }
   }
 
-  protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
+  protected def finishJob[T](jobConfig: JobConfigParser[T])(implicit spark: SparkSession): Unit = {
+    // Atum framework initialization is part of the 'prepareStandardization'
+    spark.disableControlMeasuresTracking()
+
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     EnceladusAtumPlugin.runNumber.foreach(runNumber => {
