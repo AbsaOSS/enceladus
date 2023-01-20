@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.standardization
 
 import java.io.File
-import java.nio.file.Files
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
@@ -31,6 +30,7 @@ import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils.JsonType
 import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.EnceladusDAO
@@ -118,21 +118,19 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
     // cleanup needed
   }
 
-
-
   "StandardizationExecution" should "write dataset properties into info file" in {
-    val tempDir = Files.createTempDirectory("std_exec_temp").toAbsolutePath.toString
-    runStdExecutionImitation(datasetA, tempDir)
-    safeDeleteTestDir(tempDir)
+    val tempDir = TempDirectory("std_exec_temp")
+    runStdExecutionImitation(datasetA, tempDir.path.toString)
+    tempDir.delete()
   }
 
   "StandardizationExecution" should "run twice without problems (Atum initialization, etc.)" in {
-    val tempDir = Files.createTempDirectory("std_exec_temp_twice").toAbsolutePath.toString
-    runStdExecutionImitation(datasetA, tempDir)
-    safeDeleteTestDir(s"$tempDir/std/path") // delete just the std output
+    val tempDir = TempDirectory("std_exec_temp_twice")
+    runStdExecutionImitation(datasetA, tempDir.path.toString)
+    safeDeleteTestDir(s"${tempDir.path.toString}/std/path") // delete just the std output
 
-    runStdExecutionImitation(datasetA, tempDir) // running again
-    safeDeleteTestDir(tempDir) // delete all test data
+    runStdExecutionImitation(datasetA, tempDir.path.toString) // running again
+    tempDir.delete()
   }
 
   private def safeDeleteTestDir(path: String): Unit = {
