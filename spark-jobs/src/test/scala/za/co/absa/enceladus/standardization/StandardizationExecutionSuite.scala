@@ -52,7 +52,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
   implicit val defaults: CommonTypeDefaults = new CommonTypeDefaults()
 
   import spark.implicits._
-  val datasetA = Seq(
+  private val datasetA = Seq(
     ("id1", "data1"),
     ("id2", "data2")
   ).toDF("id", "data").as("DatasetA")
