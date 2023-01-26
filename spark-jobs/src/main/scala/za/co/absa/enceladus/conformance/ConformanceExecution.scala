@@ -16,16 +16,14 @@
 package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration, Repartitioner}
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
@@ -38,6 +36,7 @@ import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.standardization.RecordIdGeneration
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -100,8 +99,6 @@ trait ConformanceExecution extends CommonJobExecution {
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
                           (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: EnceladusDAO): DataFrame = {
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
-
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
     implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem
 
@@ -121,7 +118,7 @@ trait ConformanceExecution extends CommonJobExecution {
         if (conformedDF.schema.fieldExists(Constants.EnceladusRecordId)) {
           conformedDF // no new id regeneration
         } else {
-          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdStrategy)
         }
     }
   }

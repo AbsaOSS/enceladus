@@ -39,7 +39,7 @@ import za.co.absa.standardization.Standardization
 import za.co.absa.standardization.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.validation.{ValidationException => EnceladusValidationException}
 import za.co.absa.standardization.{ValidationException => StandardizationValidationException}
-import za.co.absa.standardization.config.{StandardizationConfig => StandardizationLibraryConfig}
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig, StandardizationConfig => StandardizationLibraryConfig}
 import za.co.absa.standardization.types.TypeDefaults
 
 import java.io.{PrintWriter, StringWriter}
@@ -48,6 +48,21 @@ import scala.util.control.NonFatal
 
 trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
+
+  protected def prepareStandardizationConfig(): BasicStandardizationConfig = {
+    val metadataColumns = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(prefix = "enceladus", recordIdStrategy = recordIdStrategy)
+
+    val standardizationConfigWithoutTZ = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataColumns)
+
+    configReader.getStringOption("timezone") match {
+      case Some(tz) => standardizationConfigWithoutTZ.copy(timezone = tz)
+      case None => standardizationConfigWithoutTZ
+    }
+  }
 
   protected def prepareStandardization[T](args: Array[String],
                                           restApiCredentials: RestApiCredentials,

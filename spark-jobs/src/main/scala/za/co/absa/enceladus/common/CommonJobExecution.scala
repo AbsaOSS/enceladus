@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.standardization.RecordIdGeneration
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -57,6 +58,9 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
+  protected val recordIdStrategy = RecordIdGeneration.getRecordIdGenerationType(
+    configReader.getString("enceladus.recordId.generation.strategy")
+  )
   protected val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
   protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
@@ -200,7 +204,10 @@ trait CommonJobExecution extends ProjectMetadata {
     }
   }
 
-  protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
+  protected def finishJob[T](jobConfig: JobConfigParser[T])(implicit spark: SparkSession): Unit = {
+    // Atum framework initialization is part of the 'prepareStandardization'
+    spark.disableControlMeasuresTracking()
+
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     EnceladusAtumPlugin.runNumber.foreach(runNumber => {
