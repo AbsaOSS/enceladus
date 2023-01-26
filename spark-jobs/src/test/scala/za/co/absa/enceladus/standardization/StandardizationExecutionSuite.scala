@@ -48,7 +48,7 @@ import scala.concurrent.duration.DurationInt
 import scala.util.control.NonFatal
 
 class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase
-  with HadoopFsTestBase with MockitoSugar {
+  with HadoopFsTestBase with MockitoSugar with Eventually {
 
   private val log: Logger = LoggerFactory.getLogger(this.getClass)
   implicit val defaults: CommonTypeDefaults = new CommonTypeDefaults()

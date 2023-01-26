@@ -23,8 +23,6 @@ import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.standardization.RecordIdGeneration
-import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationJob extends StandardizationExecution {
   private val jobName: String = "Enceladus Standardization"
