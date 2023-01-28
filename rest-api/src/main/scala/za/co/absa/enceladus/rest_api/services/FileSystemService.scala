@@ -34,7 +34,7 @@ class FileSystemService @Autowired()(fs: EnceladusFileSystem) {
   }
 
   def getFolder(path: Path): Future[HDFSFolder] = Future {
-    if (!fs.isDirectory(path)) {
+    if (!fs.isDirectoryWithDefault(path, default = false)) {
       HDFSFolder(path.toUri.getPath, path.getName, None)
     } else {
       val status = fs.listStatus(path)
@@ -53,7 +53,7 @@ class FileSystemService @Autowired()(fs: EnceladusFileSystem) {
   }
 
   private def markIfDirectory(path: Path): Option[Seq[HDFSFolder]] = {
-    if (fs.isDirectory(path)) {
+    if (fs.isDirectoryWithDefault(path, default = false)) {
       Some(directoryMarker)
     } else {
       None

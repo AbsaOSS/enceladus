@@ -24,9 +24,11 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.commons.version.Version.VersionStringInterpolator
+
 import scala.collection.JavaConverters._
 import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.spark.commons.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
@@ -77,7 +79,7 @@ class HyperConformance (restApiBaseUrls: List[String],
 
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
                                      (implicit sparkSession: SparkSession, enceladusDAO: EnceladusDAO): DataFrame = {
-    import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+    sparkSession.conf.set("spark.sql.legacy.timeParserPolicy","LEGACY") // otherwise timestamp parsing migh cause issues
 
     val schema: StructType = enceladusDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
     val schemaFields = if (schema == null) List() else schema.fields.toList
@@ -135,7 +137,8 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
 
-    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+    SparkVersionGuard.fromSpark3XCompatibilitySettings.copy(minVersionInclusive = semver"3.2.1")(log)
+      .ensureSparkVersionCompatibility(SPARK_VERSION)
 
     validateConfiguration(conf)
 
@@ -161,6 +164,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
+      .setErrColNullability(true)
 
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
     implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)

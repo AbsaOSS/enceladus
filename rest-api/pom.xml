@@ -12,30 +12,34 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>rest-api</artifactId>
     <packaging>war</packaging>
-
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
         <version>3.0.0-SNAPSHOT</version>
     </parent>
-
     <properties>
         <java.version>1.8</java.version>
-        <scala.xml.version>1.0.4</scala.xml.version>
+        <scala.xml.version>1.0.6</scala.xml.version>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <embedded.mongo.version>2.2.0</embedded.mongo.version>
+        <jersery.server.version>1.19.4</jersery.server.version>
+        <!-- by default, hadoop-common 3.2.1 brings v1.19 only -->
     </properties>
-
     <dependencies>
         <!-- This will run on tomcat, include scala -->
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
             <version>${scala.version}</version>
         </dependency>
         <dependency>
@@ -98,6 +102,12 @@
             <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
             <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jersey</groupId>
+                    <artifactId>jersey-server</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -201,6 +211,12 @@
             <groupId>org.apache.htrace</groupId>
             <artifactId>htrace-core</artifactId>
             <version>${htrace.version}</version>
+        </dependency>
+        <!-- Jersey -->
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-server</artifactId>
+            <version>${jersery.server.version}</version>
         </dependency>
         <!-- Application -->
         <dependency>
@@ -358,12 +374,8 @@
                         <phase>validate</phase>
                         <configuration>
                             <target>
-                                <copy file="${project.basedir}/src/main/resources/application.properties.template"
-                                      tofile="${project.basedir}/src/main/resources/application.properties"
-                                      overwrite="false"/>
-                                <copy file="${project.basedir}/src/main/resources/docker.properties.template"
-                                      tofile="${project.basedir}/src/main/resources/docker.properties"
-                                      overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/application.properties.template" tofile="${project.basedir}/src/main/resources/application.properties" overwrite="false"/>
+                                <copy file="${project.basedir}/src/main/resources/docker.properties.template" tofile="${project.basedir}/src/main/resources/docker.properties" overwrite="false"/>
                             </target>
                         </configuration>
                         <goals>

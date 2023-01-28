@@ -15,16 +15,16 @@
 
 package za.co.absa.enceladus.utils.schema
 
-import org.apache.spark.sql.{Column, DataFrame}
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
+import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, LongType, StructField, StructType}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils.RowSeqToDf
 
-class SparkUtilsSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
-
-  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+class SparkUtilsSuite extends AnyFunSuite with TZNormalizedSparkTestBase with DatasetComparer {
 
   private def getDummyDataFrame: DataFrame = {
     import spark.implicits._
@@ -48,74 +48,65 @@ class SparkUtilsSuite extends AnyFunSuite with TZNormalizedSparkTestBase {
 
   private val colExpression: Column = lit(1)
   test("Test withColumnOverwriteIfExists() when the column does not exist") {
-    val expectedOutput =
-      """+-----+---+
-        ||value|foo|
-        |+-----+---+
-        ||1    |1  |
-        ||1    |1  |
-        ||1    |1  |
-        ||2    |1  |
-        ||1    |1  |
-        |+-----+---+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
-
     val dfIn = getDummyDataFrame
 
     val dfOut = dfIn.withColumnOverwriteIfExists("foo", colExpression)
-    val actualOutput = dfOut.dataAsString(truncate = false)
 
+    // checking schema first
     assert(dfOut.schema.length == 2)
     assert(dfOut.schema.head.name == "value")
     assert(dfOut.schema(1).name == "foo")
-    assert(actualOutput == expectedOutput)
+
+    val expectedData = Seq(
+      Row(1, 1),
+      Row(1, 1),
+      Row(1, 1),
+      Row(2, 1),
+      Row(1, 1)
+    )
+    val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
+    assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
   test("Test withColumnOverwriteIfExists() when the column exists") {
-    val expectedOutput =
-      """+-----+----------------------------------------------------------------------------------------------+
-        ||value|errCol                                                                                        |
-        |+-----+----------------------------------------------------------------------------------------------+
-        ||1    |[]                                                                                            |
-        ||1    |[]                                                                                            |
-        ||1    |[]                                                                                            |
-        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, value, [2], []]]|
-        ||1    |[]                                                                                            |
-        |+-----+----------------------------------------------------------------------------------------------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
-
     val dfIn = getDummyDataFrame
     val dfOut = dfIn.withColumnOverwriteIfExists("value", colExpression)
-    val actualOutput = dfOut.dataAsString(truncate = false)
 
+    // checking schema first
     assert(dfIn.schema.length == 1)
     assert(dfIn.schema.head.name == "value")
-    assert(actualOutput == expectedOutput)
+
+    val expectedData = Seq(
+      Row(1, Seq()),
+      Row(1, Seq()),
+      Row(1, Seq()),
+      Row(1, Seq(
+        Row("confLitError", "E00005", "Conformance Error - Special column value has changed", "value", Seq("2"), Seq())
+      )),
+      Row(1, Seq())
+    )
+    val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
+    assertSmallDatasetEquality(dfOut, expectedDF)
   }
 
   test("Test withColumnOverwriteIfExists() when the column exists, but has a different case") {
-    val expectedOutput =
-      """+-----+----------------------------------------------------------------------------------------------+
-        ||vAlUe|errCol                                                                                        |
-        |+-----+----------------------------------------------------------------------------------------------+
-        ||1    |[]                                                                                            |
-        ||1    |[]                                                                                            |
-        ||1    |[]                                                                                            |
-        ||1    |[[confLitError, E00005, Conformance Error - Special column value has changed, vAlUe, [2], []]]|
-        ||1    |[]                                                                                            |
-        |+-----+----------------------------------------------------------------------------------------------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
-
     val dfIn = getDummyDataFrame
     val dfOut = dfIn.withColumnOverwriteIfExists("vAlUe", colExpression)
-    val actualOutput = dfOut.dataAsString(truncate = false)
 
+    // checking schema first
     assert(dfIn.schema.length == 1)
     assert(dfIn.schema.head.name == "value")
-    assert(actualOutput == expectedOutput)
-  }
+
+    val expectedData = Seq(
+      Row(1, Seq()),
+      Row(1, Seq()),
+      Row(1, Seq()),
+      Row(1, Seq(
+        Row("confLitError", "E00005", "Conformance Error - Special column value has changed", "vAlUe", Seq("2"), Seq())
+      )),
+      Row(1, Seq())
+    )
+    val expectedDF = expectedData.toDfWithSchema(dfOut.schema) // checking just the data
+    assertSmallDatasetEquality(dfOut, expectedDF)  }
 
 }

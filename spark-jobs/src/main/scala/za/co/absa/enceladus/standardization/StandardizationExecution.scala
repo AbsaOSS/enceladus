@@ -165,6 +165,7 @@ trait StandardizationExecution extends CommonJobExecution {
 
   protected def standardize(inputData: DataFrame, schema: StructType, standardizationConfig: StandardizationLibraryConfig)
                               (implicit spark: SparkSession): DataFrame = {
+    //scalastyle:on parameter.number
     try {
       handleControlInfoValidation()
       Standardization.standardize(inputData, schema, standardizationConfig)

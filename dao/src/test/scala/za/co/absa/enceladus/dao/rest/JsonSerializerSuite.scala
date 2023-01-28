@@ -16,7 +16,6 @@
 package za.co.absa.enceladus.dao.rest
 
 import java.time.ZonedDateTime
-
 import org.scalactic.{AbstractStringUniformity, Uniformity}
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
@@ -25,7 +24,20 @@ import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
 
+import java.time.format.DateTimeFormatter
+
 class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
+  private val whiteSpaceNormalised: Uniformity[String] =
+    new AbstractStringUniformity {
+      def normalized(s: String): String = s.replaceAll("\\s+", "").trim
+
+      override def toString: String = "whiteSpaceNormalised"
+    }
+
+  private def parseTZDateTime(s: String): ZonedDateTime = {
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS zzz")
+    ZonedDateTime.parse(s, formatter)
+  }
 
   "JsonSerializer" should {
     "handle Datasets" when {
@@ -52,7 +64,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "conformance": [],
           |  "parent": null,
           |  "schedule": null,
-          |  "properties": null,
+          |  "properties": {},
           |  "propertiesValidation": null,
           |  "createdMessage": {
           |    "ref": {
@@ -73,7 +85,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  }
           |}
           |""".stripMargin
-      val dataset = DatasetFactory.getDummyDataset()
+      val dataset = DatasetFactory.getDummyDataset(properties = Some(Map.empty))
 
       "serializing" in {
         val result = JsonSerializer.toJson(dataset)
@@ -86,7 +98,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
     }
 
     "handle Datasets with conformance rules" when {
-      val datasetJson =
+      val datasetJson = {
       """{
         |  "name": "Test",
         |  "version": 5,
@@ -211,6 +223,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    ]
         |  }
         |}""".stripMargin
+      }
 
       val dataset: Dataset = DatasetFactory.getDummyDataset(
         name = "Test",
@@ -220,9 +233,9 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         hdfsPublishPath = "/bigdata/test2",
         schemaName = "Cobol1",
         schemaVersion = 3,
-        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        dateCreated = parseTZDateTime("2019-07-22 08:05:57.47 UTC"),
         userCreated = "system",
-        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        lastUpdated = parseTZDateTime("2020-04-02 15:53:02.947 UTC"),
         userUpdated = "system",
 
         conformance = List(
@@ -266,7 +279,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             value = "AAA"
           )
         ),
-        parent = Some(Reference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
+        parent = Some(Reference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
+        properties = None
       )
 
       "serializing" in {
@@ -275,7 +289,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
       "deserializing" in {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
-        result should matchTo(dataset)
+        val expectedDeserializedDataset = dataset.copy(properties = Option(Map.empty)) // Jackson deserializes a null to the class' default value
+        result should matchTo(expectedDeserializedDataset)
       }
     }
 
@@ -649,11 +664,4 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
   }
-
-  val whiteSpaceNormalised: Uniformity[String] =
-    new AbstractStringUniformity {
-      def normalized(s: String): String = s.replaceAll("\\s+", "").trim
-
-      override def toString: String = "whiteSpaceNormalised"
-    }
 }

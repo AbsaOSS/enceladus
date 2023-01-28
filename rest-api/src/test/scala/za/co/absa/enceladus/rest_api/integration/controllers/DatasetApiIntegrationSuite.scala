@@ -341,7 +341,7 @@ class DatasetApiIntegrationSuite extends BaseRestApiTestV2 with BeforeAndAfterAl
         ("non-empty properties map", """{"keyA":"valA","keyB":"valB","keyC":""}""",
           Some(Map("keyA" -> "valA", "keyB" -> "valB"))), // empty string property would get removed (defined "" => undefined)
         ("empty properties map", "{}", Some(Map.empty)),
-        ("no properties at all", "", None) // this is backwards compatible option with the pre-properties era versions
+        ("no properties at all", "", Some(Map.empty)) // this is backwards compatible option with the pre-properties era versions
       ).foreach {case (testCaseName, payload, expectedPropertiesSet) =>
         s"properties are replaced with a new version ($testCaseName)" in {
           val datasetV1 = DatasetFactory.getDummyDataset(name = "dataset", version = 1)

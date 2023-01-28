@@ -17,12 +17,33 @@ package za.co.absa.enceladus.rest_api
 
 import org.apache.hadoop.fs.{FileStatus, FileSystem, FsStatus, Path}
 
+import java.io.FileNotFoundException
+import scala.util.{Failure, Success, Try}
+
 sealed trait EnceladusFileSystem {
   def getStatus: FsStatus
   def listStatus(path: Path): Array[FileStatus]
   def isDirectory(path: Path): Boolean
   def exists(path: Path): Boolean
+
+  /**
+    * Checks if path is a directory, returns `default` on FileNotFoundException. Basically, behaves the same way as the late
+    * [[org.apache.hadoop.fs.FileSystem#isDirectory(org.apache.hadoop.fs.Path)]]
+    * @param path path to test if isDirectory
+    * @param default default to be returned on error
+    */
+  def isDirectoryWithDefault(path: Path, default: Boolean): Boolean = {
+    Try {
+      isDirectory(path)
+    } match {
+      case Success(value) => value
+      case Failure(_: FileNotFoundException) => default
+      case Failure(otherException) => throw otherException
+    }
+  }
+
 }
+
 object EnceladusFileSystem {
   def apply(fs: FileSystem): EnceladusFileSystem = HdfsFileSystem(fs)
   def apply() : EnceladusFileSystem = empty
@@ -31,7 +52,7 @@ object EnceladusFileSystem {
   private case class HdfsFileSystem(fileSystem: FileSystem) extends EnceladusFileSystem {
     def getStatus: FsStatus = fileSystem.getStatus
     def listStatus(path: Path): Array[FileStatus] = fileSystem.listStatus(path)
-    def isDirectory(path: Path): Boolean = fileSystem.isDirectory(path)
+    def isDirectory(path: Path): Boolean = fileSystem.getFileStatus(path).isDirectory
     def exists(path: Path): Boolean = fileSystem.exists(path)
   }
   private case object NoFileSystem extends EnceladusFileSystem {

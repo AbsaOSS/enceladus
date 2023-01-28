@@ -15,8 +15,10 @@
 
 package za.co.absa.enceladus.standardization
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
+
 import java.util.UUID
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
@@ -25,14 +27,19 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.utils.schema.MetadataKeys
+import za.co.absa.standardization.schema.MetadataKeys
+
+import java.sql.Timestamp
 import org.apache.spark.sql.functions.{col, to_timestamp}
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
 import za.co.absa.standardization.stages.TypeParserException
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
 
-class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar  {
+import java.time.Instant
+
+class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer{
   type FixtureParam = String
 
 
@@ -102,10 +109,15 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array()),
+      Row(2L, Array("C"), Row(true), Array())
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
 
@@ -134,10 +146,15 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field", DecimalType(20,4), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1, null, null, null, null, null, Array()),
+      Row(2, null, null, null, null, null, Array())
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Missing non-nullable fields are filled with default values and error appears in error column") { tmpFileName =>
@@ -165,13 +182,26 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("decimal_field",
         DecimalType(20,2),
         nullable = false,
-        new MetadataBuilder().putString("default", "3.14").build())
+        new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val EpochTimestamp = Timestamp.from(Instant.EPOCH)
+    val expectedErrors = Seq(
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "string_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "timestamp_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "long_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "double_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "decimal_field", Seq("null"), Seq())
+    )
+    val expectedData = Seq(
+      Row(1, "", EpochTimestamp, 0L, 0, Decimal(3.14), expectedErrors),
+      Row(2, "", EpochTimestamp, 0L, 0, Decimal(3.14), expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long") { tmpFileName =>
@@ -197,10 +227,20 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
         new MetadataBuilder().putString(MetadataKeys.SourceColumn, "letters").build())
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'array'", "id", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'long'", "letters", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'long'", "letters", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(null, null, 0L, expectedErrors),
+      Row(null, null, 0L, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to struct, and struct to long") { tmpFileName =>
@@ -224,14 +264,24 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString("default", "-1")
+        .putString(MetadataKeys.DefaultValue, "-1")
         .build())
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'struct'", "id", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'long'", "struct", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'long'", "struct", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(null, null, -1L, expectedErrors),
+      Row(null, null, -1L, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert array to struct, and struct to array") { tmpFileName =>
@@ -256,10 +306,19 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", ArrayType(StringType), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'struct'", "letters", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'array'", "struct", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(1L, null, null, expectedErrors),
+      Row(2L, null, null, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long, fail fast") { tmpFileName =>
@@ -293,7 +352,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       StructField("struct", LongType, nullable = true),
       StructField("structB", LongType, nullable = false, new MetadataBuilder()
         .putString(MetadataKeys.SourceColumn, "struct")
-        .putString("default", "-1")
+        .putString(MetadataKeys.DefaultValue, "-1")
         .build())
     )
     val schema = StructType(seq)
@@ -318,7 +377,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true))
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }
@@ -352,26 +411,21 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
       .fromDefault()
       .copy(metadataColumns = metadataConfigStableHashID)
     // stableHashId will always yield the same ids
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array(), 1950798873),
+      Row(2L, Array("C"), Row(true), Array(), -988631025)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("True uuids are used") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
       " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
-
-    val expected =
-      """+---+-------+-------+------+
-        ||id |letters|struct |errCol|
-        |+---+-------+-------+------+
-        ||1  |[A, B] |[false]|[]    |
-        ||2  |[C]    |[true] |[]    |
-        |+---+-------+-------+------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
@@ -386,17 +440,21 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val config = BasicStandardizationConfig
       .fromDefault()
       .copy(metadataColumns = metadataConfigTrueUuid)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val destDF = Standardization.standardize(sourceDF, schema, config)
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array()),
+      Row(2L, Array("C"), Row(true), Array())
+    )
+    // checking just the data without enceladus_record_id, not the schema here
+    val expectedDF = expectedData.toDfWithSchema(actualDf.drop("enceladus_record_id").schema)
 
     // same except for the record id
-    val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
-    assert(actual == expected)
+    assertSmallDatasetEquality(actualDf.drop("enceladus_record_id"), expectedDF, ignoreNullable = true)
 
-    val destIds = destDF.select('enceladus_record_id ).collect().map(_.getAs[String](0)).toSet
+    val destIds = actualDf.select('enceladus_record_id).collect().map(_.getAs[String](0)).toSet
     assert(destIds.size == 2)
     destIds.foreach(UUID.fromString) // check uuid validity
-
   }
 
   test("Existing enceladus_record_id is kept") { tmpFileName =>
@@ -431,13 +489,19 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val config = BasicStandardizationConfig
       .fromDefault()
       .copy(metadataColumns = metadataConfig)
-    val destDF = Standardization.standardize(sourceDfWithExistingIds, schema, config)
+
+    val actualDf =  Standardization.standardize(sourceDfWithExistingIds, schema, config)
 
     // The TrueUuids strategy does not override the existing values
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
-  }
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), "id1", Array()),
+      Row(2L, Array("C"), Row(true), "id2", Array())
+    )
 
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
+  }
 
   test("Timestamp with timezone in metadata are shifted") {tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
@@ -462,7 +526,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSp
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
       StructField("id", LongType, nullable = false),
-      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString("timezone", "CET").build())
+      StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
     )
     val schema = StructType(seq)
     val destDF = Standardization.standardize(sourceDF, schema, config)

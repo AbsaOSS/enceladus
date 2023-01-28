@@ -15,7 +15,15 @@
 
 package za.co.absa.enceladus.utils.udf
 
+import java.util.concurrent.atomic.AtomicInteger
+
 object UDFNames {
+  private val counter = new AtomicInteger(0)
+
+  final val stdCastErr = "stdCastErr"
+  final val stdNullErr = "stdNullErr"
+  final val stdSchemaErr = "stdSchemaErr"
+
   final val confMappingErr = "confMappingErr"
   final val confCastErr = "confCastErr"
   final val confNegErr = "confNegErr"
@@ -26,4 +34,8 @@ object UDFNames {
   final val errorColumnAppend = "errorColumnAppend"
 
   final val binaryUnbase64 = "binaryUnbase64"
+
+  def uniqueUDFName(prefix: String, colName: String): String = {
+    prefix + "_" + colName.replace('.', '_') + "_" + counter.getAndIncrement()
+  }
 }
