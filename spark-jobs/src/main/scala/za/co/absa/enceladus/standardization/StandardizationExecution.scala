@@ -22,7 +22,6 @@ import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
 import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
 import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
