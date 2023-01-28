@@ -73,8 +73,8 @@
         </dependency>
         <dependency>
             <groupId>za.co.absa</groupId>
-            <artifactId>spark-partition-sizing_${scala.compat.version}</artifactId>
-            <version>0.1.0</version>
+            <artifactId>spark-partition-sizing-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>0.2.0</version>
         </dependency>
         <!-- Hyperdrive -->
         <dependency>

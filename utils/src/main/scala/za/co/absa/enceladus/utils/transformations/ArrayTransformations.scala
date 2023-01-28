@@ -28,6 +28,7 @@ import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancem
 import za.co.absa.spark.commons.sql.functions.col_of_path
 import za.co.absa.spark.commons.utils.SchemaUtils
 
+//TODO refactor to use spark commons and generally better code
 object ArrayTransformations {
 
   private implicit class TransformationsChaining(val ds: DataFrame) extends AnyVal{

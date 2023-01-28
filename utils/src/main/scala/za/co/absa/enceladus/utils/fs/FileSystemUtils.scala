@@ -48,6 +48,5 @@ object FileSystemUtils {
         FileSystem.get(hadoopConf) // HDFS
     }
   }
-
 }
 

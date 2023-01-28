@@ -192,7 +192,7 @@
         <requests.version>0.1.6</requests.version>
         <scala.compat.version>2.12</scala.compat.version>
         <scala.java8.compat.version>0.9.0</scala.java8.compat.version>
-        <scala.version>2.12.12</scala.version>
+        <scala.version>2.12.17</scala.version>
         <scalatest.version>3.2.2</scalatest.version>
         <scopt.version>4.0.0</scopt.version>
         <spark.compat.version>3.2</spark.compat.version>
@@ -620,8 +620,7 @@
                         <version>${jacoco.version}</version>
                         <configuration>
                             <!-- examples of class excluding -->
-                            <!--
- excludes>
+                            <!-- excludes>
                                 <exclude>za/co/absa/enceladus/migrations/continuous/EntityVersionMap.class</exclude>
                                 <exclude>za/co/absa/enceladus/rest_api/exceptions/ValidationException.class</exclude>
                             </excludes
