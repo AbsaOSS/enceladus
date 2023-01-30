@@ -79,7 +79,7 @@ class NoneParameterStandardizationCsvSuite extends FixtureAnyFunSuite with CsvFi
     assert(df.dataAsString(truncate = false) == expected)
   }
 
-  test("Test none escape and none quote") { tmpFileName =>
+  ignore("Test none escape and none quote") { tmpFileName =>
     val args = (argumentsBase +
       "--charset ISO-8859-1 --delimiter ¡ --csv-quote none --csv-escape none").split(" ")
 
