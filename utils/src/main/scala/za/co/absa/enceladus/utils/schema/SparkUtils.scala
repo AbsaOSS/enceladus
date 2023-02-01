@@ -19,7 +19,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.udf.EnceladusUDFLibrary
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
@@ -62,7 +62,7 @@ object SparkUtils {
     */
   private def overwriteWithErrorColumn(df: DataFrame, colName: String, colExpr: Column): DataFrame = {
     implicit val spark: SparkSession = df.sparkSession
-    implicit val udfLib: UDFLibrary = new UDFLibrary
+    implicit val udfLib: EnceladusUDFLibrary = new EnceladusUDFLibrary
 
 
     val tmpColumn = df.schema.getClosestUniqueName("tmpColumn")

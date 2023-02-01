@@ -15,18 +15,15 @@
 
 package za.co.absa.enceladus.utils.udf
 
-import java.util.Base64
-import org.apache.spark.sql.api.java._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.SparkSession
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 import za.co.absa.enceladus.utils.udf.UDFNames._
 import za.co.absa.spark.commons.OncePerSparkSession
 
 import scala.collection.mutable
-import scala.util.{Failure, Success, Try}
 
-class UDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSparkSession {
+
+class EnceladusUDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSparkSession {
 
   override protected def register(implicit spark: SparkSession): Unit = {
     spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
@@ -54,40 +51,5 @@ class UDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSpar
         }
     )
 
-    spark.udf.register(cleanErrCol,
-                       UDFLibrary.cleanErrCol,
-                       ArrayType(ErrorMessage.errorColSchema(spark), containsNull = false))
-
-    spark.udf.register(errorColumnAppend,
-                       UDFLibrary.errorColumnAppend,
-                       ArrayType(ErrorMessage.errorColSchema(spark), containsNull = false))
-
-
-    spark.udf.register(binaryUnbase64,
-      {stringVal: String => Try {
-        Base64.getDecoder.decode(stringVal)
-      } match {
-        case Success(decoded) => decoded
-        case Failure(_) => null //scalastyle:ignore null
-      }})
-  }
-}
-
-object UDFLibrary {
-  private val cleanErrCol = new UDF1[Seq[Row], Seq[Row]] {
-    override def call(t1: Seq[Row]): Seq[Row] = {
-      t1.filter({ row =>
-        row != null && {
-          val typ = row.getString(0)
-          typ != null
-        }
-      })
-    }
-  }
-
-  private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
-    override def call(t1: Seq[Row], t2: Row): Seq[Row] = {
-      t1 :+ t2
-    }
   }
 }
