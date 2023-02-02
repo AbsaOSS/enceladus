@@ -67,7 +67,7 @@ class ConformanceRuleTest extends AnyWordSpec with Matchers {
     val rule = MappingConformanceRule(order = 5, controlCheckpoint = true, outputColumn = "conformed_country",
       additionalColumns = None,
       mappingTable = "country", mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country"),
-      targetAttribute = "country_name", overrideMappingTableOwnFilter = Some(false))
+      targetAttribute = "country_name", overrideMappingTableOwnFilter = Some(false)) // Some(false) is correct the default
     val json = """{"_t":"MappingConformanceRule","order":5,"controlCheckpoint":true,"mappingTable":"country","mappingTableVersion":0,"attributeMappings":{"country_code":"country"},"targetAttribute":"country_name","outputColumn":"conformed_country","additionalColumns":null,"isNullSafe":false}"""
     assertDeserialization(rule, json)
   }
