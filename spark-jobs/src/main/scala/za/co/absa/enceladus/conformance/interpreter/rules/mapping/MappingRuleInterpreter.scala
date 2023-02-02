@@ -27,6 +27,7 @@ import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.standardization.udf.{UDFNames => StandardizationUDFNames}
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.sql.functions.col_of_path
 
@@ -56,7 +57,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       val mappingErrUdfCall = call_udf(UDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(col_of_path(_).cast(StringType)): _*),
         typedLit(mappings))
-      val appendErrUdfCall = call_udf(UDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
+      val appendErrUdfCall = call_udf(StandardizationUDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,
         when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).
