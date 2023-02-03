@@ -68,8 +68,7 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
   test("Testing array transform") {
     val df = spark.createDataFrame(inputDataOrig)
 
-    val t = ArrayTransformations.arrayTransform(df, "vals"){
-      d =>
+    val t = ArrayTransformations.arrayTransform(df, "vals"){ d =>
         val tmpCol = d.withColumn("tmp", $"vals.a" * 2)
         val dropped = ArrayTransformations.nestedDrop(tmpCol, "vals.a")
         val renamed = ArrayTransformations.nestedWithColumn(dropped)("vals.a", $"tmp")
