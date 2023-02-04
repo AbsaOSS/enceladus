@@ -98,7 +98,7 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
     // rawPath must exist, _INFO file creation assures so
     val controlMeasure = ControlMeasureBuilder.forDF(dataset)
       .withSourceApplication("test app")
-      .withReportDate("2020-02-20")
+      .withReportDate("20-02-2020")
       .withReportVersion(1)
       .withCountry("CZ")
       .withAggregateColumns(List("id", "data"))
