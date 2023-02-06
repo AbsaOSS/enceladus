@@ -26,7 +26,7 @@ import javax.naming.ldap.LdapName
 
 class ActiveDirectoryLdapAuthoritiesPopulator extends LdapAuthoritiesPopulator  {
 
-  import scala.collection.JavaConversions._
+  import scala.collection.JavaConverters._
 
   override def getGrantedAuthorities(userData: DirContextOperations, username: String): util.Collection[_ <: GrantedAuthority] = {
     val groups = userData.getStringAttributes("memberOf")
@@ -39,7 +39,7 @@ class ActiveDirectoryLdapAuthoritiesPopulator extends LdapAuthoritiesPopulator  
         val ldapName = new LdapName(group)
         val role = ldapName.getRdn(ldapName.size() - 1).getValue.toString
         new SimpleGrantedAuthority(role)
-       }).toList
+       }).toList.asJava
     }
   }
 }

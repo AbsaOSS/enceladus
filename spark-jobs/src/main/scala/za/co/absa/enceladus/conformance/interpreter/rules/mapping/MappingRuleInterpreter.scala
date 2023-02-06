@@ -53,10 +53,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
       val joined = joinDatasetAndMappingTable(mapTable, dfIn)
       val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-      val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.outputColumn),
+      val mappingErrUdfCall = call_udf(UDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
         typedLit(mappings))
-      val appendErrUdfCall = callUDF(UDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
+      val appendErrUdfCall = call_udf(UDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,
         when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).

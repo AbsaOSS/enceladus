@@ -16,13 +16,13 @@
 package za.co.absa.enceladus.standardization
 
 import java.io.File
-import java.nio.file.Files
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.mockito.{ArgumentMatchers, Mockito}
 import org.scalatest.Assertion
+import org.scalatest.concurrent.Eventually
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.slf4j.{Logger, LoggerFactory}
@@ -31,6 +31,7 @@ import za.co.absa.atum.model.{ControlMeasure, RunStatus}
 import za.co.absa.atum.persistence.ControlMeasuresParser
 import za.co.absa.atum.utils.controlmeasure.ControlMeasureUtils.JsonType
 import za.co.absa.atum.utils.controlmeasure.{ControlMeasureBuilder, ControlMeasureUtils}
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.common.config.PathConfig
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.dao.EnceladusDAO
@@ -43,54 +44,59 @@ import za.co.absa.enceladus.utils.fs.FileReader
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.standardization.types.CommonTypeDefaults
 
+import scala.concurrent.duration.DurationInt
 import scala.util.control.NonFatal
 
-class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase with HadoopFsTestBase with MockitoSugar {
+class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNormalizedSparkTestBase
+  with HadoopFsTestBase with MockitoSugar with Eventually {
 
+  private val log: Logger = LoggerFactory.getLogger(this.getClass)
   implicit val defaults: CommonTypeDefaults = new CommonTypeDefaults()
 
-  private class StandardizationExecutionTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
+  import spark.implicits._
+  private val datasetA = Seq(
+    ("id1", "data1"),
+    ("id2", "data2")
+  ).toDF("id", "data").as("DatasetA")
+
+  private class StandardizationExecutionImitationTest(tempDir: String, rawPath: String, stdPath: String) extends StandardizationExecution {
     private val dataset = Dataset("DatasetA", 1, None, "", "", "SchemaA", 1, conformance = Nil)
-    private       val pathCfg: PathConfig = PathConfig(
+    private val pathCfg: PathConfig = PathConfig(
       PathWithFs(rawPath, fs),
       PathWithFs(s"/$tempDir/some/publish/path/not/used/here", fs),
       PathWithFs(stdPath, fs)
     )
     private val prepResult = PreparationResult(dataset, reportVersion = 1, pathCfg, new PerformanceMeasurer(spark.sparkContext.appName))
 
+    /**
+     * Imitates std run (just prepareStandardization(), custom DF write and finishJob()
+     */
     def testRun(testDataset: DataFrame)(implicit dao: EnceladusDAO, cmd: StandardizationConfig): Assertion = {
       prepareStandardization("some app args".split(' '), RestApiPlainCredentials("user", "pass"), prepResult)
       testDataset.write.csv(stdPath)
 
-      // Atum framework initialization is part of the 'prepareStandardization'
-      spark.disableControlMeasuresTracking()
+      finishJob(cmd) // Atum framework initialization is part of the 'prepareStandardization', this disables it at the end
 
-      val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+      eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
+        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
+        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
 
-      // key with prefix from test's application.conf
-      infoControlMeasure.metadata.additionalInfo should contain ("ds_testing_keyFromDs1" -> "itsValue1")
+        // key with prefix from test's application.conf
+        infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
+      }
     }
   }
 
-  private val log: Logger = LoggerFactory.getLogger(this.getClass)
-
-  "StandardizationExecution" should "write dataset properties into info file" in {
+  // reusable execution run for multiple tests
+  private def runStdExecutionImitation(dataset: DataFrame, tempDir: String): Assertion = {
     implicit val dao: EnceladusDAO = mock[EnceladusDAO]
     implicit val cmd: StandardizationConfig = StandardizationConfig(datasetName = "DatasetA")
 
     // fallbacking on local fs we can afford to prepare test files locally:
-    val tempDir = Files.createTempDirectory("std_exec_temp").toAbsolutePath.toString
     val (rawPath, stdPath) = (s"$tempDir/raw/path", s"$tempDir/std/path")
 
-    import spark.implicits._
-    val someDataset = Seq(
-      ("id1", "data1"),
-      ("id2", "data2")
-    ).toDF("id", "data").as("DatasetA")
-
     // rawPath must exist, _INFO file creation assures so
-    val controlMeasure = ControlMeasureBuilder.forDF(someDataset)
+    val controlMeasure = ControlMeasureBuilder.forDF(dataset)
       .withSourceApplication("test app")
       .withReportDate("2020-02-20")
       .withReportVersion(1)
@@ -111,10 +117,24 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
     // This property is expected to appear in the _INFO file, prefixed.
     Mockito.when(dao.getDatasetPropertiesForInfoFile("DatasetA", 1)).thenReturn(Map("keyFromDs1" -> "itsValue1"))
 
-    val std = new StandardizationExecutionTest(tempDir, rawPath, stdPath)
+    val std = new StandardizationExecutionImitationTest(tempDir, rawPath, stdPath)
+    std.testRun(dataset)
+    // cleanup needed
+  }
 
-    std.testRun(someDataset)
-    safeDeleteTestDir(tempDir)
+  "StandardizationExecution" should "write dataset properties into info file" in {
+    val tempDir = TempDirectory("std_exec_temp")
+    runStdExecutionImitation(datasetA, tempDir.path.toString)
+    tempDir.delete()
+  }
+
+  "StandardizationExecution" should "run twice without problems (Atum initialization, etc.)" in {
+    val tempDir = TempDirectory("std_exec_temp_twice")
+    runStdExecutionImitation(datasetA, tempDir.path.toString)
+    safeDeleteTestDir(s"${tempDir.path.toString}/std/path") // delete just the std output
+
+    runStdExecutionImitation(datasetA, tempDir.path.toString) // running again
+    tempDir.delete()
   }
 
   private def safeDeleteTestDir(path: String): Unit = {

@@ -23,7 +23,6 @@ import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
-import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
 object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
   private val jobName = "Enceladus Standardization&Conformance"
@@ -49,12 +48,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
     val schema = prepareStandardization(args, restApiCredentials, preparationResult)
     val stdInputData = readStandardizationInputData(schema, cmd, preparationResult.pathCfg.raw, preparationResult.dataset)
 
-    val metadataColumns = BasicMetadataColumnsConfig.fromDefault().copy(prefix = "enceladus")
-    val standardizationConfigWithoutTZ = BasicStandardizationConfig.fromDefault().copy(metadataColumns = metadataColumns)
-    val standardizationConfig = configReader.getStringOption("timezone") match {
-      case Some(tz) => standardizationConfigWithoutTZ.copy(timezone = tz)
-      case None => standardizationConfigWithoutTZ
-    }
+    val standardizationConfig = prepareStandardizationConfig()
 
     try {
       val standardized = standardize(stdInputData, schema, standardizationConfig)

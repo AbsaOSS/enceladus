@@ -59,7 +59,7 @@ case class CastingRuleInterpreter(rule: CastingConformanceRule) extends RuleInte
           c.cast(rule.outputDataType)
         }, c => {
           when(c.isNotNull.and(c.cast(rule.outputDataType).isNull),
-            callUDF(UDFNames.confCastErr, lit(rule.outputColumn), c.cast(StringType)))
+            call_udf(UDFNames.confCastErr, lit(rule.outputColumn), c.cast(StringType)))
             .otherwise(null) // scalastyle:ignore null
         })
     }

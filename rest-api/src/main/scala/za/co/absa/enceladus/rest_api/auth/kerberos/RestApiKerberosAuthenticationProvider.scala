@@ -55,7 +55,7 @@ class RestApiKerberosAuthenticationProvider(adServer: String, searchFilter: Stri
             throw BadKrbHostException(s"Unknown authentication host: ${nestedException.getMessage}", ex)
           case nestedException: KrbException =>
             throw new BadCredentialsException(s"Invalid credentials: ${nestedException.getMessage}", ex)
-          case NonFatal(e) =>
+          case NonFatal(_) =>
             throw ex
         }
       // This is thrown when there is an issue contacting an LDAP server specified in REST API configuration
@@ -82,7 +82,7 @@ class RestApiKerberosAuthenticationProvider(adServer: String, searchFilter: Stri
 
   private def getSpringCBHandler(username: String, password: String) = {
     new CallbackHandler() {
-      def handle(callbacks: Array[Callback]) {
+      def handle(callbacks: Array[Callback]): Unit = {
         callbacks.foreach({
           case ncb: NameCallback => ncb.setName(username)
           case pwdcb: PasswordCallback => pwdcb.setPassword(password.toCharArray)
@@ -99,7 +99,7 @@ class RestApiKerberosAuthenticationProvider(adServer: String, searchFilter: Stri
   }
 
   private def getLoginConfig: Configuration = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
 
     new Configuration {
       override def getAppConfigurationEntry(name: String): Array[AppConfigurationEntry] = {
@@ -109,7 +109,7 @@ class RestApiKerberosAuthenticationProvider(adServer: String, searchFilter: Stri
           "isInitiator" -> "true",
           "debug" -> "true")
         Array(new AppConfigurationEntry("com.sun.security.auth.module.Krb5LoginModule",
-          AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, opts))
+          AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, opts.asJava))
       }
     }
   }

@@ -29,7 +29,7 @@ import za.co.absa.enceladus.common.Constants.{InfoDateColumn, InfoDateColumnStri
 import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
 import za.co.absa.enceladus.common.plugin.PostProcessingService
 import za.co.absa.enceladus.common.plugin.enceladus.{EnceladusAtumPlugin, EnceladusRunUrl}
-import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.spark.commons.SparkVersionGuard
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.dao.OptionallyRetryableException._
 import za.co.absa.enceladus.model.Dataset
@@ -42,6 +42,7 @@ import za.co.absa.enceladus.utils.modules.SourcePhase.Standardization
 import za.co.absa.enceladus.common.performance.PerformanceMeasurer
 import za.co.absa.enceladus.utils.time.TimeZoneNormalizer
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.standardization.RecordIdGeneration
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -57,6 +58,9 @@ trait CommonJobExecution extends ProjectMetadata {
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
   protected val configReader: ConfigReader = new ConfigReader()
+  protected val recordIdStrategy = RecordIdGeneration.getRecordIdGenerationType(
+    configReader.getString("enceladus.recordId.generation.strategy")
+  )
   protected val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(configReader.getString("enceladus.rest.uri"))
   protected val restApiUrlsRetryCount: Option[Int] = configReader.getIntOption("enceladus.rest.retryCount")
   protected val restApiAvailabilitySetup: String = configReader.getString("enceladus.rest.availability.setup")
@@ -82,6 +86,7 @@ trait CommonJobExecution extends ProjectMetadata {
     val spark = SparkSession.builder()
       .appName(s"$jobName $enceladusVersion ${cmd.datasetName} ${cmd.datasetVersion} ${cmd.reportDate} $reportVersion")
       .config("spark.executor.extraJavaOptions", SecureConfig.javaOptsStringFromConfigMap(executorSecConfig)) // system properties on executors
+      .config("spark.sql.legacy.timeParserPolicy","LEGACY") // otherwise timestamp parsing migh cause issues
       .getOrCreate()
     TimeZoneNormalizer.normalizeSessionTimeZone(spark)
     spark
@@ -199,7 +204,10 @@ trait CommonJobExecution extends ProjectMetadata {
     }
   }
 
-  protected def finishJob[T](jobConfig: JobConfigParser[T]): Unit = {
+  protected def finishJob[T](jobConfig: JobConfigParser[T])(implicit spark: SparkSession): Unit = {
+    // Atum framework initialization is part of the 'prepareStandardization'
+    spark.disableControlMeasuresTracking()
+
     val name = jobConfig.datasetName
     val version = jobConfig.datasetVersion
     EnceladusAtumPlugin.runNumber.foreach(runNumber => {

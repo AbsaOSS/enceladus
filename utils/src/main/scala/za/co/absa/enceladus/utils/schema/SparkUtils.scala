@@ -67,7 +67,7 @@ object SparkUtils {
 
     val tmpColumn = df.schema.getClosestUniqueName("tmpColumn")
     val tmpErrColumn = df.schema.getClosestUniqueName("tmpErrColumn")
-    val litErrUdfCall = callUDF("confLitErr", lit(colName), col(tmpColumn))
+    val litErrUdfCall = call_udf("confLitErr", lit(colName), col(tmpColumn))
 
     // Rename the original column to a temporary name. We need it for comparison.
     val dfWithColRenamed = df.withColumnRenamed(colName, tmpColumn)
