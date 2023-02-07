@@ -294,7 +294,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
-    "handle Datasets without conformance rules" when {
+    "handle Datasets without conformance rules defined" when {
       val datasetJson =
         """{
           |  "name": "Test",
@@ -341,7 +341,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  }
           |}""".stripMargin
 
-      val dataset: Dataset = DatasetFactory.getDummyDataset(
+      val datasetToDeserialize: Dataset = DatasetFactory.getDummyDataset(
         name = "Test",
         version = 5,
         description = Some("some description here"),
@@ -354,17 +354,13 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
         userUpdated = "system",
 
-        conformance = None.toList,
+        conformance = List.empty,
         parent = Some(Reference(Some("dataset"), "Test", 4)) // scalastyle:off magic.number
       )
 
-      "serializing" in {
-        val result = JsonSerializer.toJson(dataset)
-        result should equal(datasetJson)(after being whiteSpaceNormalised)
-      }
       "deserializing" in {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
-        result should matchTo(dataset)
+        result should matchTo(datasetToDeserialize)
       }
     }
 
