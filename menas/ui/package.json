@@ -9,7 +9,7 @@
     "@ui5/cli": "^2.8.1"
   },
   "config": {
-    "apiUrl": "${API_URL}",
+    "apiUrl": "http://localhost:8090/rest_api_war",
     "lineageConsumerApiUrl": "${LINEAGE_CONSUMER_URL}",
     "lineageUiCdn": "${LINEAGE_UI_CDN}"
   },

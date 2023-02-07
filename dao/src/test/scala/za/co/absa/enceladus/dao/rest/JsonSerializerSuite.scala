@@ -294,6 +294,80 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
 
+    "handle Datasets without conformance rules" when {
+      val datasetJson =
+        """{
+          |  "name": "Test",
+          |  "version": 5,
+          |  "description": "some description here",
+          |  "hdfsPath": "/bigdata/test",
+          |  "hdfsPublishPath": "/bigdata/test2",
+          |  "schemaName": "Cobol1",
+          |  "schemaVersion": 3,
+          |  "dateCreated": "2019-07-22T08:05:57.47Z",
+          |  "userCreated": "system",
+          |  "lastUpdated": "2020-04-02T15:53:02.947Z",
+          |  "userUpdated": "system",
+          |  "disabled": false,
+          |  "dateDisabled": null,
+          |  "userDisabled": null,
+          |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
+          |  "parent": {
+          |    "collection": "dataset",
+          |    "name": "Test",
+          |    "version": 4
+          |  },
+          |  "schedule": null,
+          |  "properties": null,
+          |  "propertiesValidation": null,
+          |  "createdMessage": {
+          |    "ref": {
+          |      "collection": null,
+          |      "name": "Test",
+          |      "version": 5
+          |    },
+          |    "updatedBy": "system",
+          |    "updated": "2020-04-02T15:53:02.947Z",
+          |    "changes": [
+          |      {
+          |        "field": "",
+          |        "oldValue": null,
+          |        "newValue": null,
+          |        "message": "Dataset Test created."
+          |      }
+          |    ]
+          |  }
+          |}""".stripMargin
+
+      val dataset: Dataset = DatasetFactory.getDummyDataset(
+        name = "Test",
+        version = 5,
+        description = Some("some description here"),
+        hdfsPath = "/bigdata/test",
+        hdfsPublishPath = "/bigdata/test2",
+        schemaName = "Cobol1",
+        schemaVersion = 3,
+        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        userCreated = "system",
+        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        userUpdated = "system",
+
+        conformance = None.toList,
+        parent = Some(Reference(Some("dataset"), "Test", 4)) // scalastyle:off magic.number
+      )
+
+      "serializing" in {
+        val result = JsonSerializer.toJson(dataset)
+        result should equal(datasetJson)(after being whiteSpaceNormalised)
+      }
+      "deserializing" in {
+        val result = JsonSerializer.fromJson[Dataset](datasetJson)
+        result should matchTo(dataset)
+      }
+    }
+
     "handle Datasets with more conformance rules" when {
       val datasetJson =
         """{

@@ -47,7 +47,7 @@ case class Dataset(name: String,
                    locked: Option[Boolean] = None,
                    dateLocked: Option[ZonedDateTime] = None,
                    userLocked: Option[String] = None,
-                   conformance: List[ConformanceRule],
+                   conformance: List[ConformanceRule] = List.empty,
                    parent: Option[Reference] = None,
                    schedule: Option[OozieSchedule] = None,
                    properties: Option[Map[String, String]] = Some(Map.empty),
@@ -71,7 +71,7 @@ case class Dataset(name: String,
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
-  def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
+  def setConformance(newConformance: Option[List[ConformanceRule]]): Dataset = this.copy(conformance = newConformance.getOrElse(Nil))
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
   override def setParent(newParent: Option[Reference]): Dataset = this.copy(parent = newParent)
