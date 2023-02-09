@@ -95,6 +95,27 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
         result should matchTo(dataset)
       }
+
+      "legacy deserializing" in {
+        val legacyPropertiesDatasetJson =
+          """
+            |{
+            |  "name": "dummyName",
+            |  "version": 1,
+            |  "hdfsPath": "/dummy/path",
+            |  "hdfsPublishPath": "/dummy/publish/path",
+            |  "schemaName": "dummySchema",
+            |  "schemaVersion": 1,
+            |  "properties": null,
+            |  "propertiesValidation": null
+            |}
+            |""".stripMargin
+
+        val result = JsonSerializer.fromJson[Dataset](legacyPropertiesDatasetJson)
+        val randomDataset = Dataset("name1", hdfsPath = "path/one", hdfsPublishPath = "path/two", schemaName= "schAbc",
+          schemaVersion = 1, conformance = List.empty) // properties not mentioned = default
+        result.properties shouldBe randomDataset.properties // e.g. properties:null resulted in default properties = Some(Map())
+      }
     }
 
     "handle Datasets with conformance rules" when {
@@ -203,7 +224,10 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    "version": 4
         |  },
         |  "schedule": null,
-        |  "properties": null,
+        |  "properties": {
+        |        "prop1": "value1",
+        |        "prop2": "value2"
+        |    },
         |  "propertiesValidation": null,
         |  "createdMessage": {
         |    "ref": {
@@ -237,7 +261,6 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         userCreated = "system",
         lastUpdated = parseTZDateTime("2020-04-02 15:53:02.947 UTC"),
         userUpdated = "system",
-
         conformance = List(
           CastingConformanceRule(0,
             outputColumn = "ConformedInt",
@@ -280,7 +303,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           )
         ),
         parent = Some(Reference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
-        properties = None
+        properties = Some(Map("prop1" -> "value1", "prop2" -> "value2"))
       )
 
       "serializing" in {
@@ -289,7 +312,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
       "deserializing" in {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
-        val expectedDeserializedDataset = dataset.copy(properties = Option(Map.empty)) // Jackson deserializes a null to the class' default value
+        val expectedDeserializedDataset = dataset
         result should matchTo(expectedDeserializedDataset)
       }
     }

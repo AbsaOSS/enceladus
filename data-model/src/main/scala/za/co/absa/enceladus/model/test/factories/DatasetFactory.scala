@@ -45,7 +45,7 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       userLocked: Option[String] = None,
                       conformance: List[ConformanceRule] = List(),
                       parent: Option[Reference] = None,
-                      properties: Option[Map[String, String]] = Some(Map())): Dataset = {
+                      properties: Option[Map[String, String]] = Some(Map.empty)): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,
       schemaVersion, dateCreated, userCreated, lastUpdated, userUpdated,
