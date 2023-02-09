@@ -72,7 +72,7 @@ case class Schema(name: String,
   override def exportItem(): String = {
     val fieldsJsonList: ArrayNode = objectMapperBase.valueToTree(fields.toArray)
 
-    val objectItemMapper = objectMapperRoot.`with`("item")
+    val objectItemMapper = objectMapperRoot.withObject("/item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))

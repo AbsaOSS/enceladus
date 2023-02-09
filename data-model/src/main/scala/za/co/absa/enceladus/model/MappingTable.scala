@@ -91,7 +91,7 @@ case class MappingTable(name: String,
   override def exportItem(): String = {
     val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValue.toArray)
 
-    val objectItemMapper = objectMapperRoot.`with`("item")
+    val objectItemMapper = objectMapperRoot.withObject("/item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))

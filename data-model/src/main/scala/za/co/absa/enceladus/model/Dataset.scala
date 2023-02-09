@@ -131,7 +131,7 @@ case class Dataset(name: String,
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
     val propertiesJsonList: ObjectNode = objectMapperBase.valueToTree(propertiesAsMap)
 
-    val objectItemMapper = objectMapperRoot.`with`("item")
+    val objectItemMapper = objectMapperRoot.withObject("/item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))
