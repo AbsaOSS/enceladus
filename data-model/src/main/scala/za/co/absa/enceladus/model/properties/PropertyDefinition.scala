@@ -100,7 +100,7 @@ case class PropertyDefinition(name: String,
     val propertyTypeJson: ObjectNode = objectMapperBase.valueToTree(propertyType)
     val essentialityJson: ObjectNode = objectMapperBase.valueToTree(essentiality)
 
-    val objectItemMapper = objectMapperRoot.`with`("item")
+    val objectItemMapper = objectMapperRoot.withObject("/item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))

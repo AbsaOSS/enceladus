@@ -30,7 +30,7 @@ trait Exportable {
   @JsonIgnore
   protected lazy val objectMapperRoot: ObjectNode = {
     val mapperBase = objectMapperBase.createObjectNode()
-    mapperBase.`with`("metadata").put("exportVersion", ModelVersion)
+    mapperBase.withObject("/metadata").put("exportVersion", ModelVersion)
     mapperBase
   }
 
