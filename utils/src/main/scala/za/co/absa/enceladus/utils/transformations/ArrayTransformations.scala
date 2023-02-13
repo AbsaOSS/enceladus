@@ -23,12 +23,11 @@ import org.apache.spark.sql.api.java.UDF2
 import org.slf4j.LoggerFactory
 import org.apache.spark.storage.StorageLevel
 import za.co.absa.enceladus.utils.implicits.OptionImplicits.OptionEnhancements
-import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.sql.functions.col_of_path
 import za.co.absa.spark.commons.utils.SchemaUtils
 
-//TODO refactor to use spark commons and generally better code
 object ArrayTransformations {
 
   private implicit class TransformationsChaining(val ds: DataFrame) extends AnyVal{
@@ -126,7 +125,7 @@ object ArrayTransformations {
    *  @return Dataset with the original path being an array of form (array_index, element)
    */
   def zipWithOrder(ds: DataFrame, arrCol: String)(implicit spark: SparkSession): DataFrame = {
-    val udfName = UDFNames.uniqueUDFName("arrayZipWithIndex", arrCol)
+    val udfName = ConformanceUDFNames.uniqueUDFName("arrayZipWithIndex", arrCol)
 
     val elType = getArraySchema(arrCol, ds.schema)
     val newType = ArrayType.apply(StructType(Seq(
@@ -183,7 +182,7 @@ object ArrayTransformations {
                                       .getOrThrow(new IllegalStateException(s"The field $arrayCol not found in the transformed schema."))
     val arraySchema = ArrayType.apply(arrayChildSchema, origArraySchema.containsNull)
 
-    val udfName = UDFNames.uniqueUDFName("handleNullAndEmpty", groupField)
+    val udfName = ConformanceUDFNames.uniqueUDFName("handleNullAndEmpty", groupField)
 
     spark.udf.register(udfName, handleNullAndEmptyUDF2, arraySchema)
 
@@ -228,7 +227,7 @@ object ArrayTransformations {
         logger.info(s"Field $colName is not a nested array, returning the original dataset!")
         df
       } else {
-        val udfName = UDFNames.uniqueUDFName("flattenArray", colName)
+        val udfName = ConformanceUDFNames.uniqueUDFName("flattenArray", colName)
 
         spark.udf.register(udfName, new UDF1[Seq[Seq[Row]], Option[Seq[Row]]] {
           def call(arrayColValue: Seq[Seq[Row]]): Option[Seq[Row]] = {

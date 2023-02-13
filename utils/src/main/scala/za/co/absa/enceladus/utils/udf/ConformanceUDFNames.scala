@@ -17,10 +17,11 @@ package za.co.absa.enceladus.utils.udf
 
 import java.util.concurrent.atomic.AtomicInteger
 
-object UDFNames {
+object ConformanceUDFNames {
   private val counter = new AtomicInteger(0)
 
   final val arrayDistinctErrors = "arrayDistinctErrors"
+  final val errorColumnAppend = "errorColumnAppend"
 
   final val confMappingErr = "confMappingErr"
   final val confCastErr = "confCastErr"

@@ -26,8 +26,7 @@ import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConfo
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
-import za.co.absa.enceladus.utils.udf.UDFNames
-import za.co.absa.standardization.udf.{UDFNames => StandardizationUDFNames}
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.sql.functions.col_of_path
 
@@ -54,10 +53,10 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
       val joined = joinDatasetAndMappingTable(mapTable, dfIn)
       val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-      val mappingErrUdfCall = call_udf(UDFNames.confMappingErr, lit(rule.outputColumn),
+      val mappingErrUdfCall = call_udf(ConformanceUDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(col_of_path(_).cast(StringType)): _*),
         typedLit(mappings))
-      val appendErrUdfCall = call_udf(StandardizationUDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
+      val appendErrUdfCall = call_udf(ConformanceUDFNames.errorColumnAppend, col(ErrorMessage.errorColumnName), mappingErrUdfCall)
       errorsDf = joined.withColumn(
         ErrorMessage.errorColumnName,
         when(col(s"`${rule.outputColumn}`").isNull and inclErrorNullArr(mappings, datasetSchema), appendErrUdfCall).
@@ -80,7 +79,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
     // errNested will duplicate error values if the previous rule has any errCol
     // and in the current rule the joining key is an array so the error values will duplicate as the size of array :
     // applied deduplicate logic while flattening error column
-    val udfName = UDFNames.uniqueUDFName("flattenErrDistinct", idField)
+    val udfName = ConformanceUDFNames.uniqueUDFName("flattenErrDistinct", idField)
     spark.udf.register(udfName,
       new UDF1[Seq[Seq[Row]], Seq[Row]] {
         override def call(t1: Seq[Seq[Row]]): Seq[Row] = {t1.flatten.distinct}

@@ -15,15 +15,17 @@
 
 package za.co.absa.enceladus.utils.udf
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.api.java.UDF2
+import org.apache.spark.sql.types.ArrayType
 import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
-import za.co.absa.enceladus.utils.udf.UDFNames._
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames._
 import za.co.absa.spark.commons.OncePerSparkSession
 
 import scala.collection.mutable
 
 
-class EnceladusUDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSparkSession {
+class ConformanceUDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSparkSession {
 
   override protected def register(implicit spark: SparkSession): Unit = {
     spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
@@ -51,5 +53,18 @@ class EnceladusUDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends On
         }
     )
 
+    spark.udf.register(errorColumnAppend, // this should be removed with more general error handling implemented
+                       ConformanceUDFLibrary.errorColumnAppend,
+                       ArrayType(ErrorMessage.errorColSchema(spark), containsNull = false))
+
+  }
+}
+
+object ConformanceUDFLibrary {
+
+  private val errorColumnAppend = new UDF2[Seq[Row], Row, Seq[Row]] {
+    override def call(t1: Seq[Row], t2: Row): Seq[Row] = {
+      t1 :+ t2
+    }
   }
 }

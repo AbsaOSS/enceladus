@@ -24,7 +24,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
 import za.co.absa.spark.commons.sql.functions.col_of_path
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 import za.co.absa.spark.commons.utils.{ExplodeTools, SchemaUtils}
@@ -47,7 +47,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-    val mappingErrUdfCall = call_udf(UDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
+    val mappingErrUdfCall = call_udf(ConformanceUDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
       array(rule.attributeMappings.values.toSeq.map(col_of_path(_).cast(StringType)): _*),
       typedLit(mappings))
 
