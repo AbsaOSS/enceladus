@@ -71,7 +71,7 @@ case class Dataset(name: String,
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
   def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
-  def setConformance(newConformance: Option[List[ConformanceRule]]): Dataset = this.copy(conformance = newConformance.getOrElse(List.empty))
+  def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
   override def setParent(newParent: Option[Reference]): Dataset = this.copy(parent = newParent)
 
