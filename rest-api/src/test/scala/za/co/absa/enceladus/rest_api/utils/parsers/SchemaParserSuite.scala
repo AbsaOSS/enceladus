@@ -19,10 +19,11 @@ import java.nio.charset.Charset
 
 import org.apache.avro.SchemaParseException
 import org.apache.commons.io.IOUtils
-import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
+import org.apache.spark.sql.types.{ArrayType, DataType, DataTypes, StructField, StructType}
 import org.mockito.Mockito
 import org.scalatest.matchers.should.Matchers
 import org.mockito.scalatest.MockitoSugar
+import org.scalactic.Equality
 import org.scalatest.Inside
 import org.scalatest.wordspec.AnyWordSpec
 import za.co.absa.cobrix.cobol.parser.exceptions.SyntaxErrorException
@@ -32,6 +33,32 @@ import za.co.absa.enceladus.rest_api.utils.SchemaType
 import za.co.absa.enceladus.rest_api.utils.converters.SparkEnceladusSchemaConvertor
 
 class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with Inside {
+
+  // `metadata` field is considered to be implementation detail of a specific, external parser;
+  // that's why it should be skipped in equality comparison.
+  // For example, metadata fields have been added in one of versions of Cobrix,
+  // causing tests failure (without `structTypeEqualityIgnoreMetadata`) after Cobrix version upgrade (#2139).
+  private implicit val structTypeEqualityIgnoreMetadata: Equality[StructType] = new Equality[StructType] {
+    override def areEqual(a: StructType, b: Any): Boolean = b match {
+      case StructType(fields) =>
+        a.fields.length === fields.length &&
+          a.fields.zip(fields).forall {
+            case (aField, bField) =>
+              val areDataTypesEqual = (aField.dataType, bField.dataType) match {
+                case
+                  (
+                    ArrayType(aStructType @ StructType(_), aContainsNull),
+                    ArrayType(bStructType @ StructType(_), bContainsNull)
+                  ) =>
+                  aContainsNull === bContainsNull && areEqual(aStructType, bStructType)
+                case (aFieldDataType, bFieldDataType) => aFieldDataType === bFieldDataType
+              }
+              aField.name === bField.name && areDataTypesEqual && aField.nullable === bField.nullable
+          }
+      case _ => false
+    }
+  }
+
   val mockSchemaConvertor: SparkEnceladusSchemaConvertor = mock[SparkEnceladusSchemaConvertor]
 
   val someStructType: StructType = StructType(Seq(StructField(name = "field1", dataType = DataTypes.IntegerType)))
@@ -95,7 +122,8 @@ class SchemaParserSuite extends AnyWordSpec with Matchers with MockitoSugar with
         val expectedCopybookType = readTestResourceAsDataType(TestResourcePath.Copybook.okJsonEquivalent)
 
         val schemaContent = readTestResourceAsString(TestResourcePath.Copybook.ok)
-        copybookParser.parse(schemaContent) shouldBe expectedCopybookType
+
+        copybookParser.parse(schemaContent) shouldEqual expectedCopybookType
       }
     }
 
