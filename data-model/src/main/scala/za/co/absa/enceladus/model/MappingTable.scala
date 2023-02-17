@@ -23,6 +23,8 @@ import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
 import java.time.ZonedDateTime
 
+// TODO annotate similar to Dataset
+
 case class MappingTable(name: String,
                         version: Int = 1,
                         description: Option[String] = None,

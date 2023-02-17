@@ -16,43 +16,66 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
-
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 import za.co.absa.enceladus.model.backend.audit._
 import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
+
 case class Dataset(name: String,
-                   version: Int = 1,
-                   description: Option[String] = None,
+  @BeanProperty // generates getter (and setter) -> swagger is able to correctly report this field
+  version: Int = 1,
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty
+  description: Option[String] = None,
 
-                   hdfsPath: String,
-                   hdfsPublishPath: String,
+  @BeanProperty hdfsPath: String,
+  @BeanProperty hdfsPublishPath: String,
 
-                   schemaName: String,
-                   schemaVersion: Int,
+  @BeanProperty schemaName: String,
+  @BeanProperty schemaVersion: Int,
 
-                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                   userCreated: String = null,
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @BeanProperty userCreated: String = null,
 
-                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                   userUpdated: String = null,
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @BeanProperty userUpdated: String = null,
 
-                   disabled: Boolean = false,
-                   dateDisabled: Option[ZonedDateTime] = None,
-                   userDisabled: Option[String] = None,
+  @BeanProperty disabled: Boolean = false,
 
-                   locked: Option[Boolean] = None,
-                   dateLocked: Option[ZonedDateTime] = None,
-                   userLocked: Option[String] = None,
-                   conformance: List[ConformanceRule],
-                   parent: Option[Reference] = None,
-                   schedule: Option[OozieSchedule] = None,
-                   properties: Option[Map[String, String]] = Some(Map.empty),
-                   propertiesValidation: Option[Validation] = None
-                  ) extends VersionedModel with Auditable[Dataset] {
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Boolean], requiredMode = AosSchema.RequiredMode.NOT_REQUIRED)
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty userLocked: Option[String] = None,
+
+  @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[ConformanceRule]))
+  @BeanProperty conformance: List[ConformanceRule],
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None,
+
+  @(AosSchema@field)(implementation = classOf[OozieSchedule])
+  @BeanProperty schedule: Option[OozieSchedule] = None,
+
+  // TODO improve scala collections swagger hints
+  @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]])
+  @BeanProperty propertiesValidation: Option[Validation] = None
+) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -69,8 +92,8 @@ case class Dataset(name: String,
 
   def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
-  def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
+  def setHdfsPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
+  def setHdfsPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
   def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)

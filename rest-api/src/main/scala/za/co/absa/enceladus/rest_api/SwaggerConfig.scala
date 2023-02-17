@@ -22,7 +22,7 @@ import org.springframework.context.annotation.{Bean, Configuration}
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 
 @Configuration
-class SpringFoxConfig extends ProjectMetadata {
+class SwaggerConfig extends ProjectMetadata {
 
   import org.springframework.beans.factory.annotation.Value
 

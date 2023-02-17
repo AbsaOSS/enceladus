@@ -24,6 +24,8 @@ import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
+// TODO annotate similar to Dataset
+
 case class PropertyDefinition(name: String,
                               version: Int = 1,
                               description: Option[String] = None,

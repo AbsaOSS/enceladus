@@ -48,8 +48,8 @@ class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
       latest
           .setSchemaName(dataset.schemaName)
           .setSchemaVersion(dataset.schemaVersion)
-          .setHDFSPath(dataset.hdfsPath)
-          .setHDFSPublishPath(dataset.hdfsPublishPath)
+          .setHdfsPath(dataset.hdfsPath)
+          .setHdfsPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setProperties(removeBlankPropertiesOpt(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]
