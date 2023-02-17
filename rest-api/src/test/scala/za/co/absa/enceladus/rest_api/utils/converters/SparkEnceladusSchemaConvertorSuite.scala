@@ -85,17 +85,17 @@ class SparkEnceladusSchemaConvertorSuite extends AnyFunSuite with TZNormalizedSp
     assertResult(sparkSimleFlat)(res)
   }
 
-  test("convertSparkToEnceladusFields with non-string values in metadata") {
+  test("convertSparkToEnceladusFields with non-string/int values in metadata") {
     val fieldName = "field_name"
     val sparkDefinition = Seq(
-      StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putLong("default", 0).build)
+      StructField(name = fieldName, dataType = IntegerType, nullable = true, metadata = new MetadataBuilder().putBoolean("default", true).build)
     )
 
     val caught = intercept[SchemaParsingException] {
       sparkConvertor.convertSparkToEnceladusFields(sparkDefinition)
     }
 
-    assert(caught == SchemaParsingException(schemaType = null, message = "Value for metadata key 'default' (of value 0) to be a string or null", field = Option(fieldName))) // scalastyle:ignore null
+    assert(caught == SchemaParsingException(schemaType = null, message = "Value for metadata key 'default' (of value true) to be a string or int or null", field = Option(fieldName))) // scalastyle:ignore null
   }
 
   test("convertSparkToEnceladusFields and convertEnceladusToSparkFields with nulls in values of metadata") {
