@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -39,7 +40,7 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @PostMapping(Array("/{name}/import"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+  override def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
                          @RequestBody importObject: ExportableObject[PropertyDefinition],
                          request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
@@ -49,17 +50,17 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def create(@AuthenticationPrincipal principal: UserDetails,
-             @RequestBody item: PropertyDefinition,
+  override def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
+             @RequestBody body: PropertyDefinition,
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
-    super.create(principal, item, request)
+    super.create(principal, body, request)
   }
 
   @PutMapping(Array("/{name}/{version}"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def edit(@AuthenticationPrincipal user: UserDetails,
+  override def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
            @RequestBody item: PropertyDefinition,

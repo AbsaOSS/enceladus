@@ -18,8 +18,8 @@ package za.co.absa.enceladus.rest_api.controllers
 import java.net.URI
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import com.mongodb.client.result.UpdateResult
+import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.beans.factory.annotation.{Autowired, Value}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -52,7 +52,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  def createDatasetProperty(@AuthenticationPrincipal principal: UserDetails,
+  def createDatasetProperty(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                             @RequestBody item: PropertyDefinition): CompletableFuture[ResponseEntity[PropertyDefinition]] = {
     // basically an alias for /create with Location header response
     logger.info(s"creating new property definition '${item.name}'")
@@ -81,14 +81,14 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+  override def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                                   @RequestBody importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
     super.importSingleEntity(principal, importObject)
 
   @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def edit(@AuthenticationPrincipal user: UserDetails,
+  override def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
                     @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.edit(user, item)
 
@@ -102,7 +102,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
-  override def create(@AuthenticationPrincipal principal: UserDetails,
+  override def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                       @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)
 

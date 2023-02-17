@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
 import za.co.absa.enceladus.rest_api.services.DatasetService.RuleValidationsAndFields
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
+import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory

@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.Parameter
+
 import java.util.concurrent.CompletableFuture
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -102,7 +104,7 @@ class RunController @Autowired()(runService: RunService) extends BaseController 
   @PostMapping()
   @ResponseStatus(HttpStatus.CREATED)
   def create(@RequestBody run: Run,
-             @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
+             @Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails): CompletableFuture[Run] = {
     runService.create(run, principal.getUsername)
   }
 

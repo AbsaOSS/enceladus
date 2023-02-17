@@ -15,12 +15,13 @@
 
 package za.co.absa.enceladus.model
 
-import java.time.ZonedDateTime
-import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import com.fasterxml.jackson.databind.node.ArrayNode
-import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.backend.audit._
 import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import za.co.absa.enceladus.model.versionedModel.VersionedModel
+
+import java.time.ZonedDateTime
 
 case class MappingTable(name: String,
                         version: Int = 1,

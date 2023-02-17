@@ -60,10 +60,15 @@ class WebSecurityConfig @Autowired()(beanFactory: BeanFactory,
           .authenticationEntryPoint(spnegoEntryPoint())
         .and()
         .authorizeRequests()
-          .antMatchers("/admin/health",
+          .antMatchers(
+            "/v3/api-docs*", "/v3/api-docs/**",
+            "/v3/api-docs.yaml*","/v3/api-docs.yaml/**",
+            "/admin/health",
             "/api/user/version", "/api/configuration/**",
-            "/swagger-ui.html", "/webjars/**", "/v2/api-docs", "/swagger-resources",
-            "/swagger-resources/configuration/ui", "/swagger-resources/configuration/security")
+            "/webjars/**",
+            "/swagger-ui.html",  "/swagger-ui/**",
+            "/swagger-resources/**"
+          )
           .permitAll()
         .anyRequest()
           .authenticated()

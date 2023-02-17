@@ -15,9 +15,10 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.Parameter
+
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import javax.servlet.http.HttpServletResponse
 import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
@@ -56,7 +57,7 @@ class SchemaController @Autowired()(
 
   @PostMapping(Array("/remote"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
+  def handleRemoteFile(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                        @RequestParam remoteUrl: String,
                        @RequestParam version: Int,
                        @RequestParam name: String,
@@ -79,7 +80,7 @@ class SchemaController @Autowired()(
 
   @PostMapping(Array("/registry"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleSubject(@AuthenticationPrincipal principal: UserDetails,
+  def handleSubject(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                       @RequestParam subject: String,
                       @RequestParam version: Int,
                       @RequestParam name: String,
@@ -109,7 +110,7 @@ class SchemaController @Autowired()(
 
   @PostMapping(Array("/upload"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
+  def handleFileUpload(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                        @RequestParam file: MultipartFile,
                        @RequestParam version: Int,
                        @RequestParam name: String,
@@ -156,7 +157,7 @@ class SchemaController @Autowired()(
 
   @GetMapping(path = Array("/export/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
-  def exportSchema(@AuthenticationPrincipal principal: UserDetails,
+  def exportSchema(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                    @PathVariable name: String,
                    @PathVariable version: Int,
                    response: HttpServletResponse): CompletableFuture[Array[Byte]] = {

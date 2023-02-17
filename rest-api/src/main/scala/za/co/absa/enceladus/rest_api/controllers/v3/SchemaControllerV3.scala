@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.Parameter
 import org.apache.spark.sql.types.StructType
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
@@ -75,7 +76,7 @@ class SchemaControllerV3 @Autowired()(
 
   @GetMapping(path = Array("/{name}/{version}/original"))
   @ResponseStatus(HttpStatus.OK)
-  def exportOriginalSchemaFile(@AuthenticationPrincipal principal: UserDetails,
+  def exportOriginalSchemaFile(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                                @PathVariable name: String,
                                @PathVariable version: String,
                                response: HttpServletResponse): CompletableFuture[Array[Byte]] = {
@@ -87,7 +88,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-file"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleFileUpload(@AuthenticationPrincipal principal: UserDetails,
+  def handleFileUpload(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
                        @RequestParam file: MultipartFile,
@@ -122,7 +123,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-remote-uri"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleRemoteFile(@AuthenticationPrincipal principal: UserDetails,
+  def handleRemoteFile(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: Int,
                        @RequestParam remoteUrl: String,
@@ -149,7 +150,7 @@ class SchemaControllerV3 @Autowired()(
 
   @PostMapping(Array("/{name}/{version}/from-registry"))
   @ResponseStatus(HttpStatus.CREATED)
-  def handleSubject(@AuthenticationPrincipal principal: UserDetails,
+  def handleSubject(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                     @PathVariable name: String,
                     @PathVariable version: Int,
                     @RequestParam subject: String,

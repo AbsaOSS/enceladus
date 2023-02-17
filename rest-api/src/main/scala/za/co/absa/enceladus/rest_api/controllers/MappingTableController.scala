@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
-import java.util.concurrent.CompletableFuture
+import io.swagger.v3.oas.annotations.Parameter
 
+import java.util.concurrent.CompletableFuture
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -36,7 +37,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
 
   @PostMapping(path = Array("/updateDefaults"))
   @ResponseStatus(HttpStatus.OK)
-  def updateDefaults(@AuthenticationPrincipal user: UserDetails,
+  def updateDefaults(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
     @RequestBody updatedDefaults: GenericObject[Array[DefaultValue]]): CompletableFuture[MappingTable] = {
     mappingTableService.updateDefaults(user.getUsername, updatedDefaults.id.name,
       updatedDefaults.id.version, updatedDefaults.value.toList).map {
@@ -47,7 +48,7 @@ class MappingTableController @Autowired() (mappingTableService: MappingTableServ
 
   @PostMapping(path = Array("/addDefault"))
   @ResponseStatus(HttpStatus.OK)
-  def addDefault(@AuthenticationPrincipal user: UserDetails,
+  def addDefault(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
     @RequestBody newDefault: GenericObject[DefaultValue]): CompletableFuture[MappingTable] = {
     mappingTableService.addDefault(user.getUsername, newDefault.id.name,
       newDefault.id.version, newDefault.value).map {
