@@ -15,35 +15,50 @@
 
 package za.co.absa.enceladus.model
 
-import java.time.ZonedDateTime
-
-import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
 import com.fasterxml.jackson.databind.node.ArrayNode
-import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.backend.audit._
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
-// TODO annotate similar to Dataset
+import java.time.ZonedDateTime
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
 case class Schema(name: String,
-    version: Int = 1,
-    description: Option[String],
+  @BeanProperty version: Int = 1,
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty description: Option[String],
 
-    dateCreated: ZonedDateTime = ZonedDateTime.now(),
-    userCreated: String = null,
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @BeanProperty userCreated: String = null,
 
-    lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-    userUpdated: String = null,
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @BeanProperty userUpdated: String = null,
 
-    disabled: Boolean = false,
-    dateDisabled: Option[ZonedDateTime] = None,
-    userDisabled: Option[String] = None,
+  @BeanProperty disabled: Boolean = false,
 
-    locked: Option[Boolean] = None,
-    dateLocked: Option[ZonedDateTime] = None,
-    userLocked: Option[String] = None,
-    fields: List[SchemaField] = List(),
-    parent: Option[Reference] = None) extends VersionedModel with Auditable[Schema] {
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Boolean])
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String])
+  @BeanProperty userLocked: Option[String] = None,
+
+  @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[SchemaField]))
+  @BeanProperty fields: List[SchemaField] = List(),
+
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None
+) extends VersionedModel with Auditable[Schema] {
 
   override def setVersion(value: Int): Schema = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)

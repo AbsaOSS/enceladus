@@ -63,8 +63,10 @@ case class Dataset(name: String,
   @(AosSchema@field)(implementation = classOf[String])
   @BeanProperty userLocked: Option[String] = None,
 
+  // TODO improve type hints?
   @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[ConformanceRule]))
   @BeanProperty conformance: List[ConformanceRule],
+
   @(AosSchema@field)(implementation = classOf[Reference])
   @BeanProperty parent: Option[Reference] = None,
 
