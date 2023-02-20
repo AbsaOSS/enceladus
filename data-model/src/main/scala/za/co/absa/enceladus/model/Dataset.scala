@@ -49,7 +49,7 @@ case class Dataset(name: String,
                    userLocked: Option[String] = None,
                    conformance: List[ConformanceRule] = List.empty,
                    parent: Option[Reference] = None,
-                   schedule: Option[OozieSchedule] = None,
+                   schedule: Option[OozieSchedule] = None, //To be used for backward visioning compatibility
                    properties: Option[Map[String, String]] = Some(Map.empty),
                    propertiesValidation: Option[Validation] = None
                   ) extends VersionedModel with Auditable[Dataset] {
