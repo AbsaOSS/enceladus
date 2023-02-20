@@ -68,13 +68,12 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
   test("Testing array transform") {
     val df = spark.createDataFrame(inputDataOrig)
 
-    val t = ArrayTransformations.arrayTransform(df, "vals")({
-      case d =>
+    val t = ArrayTransformations.arrayTransform(df, "vals"){ d =>
         val tmpCol = d.withColumn("tmp", $"vals.a" * 2)
         val dropped = ArrayTransformations.nestedDrop(tmpCol, "vals.a")
         val renamed = ArrayTransformations.nestedWithColumn(dropped)("vals.a", $"tmp")
         renamed.repartition(10)
-    })
+    }
 
     val exp = OuterStruct(-1, null) :: inputData.map({ case (x, vals) => OuterStruct(x, vals.map(v => InnerStruct(v * 2))) })
     val res = t.as[OuterStruct].collect.sortBy(_.id)
@@ -84,9 +83,7 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
 
   test("Testing nested arrays") {
     val df2 = spark.createDataFrame(extraNested)
-    val actual = ArrayTransformations.arrayTransform(df2, "z.vals") {
-      case (df) => df
-    }.as[Outer2].collect().sortBy(_.z.id)
+    val actual = ArrayTransformations.arrayTransform(df2, "z.vals")(df => df).as[Outer2].collect().sortBy(_.z.id)
     val expected = extraNested.sortBy(_.z.id)
 
     assertResult(expected)(actual)
@@ -117,7 +114,7 @@ class ArrayTransformationsSuite extends AnyFunSuite with TZNormalizedSparkTestBa
     val exp = List(
       Nested1Level(List(Some(1), None, Some(2), Some(3), Some(4), Some(5), Some(6))),
       Nested1Level(List()),
-      Nested1Level(null)).toSeq
+      Nested1Level(null))
 
     val resLocal = res.as[Nested1Level].collect().toSeq
 
