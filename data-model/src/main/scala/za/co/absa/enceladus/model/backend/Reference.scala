@@ -21,8 +21,10 @@ import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
 case class Reference(
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String],  example = "collection1")
   @BeanProperty collection: Option[String],
+  @(AosSchema@field)(example = "entity1")
   @BeanProperty name: String,
+  @(AosSchema@field)(example = "1")
   @BeanProperty version: Int
 )

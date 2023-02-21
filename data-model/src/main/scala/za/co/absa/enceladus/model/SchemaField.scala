@@ -23,8 +23,11 @@ import scala.beans.BeanProperty
 
 case class SchemaField
 (
+  @(AosSchema@field)(example = "field1")
   @BeanProperty name: String,
+  @(AosSchema@field)(example = "string")
   @BeanProperty `type`: String,
+  @(AosSchema@field)(example = "topfieldA")
   @BeanProperty path: String,  // path up to this field
 
   // These fields are optional when the type of the field is "array".
@@ -35,7 +38,7 @@ case class SchemaField
   metadata: Map[String, String],
   children: Seq[SchemaField]
 ) {
-  @(AosSchema@field)(accessMode = AosSchema.AccessMode.READ_ONLY)
+  @(AosSchema@field)(accessMode = AosSchema.AccessMode.READ_ONLY) // will appear on returned entities, not on payloads
   @JsonProperty("absolutePath")
   def getAbsolutePath: String = {
     if(path.isEmpty) name else s"$path.$name"

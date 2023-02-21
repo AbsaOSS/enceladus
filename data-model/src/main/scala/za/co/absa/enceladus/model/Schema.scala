@@ -26,31 +26,35 @@ import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
 case class Schema(name: String,
+  @(AosSchema@field)(example = "1")
   @BeanProperty version: Int = 1,
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String], example = "schema description")
   @BeanProperty description: Option[String],
 
   @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user1")
   @BeanProperty userCreated: String = null,
 
   @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
   @BeanProperty userUpdated: String = null,
 
+  @(AosSchema@field)(example = "false")
   @BeanProperty disabled: Boolean = false,
 
   @(AosSchema@field)(implementation = classOf[ZonedDateTime])
   @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
 
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String], example = "user3")
   @BeanProperty userDisabled: Option[String] = None,
 
-  @(AosSchema@field)(implementation = classOf[Boolean])
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
   @BeanProperty locked: Option[Boolean] = None,
 
   @(AosSchema@field)(implementation = classOf[ZonedDateTime])
   @BeanProperty dateLocked: Option[ZonedDateTime] = None,
 
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
   @BeanProperty userLocked: Option[String] = None,
 
   @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[SchemaField]))
