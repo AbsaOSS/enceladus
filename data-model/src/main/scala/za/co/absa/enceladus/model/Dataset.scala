@@ -28,39 +28,46 @@ import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
 case class Dataset(name: String,
-  @BeanProperty // generates getter (and setter) -> swagger is able to correctly report this field
-  version: Int = 1,
-  @(AosSchema@field)(implementation = classOf[String])
-  @BeanProperty
-  description: Option[String] = None,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int = 1, // @BP generates getter (and setter) -> swagger is able to correctly report this field
 
+  @(AosSchema@field)(implementation = classOf[String], example = "dataset description")
+  @BeanProperty description: Option[String] = None,
+
+  @(AosSchema@field)(example = "/input/path/for/dataset")
   @BeanProperty hdfsPath: String,
+  @(AosSchema@field)(example = "/output/path/for/dataset")
   @BeanProperty hdfsPublishPath: String,
 
+  @(AosSchema@field)(example = "schemaA")
   @BeanProperty schemaName: String,
+  @(AosSchema@field)(example = "1")
   @BeanProperty schemaVersion: Int,
 
   @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user1")
   @BeanProperty userCreated: String = null,
 
   @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
   @BeanProperty userUpdated: String = null,
 
+  @(AosSchema@field)(example = "false")
   @BeanProperty disabled: Boolean = false,
 
   @(AosSchema@field)(implementation = classOf[ZonedDateTime])
   @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
 
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String], example = "user3")
   @BeanProperty userDisabled: Option[String] = None,
 
-  @(AosSchema@field)(implementation = classOf[Boolean], requiredMode = AosSchema.RequiredMode.NOT_REQUIRED)
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
   @BeanProperty locked: Option[Boolean] = None,
 
   @(AosSchema@field)(implementation = classOf[ZonedDateTime])
   @BeanProperty dateLocked: Option[ZonedDateTime] = None,
 
-  @(AosSchema@field)(implementation = classOf[String])
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
   @BeanProperty userLocked: Option[String] = None,
 
   // TODO improve type hints?
@@ -75,7 +82,10 @@ case class Dataset(name: String,
 
   // TODO improve scala collections swagger hints
   @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
-  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]])
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
+    "\"field1\": \"true\"," +
+    "\"field2\": \"false\"" +
+    "}")
   @BeanProperty propertiesValidation: Option[Validation] = None
 ) extends VersionedModel with Auditable[Dataset] {
 
