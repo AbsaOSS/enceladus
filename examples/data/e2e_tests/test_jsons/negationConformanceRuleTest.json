@@ -2,7 +2,7 @@
 {
     "vars": {
       "spark-submit": "spark-submit --num-executors 2 --executor-memory 2G --deploy-mode client",
-      "spark-conf": "--conf 'spark.driver.extraJavaOptions=-Denceladus.rest.uri=http://localhost:8080/rest_api_war/api -Dspline.mongodb.name=spline -Dspline.mongodb.url=mongodb://127.0.0.1:27017/ -Denceladus.recordId.generation.strategy=stableHashId'",
+      "spark-conf": "--conf 'spark.driver.extraJavaOptions=-Denceladus.rest.uri=http://localhost:8080/rest_api/api -Dspline.mongodb.name=spline -Dspline.mongodb.url=mongodb://127.0.0.1:27017/ -Denceladus.recordId.generation.strategy=stableHashId'",
       "enceladus-job-jar": "spark-jobs/target/spark-jobs-3.0.0-SNAPSHOT.jar",
       "credentials": "--rest-api-credentials-file ~/.ssh/menas-credential.properties",
       "ref-std-data-path": "/ref/negationConformanceRule/std",
