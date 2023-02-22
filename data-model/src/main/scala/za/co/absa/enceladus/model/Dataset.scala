@@ -80,12 +80,13 @@ case class Dataset(name: String,
   @(AosSchema@field)(implementation = classOf[OozieSchedule])
   @BeanProperty schedule: Option[OozieSchedule] = None,
 
-  // TODO improve scala collections swagger hints
-  @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
   @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
-    "\"field1\": \"true\"," +
-    "\"field2\": \"false\"" +
+    "\"field1\": \"value1\"," +
+    "\"field2\": \"value2\"" +
     "}")
+  @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
+
+  @(AosSchema@field)(implementation = classOf[Validation])
   @BeanProperty propertiesValidation: Option[Validation] = None
 ) extends VersionedModel with Auditable[Dataset] {
 
