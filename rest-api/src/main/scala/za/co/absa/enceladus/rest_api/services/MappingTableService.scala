@@ -52,20 +52,20 @@ class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRe
 
   def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
-      latest.setDefaultMappingValue(defaultValues)
+      latest.setDefaultMappingValues(defaultValues)
     }
   }
 
   def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
-      latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
+      latest.setDefaultMappingValues(latest.defaultMappingValues :+ defaultValue)
     }
   }
 
   override def update(username: String, mt: MappingTable): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mt.name, mt.version) { latest =>
       latest
-        .setHDFSPath(mt.hdfsPath)
+        .setHdfsPath(mt.hdfsPath)
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
@@ -99,7 +99,7 @@ class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRe
         case Some(s) => s.fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet
         case None => Set.empty[String]
       }
-      item.defaultMappingValue.foldLeft(Validation()) { (accValidations, defaultValue) =>
+      item.defaultMappingValues.foldLeft(Validation()) { (accValidations, defaultValue) =>
         accValidations.withErrorIf(
           !fields.contains(defaultValue.columnName),
           "item.defaultMappingValue",

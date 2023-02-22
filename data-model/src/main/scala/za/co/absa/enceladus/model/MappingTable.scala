@@ -15,42 +15,73 @@
 
 package za.co.absa.enceladus.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ArrayNode
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.backend.audit._
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
 import java.time.ZonedDateTime
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
-// TODO annotate similar to Dataset
+case class MappingTable(
+  @(AosSchema@field)(example = "datasetA")
+  @BeanProperty name: String,
 
-case class MappingTable(name: String,
-                        version: Int = 1,
-                        description: Option[String] = None,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int = 1,
 
-                        hdfsPath: String,
+  @(AosSchema@field)(implementation = classOf[String], example = "MT description")
+  @BeanProperty description: Option[String] = None,
 
-                        schemaName: String,
-                        schemaVersion: Int,
+  @(AosSchema@field)(example = "/input/path/for/mappingtable")
+  @BeanProperty hdfsPath: String,
 
-                        defaultMappingValue: List[DefaultValue] = List(),
+  @(AosSchema@field)(example = "schemaA")
+  @BeanProperty schemaName: String,
 
-                        dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                        userCreated: String = null,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty schemaVersion: Int,
 
-                        lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                        userUpdated: String = null,
+  @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[DefaultValue]))
+  @BeanProperty defaultMappingValues: List[DefaultValue] = List(),
 
-                        disabled: Boolean = false,
-                        dateDisabled: Option[ZonedDateTime] = None,
-                        userDisabled: Option[String] = None,
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user1")
+  @BeanProperty userCreated: String = null,
 
-                        locked: Option[Boolean] = None,
-                        dateLocked: Option[ZonedDateTime] = None,
-                        userLocked: Option[String] = None,
-                        parent: Option[Reference] = None,
-                        filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
+  @BeanProperty userUpdated: String = null,
+
+  @(AosSchema@field)(example = "false")
+  @BeanProperty disabled: Boolean = false,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user3")
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
+  @BeanProperty userLocked: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None,
+
+  // todo improve annotation hints
+  @(AosSchema@field)(implementation = classOf[DataFrameFilter])
+  @BeanProperty filter: Option[DataFrameFilter] = None
+) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -66,13 +97,14 @@ case class MappingTable(name: String,
   override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
   def setSchemaName(newName: String): MappingTable = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
-  def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
+  def setHdfsPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
+  def setDefaultMappingValues(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValues = newDefaults)
   override def setParent(newParent: Option[Reference]): MappingTable = this.copy(parent = newParent)
   def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
-  def getDefaultMappingValues: Map[String, String] = {
-    defaultMappingValue.map(_.toTuple).toMap
+  @JsonIgnore
+  def getDefaultMappingValuesAsMap: Map[String, String] = {
+    defaultMappingValues.map(_.toTuple).toMap
   }
 
   override val createdMessage = AuditTrailEntry(ref = Reference(collection = None, name = name, version = version),
@@ -92,7 +124,7 @@ case class MappingTable(name: String,
   }
 
   override def exportItem(): String = {
-    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValue.toArray)
+    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValues.toArray)
 
     val objectItemMapper = objectMapperRoot.withObject("/item")
 

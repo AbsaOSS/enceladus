@@ -21,8 +21,8 @@ import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
 
 object EmployeeConformance {
   val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country", schemaName = "country", schemaVersion = 0)
-  val departmentMT = MappingTable(name = "department", version = 0, hdfsPath = "src/test/testData/department", schemaName = "dept", schemaVersion = 0, defaultMappingValue = List(DefaultValue("department_name","'Unknown dept'")))
-  val roleMT = MappingTable(name = "role", version = 0, hdfsPath = "src/test/testData/role", schemaName = "role", schemaVersion = 0, defaultMappingValue = List())
+  val departmentMT = MappingTable(name = "department", version = 0, hdfsPath = "src/test/testData/department", schemaName = "dept", schemaVersion = 0, defaultMappingValues = List(DefaultValue("department_name","'Unknown dept'")))
+  val roleMT = MappingTable(name = "role", version = 0, hdfsPath = "src/test/testData/role", schemaName = "role", schemaVersion = 0, defaultMappingValues = List())
 
   val countryRule = new MappingConformanceRule(order = 0, mappingTable = "country", controlCheckpoint = false,
     mappingTableVersion = 0, attributeMappings = Map("country_code" -> "country" ), targetAttribute = "country_name", outputColumn = "conformed_country")

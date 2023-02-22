@@ -25,9 +25,13 @@ import java.time.ZonedDateTime
 import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
-case class Schema(name: String,
+case class Schema (
+  @(AosSchema@field)(example = "schemaA")
+  @BeanProperty  name: String,
+
   @(AosSchema@field)(example = "1")
   @BeanProperty version: Int = 1,
+
   @(AosSchema@field)(implementation = classOf[String], example = "schema description")
   @BeanProperty description: Option[String],
 

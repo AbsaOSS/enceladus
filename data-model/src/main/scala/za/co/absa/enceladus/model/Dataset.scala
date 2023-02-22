@@ -27,7 +27,10 @@ import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
-case class Dataset(name: String,
+case class Dataset(
+  @(AosSchema@field)(example = "datasetA")
+  @BeanProperty name: String,
+
   @(AosSchema@field)(example = "1")
   @BeanProperty version: Int = 1, // @BP generates getter (and setter) -> swagger is able to correctly report this field
 
@@ -36,11 +39,13 @@ case class Dataset(name: String,
 
   @(AosSchema@field)(example = "/input/path/for/dataset")
   @BeanProperty hdfsPath: String,
+
   @(AosSchema@field)(example = "/output/path/for/dataset")
   @BeanProperty hdfsPublishPath: String,
 
   @(AosSchema@field)(example = "schemaA")
   @BeanProperty schemaName: String,
+
   @(AosSchema@field)(example = "1")
   @BeanProperty schemaVersion: Int,
 

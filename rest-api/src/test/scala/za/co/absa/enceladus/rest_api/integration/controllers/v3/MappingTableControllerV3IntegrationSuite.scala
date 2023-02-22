@@ -176,7 +176,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       "when there are some defaults rules (version \"latest\")" in {
         mappingTableFixture.add(
           MappingTableFactory.getDummyMappingTable("mtA"),
-          MappingTableFactory.getDummyMappingTable("mtA", version = 2).copy(defaultMappingValue = List(
+          MappingTableFactory.getDummyMappingTable("mtA", version = 2).copy(defaultMappingValues = List(
             DefaultValue("columnX", "defaultXvalue"),
             DefaultValue("columnY", "defaultYvalue")
           ))
@@ -218,7 +218,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       }
       "the mapping table is disabled" in {
         val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1, disabled = true)
-          .copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+          .copy(defaultMappingValues = List(DefaultValue("anOldDefault", "itsValue")))
         mappingTableFixture.add(mtAv1)
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
@@ -236,7 +236,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
         ("non-empty defaults", Array(DefaultValue("colA", "defaultA")))
       ).foreach { case (testCaseName, bothPayloadAndExpectedResult: Array[DefaultValue]) =>
         s"defaults are replaced with a new version ($testCaseName)" in {
-          val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+          val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValues = List(DefaultValue("anOldDefault", "itsValue")))
           mappingTableFixture.add(mtAv1)
 
           schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
@@ -286,7 +286,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
       }
       "the mapping table is disabled" in {
         val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1, disabled = true)
-          .copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+          .copy(defaultMappingValues = List(DefaultValue("anOldDefault", "itsValue")))
         mappingTableFixture.add(mtAv1)
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
 
@@ -298,7 +298,7 @@ class MappingTableControllerV3IntegrationSuite extends BaseRestApiTestV3 with Be
 
     "201 Created with location" when {
       "defaults are replaced with a new version" in {
-        val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValue = List(DefaultValue("anOldDefault", "itsValue")))
+        val mtAv1 = MappingTableFactory.getDummyMappingTable("mtA", version = 1).copy(defaultMappingValues = List(DefaultValue("anOldDefault", "itsValue")))
         mappingTableFixture.add(mtAv1)
 
         schemaFixture.add(SchemaFactory.getDummySchema("dummySchema")) // Schema referenced by MT must exist
