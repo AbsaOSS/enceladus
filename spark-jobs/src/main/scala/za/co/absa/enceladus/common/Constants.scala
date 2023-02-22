@@ -22,6 +22,8 @@ object Constants {
   final val InfoVersionColumn = "enceladus_info_version"
   final val EnceladusRecordId = "enceladus_record_id"
 
+  final val EnceladusRunNumber = "enceladus_run_number"
+
   final val ConfigKeysToRedact = Set(
     "java.class.path",
     "java.security.auth.login.config",
