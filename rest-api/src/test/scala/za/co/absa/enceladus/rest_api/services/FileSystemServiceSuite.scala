@@ -51,7 +51,6 @@ class FileSystemServiceSuite extends BaseServiceTest {
     val nonDirectoryFileStatus = mock[FileStatus]
     Mockito.when(nonDirectoryFileStatus.isDirectory).thenReturn(false)
 
-    // [[za.co.absa.enceladus.utils.fs.FileSystemUtils.FileSystemExt.isDirectoryWithDefault]] will be called on the fs
     Mockito.when(fs.getFileStatus(dirPath)).thenReturn(directoryFileStatus)
     Mockito.when(fs.getFileStatus(filePath)).thenReturn(nonDirectoryFileStatus)
     Mockito.when(fs.getFileStatus(subdirPath)).thenReturn(directoryFileStatus)

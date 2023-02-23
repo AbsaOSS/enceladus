@@ -77,13 +77,15 @@ class StandardizationExecutionSuite extends AnyFlatSpec with Matchers with TZNor
 
       finishJob(cmd) // Atum framework initialization is part of the 'prepareStandardization', this disables it at the end
 
-      eventually(timeout(scaled(10.seconds)), interval(scaled(500.millis))) {
-        val infoContentJson = FileReader.readFileAsString(s"$stdPath/_INFO")
-        val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
-
-        // key with prefix from test's application.conf
-        infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
+      val infoContentJson = eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
+        val result = FileReader.readFileAsString(s"$stdPath/_INFO")
+        assert(result.nonEmpty)
+        result
       }
+      val infoControlMeasure = ControlMeasuresParser.fromJson(infoContentJson)
+
+      // key with prefix from test's application.conf
+      infoControlMeasure.metadata.additionalInfo should contain("ds_testing_keyFromDs1" -> "itsValue1")
     }
   }
 
