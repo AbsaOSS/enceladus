@@ -131,12 +131,14 @@ var RunService = new function () {
     return Object.keys(info).map(key => {
       return {"infoKey": key, "infoValue": info[key]}
     }).sort((a, b) => {
+      // ascending order: return -1 to keep the order (order will be: [a, b]),
+      // otherwise return 1 (order will be: [b, a])
       if (a.infoKey > b.infoKey) {
-        return -1;
+        return 1;
       }
 
       if (a.infoKey < b.infoKey) {
-        return 1;
+        return -1;
       }
 
       return 0;

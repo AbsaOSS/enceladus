@@ -36,7 +36,7 @@ import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.udf.ConformanceUDFLibrary
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
@@ -90,7 +90,7 @@ case class DynamicInterpreter()(implicit inputFs: FileSystem) {
     implicit val spark: SparkSession = ictx.spark
     implicit val dao: EnceladusDAO = ictx.dao
     implicit val progArgs: InterpreterContextArgs = ictx.progArgs
-    implicit val udfLib: UDFLibrary = new UDFLibrary
+    implicit val udfLib: ConformanceUDFLibrary = new ConformanceUDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps

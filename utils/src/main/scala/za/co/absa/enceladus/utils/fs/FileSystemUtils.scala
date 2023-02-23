@@ -48,24 +48,5 @@ object FileSystemUtils {
         FileSystem.get(hadoopConf) // HDFS
     }
   }
-
-  implicit class FileSystemExt(fs: FileSystem) {
-    /**
-     * Checks if path is a directory, returns `default` on FileNotFoundException. Basically, behaves the same way as the late
-     * [[org.apache.hadoop.fs.FileSystem#isDirectory(org.apache.hadoop.fs.Path)]]
-     * @param path path to test if isDirectory
-     * @param default default to be returned on error
-     */
-    def isDirectoryWithDefault(path: Path, default: Boolean): Boolean = {
-      Try {
-        fs.getFileStatus(path).isDirectory
-      } match {
-        case Success(value) => value
-        case Failure(_: FileNotFoundException) => default
-        case Failure(otherException) => throw otherException
-      }
-    }
-  }
-
 }
 
