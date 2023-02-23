@@ -517,9 +517,10 @@ else
   add_spark_conf_cmd "spark.yarn.submit.waitAppCompletion" "false"
 fi
 
-CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF}"
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF} ${SPLINE_CONF}"
 CMD_LINE="${CMD_LINE} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\""
 CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_EXECUTOR_CONF}\""
+CMD_LINE="${CMD_LINE} ${ADDITIONAL_JARS}"
 CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
