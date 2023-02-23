@@ -18,38 +18,64 @@ package za.co.absa.enceladus.model.properties
 import java.time.ZonedDateTime
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ObjectNode
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.backend.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
-// TODO annotate similar to Dataset
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
-case class PropertyDefinition(name: String,
-                              version: Int = 1,
-                              description: Option[String] = None,
+case class PropertyDefinition(
+  @(AosSchema@field)(example = "propertyDefinitionA")
+  @BeanProperty name: String,
 
-                              propertyType: PropertyType,
-                              putIntoInfoFile: Boolean = false,
-                              essentiality: Essentiality = Essentiality.Optional,
-                              disabled: Boolean = false,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int = 1,
 
-                              locked: Option[Boolean] = None,
-                              dateLocked: Option[ZonedDateTime] = None,
-                              userLocked: Option[String] = None,
+  @(AosSchema@field)(implementation = classOf[String], example = "dataset description")
+  @BeanProperty description: Option[String] = None,
 
-                              // VersionModel induced fields:
-                              dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                              userCreated: String = null, //scalastyle:ignore null
+  @(AosSchema@field)(implementation = classOf[PropertyType], example =
+    "{\"_t\": \"StringPropertyType\",\"suggestedValue\": \"valueX\"}")
+  @BeanProperty propertyType: PropertyType,
 
-                              lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                              userUpdated: String = null, //scalastyle:ignore null
+  @BeanProperty putIntoInfoFile: Boolean = false,
 
-                              dateDisabled: Option[ZonedDateTime] = None,
-                              userDisabled: Option[String] = None,
-                              parent: Option[Reference] = None
-                             ) extends VersionedModel with Auditable[PropertyDefinition] {
+  @(AosSchema@field)(implementation = classOf[Essentiality], example = "{\"_t\": \"Optional\"}")
+  @BeanProperty essentiality: Essentiality = Essentiality.Optional,
+
+  @(AosSchema@field)(example = "false")
+  @BeanProperty disabled: Boolean = false,
+
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user1")
+  @BeanProperty userLocked: Option[String] = None,
+
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
+  @BeanProperty userCreated: String = null, //scalastyle:ignore null
+
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user3")
+  @BeanProperty userUpdated: String = null, //scalastyle:ignore null
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None
+) extends VersionedModel with Auditable[PropertyDefinition] {
 
   @JsonIgnore
   def isRequired(allowRun: Boolean): Boolean = essentiality == Essentiality.Mandatory(allowRun)

@@ -37,11 +37,11 @@ case class Schema (
 
   @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
   @(AosSchema@field)(example = "user1")
-  @BeanProperty userCreated: String = null,
+  @BeanProperty userCreated: String = null, //scalastyle:ignore null
 
   @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
   @(AosSchema@field)(example = "user2")
-  @BeanProperty userUpdated: String = null,
+  @BeanProperty userUpdated: String = null, //scalastyle:ignore null
 
   @(AosSchema@field)(example = "false")
   @BeanProperty disabled: Boolean = false,
