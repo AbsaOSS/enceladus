@@ -78,8 +78,13 @@ case class MappingTable(
   @(AosSchema@field)(implementation = classOf[Reference])
   @BeanProperty parent: Option[Reference] = None,
 
-  // todo improve annotation hints
-  @(AosSchema@field)(implementation = classOf[DataFrameFilter])
+  @(AosSchema@field)(implementation = classOf[DataFrameFilter], example = "{" +
+    "\"_t\": \"EqualsFilter\"," +
+    "\"columnName\": \"exampleColumn1\"," +
+    "\"value\":\"wantedValue1\"," +
+    "\"valueType\": \"string\"" +
+    "}"
+  )
   @BeanProperty filter: Option[DataFrameFilter] = None
 ) extends VersionedModel with Auditable[MappingTable] {
 
