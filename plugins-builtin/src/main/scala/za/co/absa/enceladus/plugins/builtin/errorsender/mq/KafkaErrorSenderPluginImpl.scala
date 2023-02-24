@@ -26,12 +26,12 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPlugi
 import KafkaErrorSenderPluginImpl._
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 import za.co.absa.enceladus.utils.modules._
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.abris.avro.functions.to_avro
 import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig}
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin.{avroKeySchemaRegistryConfig, avroValueSchemaRegistryConfig, registerSchemas}
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage.ErrorCodes
 
 import scala.util.{Failure, Success, Try}
 

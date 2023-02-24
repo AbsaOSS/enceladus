@@ -27,8 +27,8 @@ import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
-import za.co.absa.enceladus.utils.error.Mapping
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
+import za.co.absa.spark.commons.errorhandling.ErrorMessage.Mapping
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.Try
