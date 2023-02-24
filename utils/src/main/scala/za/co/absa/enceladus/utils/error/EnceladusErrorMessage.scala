@@ -20,21 +20,8 @@ import org.apache.spark.sql.types.StructType
 import za.co.absa.standardization.config.DefaultErrorCodesConfig
 import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
-/**
- * Case class to represent an error message
- *
- * @param errType - Type or source of the error
- * @param errCode - Internal error code
- * @param errMsg - Textual description of the error
- * @param errCol - The name of the column where the error occurred
- * @param rawValues - Sequence of raw values (which are the potential culprits of the error)
- * @param mappings - Sequence of Mappings i.e Mapping Table Column -> Equivalent Mapped Dataset column
- */
-//case class ErrorMessage(errType: String, errCode: String, errMsg: String, errCol: String, rawValues: Seq[String], mappings: Seq[Mapping] = Seq())
-//case class Mapping(mappingTableColumn: String, mappedDatasetColumn: String)
 
 object EnceladusErrorMessage {
-//  val errorColumnName = "errCol"
 
   def confMappingErr(errCol: String, rawValues: Seq[String], mappings: Seq[ErrorMessage.Mapping]): ErrorMessage = ErrorMessage(
     errType = "confMapError",
