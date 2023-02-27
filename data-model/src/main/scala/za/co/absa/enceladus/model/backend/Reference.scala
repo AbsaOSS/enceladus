@@ -20,6 +20,13 @@ import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
 import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
+  @AosSchema(implementation = classOf[Reference],
+    example = "{" +
+      "\"collection\": \"dataset\"," +
+      "\"name\": \"Test\"," +
+      "\"version\": 4" +
+    "}"
+  )
 case class Reference(
   @(AosSchema@field)(implementation = classOf[String],  example = "collection1")
   @BeanProperty collection: Option[String],
