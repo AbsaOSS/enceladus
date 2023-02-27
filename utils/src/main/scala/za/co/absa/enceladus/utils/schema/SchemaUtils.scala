@@ -22,7 +22,6 @@ import za.co.absa.spark.commons.utils.SchemaUtils.appendPath
 import scala.annotation.tailrec
 
 object SchemaUtils {
-
   /**
     * Returns all renames in the provided schema.
     * @param schema                       schema to examine
