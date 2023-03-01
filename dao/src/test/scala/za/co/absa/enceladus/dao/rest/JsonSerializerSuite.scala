@@ -400,7 +400,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "hdfsPath": "/dummy/path",
           |  "schemaName": "dummySchema",
           |  "schemaVersion": 1,
-          |  "defaultMappingValue": [],
+          |  "defaultMappingValues": [],
           |  "dateCreated": "2017-12-04T16:19:17Z",
           |  "userCreated": "dummyUser",
           |  "lastUpdated": "2017-12-04T16:19:17Z",
@@ -429,8 +429,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
       val mappingTable = MappingTableFactory.getDummyMappingTable()
@@ -455,7 +454,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "hdfsPath": "/dummy/path",
           |  "schemaName": "dummySchema",
           |  "schemaVersion": 1,
-          |  "defaultMappingValue": [],
+          |  "defaultMappingValues": [],
           |  "dateCreated": "2017-12-04T16:19:17Z",
           |  "userCreated": "dummyUser",
           |  "lastUpdated": "2017-12-04T16:19:17Z",
@@ -518,8 +517,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
 
