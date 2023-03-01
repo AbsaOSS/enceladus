@@ -75,7 +75,6 @@ case class Dataset(
   @(AosSchema@field)(implementation = classOf[String], example = "user4")
   @BeanProperty userLocked: Option[String] = None,
 
-  // TODO improve type hints?
   @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[ConformanceRule]))
   @BeanProperty conformance: List[ConformanceRule],
 

@@ -15,16 +15,16 @@
 
 package za.co.absa.enceladus.model.properties
 
-import java.time.ZonedDateTime
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ObjectNode
-import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
 import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.backend.audit.{AuditFieldName, AuditTrailChange, AuditTrailEntry, Auditable}
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality
 import za.co.absa.enceladus.model.properties.propertyType.PropertyType
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
+import java.time.ZonedDateTime
 import scala.annotation.meta.field
 import scala.beans.BeanProperty
 

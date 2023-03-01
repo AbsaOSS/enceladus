@@ -16,8 +16,8 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
 import za.co.absa.enceladus.model.Validation.ValidationRecord
-import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 
 import scala.annotation.meta.field
 import scala.beans.BeanProperty
