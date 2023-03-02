@@ -121,10 +121,11 @@ class SparkEnceladusSchemaConvertor @Autowired()(val objMapper: ObjectMapper) {
           // objMapper.readValue(_, classOf[Map[String, String]] doesn't actually enforce typing within the Map, this
           // construction ensures it
           case (key: String, value: String) => (key, value)
+          case (key: String, value: Int) => (key, value.toString)
           case (key: String, null) => (key, null) // scalastyle:ignore null - some values can be null, particularly default, can be null
           case (key, value) => throw SchemaParsingException(
             schemaType = null,  //scalastyle:ignore null - unknown value = null
-            message = s"Value for metadata key '$key' (of value $value) to be a string or null",
+            message = s"Value for metadata key '$key' (of value $value) to be a string or int or null",
             field = Option(field.name)
           )
         }

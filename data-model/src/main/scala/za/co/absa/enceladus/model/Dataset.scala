@@ -76,13 +76,13 @@ case class Dataset(
   @BeanProperty userLocked: Option[String] = None,
 
   @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[ConformanceRule]))
-  @BeanProperty conformance: List[ConformanceRule],
+  @BeanProperty conformance: List[ConformanceRule] = List.empty,
 
   @(AosSchema@field)(implementation = classOf[Reference])
   @BeanProperty parent: Option[Reference] = None,
 
   @(AosSchema@field)(implementation = classOf[OozieSchedule])
-  @BeanProperty schedule: Option[OozieSchedule] = None,
+  @BeanProperty schedule: Option[OozieSchedule] = None, //To be used for backward versioning compatibility
 
   @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
     "\"field1\": \"value1\"," +
@@ -112,7 +112,6 @@ case class Dataset(
   def setHdfsPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
   def setHdfsPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
-  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
   override def setParent(newParent: Option[Reference]): Dataset = this.copy(parent = newParent)
 

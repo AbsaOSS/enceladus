@@ -120,12 +120,6 @@
             <version>${spark.fast.tests.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- Lineage tracking -->
-        <dependency>
-            <groupId>za.co.absa.spline.agent.spark</groupId>
-            <artifactId>agent-core_${scala.compat.version}</artifactId>
-            <version>${spline.agent.version}</version>
-        </dependency>
     </dependencies>
     <build>
         <plugins>

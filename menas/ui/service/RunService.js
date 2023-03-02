@@ -118,11 +118,8 @@ var RunService = new function () {
   this._preprocessRun = function (oRun, aCheckpoints) {
     let info = oRun.controlMeasure.metadata.additionalInfo;
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
-
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
-    let lineageInfo = this._buildLineageUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
-    oRun.lineageUrl = lineageInfo.lineageUrl;
-    oRun.lineageError = lineageInfo.lineageError;
+    oRun.lineageUrl = window.lineageUiCdn;
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -130,44 +127,18 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-  this._buildLineageUrl = function(outputPath, applicationId) {
-    const urlTemplate = "%s?_splineConsumerApiUrl=%s&_isEmbeddedMode=true&_targetUrl=/events/overview/%s/graph";
-    if (window.lineageConsumerApiUrl) {
-      let lineageExecutionIdApiTemplate = window.lineageConsumerApiUrl + "/execution-events?applicationId=%s&dataSourceUri=%s";
-      const lineageIdInfo = new RunRestDAO().getLineageId(lineageExecutionIdApiTemplate, outputPath, applicationId);
-
-      if (lineageIdInfo.totalCount === 1) {
-        return {
-          lineageUrl: urlTemplate
-            .replace("%s", window.lineageUiCdn)
-            .replace("%s", window.lineageConsumerApiUrl)
-            .replace("%s", lineageIdInfo.executionEventId),
-          lineageError: ""
-        };
-      } else {
-        return {
-          lineageUrl: "",
-          lineageError: !!lineageIdInfo.totalCount ? "Multiple lineage records found" : "No lineage found"
-        };
-      }
-    } else {
-      return {
-        lineageUrl: "",
-        lineageError: "Lineage service not configured"
-      };
-    }
-  };
-
   this._mapAdditionalInfo = function (info) {
     return Object.keys(info).map(key => {
       return {"infoKey": key, "infoValue": info[key]}
     }).sort((a, b) => {
+      // ascending order: return -1 to keep the order (order will be: [a, b]),
+      // otherwise return 1 (order will be: [b, a])
       if (a.infoKey > b.infoKey) {
-        return -1;
+        return 1;
       }
 
       if (a.infoKey < b.infoKey) {
-        return 1;
+        return -1;
       }
 
       return 0;
