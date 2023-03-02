@@ -32,10 +32,6 @@ spring.resources.chain.strategy.fixed.version=@project.version@
 # Disable second security filter chain passes for ASYNC requests
 spring.security.filter.dispatcher-types=REQUEST,ERROR
 
-# needed for upgraded spring https://stackoverflow.com/a/74430247
-management.metrics.mongo.command.enabled=false
-management.metrics.mongo.connectionpool.enabled=false
-
 # Generate your own secret, must be be at least 256-bit
 enceladus.rest.auth.jwt.secret=u7w!z%C*F-JaNdRgUkXp2s5v8y/A?D(G+KbPeShVmYq3t6w9z$C&E)H@McQfTjWn
 enceladus.rest.auth.jwt.lifespan.hours=8

@@ -26,8 +26,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.{Bean, Configuration, Primary, Profile}
 import za.co.absa.enceladus.rest_api.utils.implicits.codecRegistry
 
-import java.net.InetAddress
-
 /**
  * Provides an embedded local mongo. Spawn it before tests and shutdown after
  */
