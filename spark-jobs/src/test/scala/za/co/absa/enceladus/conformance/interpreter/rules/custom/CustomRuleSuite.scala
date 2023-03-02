@@ -59,7 +59,7 @@ case class MineConfd(id: Int, myOutputCol: Double, errCol: Seq[ErrorMessage])
 class CustomRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with HadoopFsTestBase  {
   import spark.implicits._
 
-  // we may WANT to enable control framework & spline here
+  // we may WANT to enable control framework here
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
   implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here
