@@ -97,11 +97,7 @@ The coverage reports are written in each module's `target` directory.
 #### REST API requirements:
 - [**Tomcat 8.5/9.0** installation](https://tomcat.apache.org/download-90.cgi)
 - [**MongoDB 4.0** installation](https://docs.mongodb.com/manual/administration/install-community/)
-- [**Spline UI deployment**](https://absaoss.github.io/spline/) - place the [spline.war](https://search.maven.org/remotecontent?filepath=za/co/absa/spline/spline-web/0.3.9/spline-web-0.3.9.war)
- in your Tomcat webapps directory (rename after downloading to _spline.war_); NB! don't forget to set up the `spline.mongodb.url` configuration for the _war_
 - `HADOOP_CONF_DIR` environment variable, pointing to the location of your hadoop configuration (pointing to a hadoop installation)
-
-The _Spline UI_ can be omitted; in such case the **REST API** `spline.urlTemplate` setting should be set to empty string. 
 
 #### Deploying REST API
 Simply copy the `rest-api.war` file produced when building the project into Tomcat's webapps directory.
@@ -142,7 +138,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization.StandardizationJob \
 <spark-jobs_<build_version>.jar> \
 --rest-api-auth-keytab <path_to_keytab_file> \
@@ -166,7 +162,7 @@ password=changeme
 --driver-cores <num> \
 --driver-memory <num>G \
 --conf 'spark.ui.port=29000' \
---conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name>" -Dhdp.version=<hadoop_version> \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_of_standardized_input>-{0}-{1}-{2}-{3} -Dconformance.mappingtable.pattern=reportDate={0}-{1}-{2} -Dhdp.version=<hadoop_version>" \
 --packages za.co.absa:enceladus-parent:<version>,za.co.absa:enceladus-conformance:<version> \
 --class za.co.absa.enceladus.conformance.DynamicConformanceJob \
 <spark-jobs_<build_version>.jar> \
@@ -186,7 +182,7 @@ password=changeme
 --deploy-mode <client/cluster> \
 --driver-cores <num> \
 --driver-memory <num>G \
---conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dspline.mongodb.url=<mongo_url_for_spline> -Dspline.mongodb.name=<spline_database_name> -Dhdp.version=<hadoop_version>" \
+--conf "spark.driver.extraJavaOptions=-Denceladus.rest.uri=<rest_api_uri:port> -Dstandardized.hdfs.path=<path_for_standardized_output>-{0}-{1}-{2}-{3} -Dhdp.version=<hadoop_version>" \
 --class za.co.absa.enceladus.standardization_conformance.StandardizationAndConformanceJob \
 <spark-jobs_<build_version>.jar> \
 --rest-api-auth-keytab <path_to_keytab_file> \
