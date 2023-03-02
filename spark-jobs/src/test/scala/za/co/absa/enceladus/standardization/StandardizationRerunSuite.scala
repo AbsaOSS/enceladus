@@ -47,6 +47,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
   private val tmpFilePrefix = "test-input-"
   private val tmpFileSuffix = ".csv"
 
+
   private val csvContent: String =
     """101|102|1|2019-05-04|2019-05-04
       |201|202|2|2019-05-05|2019-05-05

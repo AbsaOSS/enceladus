@@ -23,7 +23,6 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, Interpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
 import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.commons.sql.functions.col_of_path
