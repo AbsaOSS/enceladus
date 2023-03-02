@@ -207,6 +207,8 @@
         <spring.ldap.version>5.0.14.RELEASE</spring.ldap.version>
         <spring.version>2.0.9.RELEASE</spring.version>
         <snakeyaml.version>1.33</snakeyaml.version>
+        <springdoc.version>1.6.14</springdoc.version>
+        <swagger.annotations.version>2.2.8</swagger.annotations.version> <!-- set compatible to springdoc version -->
         <typesafe.config.version>1.3.1</typesafe.config.version>
         <ujson.version>0.7.1</ujson.version>
         <webjars.locator.version>0.35</webjars.locator.version>
