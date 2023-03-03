@@ -29,7 +29,7 @@ import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPlugin
 import za.co.absa.enceladus.utils.modules._
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.abris.avro.functions.to_avro
-import za.co.absa.abris.config.{ToAvroConfig}
+import za.co.absa.abris.config.ToAvroConfig
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin.{avroKeySchemaRegistryConfig, avroValueSchemaRegistryConfig, registerSchemas}
 import za.co.absa.enceladus.utils.error.EnceladusErrorMessage.ErrorCodes
 
