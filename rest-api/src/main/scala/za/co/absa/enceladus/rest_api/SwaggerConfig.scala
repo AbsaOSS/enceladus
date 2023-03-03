@@ -41,14 +41,16 @@ class SwaggerConfig extends ProjectMetadata {
   @Bean
   def prodApi: GroupedOpenApi = {
     GroupedOpenApi.builder()
-      .group("prod-api")
+      .group("latest-api")
       .pathsToMatch(prodPaths: _ *)
+      .displayName("Enceladus V3 API")
       .build
   }
   @Bean
   def devApi: GroupedOpenApi =  {
     GroupedOpenApi.builder()
-      .group("dev-api")
+      .group("legacy-and-latest-api")
+      .displayName("Enceladus V2+3 API (dev)")
       .pathsToMatch(devPaths: _ *)
       .build
   }
