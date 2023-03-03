@@ -36,7 +36,7 @@ object MappingsSamples {
     ToJoin(1, "one"), ToJoin(2, "two"), ToJoin(3, "three"), ToJoin(4, "four"), ToJoin(5, "five"), ToJoin(6, "six")
   )
 
-  val mappingTable = new MappingTable(name = "mapping", version = 0, hdfsPath = "mapping", schemaName = "mapping", schemaVersion = 0, defaultMappingValues = List())
+  val mappingTable = new MappingTable(name = "mapping", version = 0, hdfsPath = "mapping", schemaName = "mapping", schemaVersion = 0, defaultMappingValue = List())
 }
 
 object NullArraySamples {

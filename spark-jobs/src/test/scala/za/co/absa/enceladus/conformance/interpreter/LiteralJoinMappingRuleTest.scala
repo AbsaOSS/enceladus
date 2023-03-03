@@ -39,7 +39,7 @@ class LiteralJoinMappingRuleTest extends AnyFunSuite with TZNormalizedSparkTestB
     val isCatalystWorkaroundEnabled = true
 
     mockWhen(dao.getMappingTable("countryMT", 0)) thenReturn MappingTable(name = "countryMT", version = 0,
-        hdfsPath = "countryMT", schemaName = "whatev", schemaVersion = 0, defaultMappingValues = List())
+        hdfsPath = "countryMT", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
     DataSource.setData("countryMT/reportDate=2018-03-23", mappingDf)
 

@@ -132,7 +132,7 @@ trait CommonMappingRuleInterpreter {
    */
   private def getDefaultValues(mappingTableDef: MappingTable)
                               (implicit spark: SparkSession, dao: EnceladusDAO): Map[String, String] = {
-    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValuesAsMap
+    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValueAsMap
 
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")
     val defaultValuesForTargets = rule.allOutputColumns().flatMap {case (_, targetAttribute) =>

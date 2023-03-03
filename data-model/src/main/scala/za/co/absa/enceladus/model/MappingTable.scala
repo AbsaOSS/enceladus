@@ -47,7 +47,7 @@ case class MappingTable(
   @BeanProperty schemaVersion: Int,
 
   @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[DefaultValue]))
-  @BeanProperty defaultMappingValues: List[DefaultValue] = List(),
+  @BeanProperty defaultMappingValue: List[DefaultValue] = List(),
 
   @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
   @(AosSchema@field)(example = "user1")
@@ -103,13 +103,13 @@ case class MappingTable(
   def setSchemaName(newName: String): MappingTable = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
   def setHdfsPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
-  def setDefaultMappingValues(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValues = newDefaults)
+  def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
   override def setParent(newParent: Option[Reference]): MappingTable = this.copy(parent = newParent)
   def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
   @JsonIgnore
-  def getDefaultMappingValuesAsMap: Map[String, String] = {
-    defaultMappingValues.map(_.toTuple).toMap
+  def getDefaultMappingValueAsMap: Map[String, String] = {
+    defaultMappingValue.map(_.toTuple).toMap
   }
 
   override val createdMessage = AuditTrailEntry(ref = Reference(collection = None, name = name, version = version),
@@ -129,7 +129,7 @@ case class MappingTable(
   }
 
   override def exportItem(): String = {
-    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValues.toArray)
+    val defaultMappingValueJsonList: ArrayNode = objectMapperBase.valueToTree(defaultMappingValue.toArray)
 
     val objectItemMapper = objectMapperRoot.withObject("/item")
 

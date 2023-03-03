@@ -48,7 +48,7 @@ class ChorusMockSuite extends AnyFunSuite with TZNormalizedSparkTestBase with Lo
     val enableCF = false
     val isCatalystWorkaroundEnabled = true
 
-    mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValues = List())
+    mockWhen(dao.getMappingTable("myMappingTable", 0)) thenReturn MappingTable(name = "myMappingTable", version = 0, hdfsPath = "myMappingTable", schemaName = "whatev", schemaVersion = 0, defaultMappingValue = List())
 
     DataSource.setData("myMappingTable/reportDate=2018-03-23", mappingDf)
 

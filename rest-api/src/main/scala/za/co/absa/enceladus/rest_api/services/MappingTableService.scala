@@ -52,13 +52,13 @@ class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRe
 
   def updateDefaults(username: String, mtName: String, mtVersion: Int, defaultValues: List[DefaultValue]): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
-      latest.setDefaultMappingValues(defaultValues)
+      latest.setDefaultMappingValue(defaultValues)
     }
   }
 
   def addDefault(username: String, mtName: String, mtVersion: Int, defaultValue: DefaultValue): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mtName, mtVersion) { latest =>
-      latest.setDefaultMappingValues(latest.defaultMappingValues :+ defaultValue)
+      latest.setDefaultMappingValue(latest.defaultMappingValue :+ defaultValue)
     }
   }
 
@@ -99,7 +99,7 @@ class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRe
         case Some(s) => s.fields.flatMap(f => f.getAllChildrenBasePath :+ f.path).toSet
         case None => Set.empty[String]
       }
-      item.defaultMappingValues.foldLeft(Validation()) { (accValidations, defaultValue) =>
+      item.defaultMappingValue.foldLeft(Validation()) { (accValidations, defaultValue) =>
         accValidations.withErrorIf(
           !fields.contains(defaultValue.columnName),
           "item.defaultMappingValue",

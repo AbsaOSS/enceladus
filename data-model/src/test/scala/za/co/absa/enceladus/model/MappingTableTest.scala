@@ -29,7 +29,7 @@ class MappingTableTest extends AnyFunSuite {
     schemaName = "Some Schema",
     schemaVersion = 1,
     userCreated = "user",
-    defaultMappingValues = List(defaultValue1, defaultValue2)
+    defaultMappingValue = List(defaultValue1, defaultValue2)
   )
 
   private val modelVersion = ModelVersion

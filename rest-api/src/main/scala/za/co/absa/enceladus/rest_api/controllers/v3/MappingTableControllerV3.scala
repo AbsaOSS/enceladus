@@ -44,7 +44,7 @@ class MappingTableControllerV3 @Autowired()(mappingTableService: MappingTableSer
                   @PathVariable version: String): CompletableFuture[Seq[DefaultValue]] = {
 
     forVersionExpression(name, version)(mappingTableService.getVersion).map { // "latest" version is accepted
-      case Some(entity) => entity.defaultMappingValues
+      case Some(entity) => entity.defaultMappingValue
       case None => throw notFound()
     }
   }

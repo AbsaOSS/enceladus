@@ -33,10 +33,10 @@ object TradeConformance {
     schemaName = "country", schemaVersion = 0)
 
   val currencyMT = MappingTable(name = "currency", version = 0, hdfsPath = "src/test/testData/_currencyMT",
-    schemaName = "currency", schemaVersion = 0, defaultMappingValues = List(DefaultValue("currency_name", "\"Unknown\"")))
+    schemaName = "currency", schemaVersion = 0, defaultMappingValue = List(DefaultValue("currency_name", "\"Unknown\"")))
 
   val productMT = MappingTable(name = "product", version = 0, hdfsPath = "src/test/testData/_productMT",
-    schemaName = "product", schemaVersion = 0, defaultMappingValues =
+    schemaName = "product", schemaVersion = 0, defaultMappingValue =
       List(DefaultValue("product_name", "\"Unknown1\""), DefaultValue("*", "\"Unknown2\"")))
 
   val countryRule = MappingConformanceRule(order = 1, mappingTable = "country", controlCheckpoint = true,
