@@ -136,15 +136,6 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
-//  @Operation(
-//    summary = "Creates an entity",
-//    description = """Creates an entity based on the payload details""",
-//  )
-//  @ApiResponses(Array(
-//      new ApiResponse(code = 201, message = "Entity created",
-//        examples = new Example(Array(new ExampleProperty(value = "xxx", mediaType = "application/json"))))
-//    )
-//  )
   def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
              @Parameter(name = "Entity being created")
              @RequestBody body: C,
