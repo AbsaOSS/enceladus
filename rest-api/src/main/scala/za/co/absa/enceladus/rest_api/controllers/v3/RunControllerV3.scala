@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -46,6 +47,7 @@ object RunControllerV3 {
 
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
+@SecurityRequirement(name = "JWT")
 class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

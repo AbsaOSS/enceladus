@@ -15,6 +15,8 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
@@ -27,6 +29,7 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController with ProjectMetadata {
 
+  @SecurityRequirement(name = "JWT")
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {
     val auth = SecurityContextHolder.getContext.getAuthentication

@@ -33,7 +33,6 @@ import scala.concurrent.Future
 
 @RestController
 @RequestMapping(path = Array("/api-v3/datasets"))
-//@ApiImplicitParams
 class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
   extends VersionedModelControllerV3(datasetService) {
 

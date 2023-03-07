@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 
 import java.util.concurrent.CompletableFuture
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,6 +32,7 @@ import za.co.absa.enceladus.rest_api.services.RunService
 
 @RestController
 @RequestMapping(path = Array("/api/runs"), produces = Array("application/json"))
+@SecurityRequirement(name = "JWT")
 class RunController @Autowired()(runService: RunService) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

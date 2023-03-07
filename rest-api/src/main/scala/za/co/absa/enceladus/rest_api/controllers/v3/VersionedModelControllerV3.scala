@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.{Operation, Parameter}
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -41,6 +42,7 @@ object VersionedModelControllerV3 {
   final val LatestKey = "latest"
 }
 
+@SecurityRequirement(name = "JWT")
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController {
 

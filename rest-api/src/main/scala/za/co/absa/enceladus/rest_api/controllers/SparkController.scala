@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.RequestMapping
 import org.apache.spark.sql.SparkSession
@@ -25,6 +26,7 @@ case class Test(a:Int,b:String)
 
 @RestController
 @RequestMapping(Array("/api/spark"))
+@SecurityRequirement(name = "JWT")
 class SparkController @Autowired() (spark: SparkSession) extends BaseController {
 
   @GetMapping(path = Array("/version"))

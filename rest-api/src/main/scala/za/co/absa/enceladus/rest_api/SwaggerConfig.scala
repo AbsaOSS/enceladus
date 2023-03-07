@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.rest_api
 
-import io.swagger.v3.oas.models.OpenAPI
+import io.swagger.v3.oas.models.{Components, OpenAPI}
 import io.swagger.v3.oas.models.info.{Info, License}
+import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.GroupedOpenApi
 import org.springframework.context.annotation.{Bean, Configuration}
 import za.co.absa.enceladus.utils.general.ProjectMetadata
@@ -35,8 +36,16 @@ class SwaggerConfig extends ProjectMetadata {
 
     new OpenAPI()
       .info(apiInfo(isDev))
-    // paths are now selectable using different groups
-}
+      // paths are now selectable using different groups
+      .components(new Components()
+        .addSecuritySchemes(
+          "JWT", new SecurityScheme()
+            .`type`(SecurityScheme.Type.APIKEY) // custom JWT header (no bearer wrapper)
+            .`in`(SecurityScheme.In.HEADER)
+            .name("JWT")
+            .description("User token obtained at /api/login in JWT reponse header")
+        ))
+  }
 
   @Bean
   def prodApi: GroupedOpenApi = {
@@ -46,8 +55,9 @@ class SwaggerConfig extends ProjectMetadata {
       .displayName("Enceladus V3 API")
       .build
   }
+
   @Bean
-  def devApi: GroupedOpenApi =  {
+  def devApi: GroupedOpenApi = {
     GroupedOpenApi.builder()
       .group("legacy-and-latest-api")
       .displayName("Enceladus V2+3 API (dev)")
@@ -79,8 +89,8 @@ class SwaggerConfig extends ProjectMetadata {
       .description("Enceladus API reference")
       .version(projectVersion) // api or project?
       .license(new License()
-          .name("Apache 2.0")
-          .url("https://www.apache.org/licenses/LICENSE-2.0.html")
+        .name("Apache 2.0")
+        .url("https://www.apache.org/licenses/LICENSE-2.0.html")
       )
   }
 }
