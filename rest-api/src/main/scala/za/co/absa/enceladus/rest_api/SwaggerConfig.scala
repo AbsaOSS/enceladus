@@ -15,8 +15,11 @@
 
 package za.co.absa.enceladus.rest_api
 
-import io.swagger.v3.oas.models.{Components, OpenAPI}
+import io.swagger.v3.oas.models.{Components, OpenAPI, Operation, PathItem}
 import io.swagger.v3.oas.models.info.{Info, License}
+import io.swagger.v3.oas.models.media.Schema
+import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.GroupedOpenApi
 import org.springframework.context.annotation.{Bean, Configuration}
@@ -26,25 +29,51 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 class SwaggerConfig extends ProjectMetadata {
 
   import org.springframework.beans.factory.annotation.Value
+  import scala.collection.JavaConverters._
 
   @Value("${spring.profiles.active:}")
   private val activeProfiles: String = null
 
   @Bean
   def api(): OpenAPI = {
-    val isDev = activeProfiles.split(",").map(_.toLowerCase).contains("dev")
+    val apiInfo: Info = new Info()
+      .title(s"Enceladus API")
+      .description("Enceladus API reference")
+      .version(projectVersion) // api or project?
+      .license(new License()
+        .name("Apache 2.0")
+        .url("https://www.apache.org/licenses/LICENSE-2.0.html")
+      )
+
+    val components: Components = new Components()
+      .addSecuritySchemes(
+        "JWT", new SecurityScheme()
+          .`type`(SecurityScheme.Type.APIKEY) // custom JWT header (no bearer wrapper)
+          .`in`(SecurityScheme.In.HEADER)
+          .name("JWT")
+          .description("User token obtained at /api/login in JWT response header")
+      )
+
+    val loginPath: PathItem = new PathItem()
+      .post(new Operation()
+        .tags(List("Authentication").asJava)
+        .summary("Login")
+        .description("Login with the given credentials.")
+        .operationId("login")
+        .parameters(List(
+          new Parameter().name("username").in("query").required(true).schema(new Schema().`type`("string")),
+          new Parameter().name("password").in("query").required(true).schema(new Schema().`type`("string"))
+        ).asJava)
+        .responses(new ApiResponses()
+          .addApiResponse("200", new ApiResponse().description("OK"))
+          .addApiResponse("401", new ApiResponse().description("Unauthorized"))
+        )
+      )
 
     new OpenAPI()
-      .info(apiInfo(isDev))
-      // paths are now selectable using different groups
-      .components(new Components()
-        .addSecuritySchemes(
-          "JWT", new SecurityScheme()
-            .`type`(SecurityScheme.Type.APIKEY) // custom JWT header (no bearer wrapper)
-            .`in`(SecurityScheme.In.HEADER)
-            .name("JWT")
-            .description("User token obtained at /api/login in JWT reponse header")
-        ))
+      .info(apiInfo) // paths are based on groups
+      .components(components)
+      .path("/api/login", loginPath)
   }
 
   @Bean
@@ -76,21 +105,12 @@ class SwaggerConfig extends ProjectMetadata {
   private val v3paths = Seq(
     "/api-v3/datasets/**", "/api-v3/schemas/**",
     "/api-v3/mapping-tables/**", "/api-v3/property-definitions/**",
-    "/api-v3/runs/**"
+    "/api-v3/runs/**" //,
+    //"/api/login/**", "/api/login*"
   )
 
   private val devPaths = v2Paths ++ v3paths
   private val prodPaths = v3paths
 
 
-  private def apiInfo(isDev: Boolean): Info = {
-    new Info()
-      .title(s"Enceladus API")
-      .description("Enceladus API reference")
-      .version(projectVersion) // api or project?
-      .license(new License()
-        .name("Apache 2.0")
-        .url("https://www.apache.org/licenses/LICENSE-2.0.html")
-      )
-  }
 }
