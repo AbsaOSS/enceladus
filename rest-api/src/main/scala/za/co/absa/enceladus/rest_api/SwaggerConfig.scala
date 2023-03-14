@@ -52,7 +52,7 @@ class SwaggerConfig extends ProjectMetadata {
 
     val loginPath: PathItem = new PathItem()
       .post(new Operation()
-        .tags(List("Authentication").asJava)
+        .tags(List("authentication").asJava)
         .summary("Login")
         .description("Login with the given credentials.")
         .operationId("login")

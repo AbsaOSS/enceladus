@@ -19,6 +19,8 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import com.mongodb.client.result.UpdateResult
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
@@ -32,6 +34,7 @@ import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.backend.audit._
 
 @SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
 

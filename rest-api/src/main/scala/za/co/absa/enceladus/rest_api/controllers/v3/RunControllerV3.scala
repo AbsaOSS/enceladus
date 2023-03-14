@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
@@ -48,6 +50,7 @@ object RunControllerV3 {
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
 @SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

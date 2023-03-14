@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -43,6 +45,7 @@ object VersionedModelControllerV3 {
 }
 
 @SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController {
 

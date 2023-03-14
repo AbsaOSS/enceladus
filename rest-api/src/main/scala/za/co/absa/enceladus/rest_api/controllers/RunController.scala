@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.rest_api.controllers
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 
 import java.util.concurrent.CompletableFuture
@@ -33,6 +35,7 @@ import za.co.absa.enceladus.rest_api.services.RunService
 @RestController
 @RequestMapping(path = Array("/api/runs"), produces = Array("application/json"))
 @SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 class RunController @Autowired()(runService: RunService) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

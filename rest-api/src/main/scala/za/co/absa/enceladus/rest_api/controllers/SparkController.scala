@@ -15,21 +15,24 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.bind.annotation.RequestMapping
 import org.apache.spark.sql.SparkSession
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
+import org.springframework.web.bind.annotation.{GetMapping, RequestMapping, ResponseStatus, RestController}
 
 case class Test(a:Int,b:String)
 
 @RestController
 @RequestMapping(Array("/api/spark"))
 @SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 class SparkController @Autowired() (spark: SparkSession) extends BaseController {
 
   @GetMapping(path = Array("/version"))
+  @ResponseStatus(HttpStatus.OK)
   def sparkVersion(): String = spark.sparkContext.version
 
 }

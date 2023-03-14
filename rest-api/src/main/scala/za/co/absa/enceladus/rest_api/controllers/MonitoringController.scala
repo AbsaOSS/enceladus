@@ -15,15 +15,20 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
-import java.util.concurrent.CompletableFuture
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation.{RestController, RequestMapping, GetMapping, ResponseStatus,
-  PathVariable}
+import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.rest_api.services.MonitoringService
+
+import java.util.concurrent.CompletableFuture
 
 @RestController
 @RequestMapping(Array("/api/monitoring"))
+@SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 class MonitoringController @Autowired()(monitoringService: MonitoringService)
   extends BaseController {
 
