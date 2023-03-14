@@ -101,8 +101,7 @@ class SwaggerConfig extends ProjectMetadata {
   private val v3paths = Seq(
     "/api-v3/datasets/**", "/api-v3/schemas/**",
     "/api-v3/mapping-tables/**", "/api-v3/property-definitions/**",
-    "/api-v3/runs/**" //,
-    //"/api/login/**", "/api/login*"
+    "/api-v3/runs/**"
   )
 
   private val devPaths = v2Paths ++ v3paths
