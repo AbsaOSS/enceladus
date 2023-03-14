@@ -28,7 +28,6 @@ import za.co.absa.enceladus.utils.general.ProjectMetadata
 @Configuration
 class SwaggerConfig extends ProjectMetadata {
 
-  import org.springframework.beans.factory.annotation.Value
   import scala.collection.JavaConverters._
 
   @Bean
