@@ -17,8 +17,8 @@ package za.co.absa.enceladus.rest_api
 
 import io.swagger.v3.oas.models.{Components, OpenAPI, Operation, PathItem}
 import io.swagger.v3.oas.models.info.{Info, License}
-import io.swagger.v3.oas.models.media.Schema
-import io.swagger.v3.oas.models.parameters.Parameter
+import io.swagger.v3.oas.models.media.{Content, MediaType, Schema}
+import io.swagger.v3.oas.models.parameters.{Parameter, RequestBody}
 import io.swagger.v3.oas.models.responses.{ApiResponse, ApiResponses}
 import io.swagger.v3.oas.models.security.SecurityScheme
 import org.springdoc.core.GroupedOpenApi
@@ -58,7 +58,8 @@ class SwaggerConfig extends ProjectMetadata {
         .operationId("login")
         .parameters(List(
           new Parameter().name("username").in("query").required(true).schema(new Schema().`type`("string")),
-          new Parameter().name("password").in("query").required(true).schema(new Schema().`type`("string"))
+          new Parameter().name("password").in("query").required(true)
+            .schema(new Schema().`type`("string").format("password"))
         ).asJava)
         .responses(new ApiResponses()
           .addApiResponse("200", new ApiResponse().description("OK"))
