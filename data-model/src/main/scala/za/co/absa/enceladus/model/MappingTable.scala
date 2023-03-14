@@ -28,7 +28,7 @@ import scala.annotation.meta.field
 import scala.beans.BeanProperty
 
 case class MappingTable(
-  @(AosSchema@field)(example = "datasetA")
+  @(AosSchema@field)(example = "mappingTableA")
   @BeanProperty name: String,
 
   @(AosSchema@field)(example = "1")

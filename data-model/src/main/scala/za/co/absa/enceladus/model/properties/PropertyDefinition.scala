@@ -35,7 +35,7 @@ case class PropertyDefinition(
   @(AosSchema@field)(example = "1")
   @BeanProperty version: Int = 1,
 
-  @(AosSchema@field)(implementation = classOf[String], example = "dataset description")
+  @(AosSchema@field)(implementation = classOf[String], example = "property definition description")
   @BeanProperty description: Option[String] = None,
 
   @(AosSchema@field)(implementation = classOf[PropertyType], example =
