@@ -31,9 +31,6 @@ class SwaggerConfig extends ProjectMetadata {
   import org.springframework.beans.factory.annotation.Value
   import scala.collection.JavaConverters._
 
-  @Value("${spring.profiles.active:}")
-  private val activeProfiles: String = null
-
   @Bean
   def api(): OpenAPI = {
     val apiInfo: Info = new Info()

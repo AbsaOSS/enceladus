@@ -58,7 +58,7 @@ The main models used are:
  
 The REST API exposes a Swagger Documentation UI which documents HTTP exposed endpoints. 
 It can be found at `REST_API_HOST/swagger-ui.html`    
-In order to include legacy and development endpoint, too, please provide `-Dspring.profiles.active=dev` configuration option.
+In order to switch between latest and all (latest + legacy) endpoints, use the UI definition selector (right up corner in Swagger).
 
 ### Menas
 This is the user-facing web client, used to **specify the standardization schema**, and **define the steps required to conform** a dataset.   
