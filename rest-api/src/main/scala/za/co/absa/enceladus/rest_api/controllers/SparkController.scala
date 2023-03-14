@@ -28,7 +28,7 @@ case class Test(a:Int,b:String)
 @RestController
 @RequestMapping(Array("/api/spark"))
 @SecurityRequirement(name = "JWT")
-@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
 class SparkController @Autowired() (spark: SparkSession) extends BaseController {
 
   @GetMapping(path = Array("/version"))

@@ -50,7 +50,7 @@ object RunControllerV3 {
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
 @SecurityRequirement(name = "JWT")
-@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
 class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._

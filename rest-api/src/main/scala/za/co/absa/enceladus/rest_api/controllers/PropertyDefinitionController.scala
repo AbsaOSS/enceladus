@@ -20,7 +20,9 @@ import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import com.mongodb.client.result.UpdateResult
 import io.swagger.v3.oas.annotations.Parameter
-import org.springframework.beans.factory.annotation.{Autowired, Value}
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -81,6 +83,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                                   @RequestBody importObject: ExportableObject[PropertyDefinition]): CompletableFuture[PropertyDefinition] =
     super.importSingleEntity(principal, importObject)
@@ -88,6 +91,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
                     @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.edit(user, item)
@@ -95,6 +99,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @DeleteMapping(Array("/disable/{name}", "/disable/{name}/{version}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def disable(@PathVariable name: String,
                        @PathVariable version: Optional[String]): CompletableFuture[UpdateResult] =
     super.disable(name, version)
@@ -102,6 +107,7 @@ class PropertyDefinitionController @Autowired()(propertyDefinitionService: Prope
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                       @RequestBody item: PropertyDefinition): CompletableFuture[PropertyDefinition] =
     super.create(principal, item)

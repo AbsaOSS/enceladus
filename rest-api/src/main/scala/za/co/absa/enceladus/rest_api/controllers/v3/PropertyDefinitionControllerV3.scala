@@ -16,6 +16,8 @@
 package za.co.absa.enceladus.rest_api.controllers.v3
 
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.access.prepost.PreAuthorize
@@ -40,6 +42,7 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @PostMapping(Array("/{name}/import"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
                          @RequestBody importObject: ExportableObject[PropertyDefinition],
@@ -50,6 +53,7 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
              @RequestBody body: PropertyDefinition,
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
@@ -60,6 +64,7 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @PutMapping(Array("/{name}/{version}"))
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
@@ -72,6 +77,7 @@ class PropertyDefinitionControllerV3 @Autowired()(propertyDefinitionService: Pro
   @DeleteMapping(Array("/{name}"))
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   override def disable(@PathVariable name: String): CompletableFuture[DisabledPayload] = {
     super.disable(name)
   }

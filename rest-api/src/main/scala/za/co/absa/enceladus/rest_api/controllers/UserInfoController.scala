@@ -33,7 +33,7 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 class UserInfoController extends BaseController with ProjectMetadata {
 
   @SecurityRequirement(name = "JWT")
-  @ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
+  @ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
   @ResponseStatus(HttpStatus.OK)
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {

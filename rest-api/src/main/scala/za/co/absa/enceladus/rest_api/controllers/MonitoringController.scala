@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture
 @RestController
 @RequestMapping(Array("/api/monitoring"))
 @SecurityRequirement(name = "JWT")
-@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
 class MonitoringController @Autowired()(monitoringService: MonitoringService)
   extends BaseController {
 

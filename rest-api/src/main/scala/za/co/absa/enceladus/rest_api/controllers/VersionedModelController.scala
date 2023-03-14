@@ -174,6 +174,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @PutMapping(Array("/lock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   @ResponseStatus(HttpStatus.OK)
   def lock(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
            @PathVariable name: String): CompletableFuture[UpdateResult] = {
@@ -182,6 +183,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @PutMapping(Array("/unlock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   @ResponseStatus(HttpStatus.OK)
   def unlock(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
              @PathVariable name: String): CompletableFuture[UpdateResult] = {
