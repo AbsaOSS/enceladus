@@ -30,7 +30,7 @@
         "pluginName" : "DatasetComparison",
         "name": "DatasetComparison",
         "order" : 1,
-        "args" : ["--format", "parquet", "--new-path", "#{new-std-data-path}#", "--ref-path", "#{ref-std-data-path}#", "--keys", "property", "--datetimeRebaseMode", "LEGACY"],
+        "args" : ["--format", "parquet", "--new-path", "#{new-std-data-path}#", "--ref-path", "#{ref-std-data-path}#", "--keys", "property"],
         "writeArgs": ["--out-path", "#{results-log-path}#/stdDataDiff"],
         "dependsOn": "Standardization"
       }
