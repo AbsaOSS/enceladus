@@ -16,9 +16,13 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type
-import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo}
+import com.fasterxml.jackson.annotation.{JsonSubTypes, JsonTypeInfo, JsonTypeName}
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule.DefaultOverrideMappingTableOwnFilter
+import io.swagger.v3.oas.annotations.media.{ArraySchema, DiscriminatorMapping, Schema => AosSchema}
+
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
 package object conformanceRule {
 
@@ -36,6 +40,22 @@ package object conformanceRule {
     new Type(value = classOf[FillNullsConformanceRule], name = "FillNullsConformanceRule"),
     new Type(value = classOf[CoalesceConformanceRule], name = "CoalesceConformanceRule")
   ))
+  @AosSchema(
+    description = "Conformance rule",
+    discriminatorProperty = "_t",
+    discriminatorMapping = Array(
+      new DiscriminatorMapping(value = "CastingConformanceRule", schema = classOf[CastingConformanceRule]),
+      new DiscriminatorMapping(value = "ConcatenationConformanceRule", schema = classOf[ConcatenationConformanceRule]),
+      new DiscriminatorMapping(value = "DropConformanceRule", schema = classOf[DropConformanceRule]),
+      new DiscriminatorMapping(value = "LiteralConformanceRule", schema = classOf[LiteralConformanceRule]),
+      new DiscriminatorMapping(value = "MappingConformanceRule", schema = classOf[MappingConformanceRule]),
+      new DiscriminatorMapping(value = "NegationConformanceRule", schema = classOf[NegationConformanceRule]),
+      new DiscriminatorMapping(value = "SingleColumnConformanceRule", schema = classOf[SingleColumnConformanceRule]),
+      new DiscriminatorMapping(value = "SparkSessionConfConformanceRule", schema = classOf[SparkSessionConfConformanceRule]),
+      new DiscriminatorMapping(value = "UppercaseConformanceRule", schema = classOf[UppercaseConformanceRule]),
+      new DiscriminatorMapping(value = "FillNullsConformanceRule", schema = classOf[FillNullsConformanceRule]),
+      new DiscriminatorMapping(value = "CoalesceConformanceRule", schema = classOf[CoalesceConformanceRule])
+  ))
   sealed trait ConformanceRule {
     val order: Int
     val outputColumn: String
@@ -46,46 +66,80 @@ package object conformanceRule {
     def hasConnectedEntities: Boolean = connectedEntities.nonEmpty
   }
 
-  case class ConcatenationConformanceRule(order: Int,
-                                          outputColumn: String,
-                                          controlCheckpoint: Boolean,
-                                          inputColumns: Seq[String]) extends ConformanceRule {
+  case class ConcatenationConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "fullnameColumn")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(ArraySchema@field)(schema = new AosSchema(example = "[\"firstnameColumn\", \"lastnameColumn\"]"))
+    @BeanProperty inputColumns: Seq[String]) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): ConcatenationConformanceRule = copy(order = newOrder)
   }
 
-  case class CastingConformanceRule(order: Int,
-                                    outputColumn: String,
-                                    controlCheckpoint: Boolean,
-                                    inputColumn: String,
-                                    outputDataType: String) extends ConformanceRule {
+  case class CastingConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "conformedInt")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "stringInt1")
+    @BeanProperty inputColumn: String,
+    @(AosSchema@field)(example = "conformedInt")
+    @BeanProperty outputDataType: String
+  ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): CastingConformanceRule = copy(order = newOrder)
   }
 
-  case class DropConformanceRule(order: Int,
-                                 controlCheckpoint: Boolean,
-                                 outputColumn: String) extends ConformanceRule {
+  case class DropConformanceRule(
+    @BeanProperty order: Int,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "toBeDroppedCol1")
+    @BeanProperty outputColumn: String
+  ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): DropConformanceRule = copy(order = newOrder)
   }
 
-  case class LiteralConformanceRule(order: Int,
-                                    outputColumn: String,
-                                    controlCheckpoint: Boolean,
-                                    value: String) extends ConformanceRule {
+  case class LiteralConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "ConformedLiteral")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "AAA")
+    @BeanProperty value: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): LiteralConformanceRule = copy(order = newOrder)
   }
 
-  case class MappingConformanceRule(order: Int,
-                                    controlCheckpoint: Boolean,
-                                    mappingTable: String,
-                                    mappingTableVersion: Int,
-                                    attributeMappings: Map[String, String], // key = mapping table column, value = input df column
-                                    targetAttribute: String,
-                                    outputColumn: String,
-                                    additionalColumns: Option[Map[String, String]] = None,
-                                    isNullSafe: Boolean = false,
-                                    mappingTableFilter: Option[DataFrameFilter] = None,
-                                    overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
-                                   ) extends ConformanceRule {
+  case class MappingConformanceRule(
+    @BeanProperty order: Int,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "CurrencyMappingTable2")
+    @BeanProperty mappingTable: String,
+    @(AosSchema@field)(example = "3")
+    @BeanProperty mappingTableVersion: Int,
+
+    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
+      "\"field1\": \"mappedField1\"" +
+      "}")
+    @BeanProperty attributeMappings: Map[String, String], // key = mapping table column, value = input df column
+    @(AosSchema@field)(example = "CCC")
+    @BeanProperty targetAttribute: String,
+    @(AosSchema@field)(example = "ConformedCurrencyX")
+    @BeanProperty outputColumn: String,
+
+    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
+      "\"newCol\": \"mappedCol1\"" +
+      "}")
+    @BeanProperty additionalColumns: Option[Map[String, String]] = None,
+    @BeanProperty isNullSafe: Boolean = false,
+
+    @(AosSchema@field)(implementation = classOf[DataFrameFilter], example = "{" +
+      "\"_t\": \"EqualsFilter\"," +
+      "\"columnName\": \"column1\"," +
+      "\"value\": \"soughtAfterValue\"," +
+      "\"valueType\": \"string\"" +
+      "}")
+    @BeanProperty mappingTableFilter: Option[DataFrameFilter] = None,
+    overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
+  ) extends ConformanceRule {
 
     def allOutputColumns(): Map[String, String] = {
       definedAdditionalColumns() + (outputColumn -> targetAttribute)
@@ -104,10 +158,13 @@ package object conformanceRule {
     }
   }
 
-  case class NegationConformanceRule(order: Int,
-                                     outputColumn: String,
-                                     controlCheckpoint: Boolean,
-                                     inputColumn: String) extends ConformanceRule {
+  case class NegationConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "negated_bool_field3")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "bool_field3")
+    @BeanProperty inputColumn: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): NegationConformanceRule = copy(order = newOrder)
   }
 
@@ -116,11 +173,15 @@ package object conformanceRule {
     *
     * inputColumn -> struct(inputColumn as inputColumnAlias) as outputColumn
     */
-  case class SingleColumnConformanceRule(order: Int,
-                                         controlCheckpoint: Boolean,
-                                         outputColumn: String,
-                                         inputColumn: String,
-                                         inputColumnAlias: String) extends ConformanceRule {
+  case class SingleColumnConformanceRule(
+    @BeanProperty order: Int,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "single_string1")
+    @BeanProperty outputColumn: String,
+    @(AosSchema@field)(example = "string1")
+    @BeanProperty inputColumn: String,
+    @(AosSchema@field)(example = "string_alias1")
+    @BeanProperty inputColumnAlias: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): SingleColumnConformanceRule = copy(order = newOrder)
   }
 
@@ -132,32 +193,46 @@ package object conformanceRule {
     *
     * Gets value from spark.sessionState.conf
     */
-  case class SparkSessionConfConformanceRule(order: Int,
-                                             outputColumn: String,
-                                             controlCheckpoint: Boolean,
-                                             sparkConfKey: String) extends ConformanceRule {
+  case class SparkSessionConfConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "ssc_output_col1")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "a.key.here")
+    @BeanProperty sparkConfKey: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): SparkSessionConfConformanceRule = copy(order = newOrder)
   }
 
-  case class UppercaseConformanceRule(order: Int,
-                                      outputColumn: String,
-                                      controlCheckpoint: Boolean,
-                                      inputColumn: String) extends ConformanceRule {
+  case class UppercaseConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "uppercased_field1")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "field1")
+    @BeanProperty inputColumn: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): UppercaseConformanceRule = copy(order = newOrder)
   }
 
-  case class FillNullsConformanceRule(order: Int,
-                                      outputColumn: String,
-                                      controlCheckpoint: Boolean,
-                                      inputColumn: String,
-                                      value: String) extends ConformanceRule {
+  case class FillNullsConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "nonnulled_field1")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(AosSchema@field)(example = "field1")
+    @BeanProperty inputColumn: String,
+    @(AosSchema@field)(example = "I_am_the_null_replacement")
+    @BeanProperty value: String) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): FillNullsConformanceRule = copy(order = newOrder)
   }
 
-  case class CoalesceConformanceRule(order: Int,
-                                     outputColumn: String,
-                                     controlCheckpoint: Boolean,
-                                     inputColumns: Seq[String]) extends ConformanceRule {
+  case class CoalesceConformanceRule(
+    @BeanProperty order: Int,
+    @(AosSchema@field)(example = "greeting_name")
+    @BeanProperty outputColumn: String,
+    @BeanProperty controlCheckpoint: Boolean,
+    @(ArraySchema@field)(schema = new AosSchema(example = "[\"nickname\", \"firstname\", \"another_possible_backup\"]"))
+    @BeanProperty inputColumns: Seq[String]
+  ) extends ConformanceRule {
     override def withUpdatedOrder(newOrder: Int): CoalesceConformanceRule = copy(order = newOrder)
   }
 

@@ -15,6 +15,10 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.core.userdetails.UserDetails
@@ -40,6 +44,8 @@ object VersionedModelControllerV3 {
   final val LatestKey = "latest"
 }
 
+@SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 abstract class VersionedModelControllerV3[C <: VersionedModel with Product
   with Auditable[C]](versionedModelService: VersionedModelServiceV3[C]) extends BaseController {
 
@@ -110,7 +116,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array("/{name}/import"))
   @ResponseStatus(HttpStatus.CREATED)
-  def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+  def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                          @PathVariable name: String,
                          @RequestBody importObject: ExportableObject[C],
                          request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
@@ -135,12 +141,13 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PostMapping(Array(""))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@AuthenticationPrincipal principal: UserDetails,
-             @RequestBody item: C,
+  def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
+             @Parameter(name = "Entity being created")
+             @RequestBody body: C,
              request: HttpServletRequest): CompletableFuture[ResponseEntity[Validation]] = {
 
     // enabled check is part of the validation
-        versionedModelService.create(item, principal.getUsername)
+        versionedModelService.create(body, principal.getUsername)
       .map {
       case Some((entity, validation)) => createdWithNameVersionLocationBuilder(entity.name, entity.version, request).body(validation)
       case None => throw notFound()
@@ -149,7 +156,7 @@ abstract class VersionedModelControllerV3[C <: VersionedModel with Product
 
   @PutMapping(Array("/{name}/{version}"))
   @ResponseStatus(HttpStatus.CREATED)
-  def edit(@AuthenticationPrincipal user: UserDetails,
+  def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
            @PathVariable name: String,
            @PathVariable version: Int,
            @RequestBody item: C,

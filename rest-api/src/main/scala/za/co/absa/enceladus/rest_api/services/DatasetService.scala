@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import za.co.absa.enceladus.rest_api.repositories.{DatasetMongoRepository, PropertyDefinitionMongoRepository}
 import za.co.absa.enceladus.rest_api.services.DatasetService.RuleValidationsAndFields
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
+import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.properties.PropertyDefinition
 import za.co.absa.enceladus.model.properties.essentiality.Essentiality._
 import za.co.absa.enceladus.model.properties.essentiality.Mandatory
@@ -48,8 +48,8 @@ class DatasetService @Autowired()(val mongoRepository: DatasetMongoRepository,
       latest
           .setSchemaName(dataset.schemaName)
           .setSchemaVersion(dataset.schemaVersion)
-          .setHDFSPath(dataset.hdfsPath)
-          .setHDFSPublishPath(dataset.hdfsPublishPath)
+          .setHdfsPath(dataset.hdfsPath)
+          .setHdfsPublishPath(dataset.hdfsPublishPath)
           .setConformance(dataset.conformance)
           .setProperties(removeBlankPropertiesOpt(dataset.properties))
           .setDescription(dataset.description).asInstanceOf[Dataset]

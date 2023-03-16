@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.Parameter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -47,7 +48,7 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
 
   @PutMapping(Array("/{name}/{version}/properties"))
   @ResponseStatus(HttpStatus.OK)
-  def updateProperties(@AuthenticationPrincipal principal: UserDetails,
+  def updateProperties(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                        @PathVariable name: String,
                        @PathVariable version: String,
                        @RequestBody newProperties: java.util.Map[String, String],
@@ -76,7 +77,7 @@ class DatasetControllerV3 @Autowired()(datasetService: DatasetServiceV3)
 
   @PostMapping(Array("/{name}/{version}/rules"))
   @ResponseStatus(HttpStatus.CREATED)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
+  def addConformanceRule(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
                          @PathVariable name: String,
                          @PathVariable version: String,
                          @RequestBody rule: ConformanceRule,

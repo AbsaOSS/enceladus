@@ -15,11 +15,12 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
+import io.swagger.v3.oas.annotations.Parameter
+
 import java.net.URI
 import java.util
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
-
 import org.slf4j.{Logger, LoggerFactory}
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
@@ -56,7 +57,8 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @PostMapping(Array("/{datasetName}/rule/create"))
   @ResponseStatus(HttpStatus.OK)
-  def addConformanceRule(@AuthenticationPrincipal user: UserDetails,
+  def addConformanceRule(
+    @Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
                          @PathVariable datasetName: String,
                          @RequestBody rule: ConformanceRule): CompletableFuture[Dataset] = {
     //TODO: we need to figure out how to deal with versioning properly from UX perspective
@@ -110,7 +112,7 @@ class DatasetController @Autowired()(datasetService: DatasetService)
 
   @PutMapping(Array("/{datasetName}/properties"))
   @ResponseStatus(HttpStatus.CREATED)
-  def replaceProperties(@AuthenticationPrincipal principal: UserDetails,
+  def replaceProperties(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                         @PathVariable datasetName: String,
                         @RequestBody newProperties: Optional[Map[String, String]]): CompletableFuture[ResponseEntity[Option[Dataset]]] = {
     datasetService.updateProperties(principal.getUsername, datasetName, newProperties.toScalaOption).map {

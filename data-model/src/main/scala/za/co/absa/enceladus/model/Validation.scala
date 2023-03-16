@@ -16,7 +16,11 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
 import za.co.absa.enceladus.model.Validation.ValidationRecord
+
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
 object Validation {
 
@@ -29,7 +33,14 @@ object Validation {
   def merge(a: Validation, b: Validation) : Validation = a.merge(b)
 }
 
-case class Validation (errors: ValidationRecord = Map(), warnings: ValidationRecord = Map()) {
+case class Validation (
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, Array[String]]],
+    example = "{\"field1\": [\"error1\"]}")
+  @BeanProperty errors: ValidationRecord = Map(),
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, Array[String]]],
+    example = "{\"field2\": [\"warning1\", \"warning2\"]}")
+  @BeanProperty warnings: ValidationRecord = Map()
+) {
 
   @JsonIgnore
   def isValid: Boolean = errors.isEmpty
