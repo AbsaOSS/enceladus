@@ -15,7 +15,6 @@
 
 package za.co.absa.enceladus.rest_api
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include
 import com.fasterxml.jackson.databind.{DeserializationFeature, ObjectMapper, SerializationFeature}
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
@@ -25,13 +24,11 @@ import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.scheduling.annotation.EnableScheduling
-import springfox.documentation.swagger2.annotations.EnableSwagger2
 
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
 @Configuration
-@EnableSwagger2
 class Application() {
   private val DefaultCorePoolSize = 12
   private val DefaultMaxPoolSize = 24

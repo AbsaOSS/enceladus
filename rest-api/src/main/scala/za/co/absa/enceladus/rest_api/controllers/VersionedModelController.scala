@@ -18,6 +18,10 @@ package za.co.absa.enceladus.rest_api.controllers
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import com.mongodb.client.result.UpdateResult
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -29,7 +33,8 @@ import za.co.absa.enceladus.rest_api.exceptions.NotFoundException
 import za.co.absa.enceladus.rest_api.services.VersionedModelService
 import za.co.absa.enceladus.model.backend.audit._
 
-
+@SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema()))) // no content
 abstract class VersionedModelController[C <: VersionedModel with Product with Auditable[C]](versionedModelService: VersionedModelService[C])
   extends BaseController {
 
@@ -121,7 +126,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @PostMapping(Array("/importItem"))
   @ResponseStatus(HttpStatus.CREATED)
-  def importSingleEntity(@AuthenticationPrincipal principal: UserDetails,
+  def importSingleEntity(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
                          @RequestBody importObject: ExportableObject[C]): CompletableFuture[C] = {
     versionedModelService.importSingleItem(importObject.item, principal.getUsername, importObject.metadata).map {
       case Some((entity, validation)) => entity // validation is disregarded for V2, import-v2 has its own
@@ -131,7 +136,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @PostMapping(Array("/create"))
   @ResponseStatus(HttpStatus.CREATED)
-  def create(@AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
+  def create(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails, @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.isDisabled(item.name).flatMap { isDisabled =>
       if (isDisabled) {
         versionedModelService.recreate(principal.getUsername, item)
@@ -146,7 +151,7 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @RequestMapping(method = Array(RequestMethod.POST, RequestMethod.PUT), path = Array("/edit"))
   @ResponseStatus(HttpStatus.CREATED)
-  def edit(@AuthenticationPrincipal user: UserDetails,
+  def edit(@Parameter(hidden = true) @AuthenticationPrincipal user: UserDetails,
       @RequestBody item: C): CompletableFuture[C] = {
     versionedModelService.update(user.getUsername, item).map {
       case Some((entity, validation)) => entity // v2 disregarding validation on edit
@@ -169,16 +174,18 @@ abstract class VersionedModelController[C <: VersionedModel with Product with Au
 
   @PutMapping(Array("/lock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   @ResponseStatus(HttpStatus.OK)
-  def lock(@AuthenticationPrincipal principal: UserDetails,
+  def lock(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
            @PathVariable name: String): CompletableFuture[UpdateResult] = {
     versionedModelService.setLock(name, isLocked = true, principal)
   }
 
   @PutMapping(Array("/unlock/{name}"))
   @PreAuthorize("@authConstants.hasAdminRole(authentication)")
+  @ApiResponse(responseCode = "403", description = "Forbidden", content = Array(new Content(schema = new AosSchema())))
   @ResponseStatus(HttpStatus.OK)
-  def unlock(@AuthenticationPrincipal principal: UserDetails,
+  def unlock(@Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
              @PathVariable name: String): CompletableFuture[UpdateResult] = {
     versionedModelService.setLock(name, isLocked = false, principal)
   }

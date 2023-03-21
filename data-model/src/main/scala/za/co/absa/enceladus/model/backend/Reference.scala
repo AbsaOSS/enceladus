@@ -15,8 +15,23 @@
 
 package za.co.absa.enceladus.model.backend
 
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
+
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
+
+  @AosSchema(implementation = classOf[Reference],
+    example = "{" +
+      "\"collection\": \"dataset\"," +
+      "\"name\": \"Test\"," +
+      "\"version\": 4" +
+    "}"
+  )
 case class Reference(
-  collection: Option[String],
-  name: String,
-  version: Int
+  @(AosSchema@field)(implementation = classOf[String],  example = "collection1")
+  @BeanProperty collection: Option[String],
+  @(AosSchema@field)(example = "entity1")
+  @BeanProperty name: String,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int
 )

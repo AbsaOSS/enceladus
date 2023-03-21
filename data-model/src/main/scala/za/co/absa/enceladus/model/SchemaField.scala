@@ -16,21 +16,29 @@
 package za.co.absa.enceladus.model
 
 import com.fasterxml.jackson.annotation.{JsonIgnore, JsonProperty}
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
+
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
 case class SchemaField
 (
-  name: String,
-  `type`: String,
-  path: String,  // path up to this field
+  @(AosSchema@field)(example = "field1")
+  @BeanProperty name: String,
+  @(AosSchema@field)(example = "string")
+  @BeanProperty `type`: String,
+  @(AosSchema@field)(example = "topfieldA")
+  @BeanProperty path: String,  // path up to this field
 
   // These fields are optional when the type of the field is "array".
   elementType: Option[String] = None,
   containsNull: Option[Boolean] = None,
 
-  nullable: Boolean,
+  @BeanProperty nullable: Boolean,
   metadata: Map[String, String],
   children: Seq[SchemaField]
 ) {
+  @(AosSchema@field)(accessMode = AosSchema.AccessMode.READ_ONLY) // will appear on returned entities, not on payloads
   @JsonProperty("absolutePath")
   def getAbsolutePath: String = {
     if(path.isEmpty) name else s"$path.$name"

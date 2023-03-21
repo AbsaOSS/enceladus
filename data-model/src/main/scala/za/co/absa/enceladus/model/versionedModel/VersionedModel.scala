@@ -15,8 +15,9 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-import java.time.ZonedDateTime
+import com.fasterxml.jackson.annotation.JsonIgnore
 
+import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.Exportable
 import za.co.absa.enceladus.model.backend.Reference
 
@@ -46,6 +47,8 @@ trait VersionedModel extends Exportable {
   def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel
   def setUserDisabled(user: Option[String]): VersionedModel
   def setLastUpdated(time: ZonedDateTime) : VersionedModel
+
+  @JsonIgnore
   def setUpdatedUser(user: String): VersionedModel
   def setDescription(desc: Option[String]): VersionedModel
   def setDateCreated(time: ZonedDateTime): VersionedModel
@@ -59,10 +62,12 @@ trait VersionedModel extends Exportable {
 
   def exportItem(): String
 
+  @JsonIgnore
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)
   }
 
+  @JsonIgnore
   def setUpdatedInfo(username: String): VersionedModel = {
     setLastUpdated(ZonedDateTime.now)
       .setUpdatedUser(username)
