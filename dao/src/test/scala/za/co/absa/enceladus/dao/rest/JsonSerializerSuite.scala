@@ -499,8 +499,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
       val mappingTable = MappingTableFactory.getDummyMappingTable()
@@ -588,8 +587,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
 

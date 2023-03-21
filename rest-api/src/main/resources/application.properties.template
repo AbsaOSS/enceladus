@@ -106,6 +106,11 @@ management.health.jms.enabled=false
 # Limit on the number of documents to be fetch in a single mongodb query and shown in UI
 enceladus.rest.monitoring.fetch.limit=500
 
+# Swagger UI settings
+springdoc.swagger-ui.tryItOutEnabled=true
+springdoc.swagger-ui.displayOperationId=true
+springdoc.swagger-ui.displayRequestDuration=true
+
 #----------- Schema Registry
 # URL of schema registry [optional]:
 # when unset, the ability to load schema by subject name from the schema repository will not be present

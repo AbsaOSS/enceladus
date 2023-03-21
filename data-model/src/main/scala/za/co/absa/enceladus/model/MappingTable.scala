@@ -15,39 +15,78 @@
 
 package za.co.absa.enceladus.model
 
-import java.time.ZonedDateTime
-import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.databind.node.ArrayNode
-import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.backend.audit._
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
+import za.co.absa.enceladus.model.versionedModel.VersionedModel
 
-case class MappingTable(name: String,
-                        version: Int = 1,
-                        description: Option[String] = None,
+import java.time.ZonedDateTime
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
-                        hdfsPath: String,
+case class MappingTable(
+  @(AosSchema@field)(example = "mappingTableA")
+  @BeanProperty name: String,
 
-                        schemaName: String,
-                        schemaVersion: Int,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int = 1,
 
-                        defaultMappingValue: List[DefaultValue] = List(),
+  @(AosSchema@field)(implementation = classOf[String], example = "MT description")
+  @BeanProperty description: Option[String] = None,
 
-                        dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                        userCreated: String = null,
+  @(AosSchema@field)(example = "/input/path/for/mappingtable")
+  @BeanProperty hdfsPath: String,
 
-                        lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                        userUpdated: String = null,
+  @(AosSchema@field)(example = "schemaA")
+  @BeanProperty schemaName: String,
 
-                        disabled: Boolean = false,
-                        dateDisabled: Option[ZonedDateTime] = None,
-                        userDisabled: Option[String] = None,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty schemaVersion: Int,
 
-                        locked: Option[Boolean] = None,
-                        dateLocked: Option[ZonedDateTime] = None,
-                        userLocked: Option[String] = None,
-                        parent: Option[Reference] = None,
-                        filter: Option[DataFrameFilter] = None) extends VersionedModel with Auditable[MappingTable] {
+  @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[DefaultValue]))
+  @BeanProperty defaultMappingValue: List[DefaultValue] = List(),
+
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user1")
+  @BeanProperty userCreated: String = null, //scalastyle:ignore null
+
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
+  @BeanProperty userUpdated: String = null, //scalastyle:ignore null
+
+  @(AosSchema@field)(example = "false")
+  @BeanProperty disabled: Boolean = false,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user3")
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
+  @BeanProperty userLocked: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None,
+
+  @(AosSchema@field)(implementation = classOf[DataFrameFilter], example = "{" +
+    "\"_t\": \"EqualsFilter\"," +
+    "\"columnName\": \"exampleColumn1\"," +
+    "\"value\":\"wantedValue1\"," +
+    "\"valueType\": \"string\"" +
+    "}"
+  )
+  @BeanProperty filter: Option[DataFrameFilter] = None
+) extends VersionedModel with Auditable[MappingTable] {
 
   override def setVersion(value: Int): MappingTable = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -63,12 +102,13 @@ case class MappingTable(name: String,
   override def setUserLocked(userLocked: Option[String]): VersionedModel = this.copy(userLocked = userLocked)
   def setSchemaName(newName: String): MappingTable = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): MappingTable = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
+  def setHdfsPath(newPath: String): MappingTable = this.copy(hdfsPath = newPath)
   def setDefaultMappingValue(newDefaults: List[DefaultValue]): MappingTable = this.copy(defaultMappingValue = newDefaults)
   override def setParent(newParent: Option[Reference]): MappingTable = this.copy(parent = newParent)
   def setFilter(newFilter: Option[DataFrameFilter]): MappingTable = copy(filter = newFilter)
 
-  def getDefaultMappingValues: Map[String, String] = {
+  @JsonIgnore
+  def getDefaultMappingValueAsMap: Map[String, String] = {
     defaultMappingValue.map(_.toTuple).toMap
   }
 

@@ -15,6 +15,10 @@
 
 package za.co.absa.enceladus.rest_api.controllers.v3
 
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.{HttpStatus, ResponseEntity}
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -45,6 +49,8 @@ object RunControllerV3 {
 
 @RestController
 @RequestMapping(path = Array("/api-v3/runs"), produces = Array("application/json"))
+@SecurityRequirement(name = "JWT")
+@ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
 class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseController {
 
   import za.co.absa.enceladus.rest_api.utils.implicits._
@@ -123,7 +129,7 @@ class RunControllerV3 @Autowired()(runService: RunServiceV3) extends BaseControl
               @PathVariable datasetName: String,
               @PathVariable datasetVersion: Int,
               @RequestBody run: Run,
-              @AuthenticationPrincipal principal: UserDetails,
+              @Parameter(hidden = true) @AuthenticationPrincipal principal: UserDetails,
               request: HttpServletRequest): CompletableFuture[ResponseEntity[String]] = {
     val createdRunFuture = if (datasetName != run.dataset) {
       Future.failed(new IllegalArgumentException(s"URL and payload entity name mismatch: '$datasetName' != '${run.dataset}'"))

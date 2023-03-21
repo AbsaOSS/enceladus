@@ -15,7 +15,10 @@
 
 package za.co.absa.enceladus.rest_api.controllers
 
-import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+import io.swagger.v3.oas.annotations.media.{Content, Schema => AosSchema}
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import org.springframework.http.HttpStatus
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
@@ -23,10 +26,15 @@ import org.springframework.web.bind.annotation._
 import za.co.absa.enceladus.model.user.UserInfo
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 
+import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
+
 @RestController
 @RequestMapping(Array("/api/user"))
 class UserInfoController extends BaseController with ProjectMetadata {
 
+  @SecurityRequirement(name = "JWT")
+  @ApiResponse(responseCode = "401", description = "Unauthorized", content = Array(new Content(schema = new AosSchema())))
+  @ResponseStatus(HttpStatus.OK)
   @GetMapping(path = Array("/info"))
   def userInfo(request: HttpServletRequest, response: HttpServletResponse): UserInfo = {
     val auth = SecurityContextHolder.getContext.getAuthentication

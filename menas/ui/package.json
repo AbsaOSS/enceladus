@@ -10,7 +10,6 @@
   },
   "config": {
     "apiUrl": "${API_URL}",
-    "lineageConsumerApiUrl": "${LINEAGE_CONSUMER_URL}",
     "lineageUiCdn": "${LINEAGE_UI_CDN}"
   },
   "dependencies": {

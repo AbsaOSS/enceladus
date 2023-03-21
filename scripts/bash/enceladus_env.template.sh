@@ -99,6 +99,12 @@ ENCELADUS_FILES="/absolute/path/application.conf#application.conf"
 # ADDITIONAL_SPARK_CONF="--conf spark.yarn.principal=<principal_name> --conf spark.yarn.keytab=<path_to_keytab>"
 ADDITIONAL_SPARK_CONF=""
 
+# Spline Config for a codeless itegration with Spline
+# Intentionally adding the `--conf` here so that the run_enceladus.sh does not break if there is no Spline conf.
+SPLINE_QUERY_LISTENER="spark.sql.queryExecutionListeners=za.co.absa.spline.harvester.listener.SplineQueryExecutionListener"
+SPLINE_PRODUCER_URL="spark.spline.lineageDispatcher.http.producer.url=http://localhost:9090/producer"
+SPLINE_CONF="--conf '$SPLINE_QUERY_LISTENER' --conf '$SPLINE_PRODUCER_URL'"
+
 # Additional JVM options
 # Example: ADDITIONAL_JVM_CONF="-Dtimezone=UTC -Dfoo=bar"
 # for deployment mode: client
@@ -115,3 +121,7 @@ ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER="$KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $T
 # Switch that tells the script if it should exit if it encounters unrecognized.
 # On true it prints an Error and exits with 127, on false it only prints a warning
 EXIT_ON_UNRECOGNIZED_OPTIONS="true"
+
+# Additional JAR files
+# Intentionally adding the `--jars` here so that the run_enceladus.sh does not break if there are no extra jars.
+ADDITIONAL_JARS="--jars /path/to/spline-agent.jar"

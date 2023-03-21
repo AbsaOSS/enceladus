@@ -65,7 +65,7 @@ class MappingTableService @Autowired() (val mongoRepository: MappingTableMongoRe
   override def update(username: String, mt: MappingTable): Future[Option[(MappingTable, Validation)]] = {
     super.update(username, mt.name, mt.version) { latest =>
       latest
-        .setHDFSPath(mt.hdfsPath)
+        .setHdfsPath(mt.hdfsPath)
         .setSchemaName(mt.schemaName)
         .setSchemaVersion(mt.schemaVersion)
         .setDescription(mt.description).asInstanceOf[MappingTable]
