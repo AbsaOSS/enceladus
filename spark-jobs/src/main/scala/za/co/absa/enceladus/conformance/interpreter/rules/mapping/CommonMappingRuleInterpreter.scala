@@ -19,16 +19,17 @@ import org.apache.spark.sql.functions.{col, lit}
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, Dataset, Row, SparkSession}
 import org.slf4j.Logger
+import za.co.absa.spark.commons.utils.SchemaUtils
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.MappingTable
 import za.co.absa.enceladus.model.conformanceRule.MappingConformanceRule
 import za.co.absa.enceladus.model.dataFrameFilter.DataFrameFilter
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.utils.error.Mapping
-import za.co.absa.enceladus.utils.schema.SchemaUtils
 import za.co.absa.enceladus.utils.validation.ExpressionValidator
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -40,7 +41,7 @@ trait CommonMappingRuleInterpreter {
 
   protected def outputColumnNames(): String = rule.allOutputColumns().mkString(", ")
 
-  protected def getOutputsStructColumnName(df: DataFrame): String = SchemaUtils.getClosestUniqueName("outputs", df.schema)
+  protected def getOutputsStructColumnName(df: DataFrame): String = df.schema.getClosestUniqueName("outputs")
 
   protected val mappings: Seq[Mapping] = rule.attributeMappings.map {
     case (mappingTableField, dataframeField) => Mapping(mappingTableField, dataframeField)
@@ -50,12 +51,12 @@ trait CommonMappingRuleInterpreter {
   def conform(df: DataFrame)
              (implicit spark: SparkSession,
               explosionState: ExplosionState,
-              dao: MenasDAO,
+              dao: EnceladusDAO,
               progArgs: InterpreterContextArgs): DataFrame
 
   protected def conformPreparation(df: DataFrame, enableCrossJoin: Boolean)
                                   (implicit spark: SparkSession,
-                                   dao: MenasDAO,
+                                   dao: EnceladusDAO,
                                    progArgs: InterpreterContextArgs): (DataFrame, Map[String, String]) = {
     if (enableCrossJoin) {
       //A fix for cases, where the join condition only uses columns previously created by a literal rule
@@ -130,8 +131,8 @@ trait CommonMappingRuleInterpreter {
    * @return A map of defaults as strings of Spark expressions, where the requested fields are the map's keys
    */
   private def getDefaultValues(mappingTableDef: MappingTable)
-                              (implicit spark: SparkSession, dao: MenasDAO): Map[String, String] = {
-    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValues
+                              (implicit spark: SparkSession, dao: EnceladusDAO): Map[String, String] = {
+    val defaultMappingValueMap = mappingTableDef.getDefaultMappingValueAsMap
 
     val genericDefaultValueOpt = defaultMappingValueMap.get("*")
     val defaultValuesForTargets = rule.allOutputColumns().flatMap {case (_, targetAttribute) =>

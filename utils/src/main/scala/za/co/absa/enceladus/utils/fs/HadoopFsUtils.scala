@@ -17,10 +17,10 @@ package za.co.absa.enceladus.utils.fs
 
 import java.io.{File, FileNotFoundException}
 import java.net.ConnectException
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.log4j.LogManager
+import za.co.absa.commons.io.LocalFileSystemUtils
 import za.co.absa.enceladus.utils.fs.FileSystemUtils.log
 
 import scala.collection.concurrent.TrieMap
@@ -108,7 +108,7 @@ class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtil
    */
   def existsLocallyOrDistributed(path: String): Boolean = {
     val local = try {
-      LocalFsUtils.localExists(path)
+      LocalFileSystemUtils.localExists(path)
     } catch {
       case e: IllegalArgumentException => false
     }
@@ -140,8 +140,8 @@ class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtil
    */
   @throws[FileNotFoundException]
   def getLocalPathToFileOrCopyToLocal(path: String): String = {
-    val absolutePath = LocalFsUtils.replaceHome(path)
-    if (LocalFsUtils.localExists(absolutePath)) {
+    val absolutePath = LocalFileSystemUtils.replaceHome(path)
+    if (LocalFileSystemUtils.localExists(absolutePath)) {
       absolutePath
     } else if (exists(path)) {
       copyDistributedFileToLocalTempFile(path)
@@ -159,9 +159,9 @@ class HadoopFsUtils private()(implicit fs: FileSystem) extends DistributedFsUtil
    */
   @throws[FileNotFoundException]
   def getLocalOrDistributedFileContent(path: String): String = {
-    val absolutePath = LocalFsUtils.replaceHome(path)
-    if (LocalFsUtils.localExists(absolutePath)) {
-      LocalFsUtils.readLocalFile(absolutePath)
+    val absolutePath = LocalFileSystemUtils.replaceHome(path)
+    if (LocalFileSystemUtils.localExists(absolutePath)) {
+      FileReader.readFileAsString(absolutePath)
     } else if (exists(path)) {
       read(path)
     } else {

@@ -26,7 +26,7 @@ sap.ui.define(["components/tables/TableUtils"],
     const auditTableUtils = new TableUtils(this._oAuditTable, "Audit Trail");
     auditTableUtils.makeSearchable(["updatedBy", "changes"]);
     auditTableUtils.makeSortable(["Change Time", "Author", "Version"],
-        ["updated", "updatedBy", "menasRef/version"]);
+        ["updated", "updatedBy", "ref/version"]);
     auditTableUtils.makeGroupable(["Author"], ["updatedBy"]);
   }
 

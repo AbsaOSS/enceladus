@@ -16,12 +16,15 @@
 
 package za.co.absa.enceladus.utils.fs
 
+import java.io.FileNotFoundException
 import java.net.URI
 
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.commons.s3.SimpleS3Location.SimpleS3LocationExt
+
+import scala.util.{Failure, Success, Try}
 
 object FileSystemUtils {
 
@@ -45,7 +48,5 @@ object FileSystemUtils {
         FileSystem.get(hadoopConf) // HDFS
     }
   }
-
-
 }
 

@@ -24,24 +24,29 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.slf4j.{Logger, LoggerFactory}
+import za.co.absa.commons.version.Version.VersionStringInterpolator
+
+import scala.collection.JavaConverters._
 import za.co.absa.enceladus.common.Constants._
-import za.co.absa.enceladus.common.version.SparkVersionGuard
+import za.co.absa.spark.commons.SparkVersionGuard
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.{MenasCredentialsFactory, MenasKerberosCredentialsFactory, MenasPlainCredentialsFactory}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
+import za.co.absa.enceladus.dao.auth.{RestApiCredentialsFactory, RestApiKerberosCredentialsFactory, RestApiPlainCredentialsFactory}
 import za.co.absa.enceladus.dao.rest.RestDaoFactory.AvailabilitySetup
-import za.co.absa.enceladus.dao.rest.{MenasConnectionStringParser, RestDaoFactory}
+import za.co.absa.enceladus.dao.rest.RestDaoFactory
 import za.co.absa.enceladus.model.{ConformedSchema, Dataset}
+import za.co.absa.enceladus.utils.config.UrisConnectionStringParser
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 import za.co.absa.hyperdrive.ingestor.api.transformer.{StreamTransformer, StreamTransformerFactory}
 
-class HyperConformance (menasBaseUrls: List[String],
+class HyperConformance (restApiBaseUrls: List[String],
                         urlsRetryCount: Option[Int] = None,
-                        menasSetup: Option[String] = None
-                       )
+                        restApiAvailabilitySetup: Option[String] = None,
+                        optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty)
                        (implicit cmd: ConformanceConfig,
                         featureSwitches: FeatureSwitches,
                         infoDateFactory: InfoDateFactory,
@@ -51,10 +56,16 @@ class HyperConformance (menasBaseUrls: List[String],
   @throws[IllegalArgumentException]
   def transform(rawDf: DataFrame): DataFrame = {
     implicit val spark: SparkSession = rawDf.sparkSession
-    val menasCredentials = cmd.menasCredentialsFactory.getInstance()
+    val restApiCredentials = cmd.restApiCredentialsFactory.getInstance()
 
-    val menasSetupValue = menasSetup.map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
-    implicit val dao: MenasDAO = RestDaoFactory.getInstance(menasCredentials, menasBaseUrls, urlsRetryCount, menasSetupValue)
+    val restApiAvailabilitySetupValue = restApiAvailabilitySetup
+      .map(AvailabilitySetup.withName).getOrElse(RestDaoFactory.DefaultAvailabilitySetup)
+    implicit val dao: EnceladusDAO = RestDaoFactory.getInstance(
+      restApiCredentials,
+      restApiBaseUrls,
+      urlsRetryCount,
+      restApiAvailabilitySetupValue,
+      optionallyRetryableExceptions)
     dao.authenticate()
 
     logPreConformanceInfo(rawDf)
@@ -67,10 +78,10 @@ class HyperConformance (menasBaseUrls: List[String],
   }
 
   def applyConformanceTransformations(rawDf: DataFrame, conformance: Dataset)
-                                     (implicit sparkSession: SparkSession, menasDAO: MenasDAO): DataFrame = {
-    import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+                                     (implicit sparkSession: SparkSession, enceladusDAO: EnceladusDAO): DataFrame = {
+    sparkSession.conf.set("spark.sql.legacy.timeParserPolicy","LEGACY") // otherwise timestamp parsing migh cause issues
 
-    val schema: StructType = menasDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
+    val schema: StructType = enceladusDAO.getSchema(conformance.schemaName, conformance.schemaVersion)
     val schemaFields = if (schema == null) List() else schema.fields.toList
     val conformedSchema = ConformedSchema(schemaFields, conformance)
     val infoDateColumn = infoDateFactory.getInfoDateColumn(rawDf)
@@ -79,16 +90,18 @@ class HyperConformance (menasBaseUrls: List[String],
     // using HDFS implementation until HyperConformance is S3-ready
     implicit val hdfs: FileSystem = FileSystem.get(sparkSession.sparkContext.hadoopConfiguration)
     implicit val hdfsUtils: HadoopFsUtils = HadoopFsUtils.getOrCreate(hdfs)
-
+    val dataFormat = coalesce(date_format(infoDateColumn, "yyyy-MM-dd"), lit(""))
+    val currentDateColumn = current_date()
+    import za.co.absa.enceladus.utils.schema.SparkUtils.DataFrameWithEnhancements
     val conformedDf = DynamicInterpreter().interpret(conformance, rawDf)
-      .withColumnIfDoesNotExist(InfoDateColumn, coalesce(infoDateColumn, current_date()))
-      .withColumnIfDoesNotExist(InfoDateColumnString, coalesce(date_format(infoDateColumn,"yyyy-MM-dd"), lit("")))
-      .withColumnIfDoesNotExist(InfoVersionColumn, infoVersionColumn)
+      .withColumnOverwriteIfExists(InfoDateColumn, coalesce(infoDateColumn, currentDateColumn))
+      .withColumnOverwriteIfExists(InfoDateColumnString, dataFormat)
+      .withColumnOverwriteIfExists(InfoVersionColumn, infoVersionColumn)
     conformedDf
   }
 
   private def logPreConformanceInfo(streamData: DataFrame): Unit = {
-    log.info(s"Menas URLs: ${menasBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
+    log.info(s"REST API URLs: ${restApiBaseUrls.mkString(",")}, dataset=${cmd.datasetName}, version=${cmd.datasetVersion}")
     log.info(s"Input schema: ${streamData.schema.prettyJson}")
   }
 }
@@ -99,7 +112,7 @@ class HyperConformance (menasBaseUrls: List[String],
  * See https://github.com/AbsaOSS/hyperdrive#configuration for instructions how the component needs to be configured in Hyperdrive.
  * Example values are given below:
  * {{{
- * menas.rest.uri=http://localhost:8080
+ * enceladus.rest.uri=http://localhost:8080
  * dataset.name=example
  * dataset.version=1
  * report.date=2020-01-29
@@ -107,10 +120,10 @@ class HyperConformance (menasBaseUrls: List[String],
  * event.timestamp.column=EV_TIME
  *
  * # Either plain credentials
- * menas.credentials.file=/path/menas.credentials
+ * enceladus.rest.credentials.file=/path/rest_api.credentials
  *
  * # Or a keytab
- * menas.auth.keytab=/path/to/keytab
+ * enceladus.rest.auth.keytab=/path/to/keytab
  * }}}
  */
 object HyperConformance extends StreamTransformerFactory with HyperConformanceAttributes {
@@ -124,11 +137,12 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   override def apply(conf: Configuration): StreamTransformer = {
     log.info("Building HyperConformance")
 
-    SparkVersionGuard.fromDefaultSparkCompatibilitySettings.ensureSparkVersionCompatibility(SPARK_VERSION)
+    SparkVersionGuard.fromSpark3XCompatibilitySettings.copy(minVersionInclusive = semver"3.2.1")(log)
+      .ensureSparkVersionCompatibility(SPARK_VERSION)
 
     validateConfiguration(conf)
 
-    val menasCredentialsFactory = getMenasCredentialsFactory(conf: Configuration)
+    val restApiCredentialsFactory = getRestApiCredentialsFactory(conf: Configuration)
 
     implicit val confConfig: ConformanceConfig = ConformanceConfig(publishPathOverride = None,
       experimentalMappingRule = Some(true),
@@ -141,7 +155,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       performanceMetricsFile = None,
       folderPrefix = None,
       persistStorageLevel = None,
-      menasCredentialsFactory = menasCredentialsFactory
+      restApiCredentialsFactory = restApiCredentialsFactory
     )
 
     implicit val featureSwitcher: FeatureSwitches = FeatureSwitches()
@@ -150,22 +164,34 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(Always)
       .setBroadcastMaxSizeMb(0)
+      .setErrColNullability(true)
 
     implicit val reportDateCol: InfoDateFactory = InfoDateFactory.getFactoryFromConfig(conf)
     implicit val infoVersionCol: InfoVersionFactory = InfoVersionFactory.getFactoryFromConfig(conf)
 
-    val menasBaseUrls: List[String] = MenasConnectionStringParser.parse(conf.getString(menasUriKey))
-    val menasUrlsRetryCount: Option[Int] = if (conf.containsKey(menasUriRetryCountKey)) {
-      Option(conf.getInt(menasUriRetryCountKey))
+    val restApiBaseUrls: List[String] = UrisConnectionStringParser.parse(conf.getString(restApiUriKey))
+    val restApiUrlsRetryCount: Option[Int] = if (conf.containsKey(restApiUriRetryCountKey)) {
+      Option(conf.getInt(restApiUriRetryCountKey))
     } else {
       None
     }
-    val menasSetup: Option[String] = if (conf.containsKey(menasAvailabilitySetupKey)) {
-      Option(conf.getString(menasAvailabilitySetupKey))
+    val restApiAvailabilitySetup: Option[String] = if (conf.containsKey(restApiAvailabilitySetupKey)) {
+      Option(conf.getString(restApiAvailabilitySetupKey))
     } else {
       None
     }
-    new HyperConformance(menasBaseUrls, menasUrlsRetryCount, menasSetup)
+    val optionallyRetryableExceptions: Set[OptRetryableExceptions] =
+      if (conf.containsKey(restApiOptionallyRetryableExceptions)) {
+        conf.getList(classOf[Int], restApiOptionallyRetryableExceptions)
+          .asScala
+          .toSet
+          .map(getOptionallyRetryableException)
+      } else {
+        Set.empty
+      }
+    new HyperConformance(
+      restApiBaseUrls, restApiUrlsRetryCount, restApiAvailabilitySetup, optionallyRetryableExceptions
+    )
   }
 
   private def getReportVersion(conf: Configuration): Int = {
@@ -178,7 +204,7 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
 
   @throws[IllegalArgumentException]
   def validateConfiguration(conf: Configuration): Unit = {
-    val mandatoryKeys = List(menasUriKey, datasetNameKey, datasetVersionKey)
+    val mandatoryKeys = List(restApiUriKey, datasetNameKey, datasetVersionKey)
 
     val missingKeys = mandatoryKeys.filterNot(key => conf.containsKey(key))
 
@@ -188,14 +214,14 @@ object HyperConformance extends StreamTransformerFactory with HyperConformanceAt
   }
 
   @throws[IllegalArgumentException]
-  private def getMenasCredentialsFactory(conf: Configuration): MenasCredentialsFactory = {
-    val hasCredentialsFile = conf.containsKey(menasCredentialsFileKey)
-    val hasKeytab = conf.containsKey(menasAuthKeytabKey)
+  private def getRestApiCredentialsFactory(conf: Configuration): RestApiCredentialsFactory = {
+    val hasCredentialsFile = conf.containsKey(restApiCredentialsFileKey)
+    val hasKeytab = conf.containsKey(restApiAuthKeytabKey)
 
     (hasCredentialsFile, hasKeytab) match {
       case (false, false) => throw new IllegalArgumentException("No authentication method is specified.")
-      case (true, false)  => new MenasPlainCredentialsFactory(conf.getString(menasCredentialsFileKey))
-      case (false, true)  => new MenasKerberosCredentialsFactory(conf.getString(menasAuthKeytabKey))
+      case (true, false)  => new RestApiPlainCredentialsFactory(conf.getString(restApiCredentialsFileKey))
+      case (false, true)  => new RestApiKerberosCredentialsFactory(conf.getString(restApiAuthKeytabKey))
       case (true, true)   => throw new IllegalArgumentException("Either a credentials file or a keytab should be specified, but not both.")
     }
   }

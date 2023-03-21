@@ -12,24 +12,21 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <artifactId>spark-jobs</artifactId>
     <packaging>jar</packaging>
-
     <parent>
         <groupId>za.co.absa.enceladus</groupId>
         <artifactId>parent</artifactId>
-        <version>2.27.1</version>
+        <version>3.0.0</version>
     </parent>
-
     <properties>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
         <hyperdrive.version>4.5.2</hyperdrive.version>
-        <spark.sql.kafka.version>2.4.5</spark.sql.kafka.version>
+        <spark.sql.kafka.version>3.0.2</spark.sql.kafka.version>
     </properties>
-
     <dependencies>
         <!-- Dependent modules -->
         <dependency>
@@ -47,14 +44,17 @@
             <artifactId>dao</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <!-- Atum -->
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>atum_${scala.compat.version}</artifactId>
             <version>${atum.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-data-standardization_${scala.compat.version}</artifactId>
+            <version>${spark.data.standardization.version}</version>
+        </dependency>
         <!-- Data formats support -->
         <dependency>
             <groupId>com.databricks</groupId>
@@ -64,14 +64,18 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>fixed-width_${scala.compat.version}</artifactId>
-            <version>0.1.0</version>
+            <version>${fixed.width.version}</version>
         </dependency>
         <dependency>
             <groupId>za.co.absa.cobrix</groupId>
             <artifactId>spark-cobol_${scala.compat.version}</artifactId>
             <version>${cobrix.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-partition-sizing-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>0.2.0</version>
+        </dependency>
         <!-- Hyperdrive -->
         <dependency>
             <groupId>za.co.absa.hyperdrive</groupId>
@@ -79,13 +83,16 @@
             <version>${hyperdrive.version}</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>za.co.absa.commons</groupId>
             <artifactId>commons_${scala.compat.version}</artifactId>
             <version>${absa.commons.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>za.co.absa</groupId>
+            <artifactId>spark-commons-spark${spark.compat.version}_${scala.compat.version}</artifactId>
+            <version>${absa.spark.commons.version}</version>
+        </dependency>
         <!-- Libraries -->
         <dependency>
             <groupId>com.typesafe</groupId>
@@ -107,55 +114,11 @@
             <artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
             <version>${spark.sql.kafka.version}</version>
         </dependency>
-
-        <!-- Lineage tracking -->
         <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-core-spark-adapter-${spark.compat.version}</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-mongo</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>za.co.absa.spline</groupId>
-            <artifactId>spline-persistence-hdfs</artifactId>
-            <version>${spline.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>net.jpountz.lz4</groupId>
-                    <artifactId>lz4</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.hadoop</groupId>
-                    <artifactId>hadoop-common</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.github.mrpowers</groupId>
+            <artifactId>spark-fast-tests_${scala.compat.version}</artifactId>
+            <version>${spark.fast.tests.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -198,9 +161,10 @@
                             <include>*:*</include>
                         </includes>
                         <excludes>
-<!--  org.apache.spark:* should not be excluded. Otherwise, the spark-submit would have to be called with
+                            <!--
+  org.apache.spark:* should not be excluded. Otherwise, the spark-submit would have to be called with
 spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:2.2.0
--->
+                            -->
                             <exclude>org.apache.hadoop:*</exclude>
                             <exclude>org.scala-lang:scala-actors</exclude>
                             <exclude>org.scala-lang:scala-compiler</exclude>
@@ -210,13 +174,18 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         </excludes>
                     </artifactSet>
                     <relocations>
-                        <!-- This was introduced in #86 Set up Standardization and Conformance Menas auth.
-                             If not shaded the following exception will be thrown:
-                               Caused by: java.lang.ClassNotFoundException: za.co.absa.atum.model.RunState
-	                           at java.net.URLClassLoader.findClass(URLClassLoader.java:382)
-	                           ...
-	                           at com.fasterxml.jackson.module.scala.deser.EnumerationDeserializer.deserialize(EnumerationDeserializerModule.scala:40)
-                               java.lang.NoClassDefFoundError: com/fasterxml/jackson/datatype/jsr310/JavaTimeModule
+                        <!--
+ This was introduced in #86 Set up Standardization and Conformance Menas auth.
+
+If not shaded the following exception will be thrown:
+                               Caused by: java.lang.ClassNotFoundException:
+za.co.absa.atum.model.RunState
+                               at java.net.URLClassLoader.findClass(URLClassLoader.java:382)
+
+...
+                               at com.fasterxml.jackson.module.scala.deser.EnumerationDeserializer.deserialize(EnumerationDeserializerModule.scala:40)
+
+java.lang.NoClassDefFoundError: com/fasterxml/jackson/datatype/jsr310/JavaTimeModule
                         -->
                         <relocation>
                             <pattern>com.fasterxml.jackson</pattern>
@@ -245,25 +214,6 @@ spark-submit -(remove this)-packages org.apache.spark:spark-sql-kafka-0-10_2.11:
                         <arg>-feature</arg>
                     </args>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>${maven.antrun.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy</id>
-                        <phase>validate</phase>
-                        <configuration>
-                            <target>
-                                <copy file="${project.basedir}/src/main/resources/spline.properties.template" tofile="${project.basedir}/src/main/resources/spline.properties" overwrite="false" />
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

@@ -20,19 +20,20 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
 import org.scalatest.funsuite.FixtureAnyFunSuite
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Paths}
 
-class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
   type FixtureParam = String
 
-  private implicit val dao: MenasDAO = mock[MenasDAO]
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val standardizationReader = new StandardizationPropertiesProvider()
 
@@ -61,7 +62,7 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
 
   private val argumentsBase =
     ("--dataset-name FixedLength --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format cobol --cobol-encoding ascii").split(' ')
 
   def withFixture(test: OneArgTest): Outcome = {
@@ -141,6 +142,9 @@ class StandardizationCobolAsciiSuite extends FixtureAnyFunSuite with SparkTestBa
   }
 
   test("Test ASCII COBOL file that has EOL as record separators") { tmpFileName =>
+    val textContent: String = "1Tes  0123456789\n2 est2 SomeText\n3None Data¡3    \n4 on      Data 4"
+    Files.write(Paths.get(tmpFileName), textContent.getBytes(asciiCharset))
+
     val args = "--cobol-is-text true".split(" ")
 
     val expected =

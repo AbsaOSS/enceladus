@@ -15,9 +15,16 @@
 
 package za.co.absa.enceladus.model
 
+import io.swagger.v3.oas.annotations.media.{Schema => AosSchema}
+
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
+
 case class DefaultValue(
-    columnName: String,
-    value: String
+  @(AosSchema@field)(example = "columnA")
+  @BeanProperty columnName: String,
+  @(AosSchema@field)(example = "defaultValueA")
+  @BeanProperty value: String
 ) {
   def toTuple: (String, String) = {
     (columnName, value)

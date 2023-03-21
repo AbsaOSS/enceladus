@@ -20,14 +20,14 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error._
-import za.co.absa.enceladus.utils.explode.{ExplodeTools, ExplosionContext}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.transformations.ArrayTransformations.arrCol
-import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
+import za.co.absa.spark.commons.sql.functions.col_of_path
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.utils.{ExplodeTools, SchemaUtils}
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
@@ -39,7 +39,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   override def conform(df: DataFrame)
               (implicit spark: SparkSession,
                explosionState: ExplosionState,
-               dao: MenasDAO,
+               dao: EnceladusDAO,
                progArgs: InterpreterContextArgs): DataFrame = {
     log.info(s"Processing mapping rule to conform ${outputColumnNames()} (group explode strategy)...")
 
@@ -47,8 +47,8 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     val (explodedDf, expCtx) = explodeIfNeeded(df, explosionState)
 
     val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
-    val mappingErrUdfCall = callUDF(UDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
-      array(rule.attributeMappings.values.toSeq.map(arrCol(_).cast(StringType)): _*),
+    val mappingErrUdfCall = call_udf(ConformanceUDFNames.confMappingErr, lit(rule.allOutputColumns().keys.mkString(",")),
+      array(rule.attributeMappings.values.toSeq.map(col_of_path(_).cast(StringType)): _*),
       typedLit(mappings))
 
     val withErrorsDf = if (rule.definedAdditionalColumns().isEmpty) {
@@ -160,16 +160,16 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     )
 
     val flattenedColumns = rule.allOutputColumns().map{
-      case (outputColumn, targetAttribute) => {
+      case (outputColumn, targetAttribute) =>
         val fieldInOutputs = col(outputsStructColumnName + "." + outputColumn)
         applyDefaultsToOutputs(defaultMappingValues, outputColumn, targetAttribute, fieldInOutputs)
-      }}.toSeq ++
+      }.toSeq ++
       frame.columns.filter(!_.contains(outputsStructColumnName)).map(col)
     errorsApplied.select(flattenedColumns: _*)
   }
 
   private def applyDefaultsToOutputs(defaultMappingValues: Map[String, String], outputColumn: String,
-                                     targetAttribute: String, fieldInOutputs: Column) = {
+                                     targetAttribute: String, fieldInOutputs: Column): Column = {
     defaultMappingValues.get(targetAttribute) match {
       case Some(defValue) => when(fieldInOutputs.isNotNull, fieldInOutputs as outputColumn)
         .otherwise(expr(defValue)) as outputColumn
@@ -192,11 +192,10 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
     NestedArrayTransformations.nestedWithColumnAndErrorMap(df, parentPath, parentPath,
       ErrorMessage.errorColumnName,
       c => {
-        val defaultAppliedStructCols: Seq[Column] = rule.allOutputColumns().map { case (outputName, targetAttribute) => {
+        val defaultAppliedStructCols: Seq[Column] = rule.allOutputColumns().map { case (outputName, targetAttribute) =>
           val leafOutputColumnName = if (outputName.contains(".")) outputName.split("\\.").last else outputName
           val fieldInOutputs = c.getField(outputsStructColumnName).getField(leafOutputColumnName)
           applyDefaultsToOutputs(defaultMappingValues, leafOutputColumnName, targetAttribute, fieldInOutputs)
-        }
         }.toSeq
         struct(otherStructFields.map(field => c.getField(field).as(field)) ++ defaultAppliedStructCols: _*)
       }, _ => {
@@ -206,7 +205,7 @@ case class MappingRuleInterpreterGroupExplode(rule: MappingConformanceRule,
   }
 
   private def getOtherStructFields(df: DataFrame, parentPath: String, outputsStructColumnName: String): Seq[String] = {
-    val queryPath = if (parentPath.isEmpty) "*" else s"${parentPath}.*"
+    val queryPath = if (parentPath.isEmpty) "*" else s"$parentPath.*"
     df.select(queryPath).schema.fields
       .filter(_.name != outputsStructColumnName)
       .map(structField => structField.name).toSeq

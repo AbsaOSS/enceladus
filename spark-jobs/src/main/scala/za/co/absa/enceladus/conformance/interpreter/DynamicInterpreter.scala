@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter
 
 import org.apache.hadoop.fs.FileSystem
+import org.apache.spark.sql.execution.ExtendedMode
 import org.apache.spark.sql.execution.command.ExplainCommand
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.StructType
@@ -27,19 +28,21 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast, MappingRuleInterpreterGroupExplode}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, _}
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast,
+  MappingRuleInterpreterGroupExplode}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.explode.ExplosionContext
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
-import za.co.absa.enceladus.utils.general.Algorithms
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.enceladus.utils.udf.ConformanceUDFLibrary
+import za.co.absa.spark.commons.utils.explode.ExplosionContext
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
+import za.co.absa.commons.lang.extensions.SeqExtension._
 
-case class DynamicInterpreter(implicit inputFs: FileSystem) {
+case class DynamicInterpreter()(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)
 
   /**
@@ -53,7 +56,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     */
   def interpret[T](conformance: ConfDataset, inputDf: Dataset[Row], jobShortName: String = "Conformance")
                (implicit spark: SparkSession,
-                dao: MenasDAO,
+                dao: EnceladusDAO,
                 progArgs: ConformanceConfigParser[T],
                 featureSwitches: FeatureSwitches): DataFrame = {
 
@@ -67,12 +70,13 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     applyCheckpoint(conformedDf, "End")
     logExecutionPlan(conformedDf)
 
-    conformedDf
+    // explicitly set errCol (non)nullable, see issue #1818
+    ensureErrorColumnNullability(conformedDf, featureSwitches.errColNullability)
   }
 
   private def findOriginalColumnsModificationRules(steps: List[ConformanceRule],
                                                    schema: StructType): Seq[ConformanceRule] = {
-    steps.filter(rule => SchemaUtils.fieldExists(rule.outputColumn, schema))
+    steps.filter(rule => schema.fieldExists(rule.outputColumn))
   }
 
   /**
@@ -84,9 +88,9 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private def applyConformanceRules(inputDf: DataFrame)
                                    (implicit ictx: InterpreterContext): DataFrame = {
     implicit val spark: SparkSession = ictx.spark
-    implicit val dao: MenasDAO = ictx.dao
+    implicit val dao: EnceladusDAO = ictx.dao
     implicit val progArgs: InterpreterContextArgs = ictx.progArgs
-    implicit val udfLib: UDFLibrary = new UDFLibrary
+    implicit val udfLib: ConformanceUDFLibrary = new ConformanceUDFLibrary
     implicit val explosionState: ExplosionState = new ExplosionState()
 
     val steps = getConformanceSteps
@@ -182,7 +186,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
       if (isGroupExplosionUsable(rules) &&
         ictx.featureSwitches.experimentalMappingRuleEnabled) {
         // Inserting an explosion and a collapse between a group of mapping rules operating on a common array
-        val optArray = SchemaUtils.getDeepestArrayPath(schema, rules.head.outputColumn)
+        val optArray = schema.getDeepestArrayPath(rules.head.outputColumn)
         optArray match {
           case Some(arrayColumn) =>
             new ArrayExplodeInterpreter(arrayColumn) :: (interpreters :+ new ArrayCollapseInterpreter())
@@ -358,7 +362,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
       // Cache the data first since Atum will execute an action for each control metric
       val cachedDf = persistStorageLevel match {
         case Some(level) => df.persist(level)
-        case None        => df.cache
+        case None        => df.cacheIfNotCachedYet()
       }
       cachedDf.filter(explodeFilter)
         .setCheckpoint(s"${ictx.jobShortName} (${rule.order}) - ${rule.outputColumn}")
@@ -372,7 +376,7 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
   private def logExecutionPlan(df: DataFrame)(implicit spark: SparkSession): Unit = {
     // Need to check this explicitly since the execution plan generation can take significant amount of time
     if (log.isDebugEnabled) {
-      val explain = ExplainCommand(df.queryExecution.logical, extended = true)
+      val explain = ExplainCommand(df.queryExecution.logical, mode = ExtendedMode)
       spark.sessionState.executePlan(explain).executedPlan.executeCollect().foreach {
         r => log.debug("Output Dataset plan: \n" + r.getString(0))
       }
@@ -393,6 +397,12 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     }
   }
 
+  private def ensureErrorColumnNullability(inputDf: DataFrame, nullable: Boolean): DataFrame = {
+    import za.co.absa.enceladus.utils.implicits.EnceladusDataFrameImplicits.EnceladusDataframeEnhancements
+
+    inputDf.withNullableColumnState(ErrorMessage.errorColumnName, nullable)
+  }
+
   /**
     * Groups mapping rules if their output columns are inside the same array
     *
@@ -401,10 +411,10 @@ case class DynamicInterpreter(implicit inputFs: FileSystem) {
     * @return The list of lists of conformance rule groups
     */
   private def groupMappingRules(rules: List[ConformanceRule], schema: StructType): List[List[ConformanceRule]] = {
-    Algorithms.stableGroupByOption[ConformanceRule, String](rules, {
-      case m: MappingConformanceRule => SchemaUtils.getDeepestArrayPath(schema, m.outputColumn)
+    rules.groupConsecutiveByOption[String] {
+      case m: MappingConformanceRule => schema.getDeepestArrayPath(m.outputColumn)
       case _                         => None
-    }).map(_.toList).toList
+    }.map(_.toList).toList
   }
 
 }

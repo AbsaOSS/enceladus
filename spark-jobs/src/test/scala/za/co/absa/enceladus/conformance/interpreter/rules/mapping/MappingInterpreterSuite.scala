@@ -19,9 +19,9 @@ import org.apache.commons.io.IOUtils
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.{NestedTestCaseFactory, SimpleTestCaseFactory}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 
-trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase{
+trait MappingInterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase{
 
   protected val simpleTestCaseFactory = new SimpleTestCaseFactory()
   protected val nestedTestCaseFactory = new NestedTestCaseFactory()
@@ -30,12 +30,6 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     super.beforeAll()
     simpleTestCaseFactory.createMappingTables()
     nestedTestCaseFactory.createMappingTables()
-  }
-
-  override def afterAll(): Unit = {
-    simpleTestCaseFactory.deleteMappingTables()
-    nestedTestCaseFactory.deleteMappingTables()
-    super.afterAll()
   }
 
   protected def cleanupContainsNullProperty(inputSchemaTree: String): String = {
@@ -51,7 +45,7 @@ trait MappingInterpreterSuite extends AnyFunSuite with SparkTestBase with Logger
     IOUtils.toString(getClass.getResourceAsStream(name), "UTF-8")
 
   protected def assertSchema(actualSchema: String, expectedSchema: String): Unit = {
-    if ( fixLineEnding(actualSchema) != fixLineEnding(expectedSchema)) {
+    if ( fixLineEnding(actualSchema.trim) != fixLineEnding(expectedSchema.trim)) {
       logger.error("EXPECTED:")
       logger.error(expectedSchema)
       logger.error("ACTUAL:")

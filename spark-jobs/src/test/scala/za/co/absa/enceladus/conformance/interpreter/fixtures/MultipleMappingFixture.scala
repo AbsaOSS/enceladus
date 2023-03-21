@@ -16,6 +16,7 @@
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
 import java.io.File
+import java.nio.charset.Charset
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.sql.types.StringType
@@ -27,21 +28,21 @@ import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
 import scala.io.Source.fromFile
 import scala.util.control.NonFatal
 
-trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
+trait MultipleMappingFixture extends BeforeAndAfterAll with TZNormalizedSparkTestBase {
 
   this: Suite =>
 
   protected var standardizedDf: DataFrame = _
 
-  implicit protected val dao: MenasDAO = mock(classOf[MenasDAO])
+  implicit protected val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
   implicit protected val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2020-03-23")
 
   protected val mappingConformanceLocationRuleSimple: MappingConformanceRule = MappingConformanceRule(order = 1,
@@ -89,7 +90,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
     val value = "../examples/data/e2e_tests/data/hdfs/std/mappingConformanceRuleData/2020/03/23/v1/_INFO"
     val infoFileContents: String = fromFile(value, "UTF-8").mkString
 
-    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents)
+    FileUtils.writeStringToFile(new File(s"${getRawDataPath(mappingDS.hdfsPath)}/_INFO"), infoFileContents, Charset.defaultCharset())
   }
 
   private def prepareDataFrame(): Unit = {
@@ -129,7 +130,7 @@ trait MultipleMappingFixture extends BeforeAndAfterAll with SparkTestBase {
     try {
       FileUtils.deleteDirectory(new File(path))
     } catch {
-      case NonFatal(e) => log.warn(s"Unable to delete a temporary directory $path")
+      case NonFatal(_) => log.warn(s"Unable to delete a temporary directory $path")
     }
   }
 

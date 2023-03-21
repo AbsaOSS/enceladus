@@ -19,8 +19,14 @@ import scala.util.{Failure, Success, Try}
 
 object OptionImplicits {
   implicit class OptionEnhancements[T](option: Option[T]) {
-    def toTry(failure: Exception): Try[T] = {
-      option.fold[Try[T]](Failure(failure))(Success(_))
+    /**
+      * Get's the `option` value or throws the provided exception
+      *
+      * @param exception the exception to throw in case the `option` is None
+      * @return
+      */
+    def getOrThrow(exception: => Throwable): T = {
+      option.getOrElse(throw exception)
     }
   }
 }

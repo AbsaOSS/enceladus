@@ -22,18 +22,18 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.rules.RuleInterpreter
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, ExplosionState, FeatureSwitches, InterpreterContextArgs}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 case class MyCustomRule(
   order:             Int,
   outputColumn:      String,
   controlCheckpoint: Boolean, // this requires manual instantiation of control framework
   myCustomField:     String) extends CustomConformanceRule {
-  def getInterpreter() = MyCustomRuleInterpreter(this)
+  def getInterpreter(): MyCustomRuleInterpreter = MyCustomRuleInterpreter(this)
 
   override def withUpdatedOrder(newOrder: Int): conformanceRule.ConformanceRule = copy(order = newOrder)
 }
@@ -41,7 +41,7 @@ case class MyCustomRule(
 case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
-  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+  def conform(df: Dataset[Row])(implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO,
                                 progArgs: InterpreterContextArgs): Dataset[Row] = {
     import spark.implicits._
     // we have to do this if this rule is to support arrays
@@ -56,20 +56,20 @@ case class MyCustomRuleInterpreter(rule: MyCustomRule) extends RuleInterpreter {
 case class Mine(id: Int)
 case class MineConfd(id: Int, myOutputCol: Double, errCol: Seq[ErrorMessage])
 
-class CustomRuleSuite extends AnyFunSuite with SparkTestBase with HadoopFsTestBase  {
+class CustomRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with HadoopFsTestBase  {
   import spark.implicits._
 
-  // we may WANT to enable control framework & spline here
+  // we may WANT to enable control framework here
 
   implicit val progArgs: ConformanceConfig = ConformanceConfig() // here we may need to specify some parameters (for certain rules)
-  implicit val dao: MenasDAO = mock(classOf[MenasDAO]) // you may have to hard-code your own implementation here (if not working with menas)
+  implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO]) // you may have to hard-code your own implementation here
   val experimentalMR = true
   val isCatalystWorkaroundEnabled = true
   val enableCF: Boolean = false
 
   val inputData: DataFrame = spark.createDataFrame(Seq(Mine(1), Mine(4), Mine(9), Mine(16)))
 
-  val conformanceDef = ConfDataset(
+  val conformanceDef: ConfDataset = ConfDataset(
     name = "My dummy conformance workflow", // whatever here
     version = 0, //whatever here
     hdfsPath = "/a/b/c",

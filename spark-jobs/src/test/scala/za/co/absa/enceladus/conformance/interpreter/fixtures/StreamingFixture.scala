@@ -15,6 +15,7 @@
 
 package za.co.absa.enceladus.conformance.interpreter.fixtures
 
+import collection.JavaConverters._
 import org.apache.commons.configuration2.Configuration
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.execution.streaming.MemoryStream
@@ -28,12 +29,12 @@ import za.co.absa.enceladus.conformance.HyperConformanceAttributes._
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.FeatureSwitches
 import za.co.absa.enceladus.conformance.streaming.{InfoDateFactory, InfoVersionFactory}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
 
-trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar {
-  private val menasBaseUrls = List.empty[String]
+trait StreamingFixture extends AnyFunSuite with TZNormalizedSparkTestBase with MockitoSugar {
+  private val restApiBaseUrls = List.empty[String]
   implicit val cmd: ConformanceConfig = ConformanceConfig(reportVersion = Some(1), reportDate = "2020-03-23")
 
   protected def testHyperConformanceFromConfig(input: DataFrame,
@@ -42,7 +43,7 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
                                                reportDate: String,
                                                reportVersionColumnKeyProvided: String
                                               )
-                                              (implicit menasDAO: MenasDAO): DataFrame = {
+                                              (implicit enceladusDAO: EnceladusDAO): DataFrame = {
     val configStub: Configuration = mock[Configuration]
     when(configStub.containsKey(reportVersionKey)).thenReturn(false)
     when(configStub.containsKey(eventTimestampColumnKey)).thenReturn(false)
@@ -54,16 +55,18 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
     when(configStub.getString(datasetNameKey)).thenReturn("StreamingDataset")
     when(configStub.containsKey(datasetVersionKey)).thenReturn(true)
     when(configStub.getInt(datasetVersionKey)).thenReturn(1)
-    when(configStub.containsKey(menasUriKey)).thenReturn(true)
-    when(configStub.getString(menasUriKey)).thenReturn("https://mymenas.org")
-    when(configStub.containsKey(menasAuthKeytabKey)).thenReturn(true)
-    when(configStub.containsKey(menasCredentialsFileKey)).thenReturn(false)
-    when(configStub.getString(menasAuthKeytabKey)).thenReturn("key1")
-    when(configStub.containsKey(menasUriRetryCountKey)).thenReturn(true)
-    when(configStub.getInt(menasUriRetryCountKey)).thenReturn(0)
-    when(configStub.containsKey(menasAvailabilitySetupKey)).thenReturn(false)
+    when(configStub.containsKey(restApiUriKey)).thenReturn(true)
+    when(configStub.getString(restApiUriKey)).thenReturn("https://mymenas.org")
+    when(configStub.containsKey(restApiAuthKeytabKey)).thenReturn(true)
+    when(configStub.containsKey(restApiCredentialsFileKey)).thenReturn(false)
+    when(configStub.getString(restApiAuthKeytabKey)).thenReturn("key1")
+    when(configStub.containsKey(restApiUriRetryCountKey)).thenReturn(true)
+    when(configStub.getInt(restApiUriRetryCountKey)).thenReturn(0)
+    when(configStub.containsKey(restApiAvailabilitySetupKey)).thenReturn(false)
+    when(configStub.containsKey(restApiOptionallyRetryableExceptions)).thenReturn(true)
+    when(configStub.getList(classOf[Int], restApiOptionallyRetryableExceptions)).thenReturn(List[Int]().asJava)
 
-    when(menasDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
+    when(enceladusDAO.getSchema(dataset.schemaName,dataset.schemaVersion)).thenReturn(StructType(Seq(
       StructField("numerics.SmartObject.all_random", StringType)
     )))
 
@@ -93,15 +96,16 @@ trait StreamingFixture extends AnyFunSuite with SparkTestBase with MockitoSugar 
                                      sinkTableName: String,
                                      dataset: Dataset,
                                      catalystWorkaround: Boolean = true)
-                                    (implicit menasDAO: MenasDAO, infoDateFactory: InfoDateFactory,
+                                    (implicit enceladusDAO: EnceladusDAO, infoDateFactory: InfoDateFactory,
                                      infoVersionFactory: InfoVersionFactory): DataFrame = {
     implicit val featureSwitches: FeatureSwitches = FeatureSwitches()
       .setExperimentalMappingRuleEnabled(false)
       .setCatalystWorkaroundEnabled(catalystWorkaround)
       .setControlFrameworkEnabled(false)
+      .setErrColNullability(true)
 
     val memoryStream = new MemoryStream[Row](1, spark.sqlContext)(RowEncoder(input.schema))
-    val hyperConformance = new HyperConformance(menasBaseUrls)
+    val hyperConformance = new HyperConformance(restApiBaseUrls)
     val source: DataFrame = memoryStream.toDF()
     val conformed: DataFrame = hyperConformance.applyConformanceTransformations(source, dataset)
     val sink = conformed

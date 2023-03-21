@@ -22,12 +22,13 @@ import org.slf4j.event.Level.ERROR
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
 import za.co.absa.enceladus.conformance.samples.NegationRuleSamples
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with HadoopFsTestBase {
+class NegationRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with HadoopFsTestBase {
 
   import spark.implicits._
 
@@ -110,7 +111,7 @@ class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBa
     }
     val inputDf = spark.read.schema(schema).json(inputDataset)
 
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(reportDate = "2017-11-01")
     val experimentalMR = true
     val isCatalystWorkaroundEnabled = true
@@ -121,7 +122,7 @@ class NegationRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBa
       .setCatalystWorkaroundEnabled(isCatalystWorkaroundEnabled)
       .setControlFrameworkEnabled(enableCF)
 
-    val conformed = DynamicInterpreter().interpret(enceladusDataset, inputDf).cache
+    val conformed = DynamicInterpreter().interpret(enceladusDataset, inputDf).cacheIfNotCachedYet()
     val conformedJSON = conformed.toJSON.collect().mkString("\n")
     if (conformedJSON != expectedJSON) {
       logger.error("EXPECTED:")

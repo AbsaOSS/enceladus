@@ -15,12 +15,12 @@
 
 package za.co.absa.enceladus.model.test.factories
 
-import java.time.ZonedDateTime
-
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.model.conformanceRule._
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.versionedModel.VersionedSummary
+import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.versionedModel.{NamedVersion, VersionedSummary}
+
+import java.time.ZonedDateTime
 
 object DatasetFactory extends EntityFactory[Dataset] {
 
@@ -44,8 +44,8 @@ object DatasetFactory extends EntityFactory[Dataset] {
                       dateLocked: Option[ZonedDateTime] = None,
                       userLocked: Option[String] = None,
                       conformance: List[ConformanceRule] = List(),
-                      parent: Option[MenasReference] = None,
-                      properties: Option[Map[String, String]] = None): Dataset = {
+                      parent: Option[Reference] = None,
+                      properties: Option[Map[String, String]] = Some(Map.empty)): Dataset = {
 
     Dataset(name, version, description, hdfsPath, hdfsPublishPath, schemaName,
       schemaVersion, dateCreated, userCreated, lastUpdated, userUpdated,
@@ -126,12 +126,16 @@ object DatasetFactory extends EntityFactory[Dataset] {
 
   def getDummyDatasetParent(collection: Option[String] = Some("dataset"),
                             name: String = "dataset",
-                            version: Int = 1): MenasReference = {
-    MenasReference(collection, name, version)
+                            version: Int = 1): Reference = {
+    Reference(collection, name, version)
   }
 
   def toSummary(dataset: Dataset): VersionedSummary = {
-    VersionedSummary(dataset.name, dataset.version)
+    VersionedSummary(dataset.name, dataset.version, Set(dataset.disabled))
+  }
+
+  def toNamedVersion(dataset: Dataset): NamedVersion = {
+    toSummary(dataset).toNamedVersion
   }
 
 }

@@ -19,16 +19,17 @@ import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{ArrayType, DataType, StructField, StructType}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
+import za.co.absa.spark.commons.utils.SchemaUtils
 
 /**
   * This class contains all necessary information to apply a mapping rule locally on executors.
   */
 final case class LocalMappingTable private(
-                                    private val data: Map[Seq[Any], Any],
-                                    outputColumns: Map[String, String],
-                                    keyTypes: Seq[DataType],
-                                    valueTypes: Seq[DataType]
+                                            private val data: Map[Seq[Any], Any],
+                                            outputColumns: Map[String, String],
+                                            keyTypes: Seq[DataType],
+                                            valueType: DataType
                                   ) {
 
   def getRowWithDefault(key: Seq[Any], default: Any): Any = {
@@ -61,34 +62,45 @@ object LocalMappingTable {
     val targetAttributes = outputColumns.values.toSeq
     validateTargetAttributes(mappingTableDf, targetAttributes)
 
-    val keyTypes = keyFields.flatMap(fieldName => SchemaUtils.getFieldType(fieldName, mappingTableDf.schema))
+    val keyTypes = keyFields.flatMap(fieldName => mappingTableDf.schema.getFieldType(fieldName))
 
     val valueTypes = targetAttributes.flatMap(targetAttribute => {
-      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema)
+      mappingTableDf.schema.getFieldType(targetAttribute)
     })
-    val structFields: Seq[StructField] = outputColumns.keys.toSeq.zip(valueTypes)
+
+    val structFields: Seq[StructField] = outputColumns.keys
+      .map(SchemaUtils.stripParentPath).toSeq
+      .zip(valueTypes)
       .map { case (name: String, fieldType: DataType) => StructField(name, fieldType) }
     val rowSchema = StructType(structFields)
 
     val targetColumns: Seq[Column] = targetAttributes.map(targetAttribute => col(targetAttribute))
+    val keyColumns: Seq[Column] = keyFields.map(c => col(c))
+    val mappingColumns = targetColumns ++ keyColumns
 
-    val mappingColumns = targetColumns ++ keyFields.map(c => col(c))
     val projectedDf = mappingTableDf.select(mappingColumns: _*)
     val numberOfKeys = keyFields.size
     val numberOfValues = targetAttributes.size
 
+    val oneValue = (seq: Seq[Any]) => seq.head
+    val moreValues = (seq: Seq[Any], schema: StructType) => new GenericRowWithSchema(seq.toArray, schema)
+    val (valueType: DataType, valueFnc) = if (outputColumns.size == 1) {
+      (valueTypes.head, oneValue)
+    } else {
+      (rowSchema, moreValues(_, StructType(structFields)))
+    }
     val mappingTable = projectedDf.collect().map(row => {
       val values = (0 until numberOfValues).toArray map (row(_))
       val keys: Seq[Any] = (numberOfValues until numberOfValues + numberOfKeys) map(row(_))
-      (keys, if (values.length == 1) values.head else new GenericRowWithSchema(values, rowSchema))
+      (keys, valueFnc(values))
     }).toMap
 
-    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueTypes)
+    LocalMappingTable(mappingTable, outputColumns, keyTypes, valueType)
   }
 
   private def validateKeyFields(mappingTableDf: DataFrame, keyFields: Seq[String]): Unit = {
     keyFields.foreach(field => {
-      SchemaUtils.getFieldType(field, mappingTableDf.schema) match {
+      mappingTableDf.schema.getFieldType(field) match {
         case Some(_: ArrayType) => throw new IllegalArgumentException(s"Join condition field cannot be an array: $field.")
         case Some(_: StructType) => throw new IllegalArgumentException(s"Join condition field cannot be a struct: $field.")
         case Some(_) =>
@@ -97,7 +109,7 @@ object LocalMappingTable {
     })
 
     keyFields.foreach(field => {
-      val arraySubPath = SchemaUtils.getFirstArrayPath(field, mappingTableDf.schema)
+      val arraySubPath = mappingTableDf.schema.getFirstArrayPath(field)
       if (arraySubPath.nonEmpty) {
         throw new IllegalArgumentException(s"Join key field $field is inside an array $arraySubPath.")
       }
@@ -106,12 +118,12 @@ object LocalMappingTable {
 
   private def validateTargetAttributes(mappingTableDf: DataFrame, targetAttributes: Seq[String]): Unit = {
     targetAttributes.foreach(targetAttribute => {
-      SchemaUtils.getFieldType(targetAttribute, mappingTableDf.schema) match {
+      mappingTableDf.schema.getFieldType(targetAttribute) match {
         case Some(_: ArrayType) => throw new IllegalArgumentException(s"Target attribute cannot be an array: $targetAttribute.")
         case Some(_) =>
         case None => throw new IllegalArgumentException(s"Target attribute $targetAttribute does not exist in the mapping table.")
       }
-      val arraySubPath = SchemaUtils.getFirstArrayPath(targetAttribute, mappingTableDf.schema)
+      val arraySubPath = mappingTableDf.schema.getFirstArrayPath(targetAttribute)
       if (arraySubPath.nonEmpty) {
         throw new IllegalArgumentException(s"Target attribute $targetAttribute is inside an array $arraySubPath.")
       }

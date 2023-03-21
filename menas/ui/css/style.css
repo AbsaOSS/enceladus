@@ -41,7 +41,7 @@ html, body {
 
 .menasAddMappingFlex div {
     width: calc(100% - 38px);
-  }
+}
 
 .monitoringBlockLayoutCell {
   min-width: 20rem !important;
@@ -86,20 +86,6 @@ html, body {
   height: 100% !important;
 }
 
-.scheduleMenuButton {
-  margin-top: -1rem !important;
-  position: absolute !important;
-}
-
-.scheduleMenuHBox {
-  height: 2rem !important;
-  margin-top: 1rem !important;
-}
-
-h5[id$=datasetDetailView--scheduleTimingTitle] {
-  margin-top: 1rem !important;
-}
-
 /* Conformance indicator styling */
 .conformIcon {
   margin: 0 3px;
@@ -130,6 +116,11 @@ h5[id$=datasetDetailView--scheduleTimingTitle] {
 
 .missingPropertyValue{
   font-style: italic;
+}
+
+.lineageErrorLabel {
+  font-size: 200%;
+  padding-top: 2rem;
 }
 
 .sapMListNoDataText {

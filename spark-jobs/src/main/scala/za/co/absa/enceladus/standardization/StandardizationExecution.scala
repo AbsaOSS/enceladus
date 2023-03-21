@@ -15,45 +15,61 @@
 
 package za.co.absa.enceladus.standardization
 
-import java.io.{PrintWriter, StringWriter}
 import java.util.UUID
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.types.{StructField, StructType}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.RecordIdGeneration.getRecordIdGenerationStrategyFromConfig
-import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasCredentials
+import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.{StandardizationConfig, StandardizationConfigParser}
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.PlainSchemaGenerator
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.{DistributedFsUtils, HadoopFsUtils}
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.{MetadataKeys, SchemaUtils, SparkUtils}
-import za.co.absa.enceladus.utils.types.Defaults
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.enceladus.utils.schema.{MetadataKeys, SparkUtils}
+import za.co.absa.standardization.Standardization
+import za.co.absa.standardization.stages.PlainSchemaGenerator
+import za.co.absa.enceladus.utils.validation.{ValidationException => EnceladusValidationException}
+import za.co.absa.standardization.{ValidationException => StandardizationValidationException}
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig, StandardizationConfig => StandardizationLibraryConfig}
+import za.co.absa.standardization.types.TypeDefaults
 
+import java.io.{PrintWriter, StringWriter}
 import scala.util.control.NonFatal
+
 
 trait StandardizationExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Standardization
 
+  protected def prepareStandardizationConfig(): BasicStandardizationConfig = {
+    val metadataColumns = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(prefix = "enceladus", recordIdStrategy = recordIdStrategy)
+
+    val standardizationConfigWithoutTZ = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataColumns)
+
+    configReader.getStringOption("timezone") match {
+      case Some(tz) => standardizationConfigWithoutTZ.copy(timezone = tz)
+      case None => standardizationConfigWithoutTZ
+    }
+  }
+
   protected def prepareStandardization[T](args: Array[String],
-                                          menasCredentials: MenasCredentials,
+                                          restApiCredentials: RestApiCredentials,
                                           preparationResult: PreparationResult)
-                                         (implicit dao: MenasDAO,
+                                         (implicit dao: EnceladusDAO,
                                           cmd: StandardizationConfigParser[T],
                                           spark: SparkSession,
-                                          defaults: Defaults): StructType = {
+                                          defaults: TypeDefaults): StructType = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val rawFsUtils = HadoopFsUtils.getOrCreate(rawFs)
 
@@ -67,8 +83,8 @@ trait StandardizationExecution extends CommonJobExecution {
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
+    // Enable Enceladus plugin for Control Framework
+    EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
@@ -81,10 +97,11 @@ trait StandardizationExecution extends CommonJobExecution {
 
     // Add the raw format of the input file(s) to Atum's metadata
     Atum.setAdditionalInfo("raw_format" -> cmd.rawFormat)
+    Atum.setAdditionalInfo(Constants.EnceladusRunNumber -> EnceladusAtumPlugin.runNumber.fold("")(_.toString))
 
-    val defaultTimeZoneForTimestamp = defaults.getDefaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    val defaultTimeZoneForTimestamp = defaults.defaultTimestampTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_timestamps"-> defaultTimeZoneForTimestamp)
-    val defaultTimeZoneForDate = defaults.getDefaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
+    val defaultTimeZoneForDate = defaults.defaultDateTimeZone.getOrElse(spark.conf.get("spark.sql.session.timeZone"))
     Atum.setAdditionalInfo("default_time_zone_for_dates"-> defaultTimeZoneForDate)
 
     // Add Dataset properties marked with putIntoInfoFile=true
@@ -94,7 +111,7 @@ trait StandardizationExecution extends CommonJobExecution {
     PerformanceMetricTools.addJobInfoToAtumMetadata("std",
       preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization.path,
-      menasCredentials.username, args.mkString(" "))
+      restApiCredentials.username, args.mkString(" "))
 
     dao.getSchema(preparationResult.dataset.schemaName, preparationResult.dataset.schemaVersion)
   }
@@ -120,7 +137,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 rawInput: PathWithFs,
                                                 dataset: Dataset)
                                                (implicit spark: SparkSession,
-                                                dao: MenasDAO): DataFrame = {
+                                                dao: EnceladusDAO): DataFrame = {
     val numberOfColumns = schema.fields.length
     val standardizationReader = new StandardizationPropertiesProvider()
     val dfReaderConfigured = standardizationReader.getFormatSpecificReader(cmd, dataset, numberOfColumns)
@@ -147,21 +164,18 @@ trait StandardizationExecution extends CommonJobExecution {
     }
   }
 
-  protected def standardize[T](inputData: DataFrame, schema: StructType, cmd: StandardizationConfigParser[T])
-                              (implicit spark: SparkSession, udfLib: UDFLibrary, defaults: Defaults): DataFrame = {
+  protected def standardize(inputData: DataFrame, schema: StructType, standardizationConfig: StandardizationLibraryConfig)
+                              (implicit spark: SparkSession): DataFrame = {
     //scalastyle:on parameter.number
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
-
     try {
       handleControlInfoValidation()
-      StandardizationInterpreter.standardize(inputData, schema, cmd.rawFormat,
-        cmd.failOnInputNotPerSchema, recordIdGenerationStrategy)
+      Standardization.standardize(inputData, schema, standardizationConfig)
     } catch {
-      case e@ValidationException(msg, errors) =>
+      case e@StandardizationValidationException(msg, errors) =>
         val errorDescription = s"$msg\nDetails: ${errors.mkString("\n")}"
         spark.setControlMeasurementError("Schema Validation", errorDescription, "")
         throw e
-      case NonFatal(e) if !e.isInstanceOf[ValidationException] =>
+      case NonFatal(e) if !e.isInstanceOf[EnceladusValidationException] || !e.isInstanceOf[StandardizationValidationException] =>
         val sw = new StringWriter
         e.printStackTrace(new PrintWriter(sw))
         spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
@@ -174,7 +188,7 @@ trait StandardizationExecution extends CommonJobExecution {
                                                 preparationResult: PreparationResult,
                                                 schema: StructType,
                                                 cmd: StandardizationConfigParser[T],
-                                                menasCredentials: MenasCredentials)
+                                                restApiCredentials: RestApiCredentials)
                                                (implicit spark: SparkSession, configReader: ConfigReader): DataFrame = {
     val rawFs = preparationResult.pathCfg.raw.fileSystem
     val stdFs = preparationResult.pathCfg.standardization.fileSystem
@@ -197,11 +211,9 @@ trait StandardizationExecution extends CommonJobExecution {
 
     log.info(s"Writing into standardized path ${preparationResult.pathCfg.standardization.path}")
 
-    val minPartitionSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxPartitionSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-
     val withRepartitioning = if (cmd.isInstanceOf[StandardizationConfig]) {
-      repartitionDataFrame(standardizedDF, minPartitionSize, maxPartitionSize)
+      val repartitioner = new Repartitioner(configReader, log)
+      repartitioner.repartition(standardizedDF)
     } else {
       standardizedDF
     }
@@ -217,7 +229,7 @@ trait StandardizationExecution extends CommonJobExecution {
       "std",
       preparationResult.pathCfg.raw,
       preparationResult.pathCfg.standardization,
-      menasCredentials.username,
+      restApiCredentials.username,
       args.mkString(" ")
     )
 

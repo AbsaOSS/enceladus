@@ -32,6 +32,8 @@ syntax: glob
 # idea
 .idea
 *.iml
+*.ipr
+*.iws
 
 # vs code
 .vscode
@@ -74,6 +76,7 @@ myTestCheckpoints
 **/main/resources/spline.properties
 **/main/resources/kafka.properties
 **/menas/*/main/resources/*.properties
+**/rest-api/*/main/resources/*.properties
 **/enceladus_env.sh
 *.config
 *.keytab
