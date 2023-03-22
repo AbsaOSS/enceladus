@@ -116,27 +116,19 @@ package object conformanceRule {
     @(AosSchema@field)(example = "3")
     @BeanProperty mappingTableVersion: Int,
 
-    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
-      "\"field1\": \"mappedField1\"" +
-      "}")
+    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{\"field1\": \"mappedField1\"}")
     @BeanProperty attributeMappings: Map[String, String], // key = mapping table column, value = input df column
     @(AosSchema@field)(example = "CCC")
     @BeanProperty targetAttribute: String,
     @(AosSchema@field)(example = "ConformedCurrencyX")
     @BeanProperty outputColumn: String,
 
-    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
-      "\"newCol\": \"mappedCol1\"" +
-      "}")
+    @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{\"newCol\": \"mappedCol1\"}")
     @BeanProperty additionalColumns: Option[Map[String, String]] = None,
     @BeanProperty isNullSafe: Boolean = false,
 
-    @(AosSchema@field)(implementation = classOf[DataFrameFilter], example = "{" +
-      "\"_t\": \"EqualsFilter\"," +
-      "\"columnName\": \"column1\"," +
-      "\"value\": \"soughtAfterValue\"," +
-      "\"valueType\": \"string\"" +
-      "}")
+    @(AosSchema@field)(implementation = classOf[DataFrameFilter],
+      example = "{\"_t\": \"EqualsFilter\", \"columnName\": \"column1\", \"value\": \"soughtAfterValue\", \"valueType\": \"string\"}")
     @BeanProperty mappingTableFilter: Option[DataFrameFilter] = None,
     overrideMappingTableOwnFilter: Option[Boolean] = Some(DefaultOverrideMappingTableOwnFilter)
   ) extends ConformanceRule {
