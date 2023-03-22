@@ -84,10 +84,8 @@ case class Dataset(
   @(AosSchema@field)(implementation = classOf[OozieSchedule])
   @BeanProperty schedule: Option[OozieSchedule] = None, //To be used for backward versioning compatibility
 
-  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]], example = "{" +
-    "\"field1\": \"value1\"," +
-    "\"field2\": \"value2\"" +
-    "}")
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]],
+    example = "{\"field1\": \"value1\", \"field2\": \"value2\"}")
   @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
 
   @(AosSchema@field)(implementation = classOf[Validation])
