@@ -40,6 +40,8 @@ DRA_MIN_EXECUTORS="$DEFAULT_DRA_MIN_EXECUTORS"
 DRA_MAX_EXECUTORS="$DEFAULT_DRA_MAX_EXECUTORS"
 DRA_ALLOCATION_RATIO="$DEFAULT_DRA_ALLOCATION_RATIO"
 ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE="$DEFAULT_ADAPTIVE_TARGET_POSTSHUFFLE_INPUT_SIZE"
+PARQUET_DATETIME_WRITE_MODE="$DEFAULT_PARQUET_DATETIME_WRITE_MODE"
+PARQUET_DATETIME_READ_MODE="$DEFAULT_PARQUET_DATETIME_READ_MODE"
 
 # Command like default for the job
 JAR=${SPARK_JOBS_JAR_OVERRIDE:-$SPARK_JOBS_JAR}
@@ -116,6 +118,14 @@ case $key in
     ;;
   --dra-executor-memory)
     DRA_EXECUTOR_MEMORY="$2"
+    shift 2 # past argument and value
+    ;;
+  --parquet-datetime-read-mode)
+    PARQUET_DATETIME_READ_MODE="$2"
+    shift 2 # past argument and value
+    ;;
+  --parquet-datetime-write-mode)
+    PARQUET_DATETIME_WRITE_MODE="$2"
     shift 2 # past argument and value
     ;;
   --master)
@@ -476,6 +486,11 @@ else
   add_to_cmd_line "--num-executors" "${NUM_EXECUTORS}"
   add_to_cmd_line "--executor-cores" "${EXECUTOR_CORES}"
 fi
+
+add_spark_conf_cmd "spark.sql.parquet.datetimeRebaseModeInRead" "${PARQUET_DATETIME_READ_MODE}"
+add_spark_conf_cmd "spark.sql.parquet.datetimeRebaseModeInWrite" "${PARQUET_DATETIME_WRITE_MODE}"
+add_spark_conf_cmd "spark.sql.parquet.int96RebaseModeInRead" "${PARQUET_DATETIME_READ_MODE}"
+add_spark_conf_cmd "spark.sql.parquet.int96RebaseModeInWrite" "${PARQUET_DATETIME_WRITE_MODE}"
 
 JVM_CONF="spark.driver.extraJavaOptions=-Dstandardized.hdfs.path=$STD_HDFS_PATH \
 -Dspline.mongodb.url=$SPLINE_MONGODB_URL -Dspline.mongodb.name=$SPLINE_MONGODB_NAME -Dhdp.version=$HDP_VERSION \
