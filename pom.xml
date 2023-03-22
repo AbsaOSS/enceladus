@@ -16,7 +16,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>za.co.absa.enceladus</groupId>
     <artifactId>parent</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Enceladus</name>
     <description>Enceladus is a Dynamic Conformance Engine which allows data from different formats to be standardized to parquet and conformed to group-accepted common reference.</description>
