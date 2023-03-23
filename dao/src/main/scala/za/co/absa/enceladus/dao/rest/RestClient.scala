@@ -83,7 +83,7 @@ protected class RestClient(authClient: AuthClient,
 
     val statusCode = response.getStatusCode
 
-    /**
+    /*
      * This function handles unauthorized response by trying to authenticate
      * (if there are still some retries attempt left) - this might be due to an expired session.
      *
