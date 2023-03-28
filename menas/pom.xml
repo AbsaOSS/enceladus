@@ -60,7 +60,7 @@
                 <configuration>
                     <installDirectory>target</installDirectory>
                     <workingDirectory>ui</workingDirectory>
-                    <nodeVersion>v10.16.0</nodeVersion>
+                    <nodeVersion>v16.19.0</nodeVersion>
                 </configuration>
                 <executions>
                     <execution>

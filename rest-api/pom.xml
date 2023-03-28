@@ -25,7 +25,7 @@
     <properties>
         <scala.xml.version>1.0.6</scala.xml.version>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <embedded.mongo.version>2.2.0</embedded.mongo.version>
+        <embedded.mongo.version>3.5.0</embedded.mongo.version>
         <jersery.server.version>1.19.4</jersery.server.version>
         <!-- by default, hadoop-common 3.2.1 brings v1.19 only -->
     </properties>
