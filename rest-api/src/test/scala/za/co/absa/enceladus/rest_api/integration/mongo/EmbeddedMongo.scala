@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.rest_api.integration.mongo
 
-import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
+import de.flapdoodle.embed.mongo.config.{MongodConfig, Net}
 import de.flapdoodle.embed.mongo.distribution.Version
 import de.flapdoodle.embed.mongo.{MongodExecutable, MongodStarter}
 import de.flapdoodle.embed.process.runtime.Network
+
 import javax.annotation.{PostConstruct, PreDestroy}
 import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.slf4j.LoggerFactory
@@ -48,8 +49,9 @@ class EmbeddedMongo {
     val starter = MongodStarter.getDefaultInstance
 
     synchronized {
-      mongoPort = Network.getFreeServerPort()
-      val mongodConfig = new MongodConfigBuilder()
+      //noinspection ScalaDeprecation
+      mongoPort = Network.freeServerPort(Network.getLocalHost)
+      val mongodConfig = MongodConfig.builder()
         .version(Version.Main.V4_0)
         .net(new Net("localhost", mongoPort, Network.localhostIsIPv6()))
         .build()

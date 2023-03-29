@@ -15,7 +15,7 @@
 
 
 class FilterEdit {
-  #controlsInitd;
+  controlsInitd;
 
   /**
    *
@@ -27,29 +27,29 @@ class FilterEdit {
     this.idPrefix = idPrefix;
     this.schemaService = schemaService;
 
-    this.#controlsInitd = false;
+    this.controlsInitd = false;
   }
 
-  #getById(simpleId) {
+  getById(simpleId) {
     // in RL this can be e.g. controller.byId("someId") or sap.ui.getCore.byId("MappingConformanceRule--someId")
     return this.idBase.byId(this.idPrefix + simpleId);
   }
 
   bindFilterEditControls(oDialog) {
-    if (!this.#controlsInitd) { // prevent multiple controls attach
+    if (!this.controlsInitd) { // prevent multiple controls attach
 
       this.dialog = oDialog;
       // filter toolbar:
-      this.#getById("addAndBtn").attachPress(this.onFilterAddAnd, this);
-      this.#getById("addOrBtn").attachPress(this.onFilterAddOr, this);
-      this.#getById("addNotBtn").attachPress(this.onFilterAddNot, this);
-      this.#getById("addEqualsBtn").attachPress(this.onFilterAddEquals, this);
-      this.#getById("addDiffersBtn").attachPress(this.onFilterAddDiffers, this);
-      this.#getById("addIsNullBtn").attachPress(this.onFilterAddIsNull, this);
+      this.getById("addAndBtn").attachPress(this.onFilterAddAnd, this);
+      this.getById("addOrBtn").attachPress(this.onFilterAddOr, this);
+      this.getById("addNotBtn").attachPress(this.onFilterAddNot, this);
+      this.getById("addEqualsBtn").attachPress(this.onFilterAddEquals, this);
+      this.getById("addDiffersBtn").attachPress(this.onFilterAddDiffers, this);
+      this.getById("addIsNullBtn").attachPress(this.onFilterAddIsNull, this);
 
-      this.#getById("removeSelectedBtn").attachPress(this.onRemoveSelected, this);
+      this.getById("removeSelectedBtn").attachPress(this.onRemoveSelected, this);
 
-      this.#controlsInitd = true;
+      this.controlsInitd = true;
     }
   }
 
@@ -81,7 +81,7 @@ class FilterEdit {
     // blank filter contains validation fields:
     const namedBlankFilter = this.resetFilterDataValidation(FilterTreeUtils.addNiceNamesToFilterData(blankFilter));
 
-    const treeTable = this.#getById("filterTreeEdit");
+    const treeTable = this.getById("filterTreeEdit");
     const selectedIndices = treeTable.getSelectedIndices();
     const treeTableModel = treeTable.getBinding().getModel();
 
@@ -117,7 +117,7 @@ class FilterEdit {
   }
 
   onRemoveSelected() {
-    const treeTable = this.#getById("filterTreeEdit");
+    const treeTable = this.getById("filterTreeEdit");
     const selectedIndices = treeTable.getSelectedIndices();
     const treeTableModel = treeTable.getBinding().getModel();
 
@@ -143,7 +143,7 @@ class FilterEdit {
    * This method resets validations on the UI
    */
   resetFilterValidation() {
-    const treeTable = this.#getById("filterTreeEdit");
+    const treeTable = this.getById("filterTreeEdit");
     const treeTableModel = treeTable.getBinding().getModel();
 
     const filterData = treeTableModel.getProperty("/editingFilters");
@@ -202,7 +202,7 @@ class FilterEdit {
    * @returns {empty: boolean, valid: boolean}
    */
   validateFilterData() {
-    const treeTable = this.#getById("filterTreeEdit");
+    const treeTable = this.getById("filterTreeEdit");
     const treeTableModel = treeTable.getBinding().getModel();
     const filterData = treeTableModel.getProperty("/editingFilters");
 
@@ -315,13 +315,13 @@ class FilterEdit {
       const selectedSchema = model.getProperty("/selectedSchema");
 
       if (selectedSchema) { // initially, on new MT, no schema is preselected in the dialog
-        filterEdit.#onUpdatedSchema(selectedSchema);
+        filterEdit.onUpdatedSchema(selectedSchema);
       }
 
     });
   }
 
-  #onUpdatedSchema(updatedSchema) {
+  onUpdatedSchema(updatedSchema) {
     this.schemaService.getByNameAndVersion(updatedSchema.name, updatedSchema.version).then((schema) => {
 
       const allColumnNames = FilterEdit.extractFieldNamesInDepth(schema.fields);
