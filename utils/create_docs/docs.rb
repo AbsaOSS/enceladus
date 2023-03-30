@@ -65,7 +65,7 @@ module Docs
 
   def self.get_latest_doc_version(doc_folder:)
     FileUtils.cd(doc_folder, verbose: true) do
-      Dir.glob('*').sort_by { |v| Gem::Version.new(v) }.last
+      Dir.glob("[0-9]*").sort_by { |v| Gem::Version.new(v) }.last
     end
   end
 
