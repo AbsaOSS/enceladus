@@ -142,7 +142,7 @@
         <!--plugin versions-->
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
-        <jacoco.version>0.8.8</jacoco.version>
+        <jacoco.version>0.8.9</jacoco.version>
         <maven.antrun.plugin.version>1.8</maven.antrun.plugin.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -553,6 +553,7 @@
                                 <exclude>scripts/cmd/tee.bat</exclude>
                                 <exclude>**/org.mockito.plugins.MockMaker</exclude>
                                 <exclude>**/.idea/**</exclude>
+                                <!-- exclude>ui/dist/**</exclude -->
                             </excludes>
                         </configuration>
                     </plugin>
@@ -616,7 +617,7 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.jacoco</groupId>
+                        <groupId>za.co.absa.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>${jacoco.version}</version>
                         <configuration>
@@ -640,7 +641,9 @@
                                     <goal>report</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
+                                    <title>${project.name} - ${scala.version}</title>
+                                    <doMethodFiltration>true</doMethodFiltration>
+                                    <doScalaMethodFiltration>true</doScalaMethodFiltration>
                                 </configuration>
                             </execution>
                         </executions>
