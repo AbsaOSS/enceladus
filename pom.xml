@@ -553,7 +553,6 @@
                                 <exclude>scripts/cmd/tee.bat</exclude>
                                 <exclude>**/org.mockito.plugins.MockMaker</exclude>
                                 <exclude>**/.idea/**</exclude>
-                                <!-- exclude>ui/dist/**</exclude -->
                             </excludes>
                         </configuration>
                     </plugin>
