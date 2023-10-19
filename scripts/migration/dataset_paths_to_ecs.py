@@ -19,6 +19,7 @@ from typing import List
 
 from constants import *
 from menas_db import MenasDb, MenasDbCollectionError
+import requests
 
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
 # pip install -r requirements.txt
@@ -29,6 +30,7 @@ DEFAULT_MAPPING_SERVICE_URL = "xxx"
 # curl -X GET -d '{"hdfs_path":"/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN"}' 'https://my_service.amazonaws.com/dev/map'
 # {"ecs_path": "ursamajor123-abs1234-prod-edla-abc123-ke/publish/CNSMR_ACCNT/country_code=KEN/"}
 
+DEFAULT_MAPPING_PREFIX = "s3a://"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -49,6 +51,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-s', '--mapping-service', dest="mappingservice", default=DEFAULT_MAPPING_SERVICE_URL,
                         help="Service to use for path change mapping.")
 
+    parser.add_argument('-p', '--mapping-prefix', dest="mappingprefix", default=DEFAULT_MAPPING_PREFIX,
+                        help="Default mapping prefix to be applied for paths")
+
     parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
                         nargs="+", help='list datasets names to change paths in')
     # todo not used now
@@ -57,8 +62,23 @@ def parse_args() -> argparse.Namespace:
 
     return parser.parse_args()
 
+def map_path_from_svc(path: str, path_prefix_to_add: str, svc_url: str)-> str:
+    # session = requests.Session()
+    #response = session.post(url, auth=basic_auth, verify=http_verify)
 
-def pathchange_datasets(target_db: MenasDb, collection_name: str, dataset_names_list: List[str], dryrun:bool) -> None:
+    payload = "{\"hdfs_path\":\"" + path + "\"}"
+    response = requests.get(svc_url, data=payload)
+
+    if response.status_code != 200:
+        raise Exception(f"Could load ECS path from {svc_url}, received error {response.status_code} {response.text}")
+
+    wrapper = response.json()
+    ecs_path = wrapper['ecs_path']
+
+    return path_prefix_to_add + ecs_path
+
+def pathchange_datasets(target_db: MenasDb, collection_name: str, dataset_names_list: List[str],
+                        mapping_svc_url: str, mapping_prefix: str, dryrun:bool) -> None:
     if not dataset_names_list:
         print("No datasets to path-change in {}, skipping.".format(collection_name))
         return
@@ -83,9 +103,8 @@ def pathchange_datasets(target_db: MenasDb, collection_name: str, dataset_names_
         hdfs_path = item["hdfsPath"]
         hdfs_publish_path = item["hdfsPublishPath"]
 
-        # todo updated:
-        updated_hdfs_path = hdfs_path + "aaa"
-        updated_hdfs_publish_path = hdfs_publish_path + "bbb"
+        updated_hdfs_path = map_path_from_svc(hdfs_path, mapping_prefix, mapping_svc_url,)
+        updated_hdfs_publish_path = map_path_from_svc(hdfs_publish_path, mapping_prefix, mapping_svc_url)
 
         if dryrun:
             print("  *would set* hdfsPath: {} -> {}".format(hdfs_path,  updated_hdfs_path))
@@ -124,6 +143,8 @@ def pathchange_datasets(target_db: MenasDb, collection_name: str, dataset_names_
 
 def pathchange_collections_by_ds_names(target_db: MenasDb,
                                        supplied_ds_names: List[str],
+                                       mapping_svc_url: str,
+                                       mapping_prefix: str,
                                        dryrun: bool) -> None:
 
     if verbose:
@@ -134,7 +155,7 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
 
 
     print("")
-    pathchange_datasets(target_db, DATASET_COLLECTION, ds_names_found, dryrun)
+    pathchange_datasets(target_db, DATASET_COLLECTION, ds_names_found, mapping_svc_url, mapping_prefix, dryrun)
 
 def run(parsed_args: argparse.Namespace):
     target_conn_string = parsed_args.target
@@ -142,6 +163,7 @@ def run(parsed_args: argparse.Namespace):
 
     dryrun = args.dryrun  # if set, only path change description will be printed, no actual patching will run
     mapping_service = args.mappingservice
+    mapping_prefix = args.mappingprefix
 
     print('Menas mongo ECS paths mapping')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
@@ -159,9 +181,13 @@ def run(parsed_args: argparse.Namespace):
 
     dataset_names = parsed_args.datasets
 
+    # debug # todo remove
+    # print("res" + map_path_from_svc("/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN", mapping_service))
+
     # todo do remapping for mapping tables, too
     # mt_names = parsed_args.mtables
-    pathchange_collections_by_ds_names(target_db, dataset_names, dryrun=dryrun)
+
+    pathchange_collections_by_ds_names(target_db, dataset_names, mapping_service, mapping_prefix, dryrun=dryrun)
 
     print("Done.")
 
