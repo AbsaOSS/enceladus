@@ -18,7 +18,7 @@ import argparse
 from typing import List
 
 from constants import *
-from menas_db import MenasDb, MenasDbCollectionError
+from menas_db import MenasDb
 import requests
 
 # python package needed are denoted in requirements.txt, so to fix missing dependencies, just run
@@ -77,68 +77,80 @@ def map_path_from_svc(path: str, path_prefix_to_add: str, svc_url: str)-> str:
 
     return path_prefix_to_add + ecs_path
 
-def pathchange_datasets(target_db: MenasDb, collection_name: str, dataset_names_list: List[str],
-                        mapping_svc_url: str, mapping_prefix: str, dryrun:bool) -> None:
-    if not dataset_names_list:
-        print("No datasets to path-change in {}, skipping.".format(collection_name))
+def pathchange_entities(target_db: MenasDb, collection_name: str, entity_name: str, entity_names_list: List[str],
+                        mapping_svc_url: str, mapping_prefix: str, dryrun: bool) -> None:
+
+    assert entity_name == "dataset" or entity_name == "mapping table" , "this method supports datasets and MTs only!"
+
+    if not entity_names_list:
+        print("No {}s to path-change in {}, skipping.".format(entity_name, collection_name))
         return
 
     print("Path changing of collection {} started".format(collection_name))
     dataset_collection = target_db.mongodb[collection_name]
 
-    query = {"name": {"$in": dataset_names_list}}  # dataset name
+    query = {"name": {"$in": entity_names_list}}  # dataset/MT name
 
     docs_count = dataset_collection.count_documents(query)
     docs = dataset_collection.find(query)
 
-    print("Found: {} documents for the path change. In progress ... ".format(docs_count))
+    print("Found: {} {} documents for the path change. In progress ... ".format(docs_count, entity_name))
 
     patched = 0
     failed_count = 0
     for item in docs:
         # item preview
         if verbose:
-            print("Changing paths for dataset {} v{} (_id={}).".format(item["name"], item["version"], item["_id"]))
+            print("Changing paths for {} '{}' v{} (_id={}).".format(entity_name, item["name"], item["version"], item["_id"]))
 
+        # common logic for datasets and mapping tables, but MTs do not have hdfsPublishPath
         hdfs_path = item["hdfsPath"]
-        hdfs_publish_path = item["hdfsPublishPath"]
+        updated_hdfs_path = map_path_from_svc(hdfs_path, mapping_prefix, mapping_svc_url)
 
-        updated_hdfs_path = map_path_from_svc(hdfs_path, mapping_prefix, mapping_svc_url,)
-        updated_hdfs_publish_path = map_path_from_svc(hdfs_publish_path, mapping_prefix, mapping_svc_url)
+        has_hdfs_publish_path = "hdfsPublishPath" in item
+        if has_hdfs_publish_path:
+            hdfs_publish_path = item["hdfsPublishPath"]
+            updated_hdfs_publish_path = map_path_from_svc(hdfs_publish_path, mapping_prefix, mapping_svc_url)
 
         if dryrun:
             print("  *would set* hdfsPath: {} -> {}".format(hdfs_path,  updated_hdfs_path))
-            print("  *would set* hdfsPublishPath: {} -> {}".format(hdfs_publish_path,  updated_hdfs_publish_path))
+            if has_hdfs_publish_path:
+                print("  *would set* hdfsPublishPath: {} -> {}".format(hdfs_publish_path,  updated_hdfs_publish_path))
             print("")
 
         else:
             try:
                 if verbose:
                     print("  *changing* hdfsPath: {} -> {}".format(hdfs_path,  updated_hdfs_path))
-                    print("  *changing* hdfsPublishPath: {} -> {}".format(hdfs_publish_path,  updated_hdfs_publish_path))
+
+                update_data = {
+                    "hdfsPath": updated_hdfs_path,
+                    "bakHdfsPath": hdfs_path
+                    # todo add migration tag to properties map
+                }
+
+                if has_hdfs_publish_path:
+                    update_data["hdfsPublishPath"] = updated_hdfs_publish_path
+                    update_data["bakHdfsPublishPath"] = hdfs_publish_path
+                    if verbose:
+                        print("  *changing* hdfsPublishPath: {} -> {}".format(hdfs_publish_path,  updated_hdfs_publish_path))
 
                 update_result = dataset_collection.update_one(
                     {"_id": item["_id"]},
-                    {"$set": {
-                        "hdfsPath": updated_hdfs_path,
-                        "hdfsPublishPath": updated_hdfs_publish_path,
-                        "bakHdfsPath": hdfs_path,
-                        "bakHdfsPublishPath": hdfs_publish_path
-                        # todo add migration tag to properties map
-                    }}
+                    {"$set": update_data}
                 )
-                if update_result.acknowledged:
-                    if verbose:
-                        print("Successfully changed path for dataset {} v{} (_id={}).".format(item["name"], item["version"], item["_id"]))
-                        print("")
+                if update_result.acknowledged and verbose:
+                    print("Successfully changed path for {} '{}' v{} (_id={}).".format(entity_name, item["name"], item["version"], item["_id"]))
+                    print("")
 
             except Exception as e:
-                print("Warning: Error while changing paths for dataset {} v{} (_id={}): {}".format(item["name"], item["version"], item["_id"], e))
+                print("Warning: Error while changing paths for {} '{}' v{} (_id={}): {}".format(entity_name, item["name"], item["version"], item["_id"], e))
                 failed_count += 1
             else:
                 patched += 1
 
-    print("Successfully migrated {} of {} entries, failed: {}".format(patched, docs_count, failed_count))
+    print("Successfully migrated {} of {} {} entries, failed: {}".format(patched, docs_count, entity_name, failed_count))
+    print("")
 
 
 def pathchange_collections_by_ds_names(target_db: MenasDb,
@@ -153,9 +165,13 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
     ds_names_found = target_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, migration_free_only=False)
     print('Dataset names to path change (actually found db): {}'.format(ds_names_found))
 
+    mapping_table_found_for_dss = target_db.get_distinct_mapping_tables_from_ds_names(ds_names_found, migration_free_only=False)
+    print('MTs to path change: {}'.format(mapping_table_found_for_dss))
 
     print("")
-    pathchange_datasets(target_db, DATASET_COLLECTION, ds_names_found, mapping_svc_url, mapping_prefix, dryrun)
+    pathchange_entities(target_db, DATASET_COLLECTION, "dataset", ds_names_found, mapping_svc_url, mapping_prefix, dryrun)
+    pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_svc_url, mapping_prefix, dryrun)
+
 
 def run(parsed_args: argparse.Namespace):
     target_conn_string = parsed_args.target
@@ -183,9 +199,6 @@ def run(parsed_args: argparse.Namespace):
 
     # debug # todo remove
     # print("res" + map_path_from_svc("/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN", mapping_service))
-
-    # todo do remapping for mapping tables, too
-    # mt_names = parsed_args.mtables
 
     pathchange_collections_by_ds_names(target_db, dataset_names, mapping_service, mapping_prefix, dryrun=dryrun)
 
