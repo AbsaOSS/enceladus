@@ -32,6 +32,8 @@ DEFAULT_MAPPING_SERVICE_URL = "xxx"
 
 DEFAULT_MAPPING_PREFIX = "s3a://"
 
+PATH_CHANGE_FREE_MONGO_FILTER = {"pathChanged": {"$exists": False}}
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog='dataset_paths_to_ecs',
@@ -89,7 +91,10 @@ def pathchange_entities(target_db: MenasDb, collection_name: str, entity_name: s
     print("Path changing of collection {} started".format(collection_name))
     dataset_collection = target_db.mongodb[collection_name]
 
-    query = {"name": {"$in": entity_names_list}}  # dataset/MT name
+    query =  {"$and": [
+        {"name": {"$in": entity_names_list}},  # dataset/MT name
+        PATH_CHANGE_FREE_MONGO_FILTER
+    ]}
 
     docs_count = dataset_collection.count_documents(query)
     docs = dataset_collection.find(query)
@@ -125,8 +130,8 @@ def pathchange_entities(target_db: MenasDb, collection_name: str, entity_name: s
 
                 update_data = {
                     "hdfsPath": updated_hdfs_path,
-                    "bakHdfsPath": hdfs_path
-                    # todo add migration tag to properties map
+                    "bakHdfsPath": hdfs_path,
+                    "pathChanged": True
                 }
 
                 if has_hdfs_publish_path:
@@ -136,7 +141,10 @@ def pathchange_entities(target_db: MenasDb, collection_name: str, entity_name: s
                         print("  *changing* hdfsPublishPath: {} -> {}".format(hdfs_publish_path,  updated_hdfs_publish_path))
 
                 update_result = dataset_collection.update_one(
-                    {"_id": item["_id"]},
+                    {"$and": [
+                        {"_id": item["_id"]},
+                        PATH_CHANGE_FREE_MONGO_FILTER
+                    ]},
                     {"$set": update_data}
                 )
                 if update_result.acknowledged and verbose:
