@@ -58,9 +58,6 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
                         nargs="+", help='list datasets names to change paths in')
-    # todo not used now
-    parser.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
-                        nargs="+", help='list mapping tables names to change paths in')
 
     return parser.parse_args()
 
@@ -197,17 +194,7 @@ def run(parsed_args: argparse.Namespace):
 
     target_db = MenasDb.from_connection_string(target_conn_string, target_db_name, alias="target db", verbose=verbose)
 
-    # todo could be used for real menas
-    # Checks raise MenasDbErrors
-    # print("Checking target db validity...")
-    # target_db.check_db_version()
-    # target_db.check_menas_collections_exist()
-
     dataset_names = parsed_args.datasets
-
-    # debug # todo remove
-    # print("res" + map_path_from_svc("/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN", mapping_service))
-
     pathchange_collections_by_ds_names(target_db, dataset_names, mapping_service, mapping_prefix, dryrun=dryrun)
 
     print("Done.")
