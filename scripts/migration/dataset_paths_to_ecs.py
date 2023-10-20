@@ -26,9 +26,6 @@ import requests
 
 
 DEFAULT_MAPPING_SERVICE_URL = "https://set-your-mapping-service-here.execute-api.af-south-1.amazonaws.com/dev/map"
-# Example usage of the service:
-# curl -X GET -d '{"hdfs_path":"/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN"}' 'https://my_service.amazonaws.com/dev/map'
-# {"ecs_path": "ursamajor123-abs1234-prod-edla-abc123-ke/publish/CNSMR_ACCNT/country_code=KEN/"}
 
 DEFAULT_MAPPING_PREFIX = "s3a://"
 
@@ -62,8 +59,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def map_path_from_svc(path: str, path_prefix_to_add: str, svc_url: str)-> str:
-    # session = requests.Session()
-    #response = session.post(url, auth=basic_auth, verify=http_verify)
+    # Example usage of the service:
+    # curl -X GET -d '{"hdfs_path":"/bigdatahdfs/datalake/publish/dm9/CNSMR_ACCNT/country_code=KEN"}' 'https://my_service.amazonaws.com/dev/map'
+    # {"ecs_path": "ursamajor123-abs1234-prod-edla-abc123-ke/publish/CNSMR_ACCNT/country_code=KEN/"}
 
     payload = "{\"hdfs_path\":\"" + path + "\"}"
     response = requests.get(svc_url, data=payload)
