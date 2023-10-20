@@ -220,5 +220,8 @@ if __name__ == '__main__':
     verbose = args.verbose
     run(args)
 
-    # example test-runs:
-    # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -v -d DM9_actn_Cd -t menas_remap_test
+    ## Examples runs:
+    # Dry-run example:
+    # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -d DM9_actn_Cd -t menas_remap_test -n -s https://my_service.amazonaws.com/dev/map
+    # Verbose run example, will use DEFAULT_MAPPING_SERVICE_URL on line 28:
+    # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -d XMSK083 -t menas_remap_test -v
