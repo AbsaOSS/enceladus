@@ -28,6 +28,7 @@ import requests
 DEFAULT_MAPPING_SERVICE_URL = "https://set-your-mapping-service-here.execute-api.af-south-1.amazonaws.com/dev/map"
 
 DEFAULT_MAPPING_PREFIX = "s3a://"
+DEFAULT_DATASETS_ONLY = False
 
 PATH_CHANGE_FREE_MONGO_FILTER = {"pathChanged": {"$exists": False}}
 
@@ -55,6 +56,10 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
                         nargs="+", help='list datasets names to change paths in')
+
+    parser.add_argument('-o', '--only-datasets', dest='onlydatasets', action='store_true', default=DEFAULT_DATASETS_ONLY,
+                        help="if specified, mapping table changes will NOT be done.")
+
 
     return parser.parse_args()
 
@@ -160,6 +165,7 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
                                        supplied_ds_names: List[str],
                                        mapping_svc_url: str,
                                        mapping_prefix: str,
+                                       onlydatasets: bool,
                                        dryrun: bool) -> None:
 
     if verbose:
@@ -168,12 +174,17 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
     ds_names_found = target_db.get_distinct_ds_names_from_ds_names(supplied_ds_names, migration_free_only=False)
     print('Dataset names to path change (actually found db): {}'.format(ds_names_found))
 
-    mapping_table_found_for_dss = target_db.get_distinct_mapping_tables_from_ds_names(ds_names_found, migration_free_only=False)
-    print('MTs to path change: {}'.format(mapping_table_found_for_dss))
+    if onlydatasets:
+        print("Configured *NOT* to path-change related mapping tables.")
+    else:
+        mapping_table_found_for_dss = target_db.get_distinct_mapping_tables_from_ds_names(ds_names_found, migration_free_only=False)
+        print('MTs to path change: {}'.format(mapping_table_found_for_dss))
+
 
     print("")
     pathchange_entities(target_db, DATASET_COLLECTION, "dataset", ds_names_found, mapping_svc_url, mapping_prefix, dryrun)
-    pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_svc_url, mapping_prefix, dryrun)
+    if not onlydatasets:
+        pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_svc_url, mapping_prefix, dryrun)
 
 
 def run(parsed_args: argparse.Namespace):
@@ -193,7 +204,8 @@ def run(parsed_args: argparse.Namespace):
     target_db = MenasDb.from_connection_string(target_conn_string, target_db_name, alias="target db", verbose=verbose)
 
     dataset_names = parsed_args.datasets
-    pathchange_collections_by_ds_names(target_db, dataset_names, mapping_service, mapping_prefix, dryrun=dryrun)
+    only_datasets = parsed_args.onlydatasets
+    pathchange_collections_by_ds_names(target_db, dataset_names, mapping_service, mapping_prefix, only_datasets, dryrun=dryrun)
 
     print("Done.")
 
