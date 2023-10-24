@@ -132,13 +132,13 @@ def data_update_to_nice_string(data_update: dict) -> str:
     # hdfsPath
     if "hdfsPath" in data_update and "bakHdfsPath" in data_update:
         hdfs_path = data_update["hdfsPath"]
-        bak_hdfs_path = data_update["hdfsPath"]
+        bak_hdfs_path = data_update["bakHdfsPath"]
         mappings.append(f"hdfsPath: {bak_hdfs_path} -> {hdfs_path}")
 
     # hdfsPublishPath
     if "hdfsPublishPath" in data_update and "bakHdfsPublishPath" in data_update:
         hdfs_publish_path = data_update["hdfsPublishPath"]
-        bak_hdfs_publish_path = data_update["hdfsPublishPath"]
+        bak_hdfs_publish_path = data_update["bakHdfsPublishPath"]
         mappings.append(f"hdfsPublishPath: {bak_hdfs_publish_path} -> {hdfs_publish_path}")
 
     return ", ".join(mappings)
@@ -268,4 +268,4 @@ if __name__ == '__main__':
     # Dry-run example:
     # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -d MyDataset1 AnotherDatasetB -t menas_remap_test -n -u https://my_service.amazonaws.com/dev/map
     # Verbose run example, will use DEFAULT_MAPPING_SERVICE_URL on line 28:
-    # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -d XMSK083 -t menas_remap_test -v
+    # python dataset_paths_to_ecs.py mongodb://localhost:27017/admin -d DatasetA -t menas_remap_test -v
