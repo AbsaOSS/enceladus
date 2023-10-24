@@ -255,6 +255,7 @@ def run(parsed_args: argparse.Namespace):
     pathchange_collections_by_ds_names(target_db, dataset_names, mapping_settings, only_datasets, dryrun=dryrun)
 
     print("Done.")
+    print("")
 
 
 if __name__ == '__main__':
