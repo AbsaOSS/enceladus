@@ -82,7 +82,7 @@ def map_path_from_svc(path: str, path_prefix_to_add: str, svc_url: str)-> str:
     response = requests.get(svc_url, data=payload)
 
     if response.status_code != 200:
-        raise Exception(f"Could load ECS path from {svc_url}, received error {response.status_code} {response.text}")
+        raise Exception(f"Could load ECS path from {svc_url} for hdfs_path='{path}', received error {response.status_code} {response.text}")
 
     wrapper = response.json()
     ecs_path = wrapper['ecs_path']
@@ -229,6 +229,10 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
     if not onlydatasets:
         pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_settings, dryrun)
 
+def pre_run_mapping_service_check(svc_url: str, path_prefix_to_add: str):
+    test_path = "/bigdatahdfs/datalake/publish/pcub/just/a/path/to/test/the/service/"
+
+    map_path_from_svc(test_path, path_prefix_to_add, svc_url)
 
 def run(parsed_args: argparse.Namespace):
     target_conn_string = parsed_args.target
@@ -247,6 +251,11 @@ def run(parsed_args: argparse.Namespace):
     print("Using mapping service at: {}".format(mapping_service))
     print('  target connection-string: {}'.format(target_conn_string))
     print('  target DB: {}'.format(target_db_name))
+
+    print('Testing mapping service availability first...')
+    pre_run_mapping_service_check(mapping_service, mapping_prefix)  # would throw on error, let's fail fast before mongo is tried
+    print('  ok')
+    print("")
 
     target_db = MenasDb.from_connection_string(target_conn_string, target_db_name, alias="target db", verbose=verbose)
 
