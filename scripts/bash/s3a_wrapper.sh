@@ -135,7 +135,7 @@ fi
 exit_code=$?
 
 # Run versions cleanup for publish on s3a
-if [[ $$hdfsPublishPath == s3a://* ]]; then
+if [[ $hdfsPublishPath == s3a://* ]]; then
   echo "We have publish versions to clean:"
   curl -X GET \
     --header "x-api-key: $ECS_API_KEY" \
@@ -152,7 +152,7 @@ else
   echo "No publish versions to clean."
 fi
 
-if [[ $$STD_HDFS_PATH == s3a://* ]]; then
+if [[ $STD_HDFS_PATH == s3a://* ]]; then
   STD_HDFS_PATH_FILLED="${STD_HDFS_PATH//\{0\}/$dataset_name}"
   STD_HDFS_PATH_FILLED="${STD_HDFS_PATH_FILLED//\{1\}/$dataset_version}"
   STD_HDFS_PATH_FILLED="${STD_HDFS_PATH_FILLED//\{2\}/$report_date}"
