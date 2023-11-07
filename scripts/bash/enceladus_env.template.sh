@@ -120,3 +120,10 @@ ADDITIONAL_JVM_EXECUTOR_CONF_CLUSTER="$KRB5_CONF_CLUSTER $TRUST_STORE_CLUSTER $T
 # Switch that tells the script if it should exit if it encounters unrecognized.
 # On true it prints an Error and exits with 127, on false it only prints a warning
 EXIT_ON_UNRECOGNIZED_OPTIONS="true"
+
+# Variables for the s3a wrapper implementation
+MENAS_API="http://localhost:8080/menas/api"
+ECS_API_BASE="https://localhost"
+ECS_API_KK="$ecs_api_base/kk"
+ECS_API_MAP="$ecs_api_base/map"
+ECS_API_KEY="MY_SECRET_KEY"
