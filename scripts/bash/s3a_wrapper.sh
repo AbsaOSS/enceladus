@@ -102,7 +102,7 @@ fi
 # Get Dataset info
 response=$(curl --negotiate -s -u : "$MENAS_API/dataset/$dataset_name/$dataset_version")
 if [ $? -ne 0 ]; then
-    echo "Curl command failed."
+    echo "Could not load dataset info - $dataset_name v $dataset_version from Menas at $MENAS_API"
     exit 1
 fi
 
