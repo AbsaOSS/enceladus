@@ -36,7 +36,7 @@ report_date=""
 report_version=""
 
 # The first argument is the name of the original script
-original_script="$(dirname "$0")/${1#./}"
+original_script="$(dirname "$0")/$(basename "$1")"
 
 # Shift the first argument so we can process the rest
 shift
@@ -53,7 +53,7 @@ other_args=()
 # Loop through arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --keytab)
+    --menas-auth-keytab)
       keytab="$2"
       shift # past argument
       shift # past value
@@ -92,16 +92,11 @@ echo "Dataset Version: $dataset_version"
 echo "Report Date: $report_date"
 echo "Report Version: $report_version"
 
-# Get principle stored in the keyfile
-PR=$(printf "read_kt %s\nlist" "$keytab" | ktutil | grep -Pio "(?<=\ )[A-Za-z0-9\-\._]*?(?=@)" | head -1)
-if [[ -n "$PR" ]]; then
-  # Initialize a ticket
-  kinit -k -t "$keytab" "$PR"
-  klist -e 2>&1
+# Run klist to check for a current Kerberos ticket
+if klist -s; then
+    echo "Kerberos ticket found."
 else
-  echoerr "Unable to determine principle from the keytab file $keytab."
-  echoerr "Please make sure Kerberos ticket is initialized by running 'kinit' manually."
-  exit 1
+    echo "No Kerberos ticket found or ticket is expired. Please run kinit."
 fi
 
 # Get Dataset info
@@ -126,9 +121,10 @@ fi
 
 # Run the original script with all the arguments
 "$original_script" "${other_args[@]}" \
-  --keytab "$keytab" \
+  --menas-auth-keytab "$keytab" \
   --dataset-name "$dataset_name" \
-  --report_date "$report_date" \
+  --dataset-version "$dataset_version" \
+  --report-date "$report_date" \
   --report-version "$report_version"
 
 # Save the exit code
@@ -139,14 +135,14 @@ if [[ $hdfsPublishPath == s3a://* ]]; then
   echo "We have publish versions to clean:"
   curl -X GET \
     --header "x-api-key: $ECS_API_KEY" \
-    -d "{\"ecs_path\":\"${hdfsPublishPath#s3a:/}\"}" \
+    -d "{\"ecs_path\":\"${hdfsPublishPath#s3a://}\"}" \
     $ECS_API_KK
-
+  echo
   curl -X DELETE \
     --header "x-api-key: $ECS_API_KEY" \
-    -d "{\"ecs_path\":\"${hdfsPublishPath#s3a:/}\"}" \
+    -d "{\"ecs_path\":\"${hdfsPublishPath#s3a://}\"}" \
     $ECS_API_KK
-
+  echo
   echo "Versions cleaned"
 else
   echo "No publish versions to clean."
@@ -161,14 +157,14 @@ if [[ $STD_HDFS_PATH == s3a://* ]]; then
   echo "We have tmp versions to clean:"
   curl -X GET \
     --header "x-api-key: $ECS_API_KEY" \
-    -d "{\"ecs_path\":\"${STD_HDFS_PATH_FILLED#s3a:/}\"}" \
+    -d "{\"ecs_path\":\"${STD_HDFS_PATH_FILLED#s3a://}\"}" \
     $ECS_API_KK
-
+  echo
   curl -X DELETE \
     --header "x-api-key: $ECS_API_KEY" \
-    -d "{\"ecs_path\":\"${STD_HDFS_PATH_FILLED#s3a:/}\"}" \
+    -d "{\"ecs_path\":\"${STD_HDFS_PATH_FILLED#s3a://}\"}" \
     $ECS_API_KK
-
+  echo
   echo "Versions cleaned"
 else
   echo "No std versions to clean."
