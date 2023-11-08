@@ -29,7 +29,7 @@ import requests
 DEFAULT_MAPPING_SERVICE_URL = "https://set-your-mapping-service-here.execute-api.af-south-1.amazonaws.com/dev/map"
 
 DEFAULT_MAPPING_PREFIX = "s3a://"
-DEFAULT_SKIP_PREFIX = "s3a://"
+DEFAULT_SKIP_PREFIXES = ["s3a://", "/tmp"]
 DEFAULT_DATASETS_ONLY = False
 
 MAPPING_FIELD_HDFS_PATH = "hdfsPath"
@@ -58,8 +58,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-p', '--mapping-prefix', dest="mappingprefix", default=DEFAULT_MAPPING_PREFIX,
                         help="This prefix will be prepended to mapped path by the Mapping service")
 
-    parser.add_argument('-s', '--skip-prefix', dest="skipprefix", default=DEFAULT_SKIP_PREFIX,
-                        help="Path with these prefix will be skipped from mapping")
+    parser.add_argument('-s', '--skip-prefixes', dest="skipprefixes", metavar="SKIP_PREFIX", default=DEFAULT_SKIP_PREFIXES,
+                        nargs="+", help="Path with these prefixes will be skipped from mapping")
 
     parser.add_argument('-f', '--fields-to-map', dest='fieldstomap', choices=[MAPPING_FIELD_HDFS_PATH, MAPPING_FIELD_HDFS_PUBLISH_PATH, MAPPING_FIELD_HDFS_ALL],
                         default=MAPPING_FIELD_HDFS_ALL, help="Map either item's 'hdfsPath', 'hdfsPublishPath' or 'all'")
@@ -94,7 +94,7 @@ def map_path_from_svc(path: str, path_prefix_to_add: str, svc_url: str)-> str:
 class MappingSettings:
     mapping_service_url: str
     mapping_prefix: str
-    skip_prefix: str
+    skip_prefixes: List[str]
     fields_to_map: str  # HDFS_MAPPING_FIELD_HDFS_*
 
 
@@ -103,7 +103,10 @@ def update_data_for_item(item: dict, mapping_settings: MappingSettings) -> dict:
     hdfs_to_be_path_changed = True if mapping_settings.fields_to_map in {MAPPING_FIELD_HDFS_PATH, MAPPING_FIELD_HDFS_ALL} else False
     hdfs_path = item["hdfsPath"]
 
-    if hdfs_to_be_path_changed and not hdfs_path.startswith(mapping_settings.skip_prefix):
+    def starts_with_one_of_prefixes(path: str, prefixes: List[str]) -> bool:
+        return any(path.startswith(prefix) for prefix in prefixes)
+
+    if hdfs_to_be_path_changed and not starts_with_one_of_prefixes(hdfs_path, mapping_settings.skip_prefixes):
         updated_hdfs_path = map_path_from_svc(hdfs_path, mapping_settings.mapping_prefix, mapping_settings.mapping_service_url)
         data_update = {
             "hdfsPath": updated_hdfs_path,
@@ -119,7 +122,7 @@ def update_data_for_item(item: dict, mapping_settings: MappingSettings) -> dict:
         hdfs_publish_path = item["hdfsPublishPath"]
         hdfs_publish_to_be_path_changed = True if mapping_settings.fields_to_map in {MAPPING_FIELD_HDFS_PUBLISH_PATH, MAPPING_FIELD_HDFS_ALL} else False
 
-        if hdfs_publish_to_be_path_changed and not hdfs_publish_path.startswith(mapping_settings.skip_prefix):
+        if hdfs_publish_to_be_path_changed and not starts_with_one_of_prefixes(hdfs_publish_path, mapping_settings.skip_prefixes):
             updated_hdfs_publish_path = map_path_from_svc(hdfs_publish_path, mapping_settings.mapping_prefix, mapping_settings.mapping_service_url)
             data_update["hdfsPublishPath"] = updated_hdfs_publish_path
             data_update["bakHdfsPublishPath"] = hdfs_publish_path
@@ -242,9 +245,9 @@ def run(parsed_args: argparse.Namespace):
 
     mapping_service = args.mappingservice
     mapping_prefix = args.mappingprefix
-    skip_prefix = args.skipprefix
+    skip_prefixes = args.skipprefixes
     fields_to_map = args.fieldstomap # argparse allow only one of HDFS_MAPPING_FIELD_HDFS_*
-    mapping_settings  = MappingSettings(mapping_service, mapping_prefix, skip_prefix, fields_to_map)
+    mapping_settings  = MappingSettings(mapping_service, mapping_prefix, skip_prefixes, fields_to_map)
 
     print('Menas mongo ECS paths mapping')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
