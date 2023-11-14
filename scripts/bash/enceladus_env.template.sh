@@ -124,6 +124,6 @@ EXIT_ON_UNRECOGNIZED_OPTIONS="true"
 # Variables for the s3a wrapper implementation
 MENAS_API="http://localhost:8080/menas/api"
 ECS_API_BASE="https://localhost"
-ECS_API_KK="$ecs_api_base/kk"
-ECS_API_MAP="$ecs_api_base/map"
+ECS_API_KK="$ECS_API_BASE/kk"
+ECS_API_BUCKET="$ECS_API_BASE/bucket"
 ECS_API_KEY="MY_SECRET_KEY"
