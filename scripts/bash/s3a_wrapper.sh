@@ -12,9 +12,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#!/bin/bash
+
+# This is a wrapper script for Enceladus run scripts.
+# It is used to resolve the paths to the JCEKS files and
+# to clean up the versions in Dell ECS after the run.
+# To use it just prepend your Enceladus run script by this script
+# Example:
+# ./s3a_wrapper.sh run_standardization_conformance.sh \
+#     --dataset-name "MyDataset"
+#     --dataset-version 1
+#     --report-date "2018-01-01"
+#     --report-version 1
+#
+# If the dataset is published to S3A, the script will find the JCEKS file on its own.
+# If the dataset is not published to S3A, the script will just pass the arguments to the enceladus run script.
+# If the dataset is published to S3A and you pass --jceks-path argument, the script will use the provided JCEKS conf.
+# Format of the --jceks-path argument is:
+#   "spark.hadoop.fs.s3a.bucket.$BUCKET_NAME.security.credential.provider.path=jceks:$JCEKS_PATH"
+#
+# Requirements:
+#   - jq
+#   - curl
+#   - klist
 
 set -e
+
+# Run klist to check for a current Kerberos ticket
+if klist -s; then
+    echo "Kerberos ticket found."
+else
+    echo "No Kerberos ticket found or ticket is expired. Please run kinit."
+fi
 
 # Source environment variables
 source "$(dirname "$0")/enceladus_env.sh"
