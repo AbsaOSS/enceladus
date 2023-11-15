@@ -41,7 +41,7 @@ set -e
 if klist -s; then
     echo "Kerberos ticket found."
 else
-    echo "No Kerberos ticket found or ticket is expired. Please run kinit."
+    error_exit "No Kerberos ticket found or ticket is expired. Please run kinit."
 fi
 
 # Source environment variables
