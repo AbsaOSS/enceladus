@@ -251,6 +251,7 @@ def run(parsed_args: argparse.Namespace):
 
     print('Menas mongo ECS paths mapping')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
+    print('Skipping prefixes: {}'.format(skip_prefixes))
     print("Using mapping service at: {}".format(mapping_service))
     print('  target connection-string: {}'.format(target_conn_string))
     print('  target DB: {}'.format(target_db_name))
