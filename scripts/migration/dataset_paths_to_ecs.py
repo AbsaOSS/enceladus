@@ -44,9 +44,9 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument('-n', '--dryrun', action='store_true', default=DEFAULT_DRYRUN,
-                        help="if specified, skip the actual changes, just print what would be done.")
+                        help="If specified, skip the actual changes, just print what would be done.")
     parser.add_argument('-v', '--verbose', action="store_true", default=DEFAULT_VERBOSE,
-                        help="prints extra information while running.")
+                        help="Prints extra information while running.")
 
     parser.add_argument('target', metavar="TARGET", help="connection string for target MongoDB")
     parser.add_argument('-t', '--target-database', dest="targetdb", default=DEFAULT_DB_NAME,
@@ -56,19 +56,19 @@ def parse_args() -> argparse.Namespace:
                         help="Service URL to use for path change mapping.")
 
     parser.add_argument('-p', '--mapping-prefix', dest="mappingprefix", default=DEFAULT_MAPPING_PREFIX,
-                        help="This prefix will be prepended to mapped path by the Mapping service")
+                        help="This prefix will be prepended to mapped path by the Mapping service.")
 
     parser.add_argument('-s', '--skip-prefixes', dest="skipprefixes", metavar="SKIP_PREFIX", default=DEFAULT_SKIP_PREFIXES,
-                        nargs="+", help="Path with these prefixes will be skipped from mapping")
+                        nargs="+", help="Paths with these prefixes will be skipped from mapping.")
 
     parser.add_argument('-f', '--fields-to-map', dest='fieldstomap', choices=[MAPPING_FIELD_HDFS_PATH, MAPPING_FIELD_HDFS_PUBLISH_PATH, MAPPING_FIELD_HDFS_ALL],
-                        default=MAPPING_FIELD_HDFS_ALL, help="Map either item's 'hdfsPath', 'hdfsPublishPath' or 'all'")
+                        default=MAPPING_FIELD_HDFS_ALL, help="Map either item's 'hdfsPath', 'hdfsPublishPath' or 'all'.")
 
     parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                        nargs="+", help='list datasets names to change paths in')
+                        nargs="+", help='list datasets names to change paths in (hint: MTs are also datasets).')
 
     parser.add_argument('-o', '--only-datasets', dest='onlydatasets', action='store_true', default=DEFAULT_DATASETS_ONLY,
-                        help="if specified, mapping table changes will NOT be done.")
+                        help="if specified, only dataset path changes will be done (not MTs).")
 
 
     return parser.parse_args()
