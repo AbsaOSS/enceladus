@@ -73,6 +73,7 @@ AUTOCLEAN_STD_FOLDER=""
 PERSIST_STORAGE_LEVEL=""
 HELP_CALL="0"
 ASYNCHRONOUSMODE="0"
+JCEKS_PATH=""
 
 # Spark configuration options
 CONF_SPARK_EXECUTOR_MEMORY_OVERHEAD=""
@@ -326,6 +327,10 @@ case $key in
     ASYNCHRONOUSMODE="1"
     shift
     ;;
+  --jceks-path)
+    JCEKS_PATH="$2"
+    shift 2 # past argument and value
+    ;;
   *)    # unknown option
     OTHER_PARAMETERS+=("$1") # save it in an array for later
     shift # past argument
@@ -520,6 +525,9 @@ fi
 CMD_LINE="${CMD_LINE} ${ADDITIONAL_SPARK_CONF} ${SPARK_CONF}"
 CMD_LINE="${CMD_LINE} --conf \"${JVM_CONF} ${ADDITIONAL_JVM_CONF}\""
 CMD_LINE="${CMD_LINE} --conf \"spark.executor.extraJavaOptions=${ADDITIONAL_JVM_EXECUTOR_CONF}\""
+if [[ -n $JCEKS_PATH ]]; then
+  CMD_LINE="${CMD_LINE} --conf \"${JCEKS_PATH}\""
+fi
 CMD_LINE="${CMD_LINE} --class ${CLASS} ${JAR}"
 
 # Adding command line parameters that go AFTER the jar file
