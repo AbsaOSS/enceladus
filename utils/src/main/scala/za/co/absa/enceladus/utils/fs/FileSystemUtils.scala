@@ -37,7 +37,7 @@ object FileSystemUtils {
     path.toSimpleS3Location match {
 
       case Some(s3Location) => // s3 over hadoop fs api
-        val s3BucketUri: String = s"s3://${s3Location.bucketName}" // s3://<bucket>
+        val s3BucketUri: String = s"${s3Location.protocol}://${s3Location.bucketName}" // s3://<bucket>
         val s3uri: URI = new URI(s3BucketUri)
         FileSystem.get(s3uri, hadoopConf)
 
