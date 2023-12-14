@@ -54,11 +54,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-f', '--fields-to-map', dest='fieldstomap', choices=[MAPPING_FIELD_HDFS_PATH, MAPPING_FIELD_HDFS_PUBLISH_PATH, MAPPING_FIELD_HDFS_ALL],
                         default=MAPPING_FIELD_HDFS_ALL, help="Rollback either item's 'hdfsPath', 'hdfsPublishPath' or 'all'.")
 
-    parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                        nargs="+", help='list datasets names to rollback path changes in (hint: MTs are also datasets).')
-
     parser.add_argument('-o', '--only-datasets', dest='onlydatasets', action='store_true', default=DEFAULT_DATASETS_ONLY,
                         help="if specified, only dataset rollback path changes will be done (not MTs).")
+
+    input_options_group = parser.add_mutually_exclusive_group(required=True)
+    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
+                                     nargs="+", help='list datasets names to rollback path changes in')
+    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
+                                     nargs="+", help='list mapping tables names to rollback path changes in')
 
 
     return parser.parse_args()
@@ -218,6 +221,22 @@ def rollback_pathchange_collections_by_ds_names(target_db: MenasDb,
         rollback_pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_settings, dryrun)
 
 
+
+def rollback_pathchange_collections_by_mt_names(target_db: MenasDb,
+                                                supplied_mt_names: List[str],
+                                                mapping_settings: RollbackSettings,
+                                                dryrun: bool) -> None:
+
+    if verbose:
+        print("Mapping table names given: {}".format(supplied_mt_names))
+
+    mt_names_found = target_db.get_distinct_mt_names_from_mt_names(supplied_mt_names, migration_free_only=False)
+    print('Mapping table names to rollback path-changes (actually found db): {}'.format(mt_names_found))
+
+    print("")
+    rollback_pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mt_names_found, mapping_settings, dryrun)
+
+
 def run(parsed_args: argparse.Namespace):
     target_conn_string = parsed_args.target
     target_db_name = parsed_args.targetdb
@@ -239,7 +258,22 @@ def run(parsed_args: argparse.Namespace):
 
     dataset_names = parsed_args.datasets
     only_datasets = parsed_args.onlydatasets
-    rollback_pathchange_collections_by_ds_names(target_db, dataset_names, rollback_settings, only_datasets, dryrun=dryrun)
+    mt_names = parsed_args.mtables
+
+    if dataset_names:
+        print('Dataset names supplied: {}'.format(dataset_names))
+        rollback_pathchange_collections_by_ds_names(target_db, dataset_names, rollback_settings, only_datasets, dryrun=dryrun)
+
+    elif mt_names:
+        if only_datasets:
+            raise Exception("Invalid run options: -o/--only-datasets cannot be used with -m/--mapping-tables, only for -d/--datasets")
+
+        print('Mapping table names supplied: {}'.format(mt_names))
+        rollback_pathchange_collections_by_mt_names(target_db, mt_names, rollback_settings, dryrun=dryrun)
+
+    else:
+        # should not happen (-d/-m is exclusive and required)
+        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...)..,  MT names (-m mt1 mt2 ... ) must be given.")
 
     print("Done.")
     print("")

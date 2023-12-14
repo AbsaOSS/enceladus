@@ -64,12 +64,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('-f', '--fields-to-map', dest='fieldstomap', choices=[MAPPING_FIELD_HDFS_PATH, MAPPING_FIELD_HDFS_PUBLISH_PATH, MAPPING_FIELD_HDFS_ALL],
                         default=MAPPING_FIELD_HDFS_ALL, help="Map either item's 'hdfsPath', 'hdfsPublishPath' or 'all'.")
 
-    parser.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
-                        nargs="+", help='list datasets names to change paths in (hint: MTs are also datasets).')
-
     parser.add_argument('-o', '--only-datasets', dest='onlydatasets', action='store_true', default=DEFAULT_DATASETS_ONLY,
-                        help="if specified, only dataset path changes will be done (not MTs).")
+                        help="if specified, only dataset path changes will be done (not MTs). Cannot be used with -m/--mapping-tables")
 
+
+    input_options_group = parser.add_mutually_exclusive_group(required=True)
+    input_options_group.add_argument('-d', '--datasets', dest='datasets', metavar="DATASET_NAME", default=[],
+                                     nargs="+", help='list datasets names to change paths in')
+    input_options_group.add_argument('-m', '--mapping-tables', dest="mtables", metavar="MTABLE_NAME", default=[],
+                                     nargs="+", help='list mapping tables names to change paths in')
 
     return parser.parse_args()
 
@@ -232,6 +235,21 @@ def pathchange_collections_by_ds_names(target_db: MenasDb,
     if not onlydatasets:
         pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mapping_table_found_for_dss, mapping_settings, dryrun)
 
+def pathchange_collections_by_mt_names(target_db: MenasDb,
+                                       supplied_mt_names: List[str],
+                                       mapping_settings: MappingSettings,
+                                       dryrun: bool) -> None:
+
+    if verbose:
+        print("Mapping table names given: {}".format(supplied_mt_names))
+
+    mt_names_found = target_db.get_distinct_mt_names_from_mt_names(supplied_mt_names, migration_free_only=False)
+    print('Mapping table names to path change (actually found db): {}'.format(mt_names_found))
+
+    print("")
+    pathchange_entities(target_db, MAPPING_TABLE_COLLECTION, "mapping table", mt_names_found, mapping_settings, dryrun)
+
+
 def pre_run_mapping_service_check(svc_url: str, path_prefix_to_add: str):
     test_path = "/bigdatahdfs/datalake/publish/pcub/just/a/path/to/test/the/service/"
 
@@ -265,7 +283,22 @@ def run(parsed_args: argparse.Namespace):
 
     dataset_names = parsed_args.datasets
     only_datasets = parsed_args.onlydatasets
-    pathchange_collections_by_ds_names(target_db, dataset_names, mapping_settings, only_datasets, dryrun=dryrun)
+    mt_names = parsed_args.mtables
+
+    if dataset_names:
+        print('Dataset names supplied: {}'.format(dataset_names))
+        pathchange_collections_by_ds_names(target_db, dataset_names, mapping_settings, only_datasets, dryrun=dryrun)
+
+    elif mt_names:
+        if only_datasets:
+            raise Exception("Invalid run options: -o/--only-datasets cannot be used with -m/--mapping-tables, only for -d/--datasets")
+
+        print('Mapping table names supplied: {}'.format(mt_names))
+        pathchange_collections_by_mt_names(target_db, mt_names, mapping_settings, dryrun=dryrun)
+
+    else:
+        # should not happen (-d/-m is exclusive and required)
+        raise Exception("Invalid run options: DS names (-d ds1 ds2 ...)..,  MT names (-m mt1 mt2 ... ) must be given.")
 
     print("Done.")
     print("")

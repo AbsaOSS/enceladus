@@ -101,6 +101,9 @@ class MenasDb(object):
     def get_distinct_ds_names_from_ds_names(self, ds_names: List[str], migration_free_only: bool) -> List[str]:
         return self.get_distinct_entities_ids(ds_names, DATASET_COLLECTION, migration_free_only)
 
+    def get_distinct_mt_names_from_mt_names(self, mt_names: List[str], migration_free_only: bool) -> List[str]:
+        return self.get_distinct_entities_ids(mt_names, MAPPING_TABLE_COLLECTION, migration_free_only)
+
     def get_distinct_schema_names_from_schema_names(self, schema_names: List[str],
                                                     migration_free_only: bool) -> List[str]:
         return self.get_distinct_entities_ids(schema_names, SCHEMA_COLLECTION, migration_free_only)
