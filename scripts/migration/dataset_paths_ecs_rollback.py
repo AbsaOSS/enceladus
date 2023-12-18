@@ -137,7 +137,7 @@ def data_update_to_nice_string(data_update: dict) -> str:
 def rollback_pathchange_entities(target_db: MenasDb, collection_name: str, entity_name: str, entity_names_list: List[str],
                                  mapping_settings: RollbackSettings, dryrun: bool) -> None:
 
-    assert entity_name == "dataset" or entity_name == "mapping table" , "this method supports datasets and MTs only!"
+    assert entity_name == "dataset" or entity_name == "mapping table", "this method supports datasets and MTs only!"
 
     if not entity_names_list:
         print("No {}s to rollback path-changes in {}, skipping.".format(entity_name, collection_name))
