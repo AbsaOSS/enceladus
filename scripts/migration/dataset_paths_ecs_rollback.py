@@ -244,8 +244,8 @@ def run(parsed_args: argparse.Namespace):
     dryrun = args.dryrun  # if set, only path change rollback description will be printed, no actual patching will run
 
     skip_prefixes = args.skipprefixes
-    fields_to_map = args.fieldstomap # argparse allow only one of HDFS_MAPPING_FIELD_HDFS_*
-    rollback_settings  = RollbackSettings(skip_prefixes, fields_to_map)
+    fields_to_map = args.fieldstomap  # argparse allow only one of HDFS_MAPPING_FIELD_HDFS_*
+    rollback_settings = RollbackSettings(skip_prefixes, fields_to_map)
 
     print('Menas mongo ECS paths mapping ROLLBACK')
     print('Running with settings: dryrun={}, verbose={}'.format(dryrun, verbose))
