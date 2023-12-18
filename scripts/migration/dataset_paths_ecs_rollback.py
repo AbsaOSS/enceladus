@@ -252,8 +252,6 @@ def run(parsed_args: argparse.Namespace):
     print('Skipping prefixes: {}'.format(skip_prefixes))
     print('  target connection-string: {}'.format(target_conn_string))
     print('  target DB: {}'.format(target_db_name))
-
-
     target_db = MenasDb.from_connection_string(target_conn_string, target_db_name, alias="target db", verbose=verbose)
 
     dataset_names = parsed_args.datasets
