@@ -146,7 +146,7 @@ def rollback_pathchange_entities(target_db: MenasDb, collection_name: str, entit
     print("Rollbacking path-change of collection {} started".format(collection_name))
     dataset_collection = target_db.mongodb[collection_name]
 
-    query =  {"$and": [
+    query = {"$and": [
         {"name": {"$in": entity_names_list}}  # dataset/MT name
     ]}
 
