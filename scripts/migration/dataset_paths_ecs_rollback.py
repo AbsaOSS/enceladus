@@ -190,7 +190,8 @@ def rollback_pathchange_entities(target_db: MenasDb, collection_name: str, entit
                     patched += 1
         else:
             if verbose:
-                print("Nothing left to rollback for {} '{}' v{} (_id={}).".format(entity_name, item["name"], item["version"], item["_id"]))
+                print("  Nothing left to rollback for {} '{}' v{} (_id={}).".format(entity_name, item["name"], item["version"], item["_id"]))
+                print("")
 
     print("Successfully rollbacked {} of {} {} entries, failed: {}".format(patched, docs_count, entity_name, failed_count))
     print("")
