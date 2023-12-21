@@ -19,7 +19,9 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.{ResourceAccessException, RestClientException}
 import za.co.absa.enceladus.dao.rest.CrossHostApiCaller.logger
-import za.co.absa.enceladus.dao.{DaoException, RetryableException}
+import za.co.absa.enceladus.dao.RestApiException
+import za.co.absa.enceladus.dao.RetryableException._
+import za.co.absa.enceladus.dao.OptionallyRetryableException._
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Random, Try}
@@ -30,24 +32,56 @@ object CrossHostApiCaller {
 
   final val DefaultUrlsRetryCount: Int = 0
 
-  private def createInstance(apiBaseUrls: Seq[String], urlsRetryCount: Int, startWith: Option[Int]): CrossHostApiCaller = {
+  private def createInstance(
+      apiBaseUrls: Seq[String],
+      urlsRetryCount: Int,
+      startWith: Option[Int],
+      optionallyRetryableExceptions: Set[OptRetryableExceptions],
+      retryBackoffStrategy: Int => Int
+  ): CrossHostApiCaller = {
     val maxTryCount: Int = (if (urlsRetryCount < 0) {
-      logger.warn(s"Urls retry count cannot be negative ($urlsRetryCount). Using default number of retries instead ($DefaultUrlsRetryCount).") //scalastyle:ignore maxLineLength
+      logger.warn(
+        s"Urls retry count cannot be negative ($urlsRetryCount). " +
+        s"Using default number of retries instead ($DefaultUrlsRetryCount)."
+      )
       DefaultUrlsRetryCount
     } else {
       urlsRetryCount
     }) + 1
     val currentHostIndex = startWith.getOrElse(Random.nextInt(Math.max(apiBaseUrls.size, 1)))
-    new CrossHostApiCaller(apiBaseUrls.toVector, maxTryCount, currentHostIndex)
+    new CrossHostApiCaller(
+      apiBaseUrls.toVector, maxTryCount, currentHostIndex, optionallyRetryableExceptions, retryBackoffStrategy
+    )
   }
 
-  def apply(apiBaseUrls: Seq[String], urlsRetryCount: Int = DefaultUrlsRetryCount, startWith: Option[Int] = None): CrossHostApiCaller = {
-    createInstance(apiBaseUrls, urlsRetryCount, startWith)
+  def apply(
+      apiBaseUrls: Seq[String],
+      urlsRetryCount: Int = DefaultUrlsRetryCount,
+      startWith: Option[Int] = None,
+      optionallyRetryableExceptions: Set[OptRetryableExceptions] = Set.empty,
+      retryBackoffStrategy: Int => Int = quadraticRandomizedRetryBackoffStrategy
+   ): CrossHostApiCaller = {
+    createInstance(apiBaseUrls, urlsRetryCount, startWith, optionallyRetryableExceptions, retryBackoffStrategy)
+  }
+
+  private[rest] def quadraticRandomizedRetryBackoffStrategy(retryNumber: Int): Int = {
+    val inSeconds: Double = retryNumber * retryNumber + retryNumber * Random.nextDouble()
+    val inMillis = inSeconds * 1000
+    inMillis.toInt
   }
 }
 
-protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCount: Int, private var currentHostIndex: Int)
+protected class CrossHostApiCaller private(
+    apiBaseUrls: Vector[String],
+    maxTryCount: Int,
+    private var currentHostIndex: Int,
+    optionallyRetryableExceptions: Set[OptRetryableExceptions],
+    retryBackoffStrategy: Int => Int
+)
   extends ApiCaller {
+
+  private val retryableExceptions: Set[Class[_ <: RestApiException]] = optionallyRetryableExceptions ++
+    Set(classOf[DaoException], classOf[AutoRecoverableException])
 
   def baseUrlsCount: Int = apiBaseUrls.size
 
@@ -60,6 +94,7 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCo
 
 
   def call[T](fn: String => T): T = {
+
     def logFailure(error: Throwable, url: String, attemptNumber: Int, nextUrl: Option[String]): Unit = {
       val rootCause = ExceptionUtils.getRootCauseMessage(error)
       val switching = nextUrl.map(s => s", switching host to $s").getOrElse("")
@@ -68,20 +103,28 @@ protected class CrossHostApiCaller private(apiBaseUrls: Vector[String], maxTryCo
 
     @tailrec
     def attempt(url: String, attemptNumber: Int, urlsTried: Int): Try[T] = {
-      val result =Try {
+      val result = Try {
         fn(url)
       }.recoverWith {
-        case e @ (_: ResourceAccessException | _: RestClientException) => Failure(DaoException("Server non-responsive", e))
+        case e @ (_: ResourceAccessException | _: RestClientException) =>
+          Failure(AutoRecoverableException("Server non-responsive", e))
       }
+
       //using match instead of recoverWith to make the function @tailrec
       result match {
-        case Failure(e: RetryableException) if attemptNumber < maxTryCount =>
+        case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && attemptNumber < maxTryCount =>
           logFailure(e, url, attemptNumber, None)
+          val waitForMilliseconds = retryBackoffStrategy(attemptNumber)
+          Thread.sleep(waitForMilliseconds)
           attempt(url, attemptNumber + 1, urlsTried)
-        case Failure(e: RetryableException) if urlsTried < baseUrlsCount =>
+
+        case Failure(e: RestApiException) if retryableExceptions.contains(e.getClass) && urlsTried < baseUrlsCount =>
           val nextUrl = nextBaseUrl()
           logFailure(e, url, attemptNumber, Option(nextUrl))
+          val waitForMilliseconds = retryBackoffStrategy(1) // to have small delay between trying different URLs
+          Thread.sleep(waitForMilliseconds)
           attempt(nextUrl, 1, urlsTried + 1)
+
         case _ => result
       }
     }

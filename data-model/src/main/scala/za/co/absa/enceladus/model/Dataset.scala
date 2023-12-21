@@ -16,43 +16,81 @@
 package za.co.absa.enceladus.model
 
 import java.time.ZonedDateTime
-
 import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import io.swagger.v3.oas.annotations.media.{ArraySchema, Schema => AosSchema}
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.versionedModel.VersionedModel
-import za.co.absa.enceladus.model.menas.audit._
-import za.co.absa.enceladus.model.menas.MenasReference
-import za.co.absa.enceladus.model.menas.scheduler.oozie.OozieSchedule
+import za.co.absa.enceladus.model.backend.audit._
+import za.co.absa.enceladus.model.backend.Reference
+import za.co.absa.enceladus.model.backend.scheduler.oozie.OozieSchedule
 
-case class Dataset(name: String,
-                   version: Int = 1,
-                   description: Option[String] = None,
+import scala.annotation.meta.field
+import scala.beans.BeanProperty
 
-                   hdfsPath: String,
-                   hdfsPublishPath: String,
+case class Dataset(
+  @(AosSchema@field)(example = "datasetA")
+  @BeanProperty name: String,
 
-                   schemaName: String,
-                   schemaVersion: Int,
+  @(AosSchema@field)(example = "1")
+  @BeanProperty version: Int = 1, // @BP generates getter (and setter) -> swagger is able to correctly report this field
 
-                   dateCreated: ZonedDateTime = ZonedDateTime.now(),
-                   userCreated: String = null,
+  @(AosSchema@field)(implementation = classOf[String], example = "dataset description")
+  @BeanProperty description: Option[String] = None,
 
-                   lastUpdated: ZonedDateTime = ZonedDateTime.now(),
-                   userUpdated: String = null,
+  @(AosSchema@field)(example = "/input/path/for/dataset")
+  @BeanProperty hdfsPath: String,
 
-                   disabled: Boolean = false,
-                   dateDisabled: Option[ZonedDateTime] = None,
-                   userDisabled: Option[String] = None,
+  @(AosSchema@field)(example = "/output/path/for/dataset")
+  @BeanProperty hdfsPublishPath: String,
 
-                   locked: Option[Boolean] = None,
-                   dateLocked: Option[ZonedDateTime] = None,
-                   userLocked: Option[String] = None,
-                   conformance: List[ConformanceRule],
-                   parent: Option[MenasReference] = None,
-                   schedule: Option[OozieSchedule] = None,
-                   properties: Option[Map[String, String]] = Some(Map.empty),
-                   propertiesValidation: Option[Validation] = None
-                  ) extends VersionedModel with Auditable[Dataset] {
+  @(AosSchema@field)(example = "schemaA")
+  @BeanProperty schemaName: String,
+
+  @(AosSchema@field)(example = "1")
+  @BeanProperty schemaVersion: Int,
+
+  @BeanProperty dateCreated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user1")
+  @BeanProperty userCreated: String = null, //scalastyle:ignore null
+
+  @BeanProperty lastUpdated: ZonedDateTime = ZonedDateTime.now(),
+  @(AosSchema@field)(example = "user2")
+  @BeanProperty userUpdated: String = null, //scalastyle:ignore null
+
+  @(AosSchema@field)(example = "false")
+  @BeanProperty disabled: Boolean = false,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateDisabled: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user3")
+  @BeanProperty userDisabled: Option[String] = None,
+
+  @(AosSchema@field)(implementation = classOf[Boolean], example = "true")
+  @BeanProperty locked: Option[Boolean] = None,
+
+  @(AosSchema@field)(implementation = classOf[ZonedDateTime])
+  @BeanProperty dateLocked: Option[ZonedDateTime] = None,
+
+  @(AosSchema@field)(implementation = classOf[String], example = "user4")
+  @BeanProperty userLocked: Option[String] = None,
+
+  @(ArraySchema@field)(schema = new AosSchema(implementation = classOf[ConformanceRule]))
+  @BeanProperty conformance: List[ConformanceRule] = List.empty,
+
+  @(AosSchema@field)(implementation = classOf[Reference])
+  @BeanProperty parent: Option[Reference] = None,
+
+  @(AosSchema@field)(implementation = classOf[OozieSchedule])
+  @BeanProperty schedule: Option[OozieSchedule] = None, //To be used for backward versioning compatibility
+
+  @(AosSchema@field)(implementation = classOf[java.util.Map[String, String]],
+    example = "{\"field1\": \"value1\", \"field2\": \"value2\"}")
+  @BeanProperty properties: Option[Map[String, String]] = Some(Map.empty),
+
+  @(AosSchema@field)(implementation = classOf[Validation])
+  @BeanProperty propertiesValidation: Option[Validation] = None
+) extends VersionedModel with Auditable[Dataset] {
 
   override def setVersion(value: Int): Dataset = this.copy(version = value)
   override def setDisabled(disabled: Boolean): VersionedModel = this.copy(disabled = disabled)
@@ -69,12 +107,11 @@ case class Dataset(name: String,
 
   def setSchemaName(newName: String): Dataset = this.copy(schemaName = newName)
   def setSchemaVersion(newVersion: Int): Dataset = this.copy(schemaVersion = newVersion)
-  def setHDFSPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
-  def setHDFSPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
+  def setHdfsPath(newPath: String): Dataset = this.copy(hdfsPath = newPath)
+  def setHdfsPublishPath(newPublishPath: String): Dataset = this.copy(hdfsPublishPath = newPublishPath)
   def setConformance(newConformance: List[ConformanceRule]): Dataset = this.copy(conformance = newConformance)
-  def setSchedule(newSchedule: Option[OozieSchedule]): Dataset = this.copy(schedule = newSchedule)
   def setProperties(newProperties: Option[Map[String, String]]): Dataset = this.copy(properties = newProperties)
-  override def setParent(newParent: Option[MenasReference]): Dataset = this.copy(parent = newParent)
+  override def setParent(newParent: Option[Reference]): Dataset = this.copy(parent = newParent)
 
   def propertiesAsMap: Map[String, String] = properties.getOrElse(Map.empty)
 
@@ -91,7 +128,7 @@ case class Dataset(name: String,
   def decode: Dataset = substituteMappingConformanceRuleCharacter(this, replaceInMapKeys(MappingConformanceRule.DotReplacementSymbol, '.'))
 
   override val createdMessage: AuditTrailEntry = AuditTrailEntry(
-    menasRef = MenasReference(collection = None, name = name, version = version),
+    ref = Reference(collection = None, name = name, version = version),
     updatedBy = userUpdated, updated = lastUpdated, changes = Seq(
       AuditTrailChange(field = "", oldValue = None, newValue = None, s"Dataset $name created."))
   )
@@ -113,7 +150,7 @@ case class Dataset(name: String,
   }
 
   override def getAuditMessages(newRecord: Dataset): AuditTrailEntry = {
-    AuditTrailEntry(menasRef = MenasReference(collection = None, name = newRecord.name, version = newRecord.version),
+    AuditTrailEntry(ref = Reference(collection = None, name = newRecord.name, version = newRecord.version),
       updated = newRecord.lastUpdated,
       updatedBy = newRecord.userUpdated,
       changes = super.getPrimitiveFieldsAudit(newRecord,
@@ -131,7 +168,7 @@ case class Dataset(name: String,
     val conformanceJsonList: ArrayNode = objectMapperBase.valueToTree(conformance.toArray)
     val propertiesJsonList: ObjectNode = objectMapperBase.valueToTree(propertiesAsMap)
 
-    val objectItemMapper = objectMapperRoot.`with`("item")
+    val objectItemMapper = objectMapperRoot.withObject("/item")
 
     objectItemMapper.put("name", name)
     description.map(d => objectItemMapper.put("description", d))

@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common
 
 import za.co.absa.atum.core.{Atum, ControlType}
 import za.co.absa.atum.model.Checkpoint
-import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+import za.co.absa.commons.lang.extensions.OptionExtension._
 import za.co.absa.enceladus.utils.validation.ValidationException
 
 import scala.util.{Failure, Success, Try}

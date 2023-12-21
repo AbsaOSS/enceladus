@@ -15,7 +15,7 @@
 
 class FilterTreeUtils {
 
-  static #applyToFilterData(filterData, applyFn, mutable) {
+  static applyToFilterData(filterData, applyFn, mutable) {
     if (!filterData) {
       return filterData; // when empty, return as-is
     }
@@ -45,7 +45,7 @@ class FilterTreeUtils {
    * @returns copy of the `filterData` root node with changes applied
    */
   static applyToFilterDataImmutably(filterData, applyFn) {
-    return this.#applyToFilterData(filterData, applyFn, false)
+    return this.applyToFilterData(filterData, applyFn, false)
   }
 
   static addIconsAndNiceNamesToFilterData(filterData){

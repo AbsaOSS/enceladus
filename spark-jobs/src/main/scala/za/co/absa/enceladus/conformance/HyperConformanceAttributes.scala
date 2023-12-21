@@ -15,16 +15,19 @@
 
 package za.co.absa.enceladus.conformance
 
+import za.co.absa.enceladus.dao.OptionallyRetryableException.mapIntToOptionallyRetryableException
 import za.co.absa.hyperdrive.ingestor.api.{HasComponentAttributes, PropertyMetadata}
 
 object HyperConformanceAttributes {
 
   // Configuration keys expected to be set up when running Conformance as a Transformer component for Hyperdrive
-  val menasUriKey = "menas.rest.uri"
-  val menasUriRetryCountKey = "menas.rest.retryCount"
-  val menasAvailabilitySetupKey = "menas.rest.availability.setup"
-  val menasCredentialsFileKey = "menas.credentials.file"
-  val menasAuthKeytabKey = "menas.auth.keytab"
+  val restApiUriKey = "enceladus.rest.uri"
+  val restApiUriRetryCountKey = "enceladus.rest.retryCount"
+  val restApiAvailabilitySetupKey = "enceladus.rest.availability.setup"
+  val restApiOptionallyRetryableExceptions = "enceladus.rest.optionallyRetryableExceptions"
+  val restApiCredentialsFileKey = "enceladus.rest.credentials.file"
+  val restApiAuthKeytabKey = "enceladus.rest.auth.keytab"
+  val menasBaseUris = "enceladus.menas.uri"
   val datasetNameKey = "dataset.name"
   val datasetVersionKey = "dataset.version"
   val reportDateKey = "report.date"
@@ -42,17 +45,27 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
   override def getDescription: String = "Dynamic Conformance - a transformer component for Hyperdrive"
 
   override def getProperties: Map[String, PropertyMetadata] = Map(
-    menasUriKey ->
-      PropertyMetadata("Menas API URL", Some("E.g. http://localhost:8080/menas"), required = true),
-    menasUriRetryCountKey ->
-      PropertyMetadata("Menas API URL retry count",
-        Some("How many times a call to Menas API URL should be retried after failure before proceeding to the next URL. E.g. 2"),
+    restApiUriKey ->
+      PropertyMetadata("REST API URL", Some("E.g. http://localhost:8080/rest_api"), required = true),
+    restApiUriRetryCountKey ->
+      PropertyMetadata("REST API URL retry count",
+        Some("How many times a call to REST API URL should be retried after failure before proceeding to the next URL. E.g. 2"),
         required = false),
-    menasAvailabilitySetupKey ->
-      PropertyMetadata("The setup type of Menas URLs",
+    restApiAvailabilitySetupKey ->
+      PropertyMetadata("The setup type of REST API URLs",
         Some("""Either "roundrobin" (default) or "fallback", affects in which order the URls are picked up for use. """ +
           "Round-robin - start from random, fallback - start from first"),
         required = false),
+    restApiOptionallyRetryableExceptions ->
+      PropertyMetadata("Rest API optionally retryable HTTP exceptions",
+        Some(
+          """List of HTTP status codes that are allowed to be retryable. """ +
+            s"""Currently we support these: ${mapIntToOptionallyRetryableException.keys.mkString("[", ", ", "]")} """ +
+            """(retry count is specified by `menasUriRetryCountKey` attribute, see its description for more details.)"""
+        ),
+        required = false),
+    menasBaseUris ->
+      PropertyMetadata("Menas (Enceladus UI) URL(s)", Some("E.g. http://localhost:8080/menas"), required = true),
     datasetNameKey ->
       PropertyMetadata("Dataset name", None, required = true),
     datasetVersionKey ->
@@ -71,9 +84,9 @@ trait HyperConformanceAttributes extends HasComponentAttributes {
       PropertyMetadata("Event timestamp pattern",
         Some("If the event timestamp column is string, the pattern is used to parse it (default is 'yyyy-MM-dd'T'HH:mm'Z''"),
         required = false),
-    menasCredentialsFileKey ->
-      PropertyMetadata("Menas credentials file", Some("Relative or absolute path to the file on local FS or HDFS"), required = false),
-    menasAuthKeytabKey ->
+    restApiCredentialsFileKey ->
+      PropertyMetadata("REST API credentials file", Some("Relative or absolute path to the file on local FS or HDFS"), required = false),
+    restApiAuthKeytabKey ->
       PropertyMetadata("Keytab", Some("Relative or absolute path to the file on local FS or HDFS"), required = false)
   )
 

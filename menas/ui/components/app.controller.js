@@ -48,7 +48,6 @@ sap.ui.define([
       this._router = sap.ui.core.UIComponent.getRouterFor(this);
 
       GenericService.getUserInfo();
-      GenericService.getOozieInfo();
       PropertiesService.getProperties(); // works correctly with existing session, hence called after login, too
 
       this._router.getRoute("root").attachMatched((oEvent) => {

@@ -18,10 +18,10 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.NumericType
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.general.JsonUtils
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.spark.commons.utils.JsonUtils
 
-class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
+class LocalMappingTableSuite extends AnyWordSpec with TZNormalizedSparkTestBase {
 
   import spark.implicits._
 
@@ -54,7 +54,7 @@ class LocalMappingTableSuite extends AnyWordSpec with SparkTestBase {
     """{"id":1,"arst":[{"a":"a1","b":11,"c":true}],"val":"v1","sval":{"d":"d1","e":21,"f":true},"flag":true}""" ::
       """{"id":2,"arst":[{"a":"a2","b":12,"c":false}],"val":"v2","sval":{"d":"d2","e":22,"f":false},"flag":true}""" ::
       """{"id":3,"arst":[{"a":"a3","b":13,"c":true}],"val":"v3","sval":{"d":"d3","e":23,"f":true},"flag":true}""" :: Nil
-    val dfComplexMt = JsonUtils.getDataFrameFromJson(spark, complexMt)
+    val dfComplexMt = JsonUtils.getDataFrameFromJson(complexMt)
 
     "be created" when {
       "a simple mapping table dataframe is provided" in {

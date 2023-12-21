@@ -15,10 +15,11 @@
 
 package za.co.absa.enceladus.model.versionedModel
 
-import java.time.ZonedDateTime
+import com.fasterxml.jackson.annotation.JsonIgnore
 
+import java.time.ZonedDateTime
 import za.co.absa.enceladus.model.Exportable
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 
 trait VersionedModel extends Exportable {
   val name: String
@@ -39,19 +40,21 @@ trait VersionedModel extends Exportable {
   val dateLocked: Option[ZonedDateTime]
   val userLocked: Option[String]
 
-  val parent: Option[MenasReference]
+  val parent: Option[Reference]
 
   def setVersion(value: Int): VersionedModel
   def setDisabled(disabled: Boolean) : VersionedModel
   def setDateDisabled(time: Option[ZonedDateTime]): VersionedModel
   def setUserDisabled(user: Option[String]): VersionedModel
   def setLastUpdated(time: ZonedDateTime) : VersionedModel
+
+  @JsonIgnore
   def setUpdatedUser(user: String): VersionedModel
   def setDescription(desc: Option[String]): VersionedModel
   def setDateCreated(time: ZonedDateTime): VersionedModel
   def setUserCreated(user: String): VersionedModel
   def setLocked(locked: Option[Boolean]): VersionedModel
-  def setParent(newParent: Option[MenasReference]): VersionedModel
+  def setParent(newParent: Option[Reference]): VersionedModel
   def setDateLocked(dateLocked: Option[ZonedDateTime]): VersionedModel
   def setUserLocked(userLocked: Option[String]): VersionedModel
 
@@ -59,10 +62,12 @@ trait VersionedModel extends Exportable {
 
   def exportItem(): String
 
+  @JsonIgnore
   def setCreatedInfo(username: String): VersionedModel = {
     setDateCreated(ZonedDateTime.now).setUserCreated(username)
   }
 
+  @JsonIgnore
   def setUpdatedInfo(username: String): VersionedModel = {
     setLastUpdated(ZonedDateTime.now)
       .setUpdatedUser(username)

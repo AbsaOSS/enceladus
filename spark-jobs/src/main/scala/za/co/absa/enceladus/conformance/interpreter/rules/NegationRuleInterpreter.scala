@@ -18,14 +18,14 @@ package za.co.absa.enceladus.conformance.interpreter.rules
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Column, Dataset, Row, SparkSession}
+import za.co.absa.enceladus.common.GlobalDefaults
 import za.co.absa.spark.hats.Extensions._
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs, RuleValidators}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, NegationConformanceRule}
-import za.co.absa.enceladus.utils.schema.SchemaUtils
-import za.co.absa.enceladus.utils.types.GlobalDefaults
-import za.co.absa.enceladus.utils.udf.UDFNames
+import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
 import za.co.absa.enceladus.utils.validation.SchemaPathValidator
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 
 case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleInterpreter {
@@ -33,13 +33,13 @@ case class NegationRuleInterpreter(rule: NegationConformanceRule) extends RuleIn
   override def conformanceRule: Option[ConformanceRule] = Some(rule)
 
   override def conform(df: Dataset[Row])
-                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: MenasDAO,
+                      (implicit spark: SparkSession, explosionState: ExplosionState, dao: EnceladusDAO,
                        progArgs: InterpreterContextArgs): Dataset[Row] = {
     NegationRuleInterpreter.validateInputField(progArgs.datasetName, df.schema, rule.inputColumn)
 
-    val field = SchemaUtils.getField(rule.inputColumn, df.schema).get
+    val field = df.schema.getField(rule.inputColumn).get
 
-    val negationErrUdfCall = callUDF(UDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
+    val negationErrUdfCall = call_udf(ConformanceUDFNames.confNegErr, lit(rule.outputColumn), col(rule.inputColumn))
     val errCol = "errCol"
 
     field.dataType match {

@@ -19,7 +19,7 @@ import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
 import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
-import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{InvalidRestApiCredentialsFactory, RestApiCredentialsFactory}
 import za.co.absa.enceladus.standardization.CobolOptions
 import za.co.absa.enceladus.standardization.config.StandardizationConfigParser
 
@@ -30,7 +30,7 @@ case class StandardizationConformanceConfig(datasetName: String = "",
                                             datasetVersion: Int = 1,
                                             reportDate: String = "",
                                             reportVersion: Option[Int] = None,
-                                            menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                                            restApiCredentialsFactory: RestApiCredentialsFactory = InvalidRestApiCredentialsFactory,
                                             performanceMetricsFile: Option[String] = None,
                                             folderPrefix: Option[String] = None,
                                             persistStorageLevel: Option[StorageLevel] = None,
@@ -95,18 +95,18 @@ case class StandardizationConformanceConfig(datasetName: String = "",
     copy(fixedWidthTreatEmptyValuesAsNulls = value)
   }
 
-  override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConformanceConfig = {
-    copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withCredsFile(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): StandardizationConformanceConfig = {
+    copy(credsFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
   }
-  override def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): StandardizationConformanceConfig = {
-    copy(keytabFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withAuthKeytab(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): StandardizationConformanceConfig = {
+    copy(keytabFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
   }
 }
 
 object StandardizationConformanceConfig {
 
   def tryFromArguments(args: Array[String]): Try[StandardizationConformanceConfig] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    import za.co.absa.commons.lang.extensions.OptionExtension._
     OParser.parse(stdConfJobParser, args, StandardizationConformanceConfig())
       .toTry(ConfigError("Command line parameters error"))
   }

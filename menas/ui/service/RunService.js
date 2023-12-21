@@ -97,7 +97,7 @@ var RunService = new function () {
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun), "run");
     oControl.setModel(new sap.ui.model.json.JSONModel(oRun.controlMeasure.metadata), "metadata");
     //the core:HTML data binding doesn't update properly for iframe for some reason, we try to update manually therefore
-    this._updateLineageIframeSrc(oRun.splineUrl)
+    this._updateLineageIframeSrc(oControl, oRun.lineageUrl, oRun.lineageError)
   };
 
   this._bindRunSummaries = function (oRunSummaries, oControl) {
@@ -118,9 +118,8 @@ var RunService = new function () {
   this._preprocessRun = function (oRun, aCheckpoints) {
     let info = oRun.controlMeasure.metadata.additionalInfo;
     oRun.controlMeasure.metadata.additionalInfo = this._mapAdditionalInfo(info);
-
     oRun.status = Formatters.statusToPrettyString(oRun.runStatus.status);
-    oRun.splineUrl = this._buildSplineUrl(oRun.splineRef.outputPath, oRun.splineRef.sparkApplicationId);
+    oRun.lineageUrl = window.lineageUiCdn;
 
     const sStdName = this._nameExists(aCheckpoints, "Standardization Finish") ? "Standardization Finish" : "Standardization - End";
 
@@ -128,31 +127,18 @@ var RunService = new function () {
     oRun.cfmTime = this._getTimeSummary(aCheckpoints, "Conformance - Start", "Conformance - End");
   };
 
-  this._buildSplineUrl = function (outputPath, applicationId) {
-    return this._getSplineUrlTemplate()
-      .replace("%s", outputPath)
-      .replace("%s", applicationId)
-  };
-
-  this._getSplineUrlTemplate = function () {
-    if (!this.splineUrlTemplate) {
-      const runRestDAO = new RunRestDAO();
-      runRestDAO.getSplineUrlTemplate()
-        .then(urlTemplate => this.splineUrlTemplate = urlTemplate)
-    }
-    return this.splineUrlTemplate
-  };
-
   this._mapAdditionalInfo = function (info) {
     return Object.keys(info).map(key => {
       return {"infoKey": key, "infoValue": info[key]}
     }).sort((a, b) => {
+      // ascending order: return -1 to keep the order (order will be: [a, b]),
+      // otherwise return 1 (order will be: [b, a])
       if (a.infoKey > b.infoKey) {
-        return -1;
+        return 1;
       }
 
       if (a.infoKey < b.infoKey) {
-        return 1;
+        return -1;
       }
 
       return 0;
@@ -248,12 +234,19 @@ var RunService = new function () {
     return this._durationAsString(duration);
   };
 
-  this._updateLineageIframeSrc = function (sNewUrl) {
+  this._updateLineageIframeSrc = function (oControl, sNewUrl, sErrorMessage) {
     let iframe = document.getElementById("lineage_iframe");
     if (iframe) {
       // the iframe doesn't necessary exists yet
       // (but if it doesn't it will be created, and initial data binding actually works)
+      iframe.visible = (sNewUrl !== "");
       iframe.src = sNewUrl;
+    }
+    let view = oControl.getParent();
+    let label = view.byId("LineageErrorLabel");
+    if (label) {
+      label.setVisible(sErrorMessage !== "");
+      label.setText(sErrorMessage);
     }
   };
 

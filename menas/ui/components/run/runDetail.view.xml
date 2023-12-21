@@ -19,6 +19,7 @@
            xmlns="sap.m"
            xmlns:form="sap.ui.layout.form"
            xmlns:table="sap.ui.table"
+           xmlns:l="sap.ui.layout"
            xmlns:cust="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1">
     <Page id="detailPage" enableScrolling="true">
         <customHeader>
@@ -136,8 +137,16 @@
                             </items>
                         </Table>
                     </IconTabFilter>
-                    <IconTabFilter id="Lineage" icon="sap-icon://org-chart" key="lineage" text="Lineage" visible="{= ${run>/splineUrl} !== ''}">
-                        <core:HTML content="&lt;iframe  id=&quot;lineage_iframe&quot; height=&quot;100%&quot; width=&quot;100%&quot; style=&quot;border: Ridge;&quot; src=&quot;{run>/splineUrl}&quot;&gt;&lt;/iframe&gt;" />
+                    <IconTabFilter id="Lineage" icon="sap-icon://org-chart" key="lineage" text="Lineage" visible="{= ${/lineageExecutionIdApiTemplate} !== ''}">
+                        <l:VerticalLayout class="sapUiContentPadding" width="80%">
+                            <Text text="Spline architecture changed as is not intended as an embedded system anymore.&#13;&#10;"/>
+                            <Text text="Spline is a standalone application available at the link bellow&#13;&#10;"/>
+                            <Link
+                                text="Lineage URL&#13;&#10;"
+                                target="_blank"
+                                href="{run>/lineageUrl}" />
+                            <Text text="Use appId {run>/splineRef/sparkApplicationId} and &#13;&#10;destination {run>/splineRef/outputPath} to search for your run.&#13;&#10;"/>
+                        </l:VerticalLayout>
                     </IconTabFilter>
                 </items>
             </IconTabBar>

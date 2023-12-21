@@ -17,7 +17,7 @@ package za.co.absa.enceladus.model.test.factories
 
 import java.time.ZonedDateTime
 
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.{Schema, SchemaField}
 
 object SchemaFactory extends EntityFactory[Schema] {
@@ -38,7 +38,7 @@ object SchemaFactory extends EntityFactory[Schema] {
                      dateLocked: Option[ZonedDateTime] = None,
                      userLocked: Option[String] = None,
                      fields: List[SchemaField] = List(),
-                     parent: Option[MenasReference] = None): Schema = {
+                     parent: Option[Reference] = None): Schema = {
 
     Schema(name,
       version,

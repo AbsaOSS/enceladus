@@ -16,16 +16,28 @@
 package za.co.absa.enceladus.dao.rest
 
 import java.time.ZonedDateTime
-
 import org.scalactic.{AbstractStringUniformity, Uniformity}
 import za.co.absa.enceladus.model.conformanceRule.{CastingConformanceRule, LiteralConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.dataFrameFilter._
-import za.co.absa.enceladus.model.menas.MenasReference
+import za.co.absa.enceladus.model.backend.Reference
 import za.co.absa.enceladus.model.test.VersionedModelMatchers
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory, RunFactory, SchemaFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable, Run, Schema}
 
+import java.time.format.DateTimeFormatter
+
 class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
+  private val whiteSpaceNormalised: Uniformity[String] =
+    new AbstractStringUniformity {
+      def normalized(s: String): String = s.replaceAll("\\s+", "").trim
+
+      override def toString: String = "whiteSpaceNormalised"
+    }
+
+  private def parseTZDateTime(s: String): ZonedDateTime = {
+    val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS zzz")
+    ZonedDateTime.parse(s, formatter)
+  }
 
   "JsonSerializer" should {
     "handle Datasets" when {
@@ -52,10 +64,10 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "conformance": [],
           |  "parent": null,
           |  "schedule": null,
-          |  "properties": null,
+          |  "properties": {},
           |  "propertiesValidation": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -73,7 +85,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  }
           |}
           |""".stripMargin
-      val dataset = DatasetFactory.getDummyDataset()
+      val dataset = DatasetFactory.getDummyDataset(properties = Some(Map.empty))
 
       "serializing" in {
         val result = JsonSerializer.toJson(dataset)
@@ -83,10 +95,31 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
         result should matchTo(dataset)
       }
+
+      "legacy deserializing" in {
+        val legacyPropertiesDatasetJson =
+          """
+            |{
+            |  "name": "dummyName",
+            |  "version": 1,
+            |  "hdfsPath": "/dummy/path",
+            |  "hdfsPublishPath": "/dummy/publish/path",
+            |  "schemaName": "dummySchema",
+            |  "schemaVersion": 1,
+            |  "properties": null,
+            |  "propertiesValidation": null
+            |}
+            |""".stripMargin
+
+        val result = JsonSerializer.fromJson[Dataset](legacyPropertiesDatasetJson)
+        val randomDataset = Dataset("name1", hdfsPath = "path/one", hdfsPublishPath = "path/two", schemaName= "schAbc",
+          schemaVersion = 1, conformance = List.empty) // properties not mentioned = default
+        result.properties shouldBe randomDataset.properties // e.g. properties:null resulted in default properties = Some(Map())
+      }
     }
 
     "handle Datasets with conformance rules" when {
-      val datasetJson =
+      val datasetJson = {
       """{
         |  "name": "Test",
         |  "version": 5,
@@ -191,10 +224,13 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    "version": 4
         |  },
         |  "schedule": null,
-        |  "properties": null,
+        |  "properties": {
+        |        "prop1": "value1",
+        |        "prop2": "value2"
+        |    },
         |  "propertiesValidation": null,
         |  "createdMessage": {
-        |    "menasRef": {
+        |    "ref": {
         |      "collection": null,
         |      "name": "Test",
         |      "version": 5
@@ -211,6 +247,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         |    ]
         |  }
         |}""".stripMargin
+      }
 
       val dataset: Dataset = DatasetFactory.getDummyDataset(
         name = "Test",
@@ -220,11 +257,10 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
         hdfsPublishPath = "/bigdata/test2",
         schemaName = "Cobol1",
         schemaVersion = 3,
-        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        dateCreated = parseTZDateTime("2019-07-22 08:05:57.47 UTC"),
         userCreated = "system",
-        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        lastUpdated = parseTZDateTime("2020-04-02 15:53:02.947 UTC"),
         userUpdated = "system",
-
         conformance = List(
           CastingConformanceRule(0,
             outputColumn = "ConformedInt",
@@ -266,7 +302,8 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
             value = "AAA"
           )
         ),
-        parent = Some(MenasReference(Some("dataset"),"Test", 4)) // scalastyle:off magic.number
+        parent = Some(Reference(Some("dataset"),"Test", 4)), // scalastyle:off magic.number
+        properties = Some(Map("prop1" -> "value1", "prop2" -> "value2"))
       )
 
       "serializing" in {
@@ -275,7 +312,78 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
       "deserializing" in {
         val result = JsonSerializer.fromJson[Dataset](datasetJson)
-        result should matchTo(dataset)
+        val expectedDeserializedDataset = dataset
+        result should matchTo(expectedDeserializedDataset)
+      }
+    }
+
+    "handle Datasets without conformance rules defined" when {
+      val datasetJson =
+        """{
+          |  "name": "Test",
+          |  "version": 5,
+          |  "description": "some description here",
+          |  "hdfsPath": "/bigdata/test",
+          |  "hdfsPublishPath": "/bigdata/test2",
+          |  "schemaName": "Cobol1",
+          |  "schemaVersion": 3,
+          |  "dateCreated": "2019-07-22T08:05:57.47Z",
+          |  "userCreated": "system",
+          |  "lastUpdated": "2020-04-02T15:53:02.947Z",
+          |  "userUpdated": "system",
+          |  "disabled": false,
+          |  "dateDisabled": null,
+          |  "userDisabled": null,
+          |  "locked": null,
+          |  "dateLocked":null,
+          |  "userLocked":null,
+          |  "parent": {
+          |    "collection": "dataset",
+          |    "name": "Test",
+          |    "version": 4
+          |  },
+          |  "schedule": null,
+          |  "properties": null,
+          |  "propertiesValidation": null,
+          |  "createdMessage": {
+          |    "ref": {
+          |      "collection": null,
+          |      "name": "Test",
+          |      "version": 5
+          |    },
+          |    "updatedBy": "system",
+          |    "updated": "2020-04-02T15:53:02.947Z",
+          |    "changes": [
+          |      {
+          |        "field": "",
+          |        "oldValue": null,
+          |        "newValue": null,
+          |        "message": "Dataset Test created."
+          |      }
+          |    ]
+          |  }
+          |}""".stripMargin
+
+      val datasetToDeserialize: Dataset = DatasetFactory.getDummyDataset(
+        name = "Test",
+        version = 5,
+        description = Some("some description here"),
+        hdfsPath = "/bigdata/test",
+        hdfsPublishPath = "/bigdata/test2",
+        schemaName = "Cobol1",
+        schemaVersion = 3,
+        dateCreated = ZonedDateTime.parse("2019-07-22T08:05:57.47Z"),
+        userCreated = "system",
+        lastUpdated = ZonedDateTime.parse("2020-04-02T15:53:02.947Z"),
+        userUpdated = "system",
+
+        conformance = List.empty,
+        parent = Some(Reference(Some("dataset"), "Test", 4)) // scalastyle:off magic.number
+      )
+
+      "deserializing" in {
+        val result = JsonSerializer.fromJson[Dataset](datasetJson)
+        result should matchTo(datasetToDeserialize)
       }
     }
 
@@ -329,7 +437,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  },
           |  "schedule": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "avro_users",
           |      "version": 3
@@ -376,7 +484,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "parent": null,
           |  "filter": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -391,8 +499,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
       val mappingTable = MappingTableFactory.getDummyMappingTable()
@@ -465,7 +572,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |    ]
           |  },
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -480,8 +587,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |        "message": "Mapping Table dummyName created."
           |      }
           |    ]
-          |  },
-          |  "defaultMappingValues": {}
+          |  }
           |}
           |""".stripMargin
 
@@ -530,7 +636,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
           |  "fields": [],
           |  "parent": null,
           |  "createdMessage": {
-          |    "menasRef": {
+          |    "ref": {
           |      "collection": null,
           |      "name": "dummyName",
           |      "version": 1
@@ -575,10 +681,7 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
            |  },
            |  "startDateTime": "04-12-2017 16:19:17 +0200",
            |  "runStatus": {
-           |    "status": {
-           |      "enumClass": "za.co.absa.atum.model.RunState",
-           |      "value": "allSucceeded"
-           |    },
+           |    "status": "allSucceeded",
            |    "error": null
            |  },
            |  "controlMeasure": {
@@ -652,11 +755,4 @@ class JsonSerializerSuite extends BaseTestSuite with VersionedModelMatchers {
       }
     }
   }
-
-  val whiteSpaceNormalised: Uniformity[String] =
-    new AbstractStringUniformity {
-      def normalized(s: String): String = s.replaceAll("\\s+", "").trim
-
-      override def toString: String = "whiteSpaceNormalised"
-    }
 }

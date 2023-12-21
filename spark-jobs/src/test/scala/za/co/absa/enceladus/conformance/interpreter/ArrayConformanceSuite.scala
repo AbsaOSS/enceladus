@@ -22,16 +22,16 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, SparkTestBase}
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
 
 
-class ArrayConformanceSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with HadoopFsTestBase {
+class ArrayConformanceSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with HadoopFsTestBase {
 
   import spark.implicits._
   // spark.enableControlFrameworkTracking()
 
-  implicit var dao: MenasDAO = _
+  implicit var dao: EnceladusDAO = _
   implicit var progArgs: ConformanceConfig = _
 
   private val enableCF = false
@@ -41,7 +41,7 @@ class ArrayConformanceSuite extends AnyFunSuite with SparkTestBase with BeforeAn
 
     val mapDF = spark.createDataFrame(MappingsSamples.mapping)
 
-    dao = mock(classOf[MenasDAO])
+    dao = mock(classOf[EnceladusDAO])
     progArgs = new ConformanceConfig(reportDate = "2017-11-01")
 
     mockWhen(dao.getMappingTable("mapping", 0)) thenReturn MappingsSamples.mappingTable

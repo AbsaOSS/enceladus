@@ -19,18 +19,23 @@ import org.json4s._
 import org.json4s.jackson._
 import org.mockito.Mockito.{mock, when => mockWhen}
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.concurrent.Eventually.eventually
+import org.scalatest.concurrent.Waiters.{interval, scaled, timeout}
 import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.model.ControlMeasure
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.datasource.DataSource
 import za.co.absa.enceladus.conformance.samples._
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.utils.fs.FileReader
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
 import za.co.absa.enceladus.utils.validation.ValidationLevel
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
+import scala.concurrent.duration.DurationInt
+
+class InterpreterSuite extends AnyFunSuite with TZNormalizedSparkTestBase with BeforeAndAfterAll with LoggerTestBase with HadoopFsTestBase {
 
   override def beforeAll(): Unit = {
     super.beforeAll
@@ -50,7 +55,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
     //configure conf value
     spark.sessionState.conf.setConfString("co.za.absa.enceladus.confTest", "hello :)")
 
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(
       experimentalMappingRule = Option(useExperimentalMappingRule),reportDate = "2017-11-01")
     val enableCF = true
@@ -82,6 +87,8 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     spark.disableControlMeasuresTracking()
 
+
+    eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
     val infoFile = FileReader.readFileAsString("src/test/testData/_testOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
@@ -100,12 +107,13 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
       assert(cp.controls(1).controlValue === "6")
     })
   }
+  }
 
   def testEndToEndArrayConformance(useExperimentalMappingRule: Boolean): Unit = {
     // Enable Conformance Framework
     spark.enableControlMeasuresTracking(Option("src/test/testData/_tradeData/2017/11/01/_INFO"), Option("src/test/testData/_tradeOutput/_INFO"))
 
-    implicit val dao: MenasDAO = mock(classOf[MenasDAO])
+    implicit val dao: EnceladusDAO = mock(classOf[EnceladusDAO])
     implicit val progArgs: ConformanceConfig = ConformanceConfig(
       experimentalMappingRule = Option(useExperimentalMappingRule),
       reportDate = "2017-11-01")
@@ -128,7 +136,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
       .setControlFrameworkEnabled(enableCF)
       .setBroadcastStrategyMode(Never)
 
-    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cache
+    val conformed = DynamicInterpreter().interpret(TradeConformance.tradeDS, dfs).cacheIfNotCachedYet()
 
     val data = conformed.repartition(1).orderBy($"id").toJSON.collect.mkString("\n")
 
@@ -145,6 +153,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
 
     spark.disableControlMeasuresTracking()
 
+    eventually(timeout(scaled(30.seconds)), interval(scaled(500.millis))) {
     val infoFile = FileReader.readFileAsString("src/test/testData/_tradeOutput/_INFO")
 
     implicit val formats: DefaultFormats.type = DefaultFormats
@@ -167,6 +176,7 @@ class InterpreterSuite extends AnyFunSuite with SparkTestBase with BeforeAndAfte
       assert(cp.controls(1).controlValue === "7")
       assert(cp.controls(2).controlValue === "28")
     })
+    }
   }
 
   test("End to end dynamic conformance test") {

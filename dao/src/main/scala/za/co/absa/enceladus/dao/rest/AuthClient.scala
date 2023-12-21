@@ -21,24 +21,27 @@ import org.springframework.security.kerberos.client.KerberosRestTemplate
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.web.client.RestTemplate
 import za.co.absa.enceladus.dao.auth._
-import za.co.absa.enceladus.dao.UnauthorizedException
+import za.co.absa.enceladus.dao.NotRetryableException.AuthenticationException
+import za.co.absa.enceladus.dao.OptionallyRetryableException
+import za.co.absa.enceladus.dao.OptionallyRetryableException.{ForbiddenException, NotFoundException, UnauthorizedException}
 
 object AuthClient {
 
-  def apply(credentials: MenasCredentials, apiCaller: ApiCaller): AuthClient = {
+  def apply(credentials: RestApiCredentials, apiCaller: ApiCaller): AuthClient = {
     credentials match {
-      case menasCredentials: MenasPlainCredentials    => createLdapAuthClient(apiCaller, menasCredentials)
-      case menasCredentials: MenasKerberosCredentials => createSpnegoAuthClient(apiCaller, menasCredentials)
-      case InvalidMenasCredentials                    => throw UnauthorizedException("No Menas credentials provided")
+      case restApiCredentials: RestApiPlainCredentials    => createLdapAuthClient(apiCaller, restApiCredentials)
+      case restApiCredentials: RestApiKerberosCredentials => createSpnegoAuthClient(apiCaller, restApiCredentials)
+      case InvalidRestApiCredentials                      =>
+        throw AuthenticationException("No REST API credentials provided")
     }
   }
 
-  private def createLdapAuthClient(apiCaller: ApiCaller, credentials: MenasPlainCredentials): LdapAuthClient = {
+  private def createLdapAuthClient(apiCaller: ApiCaller, credentials: RestApiPlainCredentials): LdapAuthClient = {
     val restTemplate = RestTemplateSingleton.instance
     new LdapAuthClient(credentials.username, credentials.password, restTemplate, apiCaller)
   }
 
-  private def createSpnegoAuthClient(apiCaller: ApiCaller, credentials: MenasKerberosCredentials): SpnegoAuthClient = {
+  private def createSpnegoAuthClient(apiCaller: ApiCaller, credentials: RestApiKerberosCredentials): SpnegoAuthClient = {
     val restTemplate = new KerberosRestTemplate(credentials.keytabLocation, credentials.username)
     restTemplate.setErrorHandler(NoOpErrorHandler)
     new SpnegoAuthClient(credentials.username, credentials.keytabLocation, restTemplate, apiCaller)
@@ -51,18 +54,31 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
 
   protected val log: Logger = LoggerFactory.getLogger(this.getClass)
 
-  @throws[UnauthorizedException]
+  @throws[AuthenticationException]
+  @throws[OptionallyRetryableException]
   def authenticate(): HttpHeaders = {
     apiCaller.call { baseUrl =>
       val response = requestAuthentication(url(baseUrl))
       val statusCode = response.getStatusCode
 
+      val errMessage = s"Authentication failure ($statusCode): $username"
+
       statusCode match {
         case HttpStatus.OK =>
           log.info(s"Authentication successful: $username")
           getAuthHeaders(response)
-        case _             =>
-          throw UnauthorizedException(s"Authentication failure ($statusCode): $username")
+
+        case HttpStatus.UNAUTHORIZED =>
+          throw UnauthorizedException(errMessage)
+
+        case HttpStatus.FORBIDDEN =>
+          throw ForbiddenException(errMessage)
+
+        case HttpStatus.NOT_FOUND =>
+          throw NotFoundException(errMessage)
+
+        case _ =>
+          throw AuthenticationException(errMessage)
       }
     }
   }
@@ -71,15 +87,12 @@ sealed abstract class AuthClient(username: String, restTemplate: RestTemplate, a
 
   private def getAuthHeaders(response: ResponseEntity[String]): HttpHeaders = {
     val headers = response.getHeaders
-    val sessionCookie = headers.get("set-cookie").asScala.head
-    val csrfToken = headers.get("X-CSRF-TOKEN").asScala.head
+    val jwt = headers.get("JWT").asScala.head
 
-    log.info(s"Session Cookie: $sessionCookie")
-    log.info(s"CSRF Token: $csrfToken")
+    log.info(s"JWT: $jwt")
 
     val resultHeaders = new HttpHeaders()
-    resultHeaders.add("cookie", sessionCookie)
-    resultHeaders.add("X-CSRF-TOKEN", csrfToken)
+    resultHeaders.add("JWT", jwt)
     resultHeaders
   }
 

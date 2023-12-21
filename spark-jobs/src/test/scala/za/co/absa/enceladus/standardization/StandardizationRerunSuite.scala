@@ -22,26 +22,27 @@ import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
 import za.co.absa.enceladus.utils.error.ErrorMessage
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import za.co.absa.enceladus.utils.validation.ValidationException
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.standardization.ValidationException
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
 
-class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar {
+class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar {
 
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-  private implicit val udfLib: UDFLibrary = new UDFLibrary
-  private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val defaults: Defaults = GlobalDefaults
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val standardizationReader = new StandardizationPropertiesProvider()
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
   private val tmpFilePrefix = "test-input-"
   private val tmpFileSuffix = ".csv"
@@ -66,7 +67,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase wi
   /** Creates a dataframe from an input file name path and command line arguments to Standardization */
   private def getTestDataFrame(tmpFileName: String, schemaWithStringType: StructType): DataFrame = {
     val args = ("--dataset-name SpecialColumns --dataset-version 1 --report-date 2019-07-23 --report-version 1 " +
-      "--menas-auth-keytab src/test/resources/user.keytab.example " +
+      "--rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format csv --header false --delimiter |").split(" ")
 
     val cmd: StandardizationConfig = StandardizationConfig.getFromArguments(args)
@@ -109,7 +110,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase wi
 
     val inputDf = getTestDataFrame(tmpFileName, schemaWithStringType)
 
-    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+    val stdDf = Standardization.standardize(inputDf, schema, config).cacheIfNotCachedYet()
 
     val actualOutput = stdDf.dataAsString(truncate = false)
 
@@ -137,7 +138,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase wi
     val inputDf = getTestDataFrame(tmpFileName, schemaStr)
 
     assertThrows[ValidationException] {
-      StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+      Standardization.standardize(inputDf, schema, config).cacheIfNotCachedYet()
     }
   }
 
@@ -162,7 +163,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with SparkTestBase wi
     val inputDf = getTestDataFrame(tmpFileName, schemaStr)
       .withColumn(ErrorMessage.errorColumnName, typedLit(List[ErrorMessage]()))
 
-    val stdDf = StandardizationInterpreter.standardize(inputDf, schema, "").cache()
+    val stdDf = Standardization.standardize(inputDf, schema, config).cacheIfNotCachedYet()
     val failedRecords = stdDf.filter(size(col(ErrorMessage.errorColumnName)) > 0).count
 
     assert(stdDf.schema.exists(field => field.name == ErrorMessage.errorColumnName))

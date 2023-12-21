@@ -40,7 +40,7 @@ package object dataFrameFilter {
     @JsonIgnore def filter: Column
     @JsonIgnore def or(otherFilter: DataFrameFilter): DataFrameFilter = {
       (this, otherFilter) match {
-        case (a: OrJoinedFilters, b: OrJoinedFilters) => OrJoinedFilters(a.filterItems & b.filterItems)
+        case (a: OrJoinedFilters, b: OrJoinedFilters) => OrJoinedFilters(a.filterItems union b.filterItems)
         case (a: OrJoinedFilters, b) => a.copy(filterItems = a.filterItems + b)
         case (a, b: OrJoinedFilters) => b.copy(filterItems = b.filterItems + a)
         case (a, b) => OrJoinedFilters(Set(a, b))
@@ -48,7 +48,7 @@ package object dataFrameFilter {
     }
     @JsonIgnore def and(otherFilter: DataFrameFilter): DataFrameFilter = {
       (this, otherFilter) match {
-        case (a: AndJoinedFilters, b: AndJoinedFilters) => AndJoinedFilters(a.filterItems & b.filterItems)
+        case (a: AndJoinedFilters, b: AndJoinedFilters) => AndJoinedFilters(a.filterItems union b.filterItems)
         case (a: AndJoinedFilters, b) => a.copy(filterItems = a.filterItems + b)
         case (a, b: AndJoinedFilters) => b.copy(filterItems = b.filterItems + a)
         case (a, b) => AndJoinedFilters(Set(a, b))

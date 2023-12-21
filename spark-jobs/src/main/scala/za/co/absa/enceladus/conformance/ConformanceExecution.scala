@@ -16,28 +16,27 @@
 package za.co.absa.enceladus.conformance
 
 import java.io.{PrintWriter, StringWriter}
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import za.co.absa.atum.AtumImplicits._
 import za.co.absa.atum.core.Atum
-import za.co.absa.enceladus.common.RecordIdGeneration._
-import za.co.absa.enceladus.common.config.{CommonConfConstants, JobConfigParser, PathConfig}
-import za.co.absa.enceladus.common.plugin.menas.MenasPlugin
-import za.co.absa.enceladus.common.{CommonJobExecution, Constants, RecordIdGeneration}
+import za.co.absa.enceladus.common.config.{JobConfigParser, PathConfig}
+import za.co.absa.enceladus.common.plugin.enceladus.EnceladusAtumPlugin
+import za.co.absa.enceladus.common.{CommonJobExecution, Constants, Repartitioner}
 import za.co.absa.enceladus.conformance.config.{ConformanceConfig, ConformanceConfigParser}
 import za.co.absa.enceladus.conformance.interpreter.rules.ValidationException
 import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, FeatureSwitches}
-import za.co.absa.enceladus.dao.MenasDAO
-import za.co.absa.enceladus.dao.auth.MenasCredentials
+import za.co.absa.enceladus.dao.EnceladusDAO
+import za.co.absa.enceladus.dao.auth.RestApiCredentials
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization_conformance.config.StandardizationConformanceConfig
 import za.co.absa.enceladus.utils.config.{ConfigReader, PathWithFs}
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.common.performance.PerformanceMetricTools
-import za.co.absa.enceladus.utils.schema.SchemaUtils
+import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
+import za.co.absa.standardization.RecordIdGeneration
 
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
@@ -47,7 +46,7 @@ trait ConformanceExecution extends CommonJobExecution {
   private val sourceId = SourcePhase.Conformance
 
   protected def prepareConformance[T](preparationResult: PreparationResult)
-                                     (implicit dao: MenasDAO,
+                                     (implicit dao: EnceladusDAO,
                                       cmd: ConformanceConfigParser[T],
                                       spark: SparkSession): Unit = {
 
@@ -69,8 +68,8 @@ trait ConformanceExecution extends CommonJobExecution {
     // Enable control framework performance optimization for pipeline-like jobs
     Atum.setAllowUnpersistOldDatasets(true)
 
-    // Enable Menas plugin for Control Framework
-    MenasPlugin.enableMenas(
+    // Enable Enceladus plugin for Control Framework
+    EnceladusAtumPlugin.enableEnceladusAtumPlugin(
       configReader.config,
       cmd.datasetName,
       cmd.datasetVersion,
@@ -99,9 +98,7 @@ trait ConformanceExecution extends CommonJobExecution {
   }
 
   protected def conform[T](inputData: DataFrame, preparationResult: PreparationResult)
-                          (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: MenasDAO): DataFrame = {
-    val recordIdGenerationStrategy = getRecordIdGenerationStrategyFromConfig(configReader.config)
-
+                          (implicit spark: SparkSession, cmd: ConformanceConfigParser[T], dao: EnceladusDAO): DataFrame = {
     implicit val featureSwitcher: FeatureSwitches = conformanceReader.readFeatureSwitches()
     implicit val stdFs: FileSystem = preparationResult.pathCfg.standardization.fileSystem
 
@@ -118,10 +115,10 @@ trait ConformanceExecution extends CommonJobExecution {
         spark.setControlMeasurementError(sourceId.toString, e.getMessage, sw.toString)
         throw e
       case Success(conformedDF) =>
-        if (SchemaUtils.fieldExists(Constants.EnceladusRecordId, conformedDF.schema)) {
+        if (conformedDF.schema.fieldExists(Constants.EnceladusRecordId)) {
           conformedDF // no new id regeneration
         } else {
-          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdGenerationStrategy)
+          RecordIdGeneration.addRecordIdColumnByStrategy(conformedDF, Constants.EnceladusRecordId, recordIdStrategy)
         }
     }
   }
@@ -129,7 +126,7 @@ trait ConformanceExecution extends CommonJobExecution {
   protected def processConformanceResult[T](args: Array[String],
                                             result: DataFrame,
                                             preparationResult: PreparationResult,
-                                            menasCredentials: MenasCredentials)
+                                            restApiCredentials: RestApiCredentials)
                                            (implicit spark: SparkSession,
                                             cmd: ConformanceConfigParser[T],
                                             configReader: ConfigReader): Unit = {
@@ -141,7 +138,7 @@ trait ConformanceExecution extends CommonJobExecution {
       "conform",
       preparationResult.pathCfg.standardization,
       preparationResult.pathCfg.publish.path,
-      menasCredentials.username, cmdLineArgs
+      restApiCredentials.username, cmdLineArgs
     )
 
     val withPartCols = addInfoColumns(result, cmd.reportDate, preparationResult.reportVersion)
@@ -154,9 +151,8 @@ trait ConformanceExecution extends CommonJobExecution {
       handleEmptyOutput(SourcePhase.Conformance)
     }
 
-    val minBlockSize = configReader.getLongOption(CommonConfConstants.minPartitionSizeKey)
-    val maxBlockSize = configReader.getLongOption(CommonConfConstants.maxPartitionSizeKey)
-    val withRepartitioning = repartitionDataFrame(withPartCols, minBlockSize, maxBlockSize)
+    val repartitioner = new Repartitioner(configReader, log)
+    val withRepartitioning = repartitioner.repartition(withPartCols)
 
     withRepartitioning.write.parquet(preparationResult.pathCfg.publish.path)
 
@@ -167,7 +163,7 @@ trait ConformanceExecution extends CommonJobExecution {
       "conform",
       preparationResult.pathCfg.standardization,
       preparationResult.pathCfg.publish,
-      menasCredentials.username, cmdLineArgs
+      restApiCredentials.username, cmdLineArgs
     )
 
     withRepartitioning.writeInfoFile(preparationResult.pathCfg.publish.path)(publishFs)

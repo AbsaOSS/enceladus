@@ -15,41 +15,48 @@
 
 package za.co.absa.enceladus.standardization
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
+
 import java.util.UUID
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 import org.scalatest.funsuite.FixtureAnyFunSuite
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.Outcome
-import za.co.absa.enceladus.common.RecordIdGeneration.IdType
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.standardization.interpreter.StandardizationInterpreter
-import za.co.absa.enceladus.standardization.interpreter.stages.TypeParserException
-import za.co.absa.enceladus.utils.schema.MetadataKeys
-import za.co.absa.enceladus.utils.testUtils.SparkTestBase
-import za.co.absa.enceladus.utils.udf.UDFLibrary
-import org.apache.spark.sql.functions.{col, to_timestamp}
-import za.co.absa.enceladus.utils.types.{Defaults, GlobalDefaults}
+import za.co.absa.standardization.schema.MetadataKeys
 
-class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase with TempFileFixture with MockitoSugar  {
+import java.sql.Timestamp
+import org.apache.spark.sql.functions.{col, to_timestamp}
+import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.standardization.{RecordIdGeneration, Standardization}
+import za.co.absa.standardization.stages.TypeParserException
+import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
+import za.co.absa.enceladus.utils.testUtils.DataFrameTestUtils._
+
+import java.time.Instant
+
+class StandardizationParquetSuite extends FixtureAnyFunSuite with TZNormalizedSparkTestBase with TempFileFixture with MockitoSugar with DatasetComparer{
   type FixtureParam = String
 
 
   import spark.implicits._
-  import za.co.absa.enceladus.utils.implicits.DataFrameImplicits.DataFrameEnhancements
+  import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
   private val standardizationReader = new StandardizationPropertiesProvider()
-  private implicit val dao: MenasDAO = mock[MenasDAO]
-  private implicit val udfLibrary:UDFLibrary = new UDFLibrary()
-  private implicit val defaults: Defaults = GlobalDefaults
+  private implicit val dao: EnceladusDAO = mock[EnceladusDAO]
 
   private val tmpFilePrefix = "parquet-data-"
   private val datasetName = "ParquetTest"
   private val datasetVersion = 1
   private val tsPattern = "yyyy-MM-dd HH:mm:ss zz"
+  private val metadataConfig = BasicMetadataColumnsConfig.fromDefault().copy(recordIdStrategy = RecordIdGeneration.IdType.NoId)
+  private val config = BasicStandardizationConfig
+    .fromDefault()
+    .copy(metadataColumns = metadataConfig)
 
 
   private val data = Seq (
@@ -82,7 +89,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
 
   test("All columns standardized") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -102,16 +109,21 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array()),
+      Row(2L, Array("C"), Row(true), Array())
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
 
   test("Missing nullable fields are considered null") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -134,15 +146,20 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("decimal_field", DecimalType(20,4), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1, null, null, null, null, null, Array()),
+      Row(2, null, null, null, null, null, Array())
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Missing non-nullable fields are filled with default values and error appears in error column") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -168,15 +185,28 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
         new MetadataBuilder().putString(MetadataKeys.DefaultValue, "3.14").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val EpochTimestamp = Timestamp.from(Instant.EPOCH)
+    val expectedErrors = Seq(
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "string_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "timestamp_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "long_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "double_field", Seq("null"), Seq()),
+      Row("stdNullError", "E00002", "Standardization Error - Null detected in non-nullable attribute", "decimal_field", Seq("null"), Seq())
+    )
+    val expectedData = Seq(
+      Row(1, "", EpochTimestamp, 0L, 0, Decimal(3.14), expectedErrors),
+      Row(2, "", EpochTimestamp, 0L, 0, Decimal(3.14), expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -197,15 +227,25 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
         new MetadataBuilder().putString(MetadataKeys.SourceColumn, "letters").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'array'", "id", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'long'", "letters", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'long'", "letters", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(null, null, 0L, expectedErrors),
+      Row(null, null, 0L, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to struct, and struct to long") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -228,15 +268,25 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
         .build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'integer' cannot be cast to 'struct'", "id", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'long'", "struct", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'long'", "struct", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(null, null, -1L, expectedErrors),
+      Row(null, null, -1L, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert array to struct, and struct to array") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -256,15 +306,24 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("struct", ArrayType(StringType), nullable = true)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedErrors = Seq(
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'array' cannot be cast to 'struct'", "letters", Seq(), Seq()),
+      Row("stdTypeError", "E00006", "Standardization Error - Type 'struct' cannot be cast to 'array'", "struct", Seq(), Seq())
+    )
+    val expectedData = Seq(
+      Row(1L, null, null, expectedErrors),
+      Row(2L, null, null, expectedErrors)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("Cannot convert int to array, and array to long, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -277,14 +336,14 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into array")
   }
 
   test("Cannot convert int to struct, and struct to long, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -299,14 +358,14 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'id' from type integer into struct")
   }
 
   test("Cannot convert array to struct, and struct to array, fail fast") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
@@ -318,14 +377,14 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
     val schema = StructType(seq)
 
     val exception = intercept[TypeParserException] {
-      StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, failOnInputNotPerSchema = true)
+      Standardization.standardize(sourceDF, schema, BasicStandardizationConfig.fromDefault().copy(failOnInputNotPerSchema = true, metadataColumns = metadataConfig))
     }
     assert(exception.getMessage == "Cannot standardize field 'letters' from type array into struct")
   }
 
   test("PseudoUuids are used") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -345,27 +404,28 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
+    val metadataConfigStableHashID = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.StableHashId, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfigStableHashID)
     // stableHashId will always yield the same ids
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.StableHashId)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
 
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array(), 1950798873),
+      Row(2L, Array("C"), Row(true), Array(), -988631025)
+    )
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
   }
 
   test("True uuids are used") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
-
-    val expected =
-      """+---+-------+-------+------+
-        ||id |letters|struct |errCol|
-        |+---+-------+-------+------+
-        ||1  |[A, B] |[false]|[]    |
-        ||2  |[C]    |[true] |[]    |
-        |+---+-------+-------+------+
-        |
-        |""".stripMargin.replace("\r\n", "\n")
 
     val (cmd, sourceDF) = getTestDataFrame(tmpFileName, args)
     val seq = Seq(
@@ -374,21 +434,32 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("struct", StructType(Seq(StructField("bar", BooleanType))), nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val metadataConfigTrueUuid = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfigTrueUuid)
+    val actualDf = Standardization.standardize(sourceDF, schema, config)
+
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), Array()),
+      Row(2L, Array("C"), Row(true), Array())
+    )
+    // checking just the data without enceladus_record_id, not the schema here
+    val expectedDF = expectedData.toDfWithSchema(actualDf.drop("enceladus_record_id").schema)
 
     // same except for the record id
-    val actual = destDF.drop("enceladus_record_id").dataAsString(truncate = false)
-    assert(actual == expected)
+    assertSmallDatasetEquality(actualDf.drop("enceladus_record_id"), expectedDF, ignoreNullable = true)
 
-    val destIds = destDF.select('enceladus_record_id ).collect().map(_.getAs[String](0)).toSet
+    val destIds = actualDf.select('enceladus_record_id).collect().map(_.getAs[String](0)).toSet
     assert(destIds.size == 2)
     destIds.foreach(UUID.fromString) // check uuid validity
-
   }
 
   test("Existing enceladus_record_id is kept") { tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
     val expected =
@@ -412,17 +483,29 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("enceladus_record_id", StringType, nullable = false)
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDfWithExistingIds, schema, cmd.rawFormat, recordIdGenerationStrategy = IdType.TrueUuids)
+    val metadataConfig = BasicMetadataColumnsConfig
+      .fromDefault()
+      .copy(recordIdStrategy = RecordIdGeneration.IdType.TrueUuids, prefix = "enceladus")
+    val config = BasicStandardizationConfig
+      .fromDefault()
+      .copy(metadataColumns = metadataConfig)
+
+    val actualDf =  Standardization.standardize(sourceDfWithExistingIds, schema, config)
 
     // The TrueUuids strategy does not override the existing values
-    val actual = destDF.dataAsString(truncate = false)
-    assert(actual == expected)
-  }
+    val expectedData = Seq(
+      Row(1L, Array("A", "B"), Row(false), "id1", Array()),
+      Row(2L, Array("C"), Row(true), "id2", Array())
+    )
 
+    val expectedDF = expectedData.toDfWithSchema(actualDf.schema) // checking just the data, not the schema here
+
+    assertSmallDatasetEquality(actualDf, expectedDF, ignoreNullable = true)
+  }
 
   test("Timestamp with timezone in metadata are shifted") {tmpFileName =>
     val args = (s"--dataset-name $datasetName --dataset-version $datasetVersion --report-date 2019-07-23" +
-      " --report-version 1 --menas-auth-keytab src/test/resources/user.keytab.example " +
+      " --report-version 1 --rest-api-auth-keytab src/test/resources/user.keytab.example " +
       "--raw-format parquet").split(" ")
 
 
@@ -446,7 +529,7 @@ class StandardizationParquetSuite extends FixtureAnyFunSuite with SparkTestBase 
       StructField("ts", TimestampType, nullable = false, new MetadataBuilder().putString(MetadataKeys.DefaultTimeZone, "CET").build())
     )
     val schema = StructType(seq)
-    val destDF = StandardizationInterpreter.standardize(sourceDF, schema, cmd.rawFormat)
+    val destDF = Standardization.standardize(sourceDF, schema, config)
 
     val actual = destDF.dataAsString(truncate = false)
     assert(actual == expected)

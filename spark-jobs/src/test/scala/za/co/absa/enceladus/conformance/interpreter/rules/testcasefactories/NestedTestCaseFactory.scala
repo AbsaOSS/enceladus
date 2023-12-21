@@ -19,13 +19,13 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession, types}
 import org.mockito.Mockito.{mock, when => mockWhen}
+import za.co.absa.commons.io.TempDirectory
 import za.co.absa.enceladus.conformance.config.ConformanceConfig
 import za.co.absa.enceladus.conformance.interpreter.{Always, FeatureSwitches, Never}
-import za.co.absa.enceladus.dao.MenasDAO
+import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.test.factories.{DatasetFactory, MappingTableFactory}
 import za.co.absa.enceladus.model.{Dataset, MappingTable}
-import za.co.absa.enceladus.utils.fs.{HadoopFsUtils, LocalFsUtils}
 import za.co.absa.enceladus.utils.testUtils.HadoopFsTestBase
 import za.co.absa.enceladus.utils.validation.ValidationLevel
 
@@ -289,7 +289,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
 
   import NestedTestCaseFactory._
 
-  private val tempDir = LocalFsUtils.getLocalTemporaryDirectory("test_case_factory")
+  private val tempDir = TempDirectory("test_case_factory").path
 
   /**
     * This method returns all objects necessary to run a dynamic conformance job.
@@ -298,11 +298,13 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     * @param experimentalMappingRule       If true, the experimental mapping rule will be used.
     * @param enableMappingRuleBroadcasting Specify if the broadcasting strategy will be used for the mapping rule.
     * @param conformanceRules              Zero or more conformance rules to be applied as the part of conformance.
-    * @return A dataframe, a dataset, a Menas DAO, a Cmd Config and feature switches prepared to run conformance interpreter
+    * @param errColNullability             errCol nullability
+    * @return A dataframe, a dataset, a Enceladus DAO, a Cmd Config and feature switches prepared to run conformance interpreter
     */
   def getTestCase(experimentalMappingRule: Boolean,
                   enableMappingRuleBroadcasting: Boolean,
-                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, MenasDAO, ConformanceConfig, FeatureSwitches) = {
+                  errColNullability: Boolean,
+                  conformanceRules: ConformanceRule*): (DataFrame, Dataset, EnceladusDAO, ConformanceConfig, FeatureSwitches) = {
 
     val inputDf = spark.read
       .schema(testCaseSchema)
@@ -311,7 +313,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     val dataset = getDataSetWithConformanceRules(testCaseDataset, conformanceRules: _*)
     val cmdConfig = ConformanceConfig(reportDate = reportDate)
 
-    val dao = mock(classOf[MenasDAO])
+    val dao = mock(classOf[EnceladusDAO])
     mockWhen(dao.getDataset(testCaseName, 1, ValidationLevel.NoValidation)) thenReturn testCaseDataset
     mockWhen(dao.getMappingTable(nestedMappingTableName, 1)) thenReturn fixPathsInMappingTable(nestedMT)
     mockWhen(dao.getSchema(nestedMappingTableName, 1)) thenReturn nestedMappingTableSchema
@@ -321,6 +323,7 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
       .setCatalystWorkaroundEnabled(true)
       .setControlFrameworkEnabled(false)
       .setBroadcastStrategyMode(if (enableMappingRuleBroadcasting) Always else Never)
+      .setErrColNullability(errColNullability)
 
     (inputDf, dataset, dao, cmdConfig, featureSwitches)
   }
@@ -330,13 +333,6 @@ class NestedTestCaseFactory(implicit val spark: SparkSession) extends HadoopFsTe
     */
   def createMappingTables(): Unit = {
     createNestedMappingTable()
-  }
-
-  /**
-    * This method should be invoked after all tests in a test suite so that mapping tables are deleted.
-    */
-  def deleteMappingTables(): Unit = {
-    fsUtils.deleteDirectoryRecursively(tempDir)
   }
 
   private def createNestedMappingTable(): Unit = {

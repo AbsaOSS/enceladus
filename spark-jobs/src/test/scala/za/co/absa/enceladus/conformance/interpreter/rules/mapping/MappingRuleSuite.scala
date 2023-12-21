@@ -21,9 +21,10 @@ import org.scalatest.funsuite.AnyFunSuite
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
-import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, SparkTestBase}
+import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, LoggerTestBase, TZNormalizedSparkTestBase}
+import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 
-class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
+class MappingRuleSuite extends AnyFunSuite with TZNormalizedSparkTestBase with LoggerTestBase with BeforeAndAfterAll with HadoopFsTestBase {
   private val testCaseFactory = new SimpleTestCaseFactory()
 
   override def beforeAll(): Unit = {
@@ -31,17 +32,12 @@ class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBas
     testCaseFactory.createMappingTables()
   }
 
-  override def afterAll(): Unit = {
-    testCaseFactory.deleteMappingTables()
-    super.afterAll()
-  }
-
   test("Test non-existent mapping table directory handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, false, nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(true, false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -49,10 +45,10 @@ class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBas
 
   test("Test non-existent mapping table directory handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(false, false, nonExistentTableMappingRule)
+      testCaseFactory.getTestCase(false, false, false, nonExistentTableMappingRule)
 
     val ex = intercept[AnalysisException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Path does not exist"))
@@ -60,10 +56,10 @@ class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBas
 
   test("Test empty mapping table error handling in a mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(true, false, emptyTableMappingRule)
+      testCaseFactory.getTestCase(true, false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))
@@ -71,10 +67,10 @@ class MappingRuleSuite extends AnyFunSuite with SparkTestBase with LoggerTestBas
 
   test("Test empty mapping table error handling in an experimental mapping rule") {
     implicit val (inputDf, dataset, dao, progArgs, featureSwitches) =
-      testCaseFactory.getTestCase(false, false, emptyTableMappingRule)
+      testCaseFactory.getTestCase(false, false, false, emptyTableMappingRule)
 
     val ex = intercept[RuntimeException] {
-      DynamicInterpreter().interpret(dataset, inputDf).cache
+      DynamicInterpreter().interpret(dataset, inputDf).cacheIfNotCachedYet()
     }
 
     assert(ex.getMessage.contains("Unable to read the mapping table"))

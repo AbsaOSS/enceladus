@@ -18,7 +18,7 @@ package za.co.absa.enceladus.conformance.config
 import org.apache.spark.storage.StorageLevel
 import scopt.OParser
 import za.co.absa.enceladus.common.config.{ConfigError, JobConfigParser}
-import za.co.absa.enceladus.dao.auth.{InvalidMenasCredentialsFactory, MenasCredentialsFactory}
+import za.co.absa.enceladus.dao.auth.{InvalidRestApiCredentialsFactory, RestApiCredentialsFactory}
 
 import scala.util.Try
 
@@ -33,7 +33,7 @@ case class ConformanceConfig(datasetName: String = "",
                              datasetVersion: Int = 1,
                              reportDate: String = "",
                              reportVersion: Option[Int] = None,
-                             menasCredentialsFactory: MenasCredentialsFactory = InvalidMenasCredentialsFactory,
+                             restApiCredentialsFactory: RestApiCredentialsFactory = InvalidRestApiCredentialsFactory,
                              performanceMetricsFile: Option[String] = None,
                              folderPrefix: Option[String] = None,
                              persistStorageLevel: Option[StorageLevel] = None,
@@ -55,11 +55,11 @@ case class ConformanceConfig(datasetName: String = "",
   override def withDatasetVersion(value: Int): ConformanceConfig = copy(datasetVersion = value)
   override def withReportDate(value: String): ConformanceConfig = copy(reportDate = value)
   override def withReportVersion(value: Option[Int]): ConformanceConfig = copy(reportVersion = value)
-  override def withCredsFile(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): ConformanceConfig =
-    copy(credsFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withCredsFile(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): ConformanceConfig =
+    copy(credsFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
 
-  override def withAuthKeytab(value: Option[String], menasCredentialsFactory: MenasCredentialsFactory): ConformanceConfig =
-    copy(keytabFile = value, menasCredentialsFactory = menasCredentialsFactory)
+  override def withAuthKeytab(value: Option[String], restApiCredentialsFactory: RestApiCredentialsFactory): ConformanceConfig =
+    copy(keytabFile = value, restApiCredentialsFactory = restApiCredentialsFactory)
 
   override def withPerformanceMetricsFile(value: Option[String]): ConformanceConfig = copy(performanceMetricsFile = value)
   override def withFolderPrefix(value: Option[String]): ConformanceConfig = copy(folderPrefix = value)
@@ -68,7 +68,7 @@ case class ConformanceConfig(datasetName: String = "",
 
 object ConformanceConfig {
   def tryFromArguments(args: Array[String]): Try[ConformanceConfig] = {
-    import za.co.absa.enceladus.utils.implicits.OptionImplicits._
+    import za.co.absa.commons.lang.extensions.OptionExtension._
     OParser.parse(conformanceJobParser, args, ConformanceConfig()).toTry(ConfigError("Command line parameters error"))
   }
 
