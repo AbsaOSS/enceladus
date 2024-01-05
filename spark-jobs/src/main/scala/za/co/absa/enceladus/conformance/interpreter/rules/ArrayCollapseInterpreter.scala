@@ -19,7 +19,7 @@ import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, InterpreterContextArgs}
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.commons.utils.ExplodeTools
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 

@@ -25,8 +25,8 @@ import za.co.absa.enceladus.conformance.interpreter.{DynamicInterpreter, Explosi
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.ConformanceRule
 import za.co.absa.enceladus.model.{conformanceRule, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{HadoopFsTestBase, TZNormalizedSparkTestBase}
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 case class MyCustomRule(
   order:             Int,

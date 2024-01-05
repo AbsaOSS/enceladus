@@ -17,7 +17,7 @@ package za.co.absa.enceladus.common
 
 import com.typesafe.config.Config
 import org.apache.spark.sql.DataFrame
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.enceladus.utils.implicits.EnceladusDataFrameImplicits.EnceladusDataframeEnhancements
 
 object ErrorColNormalization {

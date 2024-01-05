@@ -26,8 +26,8 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.Dataset
 import za.co.absa.enceladus.standardization.config.StandardizationConfig
 import za.co.absa.enceladus.standardization.fixtures.TempFileFixture
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.testUtils.TZNormalizedSparkTestBase
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.standardization.ValidationException
 import za.co.absa.standardization.{RecordIdGeneration, Standardization}
 import za.co.absa.standardization.config.{BasicMetadataColumnsConfig, BasicStandardizationConfig}
@@ -46,6 +46,7 @@ class StandardizationRerunSuite extends FixtureAnyFunSuite with TZNormalizedSpar
 
   private val tmpFilePrefix = "test-input-"
   private val tmpFileSuffix = ".csv"
+
 
   private val csvContent: String =
     """101|102|1|2019-05-04|2019-05-04

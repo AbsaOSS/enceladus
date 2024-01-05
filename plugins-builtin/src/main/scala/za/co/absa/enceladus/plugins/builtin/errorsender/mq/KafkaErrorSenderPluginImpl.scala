@@ -20,18 +20,18 @@ import org.apache.spark.sql.functions.{col, explode, lit, size, struct, typedLit
 import org.apache.spark.sql.types.DataTypes
 import org.apache.spark.sql.{Column, DataFrame, DataFrameWriter, Encoder, Encoders}
 import za.co.absa.enceladus.plugins.api.postprocessor.PostProcessor
-import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams, SchemaRegistrySecurityParams}
+import za.co.absa.enceladus.plugins.builtin.common.mq.kafka.{KafkaConnectionParams, KafkaSecurityParams}
 import za.co.absa.enceladus.plugins.builtin.errorsender.DceError
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.KafkaErrorSenderPluginImpl.SingleErrorStardardized
 import KafkaErrorSenderPluginImpl._
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin
 import za.co.absa.enceladus.plugins.builtin.errorsender.params.ErrorSenderPluginParams
-import za.co.absa.enceladus.utils.error.ErrorMessage.ErrorCodes
 import za.co.absa.enceladus.utils.modules._
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 import za.co.absa.abris.avro.functions.to_avro
-import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig}
+import za.co.absa.abris.config.ToAvroConfig
 import za.co.absa.enceladus.plugins.builtin.errorsender.mq.kafka.KafkaErrorSenderPlugin.{avroKeySchemaRegistryConfig, avroValueSchemaRegistryConfig, registerSchemas}
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage.ErrorCodes
 
 import scala.util.{Failure, Success, Try}
 

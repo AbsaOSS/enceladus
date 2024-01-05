@@ -28,19 +28,18 @@ import za.co.absa.enceladus.conformance.config.ConformanceConfigParser
 import za.co.absa.enceladus.conformance.datasource.PartitioningUtils
 import za.co.absa.enceladus.conformance.interpreter.rules._
 import za.co.absa.enceladus.conformance.interpreter.rules.custom.CustomConformanceRule
-import za.co.absa.enceladus.conformance.interpreter.rules.mapping.{MappingRuleInterpreter, MappingRuleInterpreterBroadcast,
-  MappingRuleInterpreterGroupExplode}
+import za.co.absa.enceladus.conformance.interpreter.rules.mapping._
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.config.PathWithFs
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
 import za.co.absa.enceladus.utils.udf.ConformanceUDFLibrary
 import za.co.absa.spark.commons.utils.explode.ExplosionContext
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 import za.co.absa.commons.lang.extensions.SeqExtension._
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 case class DynamicInterpreter()(implicit inputFs: FileSystem) {
   private val log = LoggerFactory.getLogger(this.getClass)

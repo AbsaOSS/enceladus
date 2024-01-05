@@ -23,7 +23,7 @@ import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
 import za.co.absa.enceladus.utils.broadcast.{BroadcastUtils, LocalMappingTable}
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations
 import za.co.absa.spark.hats.transformations.NestedArrayTransformations.GetFieldFunction
 
