@@ -349,7 +349,7 @@ def run(parsed_args: argparse.Namespace):
         print('Property definition names supplied: {}'.format(propdef_names))
         migrate_propdefs_by_propdef_names(source_db, target_db, propdef_names, dryrun=dryrun)
     else:
-        # should not happen (-d/-m is exclusive and required)
+        # should not happen (-d/-m/-p is exclusive and required)
         raise Exception("Invalid run options: DS names (-d ds1 ds2 ...)..,  MT names (-m mt1 mt2 ... ), "
                         "or prop defs (-p prop1 prop2 ...) must be given.")
 
