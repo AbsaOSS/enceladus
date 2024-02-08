@@ -124,6 +124,9 @@ while [[ $# -gt 0 ]]; do
       elif [ "$1" == "|" ]; then
         # If the argument is a pipe character
         other_args+=("'|'")
+      elif [[ "$1" =~ ^[[:space:]]+$ ]]; then
+        # If the argument is one or more space characters
+        other_args+=("'$1'")
       else
         other_args+=("$1")
       fi
