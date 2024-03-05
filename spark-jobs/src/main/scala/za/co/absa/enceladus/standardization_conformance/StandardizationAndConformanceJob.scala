@@ -24,6 +24,7 @@ import za.co.absa.enceladus.utils.config.ConfigReader
 import za.co.absa.enceladus.utils.modules.SourcePhase
 import za.co.absa.enceladus.utils.types.{Defaults, DefaultsByFormat}
 import za.co.absa.enceladus.utils.udf.UDFLibrary
+import za.co.absa.atum.AtumImplicits._
 
 object StandardizationAndConformanceJob extends StandardizationAndConformanceExecution {
   private val jobName = "Enceladus Standardization&Conformance"
@@ -60,6 +61,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
       // post processing deliberately rereads the output ... same as above
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
+      spark.disableControlMeasuresTracking()
       finishJob(cmd)
     }
   }
