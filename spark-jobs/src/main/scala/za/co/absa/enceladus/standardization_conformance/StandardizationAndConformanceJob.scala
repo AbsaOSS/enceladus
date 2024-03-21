@@ -61,7 +61,7 @@ object StandardizationAndConformanceJob extends StandardizationAndConformanceExe
       // post processing deliberately rereads the output ... same as above
       runPostProcessing(SourcePhase.Conformance, preparationResult, cmd)
     } finally {
-      spark.disableControlMeasuresTracking()
+      spark.disableControlMeasuresTracking() //disabling Atum to enable running the whole process again, with fresh initialization
       finishJob(cmd)
     }
   }
