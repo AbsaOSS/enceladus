@@ -55,6 +55,7 @@ shift
 hdfsPublishPath=""
 hdfsPath=""
 jceks_flag=""
+std_path="$STD_HDFS_PATH"
 
 # Function to print error message and exit
 function error_exit() {
@@ -105,6 +106,18 @@ function cleanup_versions() {
   return 0
 }
 
+# Function to get evaluated tmp path for standardization
+# Replace placeholders if present
+function replace_std_path_placeholders() {
+  std_path=$(echo "$path" | sed "s/{0}/$dataset_name/")
+  std_path=$(echo "$path" | sed "s/{1}/$dataset_version/")
+  std_path=$(echo "$path" | sed "s/{2}/$report_date/")
+  std_path=$(echo "$path" | sed "s/{3}/$report_version/")
+
+  return 0
+}
+
+
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -152,7 +165,7 @@ echo "$original_script" "${other_args[@]}" \
 exit_code=$?
 
 # Clean up versions if necessary
-[[ $hdfsPublishPath == s3a://* ]] && cleanup_versions "$hdfsPublishPath" "$ECS_API_KK"
-[[ $STD_HDFS_PATH == s3a://* ]] && cleanup_versions "$STD_HDFS_PATH" "$ECS_API_KK"
+[[ $hdfsPublishPath == s3a://* ]] && cleanup_versions "$hdfsPublishPath/enceladus_info_date=$report_date" "$ECS_API_KK"
+[[ $std_path == s3a://* ]] && replace_std_path_placeholders && cleanup_versions "$std_path"
 
 exit $exit_code
