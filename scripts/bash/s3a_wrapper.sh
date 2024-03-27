@@ -109,10 +109,10 @@ function cleanup_versions() {
 # Function to get evaluated tmp path for standardization
 # Replace placeholders if present
 function replace_std_path_placeholders() {
-  std_path=$(echo "$path" | sed "s/{0}/$dataset_name/")
-  std_path=$(echo "$path" | sed "s/{1}/$dataset_version/")
-  std_path=$(echo "$path" | sed "s/{2}/$report_date/")
-  std_path=$(echo "$path" | sed "s/{3}/$report_version/")
+  std_path=$(echo "$std_path" | sed "s/{0}/$dataset_name/")
+  std_path=$(echo "$std_path" | sed "s/{1}/$dataset_version/")
+  std_path=$(echo "$std_path" | sed "s/{2}/$report_date/")
+  std_path=$(echo "$std_path" | sed "s/{3}/$report_version/")
 
   return 0
 }
