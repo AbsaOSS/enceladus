@@ -14,32 +14,43 @@
  */
 
 // Removes trailing slashes from ECS-mapped paths
-// It works, but on target it is too slow (e.g. maps only 10 documents at once and then need to rerun)
 
-
-function stripTrailingSlash(collectionName, fieldToStrip, requiredFieldToExist) {
-  print(`Stripping trailing / from field ${fieldToStrip} collection in ${collectionName}`);
+function stripTrailingSlashOps(collectionName, fieldToStrip, requiredFieldToExist) {
+  print(`PrepOps: Stripping trailing / from field ${fieldToStrip} collection in ${collectionName}`);
   var count = 0;
-  db[collectionName].find(
+  var ops = db[collectionName].find(
     {
       "$and": [
         {[requiredFieldToExist]: {$exists: true}},
         {[fieldToStrip]: {$regex: "/$"}}
       ]
     }
-  ).forEach(function (e, i) {
-    var origPath = e[fieldToStrip];
+  ).map(function (doc) {
+    var origPath = doc[fieldToStrip];
     var updatedPath = origPath.replace(/\/$/, "");
-    print(`${e.name} v${e.version} - updating field ${fieldToStrip}: ${origPath} -> ${updatedPath}`);
-    e[fieldToStrip] = updatedPath;
-    db[collectionName].save(e);
+    print(`${doc.name} v${doc.version} - updating field ${fieldToStrip}: ${origPath} -> ${updatedPath}`);
     count++;
-  })
 
-  print(`${count} documents adjusted in total.`);
+    return {
+      "updateOne": {
+        "filter": {"_id": doc._id},
+        "update": { "$set": { [fieldToStrip]: updatedPath}}
+      }
+    };
+  });
+
+  print(`${count} documents will be adjusted.`);
   print(``);
+
+  return ops;
 }
 
-stripTrailingSlash("dataset_v1", "hdfsPath", "bakHdfsPath");
-stripTrailingSlash("dataset_v1", "hdfsPublishPath", "bakHdfsPublishPath");
-stripTrailingSlash("mapping_table_v1", "hdfsPath", "bakHdfsPath");
+var ops_d1 = stripTrailingSlashOps("dataset_v1", "hdfsPath", "bakHdfsPath");
+db.getCollection('dataset_v1').bulkWrite(ops_d1);
+
+var ops_d2 = stripTrailingSlashOps("dataset_v1", "hdfsPublishPath", "bakHdfsPublishPath");
+db.getCollection('dataset_v1').bulkWrite(ops_d2);
+
+var ops_mt1 = stripTrailingSlashOps("mapping_table_v1", "hdfsPath", "bakHdfsPath");
+db.getCollection('mapping_table_v1').bulkWrite(ops_mt1);
+
