@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.samples
 
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{Dataset, DefaultValue, MappingTable}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 object EmployeeConformance {
   val countryMT = MappingTable(name = "country", version = 0, hdfsPath = "src/test/testData/country", schemaName = "country", schemaVersion = 0)
@@ -65,8 +66,8 @@ object EmployeeConformance {
       ConformedRole(1), ConformedEmployeeId = "2"),
     ConformedEmployee(employee_id = 3, name = "John", surname = "Doe3", dept= 3, role = 2, country = "SWE", conformed_country = null, conformed_department = "Unknown dept",
       conformed_role = "External dev", errCol= List(
-          ErrorMessage.confMappingErr("conformed_country", Seq("SWE"), Seq(Mapping("country_code", "country"))),
-          ErrorMessage.confMappingErr("conformed_department", Seq("3"), Seq(Mapping("dept_id", "dept")))
+          EnceladusErrorMessage.confMappingErr("conformed_country", Seq("SWE"), Seq(ErrorMessage.Mapping("country_code", "country"))),
+        EnceladusErrorMessage.confMappingErr("conformed_department", Seq("3"), Seq(ErrorMessage.Mapping("dept_id", "dept")))
       ), MyLiteral = "abcdef", MyUpperLiteral = "ABCDEF", Concatenated = "abcdefABCDEF", SparkConfAttr = "hello :)", ConformedRole(2), ConformedEmployeeId = "3"),
     ConformedEmployee(employee_id = 4, name = "John", surname = "Doe4", dept= 1, role = 2, country = "IN", conformed_country = "India", conformed_department = "Ingestion Squad",
       conformed_role = "Ingestion Developer", errCol= List(), MyLiteral = "abcdef", MyUpperLiteral = "ABCDEF", Concatenated = "abcdefABCDEF", SparkConfAttr = "hello :)",

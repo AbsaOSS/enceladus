@@ -22,7 +22,8 @@ import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{expr, udf}
 import org.apache.spark.sql.types.DataType
 import org.apache.spark.sql.{Row, SparkSession}
-import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 object BroadcastUtils {
   // scalastyle:off null
@@ -108,7 +109,7 @@ object BroadcastUtils {
    */
   def getErrorUdf(mappingTable: Broadcast[LocalMappingTable],
                   outputColumns: Seq[String],
-                  mappings: Seq[Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
+                  mappings: Seq[ErrorMessage.Mapping])(implicit spark: SparkSession): UserDefinedFunction = {
 
     val numberOfArguments = mappingTable.value.keyTypes.size
 
@@ -117,7 +118,7 @@ object BroadcastUtils {
         null
       } else {
         val strings: Seq[String] = key.map(a => safeToString(a))
-        ErrorMessage.confMappingErr(outputColumns.mkString(","), strings, mappings)
+        EnceladusErrorMessage.confMappingErr(outputColumns.mkString(","), strings, mappings)
       }
     }
     val errorMessageType = ScalaReflection.schemaFor[ErrorMessage].dataType

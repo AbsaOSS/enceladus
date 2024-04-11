@@ -24,9 +24,9 @@ import za.co.absa.enceladus.conformance.interpreter.{ExplosionState, Interpreter
 import za.co.absa.enceladus.dao.EnceladusDAO
 import za.co.absa.enceladus.model.conformanceRule.{ConformanceRule, MappingConformanceRule}
 import za.co.absa.enceladus.model.{Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error._
 import za.co.absa.enceladus.utils.transformations.ArrayTransformations
 import za.co.absa.enceladus.utils.udf.ConformanceUDFNames
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancementsArrays
 import za.co.absa.spark.commons.sql.functions.col_of_path
 
@@ -52,7 +52,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
 
     val res = handleArrays(rule.outputColumn, withUniqueId) { dfIn =>
       val joined = joinDatasetAndMappingTable(mapTable, dfIn)
-      val mappings = rule.attributeMappings.map(x => Mapping(x._1, x._2)).toSeq
+      val mappings = rule.attributeMappings.map(x => ErrorMessage.Mapping(x._1, x._2)).toSeq
       val mappingErrUdfCall = call_udf(ConformanceUDFNames.confMappingErr, lit(rule.outputColumn),
         array(rule.attributeMappings.values.toSeq.map(col_of_path(_).cast(StringType)): _*),
         typedLit(mappings))
@@ -94,7 +94,7 @@ case class MappingRuleInterpreter(rule: MappingConformanceRule, conformance: Con
       .select($"conf.*", col(s"err.${ErrorMessage.errorColumnName}")).drop(idField)
   }
 
-  private def inclErrorNullArr(mappings: Seq[Mapping], schema: StructType): Column = {
+  private def inclErrorNullArr(mappings: Seq[ErrorMessage.Mapping], schema: StructType): Column = {
     val paths = mappings.flatMap { mapping =>
       schema.getAllArraysInPath(mapping.mappedDatasetColumn)
     }

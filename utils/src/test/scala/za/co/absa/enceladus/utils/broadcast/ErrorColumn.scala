@@ -15,7 +15,8 @@
 
 package za.co.absa.enceladus.utils.broadcast
 
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
+
 
 /** This case class is used to extract error column from test dataframes. */
 case class ErrorColumn(errCol: ErrorMessage)

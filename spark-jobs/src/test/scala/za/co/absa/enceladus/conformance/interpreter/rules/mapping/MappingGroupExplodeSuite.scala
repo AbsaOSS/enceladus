@@ -18,8 +18,8 @@ package za.co.absa.enceladus.conformance.interpreter.rules.mapping
 import org.apache.spark.sql.functions.{array, typedLit}
 import za.co.absa.enceladus.conformance.interpreter.DynamicInterpreter
 import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.NestedTestCaseFactory._
-import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory.{simpleMappingRule, simpleMappingRuleMultipleOutputs, simpleMappingRuleMultipleOutputsWithDefaults, simpleMappingRuleWithDefaultValue}
-import za.co.absa.enceladus.utils.error.ErrorMessage
+import za.co.absa.enceladus.conformance.interpreter.rules.testcasefactories.SimpleTestCaseFactory._
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.commons.utils.JsonUtils
 import za.co.absa.spark.commons.implicits.DataFrameImplicits.DataFrameEnhancements
 

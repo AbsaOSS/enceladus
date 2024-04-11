@@ -18,7 +18,8 @@ package za.co.absa.enceladus.utils.udf
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.api.java.UDF2
 import org.apache.spark.sql.types.ArrayType
-import za.co.absa.enceladus.utils.error.{ErrorMessage, Mapping}
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.enceladus.utils.udf.ConformanceUDFNames._
 import za.co.absa.spark.commons.OncePerSparkSession
 
@@ -28,20 +29,20 @@ import scala.collection.mutable
 class ConformanceUDFLibrary()(implicit sparkToRegisterTo: SparkSession) extends OncePerSparkSession {
 
   override protected def register(implicit spark: SparkSession): Unit = {
-    spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[Mapping]) =>
-      ErrorMessage.confMappingErr(errCol, rawValues, mappings)
+    spark.udf.register(confMappingErr, { (errCol: String, rawValues: Seq[String], mappings: Seq[ErrorMessage.Mapping]) =>
+      EnceladusErrorMessage.confMappingErr(errCol, rawValues, mappings)
     })
 
     spark.udf.register(confCastErr, { (errCol: String, rawValue: String) =>
-      ErrorMessage.confCastErr(errCol, rawValue)
+      EnceladusErrorMessage.confCastErr(errCol, rawValue)
     })
 
     spark.udf.register(confNegErr, { (errCol: String, rawValue: String) =>
-      ErrorMessage.confNegErr(errCol, rawValue)
+      EnceladusErrorMessage.confNegErr(errCol, rawValue)
     })
 
     spark.udf.register(confLitErr, { (errCol: String, rawValue: String) =>
-      ErrorMessage.confLitErr(errCol, rawValue)
+      EnceladusErrorMessage.confLitErr(errCol, rawValue)
     })
 
     spark.udf.register(arrayDistinctErrors, // this UDF is registered for _spark-hats_ library sake

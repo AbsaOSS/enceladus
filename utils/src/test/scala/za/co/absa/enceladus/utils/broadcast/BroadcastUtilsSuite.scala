@@ -18,8 +18,9 @@ package za.co.absa.enceladus.utils.broadcast
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalatest.wordspec.AnyWordSpec
-import za.co.absa.enceladus.utils.error.Mapping
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage
 import za.co.absa.enceladus.utils.testUtils.{LoggerTestBase, TZNormalizedSparkTestBase}
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 import scala.collection.mutable
 
@@ -522,7 +523,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase wit
 
         val localMt = LocalMappingTable(dfMt, Seq("id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
-        val mappings = Seq(Mapping("id", "key2"))
+        val mappings = Seq(ErrorMessage.Mapping("id", "key2"))
 
         val errorUdf1 = BroadcastUtils.getErrorUdf(broadcastedMt, Seq("val"), mappings)
 
@@ -540,7 +541,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase wit
 
         val localMt = LocalMappingTable(dfMt, Seq("id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
-        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"))
+        val mappings = Seq(ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"))
 
         val errorUdf2 = BroadcastUtils.getErrorUdf(broadcastedMt, Seq("val"), mappings)
 
@@ -552,7 +553,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase wit
       "3 UDF parameter is used" in {
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
-        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
+        val mappings = Seq(ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"))
 
         val errorUdf3 = BroadcastUtils.getErrorUdf(broadcastedMt, Seq("val"), mappings)
 
@@ -567,7 +568,7 @@ class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase wit
       "4 UDF parameter is used" in {
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
-        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"))
+        val mappings = Seq(ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"))
 
         val errorUdf4 = BroadcastUtils.getErrorUdf(broadcastedMt, Seq("val"), mappings)
 
@@ -582,8 +583,8 @@ class BroadcastUtilsSuite extends AnyWordSpec with TZNormalizedSparkTestBase wit
       "5 UDF parameter is used" in {
         val localMt = LocalMappingTable(dfMt, Seq("id", "id", "id", "id", "id"), Map(""->"val"))
         val broadcastedMt = BroadcastUtils.broadcastMappingTable(localMt)
-        val mappings = Seq(Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"), Mapping("id", "key2"),
-          Mapping("id", "key2"))
+        val mappings = Seq(ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"), ErrorMessage.Mapping("id", "key2"),
+          ErrorMessage.Mapping("id", "key2"))
 
         val errorUdf5 = BroadcastUtils.getErrorUdf(broadcastedMt, Seq("val"), mappings)
 

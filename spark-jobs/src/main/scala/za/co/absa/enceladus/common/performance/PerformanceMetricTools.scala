@@ -20,9 +20,9 @@ import org.apache.spark.sql.functions.{col, size, sum}
 import org.slf4j.{Logger, LoggerFactory}
 import za.co.absa.atum.core.Atum
 import za.co.absa.enceladus.utils.config.PathWithFs
-import za.co.absa.enceladus.utils.error.ErrorMessage
 import za.co.absa.enceladus.utils.general.ProjectMetadata
 import za.co.absa.enceladus.utils.fs.HadoopFsUtils
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 import za.co.absa.spark.commons.implicits.StructTypeImplicits.StructTypeEnhancements
 
 object PerformanceMetricTools extends ProjectMetadata {

@@ -17,7 +17,8 @@ package za.co.absa.enceladus.conformance.samples
 
 import za.co.absa.enceladus.model.conformanceRule._
 import za.co.absa.enceladus.model.{MappingTable, Dataset => ConfDataset}
-import za.co.absa.enceladus.utils.error._
+import za.co.absa.enceladus.utils.error.EnceladusErrorMessage
+import za.co.absa.spark.commons.errorhandling.ErrorMessage
 
 case class Outer(order: Int, a: Seq[Inner], myFlag: Boolean)
 case class OuterErr(order: Int, a: Seq[Inner], myFlag: Boolean, errCol: Seq[ErrorMessage])
@@ -142,7 +143,7 @@ object ArraySamples {
                 ConformedInner2(2, "two", "twoDrop me :)", "Hello world", new ConformedInner3("Hello world"), "myConf", "HELLO WORLD")
             )),
           ConformedInner(Seq()),
-          ConformedInner(null)), Seq(ErrorMessage.confMappingErr("a.c.conformedD", List("0", "true"), List(Mapping("ind", "a.c.d"), Mapping("otherFlag", "myFlag"))))),
+          ConformedInner(null)), Seq(EnceladusErrorMessage.confMappingErr("a.c.conformedD", List("0", "true"), List(ErrorMessage.Mapping("ind", "a.c.d"), ErrorMessage.Mapping("otherFlag", "myFlag"))))),
       ConformedOuter(2, Seq(), Seq()),
       ConformedOuter(3, null, Seq()))
 }
