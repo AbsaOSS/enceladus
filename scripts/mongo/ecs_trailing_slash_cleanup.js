@@ -13,16 +13,15 @@
  * limitations under the License.
  */
 
-// Removes trailing slashes from ECS-mapped paths
+// Removes trailing slashes from 's3a://.../' paths (ECS-mapped paths and derived further from there)
 
-function stripTrailingSlashOps(collectionName, fieldToStrip, requiredFieldToExist) {
+function stripTrailingSlashOps(collectionName, fieldToStrip) {
   print(`PrepOps: Stripping trailing / from field ${fieldToStrip} collection in ${collectionName}`);
   var count = 0;
   var ops = db[collectionName].find(
     {
       "$and": [
-        {[requiredFieldToExist]: {$exists: true}},
-        {[fieldToStrip]: {$regex: "/$"}}
+        {[fieldToStrip]: {$regex: "s3a://.*/$"}}
       ]
     }
   ).map(function (doc) {
@@ -45,12 +44,12 @@ function stripTrailingSlashOps(collectionName, fieldToStrip, requiredFieldToExis
   return ops;
 }
 
-var ops_d1 = stripTrailingSlashOps("dataset_v1", "hdfsPath", "bakHdfsPath");
+var ops_d1 = stripTrailingSlashOps("dataset_v1", "hdfsPath");
 db.getCollection('dataset_v1').bulkWrite(ops_d1);
 
-var ops_d2 = stripTrailingSlashOps("dataset_v1", "hdfsPublishPath", "bakHdfsPublishPath");
+var ops_d2 = stripTrailingSlashOps("dataset_v1", "hdfsPublishPath");
 db.getCollection('dataset_v1').bulkWrite(ops_d2);
 
-var ops_mt1 = stripTrailingSlashOps("mapping_table_v1", "hdfsPath", "bakHdfsPath");
+var ops_mt1 = stripTrailingSlashOps("mapping_table_v1", "hdfsPath");
 db.getCollection('mapping_table_v1').bulkWrite(ops_mt1);
 
