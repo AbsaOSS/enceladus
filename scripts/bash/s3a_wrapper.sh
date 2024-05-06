@@ -98,8 +98,6 @@ function cleanup_versions() {
   local path=$1
   local api=$2
   echo "Cleaning versions for $path"
-  curl -s -X GET --header "x-api-key: $ECS_API_KEY" -d "{\"ecs_path\":\"${path#s3a://}\"}" "$api"
-  echo
   curl -s -X DELETE --header "x-api-key: $ECS_API_KEY" -d "{\"ecs_path\":\"${path#s3a://}\"}" "$api"
   echo
   echo "Versions cleaned"
