@@ -15,10 +15,10 @@
 
 package za.co.absa.enceladus.menas.integration.mongo
 
-import de.flapdoodle.embed.mongo.config.{MongodConfigBuilder, Net}
 import de.flapdoodle.embed.mongo.distribution.Version
-import de.flapdoodle.embed.mongo.{MongodExecutable, MongodStarter}
-import de.flapdoodle.embed.process.runtime.Network
+import de.flapdoodle.embed.mongo.transitions.{Mongod, RunningMongodProcess}
+import de.flapdoodle.reverse.TransitionWalker
+
 import javax.annotation.{PostConstruct, PreDestroy}
 import org.mongodb.scala.{MongoClient, MongoDatabase}
 import org.slf4j.LoggerFactory
@@ -33,43 +33,28 @@ import za.co.absa.enceladus.menas.utils.implicits.codecRegistry
 @Profile(Array("withEmbeddedMongo"))
 class EmbeddedMongo {
   private val logger = LoggerFactory.getLogger(this.getClass)
-  private var mongodExecutable: MongodExecutable = _
-  private var mongoPort: Int = _
+  private var runningMongod: TransitionWalker.ReachedState[RunningMongodProcess] = _
 
-  def getMongoUri: String = s"mongodb://localhost:$mongoPort/?ssl=false"
-
-  def getMongoPort: Int = mongoPort
+  def getMongoUri: String = f"mongodb://${runningMongod.current().getServerAddress}"
 
   @Value("${menas.mongo.connection.database}")
   val database: String = ""
 
   @PostConstruct
   def runDummyMongo(): Unit = {
-    val starter = MongodStarter.getDefaultInstance
-
-    synchronized {
-      mongoPort = Network.getFreeServerPort()
-      val mongodConfig = new MongodConfigBuilder()
-        .version(Version.Main.V4_0)
-        .net(new Net("localhost", mongoPort, Network.localhostIsIPv6()))
-        .build()
-
-      mongodExecutable = starter.prepare(mongodConfig)
-    }
-
-    mongodExecutable.start()
-    logger.debug(s"*** mongod started at port $mongoPort")
+    runningMongod = Mongod.instance().start(Version.Main.V4_0)
+    logger.debug(s"*** mongod started at $getMongoUri")
   }
 
   @PreDestroy
   def shutdownDummyMongo(): Unit = {
-    mongodExecutable.stop()
+    runningMongod.close()
   }
 
   @Primary // will override non-primary MongoDatabase-typed bean when in scope - here: the 'defaultMongoDb' bean
   @Bean
   def embeddedMongoDb: MongoDatabase = {
+    print(f"\n===TEST MONGO DB URI===: $getMongoUri ===\n")
     MongoClient(getMongoUri).getDatabase(database).withCodecRegistry(codecRegistry)
   }
-
 }
