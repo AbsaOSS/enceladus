@@ -54,7 +54,6 @@ class EmbeddedMongo {
   @Primary // will override non-primary MongoDatabase-typed bean when in scope - here: the 'defaultMongoDb' bean
   @Bean
   def embeddedMongoDb: MongoDatabase = {
-    print(f"\n===TEST MONGO DB URI===: $getMongoUri ===\n")
     MongoClient(getMongoUri).getDatabase(database).withCodecRegistry(codecRegistry)
   }
 }
