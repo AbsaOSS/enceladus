@@ -42,7 +42,7 @@ class EmbeddedMongo {
 
   @PostConstruct
   def runDummyMongo(): Unit = {
-    runningMongod = Mongod.instance().start(Version.Main.V4_0)
+    runningMongod = Mongod.instance().start(Version.Main.V8_0)
     logger.debug(s"*** mongod started at $getMongoUri")
   }
 
