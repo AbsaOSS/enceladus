@@ -308,7 +308,8 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
 
           val actual = response.getBody
           val expected = UsedIn(Some(Seq(MenasReference(None, "dataset", 1))), Some(Seq()))
-          assert(actual == expected)
+          val expectedMongo4_4 = UsedIn(Some(Seq(MenasReference(Some("dataset"), "dataset", 1))), Some(Seq()))
+          assert(actual == expectedMongo4_4)
         }
       }
       "some version of the Schema is used by a enabled MappingTable" should {
@@ -325,7 +326,8 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
 
           val actual = response.getBody
           val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping", 1))))
-          assert(actual == expected)
+          val expectedMongo4_4 = UsedIn(Some(Seq()), Some(Seq(MenasReference(Some("mapping_table"), "mapping", 1))))
+          assert(actual == expectedMongo4_4)
         }
       }
     }
@@ -460,7 +462,8 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
 
           val actual = response.getBody
           val expected = UsedIn(Some(Seq(MenasReference(None, "dataset1", 1))), Some(Seq()))
-          assert(actual == expected)
+          val expectedMongo4_4 = UsedIn(Some(Seq(MenasReference(Some("dataset"), "dataset1", 1))), Some(Seq()))
+          assert(actual == expectedMongo4_4)
         }
       }
       "some version of the Schema is used by a enabled MappingTable" should {
@@ -478,7 +481,8 @@ class SchemaApiFeaturesIntegrationSuite extends BaseRestApiTest with BeforeAndAf
 
           val actual = response.getBody
           val expected = UsedIn(Some(Seq()), Some(Seq(MenasReference(None, "mapping1", 1))))
-          assert(actual == expected)
+          val expectedMongo4_4 = UsedIn(Some(Seq()), Some(Seq(MenasReference(Some("mapping_table"), "mapping1", 1))))
+          assert(actual == expectedMongo4_4)
         }
       }
     }
