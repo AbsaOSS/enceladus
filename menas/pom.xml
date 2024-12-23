@@ -29,7 +29,7 @@
         <scala.xml.version>1.0.4</scala.xml.version>
         <webui.basedir>${project.basedir}/ui</webui.basedir>
         <scalastyle.configLocation>${project.parent.basedir}/scalastyle-config.xml</scalastyle.configLocation>
-        <embedded.mongo.version>2.2.0</embedded.mongo.version>
+        <embedded.mongo.version>4.18.0</embedded.mongo.version>
     </properties>
 
     <dependencies>
@@ -340,7 +340,7 @@
                     <args>
                         <arg>-Xfatal-warnings</arg>
                         <arg>-unchecked</arg>
-                        <arg>-deprecation</arg>
+                        <arg>-deprecation:false</arg>
                         <arg>-feature</arg>
                     </args>
                 </configuration>
