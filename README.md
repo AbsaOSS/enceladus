@@ -36,6 +36,7 @@ ___
     - [Conformance](#conformance)
 - [How to build](#how-to-build)
 - [How to run](#how-to-run)
+- [How to release](#how-to-release)
 - [Plugins](#plugins)
     - [Built-in Plugins](#built-in-plugins)
 - [How to contribute](#how-to-contribute)
@@ -311,7 +312,7 @@ The list of additional options available for running Standardization:
 
 Most of these options are format specific. For details see [the documentation](https://absaoss.github.io/enceladus/docs/usage/standardization-formats). 
 
-<sup>*</sup> Can also be specified as a unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
+<sup>*</sup> Can also be specified as a Unicode value in the following ways: <code>U+00A1</code>, <code>u00a1</code> or just the code <code>00A1</code>. In case empty string option needs to be applied, the keyword <code>none</code> can be used.
 
 The list of additional options available for running Conformance:
 
@@ -323,6 +324,10 @@ The list of additional options available for running Conformance:
 | --autoclean-std-folder **true/false**      | If `true`, the standardized folder will be cleaned automatically after successful execution of a Conformance job. |
 
 All the additional options valid for both Standardization and Conformance can also be specified when running the combined StandardizationAndConformance job
+
+## How to release
+
+See the detailed document in [scripts/release/README.md](scripts/release/README.md).
 
 ## Plugins
 

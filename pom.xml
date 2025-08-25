@@ -140,11 +140,13 @@
         <dockerfile.maven.version>1.4.13</dockerfile.maven.version>
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
         <maven.antrun.plugin.version>1.8</maven.antrun.plugin.version>
-        <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
+        <maven.central.publishing.plugin.version>0.8.0</maven.central.publishing.plugin.version>
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.rat.plugin.version>0.12</maven.rat.plugin.version>
+        <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
         <maven.shade.plugin.version>3.2.1</maven.shade.plugin.version>
-        <maven.source.plugin.version>3.0.1</maven.source.plugin.version>
+        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
         <maven.war.plugin.version>2.2</maven.war.plugin.version>
         <scala.maven.plugin.version>4.8.1</scala.maven.plugin.version>
@@ -189,7 +191,7 @@
         <spark.hats.version>0.2.2</spark.hats.version>
         <spark.hofs.version>0.4.0</spark.hofs.version>
         <spark.version>2.4.4</spark.version>
-        <spark.xml.version>0.5.0</spark.xml.version>
+        <spark.xml.version>0.13.0</spark.xml.version>
         <specs.version>2.4.16</specs.version>
         <spline.version>0.3.9</spline.version>
         <spray.json.version>1.3.5</spray.json.version>
@@ -462,7 +464,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>${maven.resources.plugin.version}</version>
                 <configuration>
                     <delimiters>
                         <delimiter>@</delimiter>
@@ -477,6 +479,30 @@
                     <scalaVersion>${scala.version}</scalaVersion>
                     <aggregate>true</aggregate>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>${maven.central.publishing.plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.rat</groupId>
+                <artifactId>apache-rat-plugin</artifactId>
+                <version>${maven.rat.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven.source.plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>${maven.gpg.plugin.version}</version>
             </plugin>
         </plugins>
         <resources>
@@ -593,6 +619,16 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <deploymentName>${project.groupId}:${project.artifactId}:${project.version}</deploymentName>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
