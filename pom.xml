@@ -141,10 +141,10 @@
         <gitflow.maven.plugin.version>1.16.0</gitflow.maven.plugin.version>
         <maven.antrun.plugin.version>1.8</maven.antrun.plugin.version>
         <maven.central.publishing.plugin.version>0.8.0</maven.central.publishing.plugin.version>
-        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.rat.plugin.version>0.12</maven.rat.plugin.version>
-        <maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
+        <maven.resources.plugin.version>3.1.0</maven.resources.plugin.version>
         <maven.shade.plugin.version>3.2.1</maven.shade.plugin.version>
         <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
         <maven.surefire.plugin.version>2.18.1</maven.surefire.plugin.version>
@@ -402,7 +402,7 @@
                     <filereports>WDF TestSuite.txt</filereports>
                     <!--
                         Set heap memory to 4000 MB so array conformance test and conformance
-                        end to end test could run. This can be removed later when dynamic conformance
+                        end-to-end test could run. This can be removed later when dynamic conformance
                         becomes more efficient
                     -->
                     <argLine>-Xmx4000m -Dfile.encoding=UTF-8</argLine>
