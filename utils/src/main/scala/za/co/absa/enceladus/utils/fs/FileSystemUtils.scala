@@ -29,6 +29,7 @@ import scala.util.{Failure, Success, Try}
 object FileSystemUtils {
 
   val log: Logger = LoggerFactory.getLogger(this.getClass)
+  private val SchemeSeparator = "://"
 
   /**
    * Will yeild a [[FileSystem]] for path. If path prefix suggest S3, S3 FS is returned, HDFS otherwise.
@@ -40,13 +41,17 @@ object FileSystemUtils {
     path.toSimpleS3Location match {
 
       case Some(s3Location) => // s3 over hadoop fs api
-        val s3BucketUri: String = s"s3://${s3Location.bucketName}" // s3://<bucket>
-        val s3uri: URI = new URI(s3BucketUri)
+        val s3uri: URI = s3BucketUri(path, s3Location.bucketName)
         FileSystem.get(s3uri, hadoopConf)
 
       case None =>
         FileSystem.get(hadoopConf) // HDFS
     }
   }
-}
 
+  private[fs] def s3BucketUri(path: String, bucketName: String): URI = {
+    val separatorIndex = path.indexOf(SchemeSeparator)
+    val scheme = if (separatorIndex >= 0) path.substring(0, separatorIndex) else "s3"
+    new URI(s"$scheme://$bucketName")
+  }
+}
